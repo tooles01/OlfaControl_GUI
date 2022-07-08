@@ -2,6 +2,7 @@ import sys, logging
 from datetime import datetime
 
 from PyQt5.QtWidgets import *
+#from PyQt5.QtCore import QObject
 from serial.tools import list_ports
 
 import time
@@ -20,6 +21,7 @@ class Vial(QGroupBox):
         super().__init__()
         self.parent = parent
         self.vialNum = vialNum
+        self.teensy = self.parent.olfa_device
 
         self.generate_stuff()
 
@@ -61,19 +63,20 @@ class Vial(QGroupBox):
     # ACTIONS
     def vial_button_toggled(self, checked):
         if checked:
+            print(type(self.vialNum))
             logger.debug('opening vial %s', self.vialNum)
-            # TODO: open vial
+            self.teensy._set_valveset(self.vialNum, valvestate=1, suppress_errors=False)
 
         else:
             logger.debug('closing vial %s', self.vialNum)
-            # TODO: close vial
+            self.teensy._set_valveset(self.vialNum, 0, suppress_errors=False)
 
 
 class MFC(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-
+        self.teensy = self.parent.olfa_device
         self.generate_stuff()
         self.setLayout(self.mainLayout)
 
@@ -94,16 +97,20 @@ class MFC(QWidget):
     def send_mfc_flow_update(self):
         new_flow_value = self.mfc_flow_set.text()
         logger.debug('updated MFC flow to %s sccm',new_flow_value)
-
-        # TODO: send this to the MFC
+        print(type(new_flow_value))
+        self.teensy.set_flowrate( int(new_flow_value))
 
 
 
 
 class TeensyOlfa():
     
-    def __init__(self, mfc_config, com_settings, flow_units='SCCM', setflow=-1):
+    def __init__(self):
+        #super().__init__()
         self.dummyvial = 4
+        
+    def connect_olfa(self, mfc_config, com_settings, flow_units='SCCM', setflow=-1):   
+        print(flow_units)
         self.slaveindex = mfc_config['slave_index']
         self.mfc_type = mfc_config['MFC_type']
         self.capacity = int(mfc_config['capacity'])
@@ -115,7 +122,7 @@ class TeensyOlfa():
             self.arduino_port = int(mfc_config['arduino_port_num'])
 
         self.serial = self.connect_serial(com_settings['com_port'], baudrate=com_settings['baudrate'], timeout=1, writeTimeout=1)
-        
+     
     def connect_serial(self, port, baudrate, timeout=1, writeTimeout=1):
         """
         Return Serial object after making sure that the port is accessible and that the port is expressed as a string.
@@ -159,10 +166,10 @@ class TeensyOlfa():
         # print "Setting rate of: ", flowrate
         if flowrate > self.capacity or flowrate < 0:
             return success
-        flownum = (flowrate * 1. / self.capacity) * 64000.
+        flownum = (flowrate * 1. / self.capacity) *100#* 64000.
         flownum = int(flownum)
         command = "DMFC {0:d} {1:d} A{2:d}".format(self.slaveindex, self.arduino_port, flownum)
-        #print(command)
+        print(command)
         confirmation = self.send_command(command)
         #print(confirmation)
         if(confirmation != 'MFC set\r\n'):
@@ -273,18 +280,22 @@ class TeensyOlfa():
         return success
     
     
-    def _set_valveset(self, valvenum, valvestate=1, suppress_errors=False):
+    def _set_valveset(self, vial_num, valvestate=1, suppress_errors=False):
+
+        if vial_num == self.dummyvial:
+            self.set_dummy_vial(valvestate)
         if valvestate:
-            command = "vialOn {0} {1}".format(self.slaveindex, valvenum)
+            command = "vialOn {0} {1}".format(self.slaveindex, vial_num)
         else:
-            command = "vialOff {0} {1}".format(self.slaveindex, valvenum)
+            command = "vialOff {0} {1}".format(self.slaveindex, vial_num)
         line = self.send_command(command)
         if not line.split()[0] == 'Error':
             return True
         elif not suppress_errors:
-            logging.error('Cannot set valveset for vial {0}'.format(valvenum))
+            logging.error('Cannot set valveset for vial {0}'.format(vial_num))
             logging.error(repr(line))
             return False
+            
     def send_command(self, command, tries=1):
         self.serial.flushInput()
         for i in range(tries):
@@ -314,15 +325,17 @@ class olfactometer_window(QGroupBox):
     def __init__(self):
         super().__init__()
 
-        self.generate_ui()
+        
         self.setTitle('Olfactometer')
         self.setDefaultParams()
-        self.olfa_device = TeensyOlfa(self.MFC_settings, self.COM_settings_mfc, flow_units='SCCM', setflow=-1)
-
+        self.olfa_device = TeensyOlfa()
+        self.generate_ui()
+        #self.MFC_settings, self.COM_settings_mfc, flow_units='SCCM', setflow=-1
+    
     def setDefaultParams(self):
         self.COM_settings_mfc = dict()
         self.COM_settings_mfc['baudrate'] = 115200
-        self.COM_settings_mfc['com_port'] = 25
+        
         self.MFC_settings = dict()
         self.MFC_settings['MFC_type'] = 'alicat_digital'
         self.MFC_settings['address'] = 'A'
@@ -377,7 +390,7 @@ class olfactometer_window(QGroupBox):
         self.vials_groupbox = QGroupBox('Vials')
         self.vials = []
         for v in range(number_of_vials):
-            v_vialNum = str(v+1)
+            v_vialNum = str(v+5)
             v_vial = Vial(parent=self, vialNum=v_vialNum)
             self.vials.append(v_vial)
 
@@ -418,7 +431,10 @@ class olfactometer_window(QGroupBox):
     def toggled_connect(self, checked):
         if checked:
             logger.error('connecting to olfactometer')
-            # TODO: connect to olfactometer
+            print(int(self.portStr[3:]))
+            self.COM_settings_mfc['com_port'] = int(self.portStr[3:])
+            self.olfa_device.connect_olfa(self.MFC_settings, self.COM_settings_mfc, flow_units='SCCM', setflow=-1)
+            
 
         '''
             i = self.port.index(':')
