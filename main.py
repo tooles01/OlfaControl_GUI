@@ -1,12 +1,13 @@
-from asyncore import write
+#from asyncore import write
 import sys, os, logging, csv
 
 from PyQt5 import sip
 from PyQt5.QtWidgets import *
 
 import utils
-import olfactometer_driver
+import olfa_driver_48line
 import NiDAQ_driver
+import olfa_driver_original
 
 
 #main_datafile_directory = 'C:\\Users\\Admin\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
@@ -149,23 +150,25 @@ class mainWindow(QMainWindow):
     def create_add_devices_box(self):
         self.add_devices_groupbox = QGroupBox("Devices")
 
-        self.add_olfa_btn = QPushButton(text='Add Olfactometer',checkable=True,toggled=self.add_olfactometer_toggled)
+        self.add_olfa_48line_btn = QPushButton(text='Add Olfactometer\n(48-line)',checkable=True,toggled=self.add_olfa_48line_toggled)
         self.add_pid_btn = QPushButton(text='Add PID',checkable=True,toggled=self.add_pid_toggled)
+        self.add_olfa_orig_btn = QPushButton(text='Add Olfactometer\n(original)',checkable=True,toggled=self.add_olfa_orig_toggled)
         
         layout = QVBoxLayout()
         layout.addWidget(self.add_pid_btn)
-        layout.addWidget(self.add_olfa_btn)
+        layout.addWidget(self.add_olfa_48line_btn)
+        layout.addWidget(self.add_olfa_orig_btn)
         self.add_devices_groupbox.setLayout(layout)
 
     
-    def add_olfactometer_toggled(self,checked):
+    def add_olfa_48line_toggled(self,checked):
         if checked:
-            self.olfactometer = olfactometer_driver.olfactometer_window()
+            self.olfactometer = olfa_driver_48line.olfactometer_window()
             self.device_layout.addWidget(self.olfactometer)
             logger.debug('created olfactometer object')
             
-            self.add_olfa_btn.setText('Remove olfactometer')
-            #self.add_olfa_btn.setToolTip('are you sure!!!')
+            self.add_olfa_orig_btn.setEnabled(False)
+            self.add_olfa_48line_btn.setText('Remove olfactometer\n(48-line)')
             
         else:
             self.mainLayout.removeWidget(self.olfactometer)
@@ -174,8 +177,24 @@ class mainWindow(QMainWindow):
             '''
                 self.resize(self.sizeHint())   # this throws an error \__/
             '''
-            
-            self.add_olfa_btn.setText('Add Olfactometer')
+            self.add_olfa_orig_btn.setEnabled(True)
+            self.add_olfa_48line_btn.setText('Add Olfactometer')
+
+    def add_olfa_orig_toggled(self, checked):
+        if checked:
+            self.olfactometer = olfa_driver_original.olfactometer_window()
+            self.device_layout.addWidget(self.olfactometer)
+            logger.debug('created olfactometer object')
+            self.add_olfa_48line_btn.setEnabled(False)
+            self.add_olfa_orig_btn.setText('Remove olfactometer\n(original)')
+
+        else:
+            self.mainLayout.removeWidget(self.olfactometer)
+            sip.delete(self.olfactometer)
+            logger.debug('removed olfactometer object')
+            self.add_olfa_48line_btn.setEnabled(True)
+            self.add_olfa_orig_btn.setText('Add Olfactometer\n(48-line)')
+
 
     def add_pid_toggled(self, checked):
         if checked:
