@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import *
 
 import utils
 import olfa_driver_48line
-import NiDAQ_driver
+#import NiDAQ_driver
 import olfa_driver_original
 
 
