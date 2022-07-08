@@ -1,4 +1,3 @@
-#from asyncore import write
 import sys, os, logging, csv
 
 from PyQt5 import sip
@@ -24,7 +23,6 @@ class mainWindow(QMainWindow):
         self.mainLayout = QHBoxLayout()
         self.mainLayout.addWidget(self.settings_box)
         self.mainLayout.addWidget(self.device_groupbox)
-        #self.mainLayout.addLayout(self.device_layout)
         self.central_widget = QWidget()
         self.central_widget.setLayout(self.mainLayout)
         self.setCentralWidget(self.central_widget)
@@ -35,11 +33,13 @@ class mainWindow(QMainWindow):
         self.settings_box = QGroupBox('Settings')
         self.create_general_settings_box()
         self.create_add_devices_box()
+        self.create_program_selection_groupbox()
         self.create_datafile_box()
         self.settings_layout = QGridLayout()
         self.settings_layout.addWidget(self.general_settings_box,0,0,1,1)
         self.settings_layout.addWidget(self.add_devices_groupbox,0,1,1,1)
-        self.settings_layout.addWidget(self.datafile_groupbox,1,0,1,2)
+        self.settings_layout.addWidget(self.program_selection_groupbox,1,0,1,2)
+        self.settings_layout.addWidget(self.datafile_groupbox,2,0,1,2)
         self.settings_box.setLayout(self.settings_layout)
         self.settings_box.setFixedWidth(self.settings_box.sizeHint().width() - 50)
 
@@ -95,6 +95,26 @@ class mainWindow(QMainWindow):
         max_height = self.general_settings_box.sizeHint().height()
         self.general_settings_box.setMaximumHeight(max_height)
         
+    def create_program_selection_groupbox(self):
+        self.program_selection_groupbox = QGroupBox('Program Selection')
+
+        self.olfa_type_label = QLabel()
+
+        programs = ['setpoint characterization','additive']
+        self.program_selection_combo = QComboBox()
+        self.program_selection_combo.addItems(programs)
+        
+        self.program_selection_picked = QPushButton('Select')
+        self.program_selection_picked.clicked.connect(self.create_program_widgets)
+        
+        self.program_start_btn = QPushButton(text='Start',toolTip='this doesn''t do anything')
+
+        layout = QFormLayout()
+        layout.addRow(QLabel('Olfactometer type:'),self.olfa_type_label)
+        layout.addRow(self.program_selection_combo,self.program_start_btn)
+        self.program_selection_groupbox.setLayout(layout)
+        self.program_selection_groupbox.setEnabled(False)
+    
     def create_datafile_box(self):
         self.datafile_groupbox = QGroupBox('Data file')
 
@@ -169,16 +189,18 @@ class mainWindow(QMainWindow):
             
             self.add_olfa_orig_btn.setEnabled(False)
             self.add_olfa_48line_btn.setText('Remove olfactometer\n(48-line)')
+            self.olfa_type_label.setText('48-line olfa')
+            self.program_selection_groupbox.setEnabled(True)
             
         else:
             self.mainLayout.removeWidget(self.olfactometer)
             sip.delete(self.olfactometer)
             logger.debug('removed olfactometer object')
-            '''
-                self.resize(self.sizeHint())   # this throws an error \__/
-            '''
+
             self.add_olfa_orig_btn.setEnabled(True)
             self.add_olfa_48line_btn.setText('Add Olfactometer')
+            self.olfa_type_label.setText(' ')
+            self.program_selection_groupbox.setEnabled(False)
 
     def add_olfa_orig_toggled(self, checked):
         if checked:
@@ -187,6 +209,9 @@ class mainWindow(QMainWindow):
             logger.debug('created olfactometer object')
             self.add_olfa_48line_btn.setEnabled(False)
             self.add_olfa_orig_btn.setText('Remove olfactometer\n(original)')
+            self.olfa_type_label.setText('original olfa')
+            self.program_selection_groupbox.setEnabled(True)
+
 
         else:
             self.mainLayout.removeWidget(self.olfactometer)
@@ -194,6 +219,8 @@ class mainWindow(QMainWindow):
             logger.debug('removed olfactometer object')
             self.add_olfa_48line_btn.setEnabled(True)
             self.add_olfa_orig_btn.setText('Add Olfactometer\n(48-line)')
+            self.olfa_type_label.setText(' ')
+            self.program_selection_groupbox.setEnabled(False)
 
 
     def add_pid_toggled(self, checked):
@@ -212,7 +239,8 @@ class mainWindow(QMainWindow):
             
             self.add_pid_btn.setText('Add PID')
         
-    
+    def create_program_widgets(self):
+        pass
 
     def begin_record_btn_toggled(self):
         if self.begin_record_btn.isChecked() == True:
