@@ -1,4 +1,3 @@
-#from asyncore import write
 import sys, os, logging, csv
 
 from PyQt5 import sip
@@ -279,6 +278,7 @@ class mainWindow(QMainWindow):
 
     def closeEvent(self, event):
         # set all vials to not debug
+        # if olfactometer is still connected: set all vials to not debug
         pass
         '''
         active_slaves = self.olfactometer.active_slaves
