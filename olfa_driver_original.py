@@ -95,6 +95,7 @@ class MFC(QWidget):
         self.mainLayout.addWidget(self.mfc_flow_update_btn)
 
     def send_mfc_flow_update(self):
+        print("I am sure I am here")
         new_flow_value = self.mfc_flow_set.text()
         logger.debug('updated MFC flow to %s sccm',new_flow_value)
         print(type(new_flow_value))
@@ -164,9 +165,10 @@ class TeensyOlfa():
         success = False
         start_time = time.time()
         # print "Setting rate of: ", flowrate
+        print( self.capacity)
         if flowrate > self.capacity or flowrate < 0:
             return success
-        flownum = (flowrate * 1. / self.capacity) *100#* 64000.
+        flownum = (flowrate * 1. / self.capacity)*64000
         flownum = int(flownum)
         command = "DMFC {0:d} {1:d} A{2:d}".format(self.slaveindex, self.arduino_port, flownum)
         print(command)
@@ -179,8 +181,10 @@ class TeensyOlfa():
             success = True
             command = "DMFC {0:d} {1:d}".format(self.slaveindex, self.arduino_port)
             returnstring = self.send_command(command)
-            while (returnstring is None or returnstring.startswith('Error -2')) and time.time() - start_time < .2:
+            print(returnstring)
+            while (returnstring is None or returnstring.startswith(b'Error -2')) and time.time() - start_time < .2:
                 returnstring = self.send_command(command)
+            
         return success
 
     def get_flowrate(self):
@@ -344,9 +348,9 @@ class olfactometer_window(QGroupBox):
         self.MFC_settings['gas'] = "Air"
         self.MFC_settings["slave_index"] = 1 # this in full honestly is a teensy 
 
-        self.COM_settings_flowmeter = dict()
-        self.COM_settings_flowmeter['baudrate'] = 9600
-        self.COM_settings_flowmeter['com_port'] = 7
+        # self.COM_settings_flowmeter = dict()
+        # self.COM_settings_flowmeter['baudrate'] = 9600
+        # self.COM_settings_flowmeter['com_port'] = 7
 
         self.filepath = 'R:/rinberglabspace/Users/Bea/olfactometry/flow_sensor_calibration/calibration_files/test.csv'
         self.folderpath = 'R:/rinberglabspace/Users/Bea/olfactometry/flow_sensor_calibration/calibration_files'
