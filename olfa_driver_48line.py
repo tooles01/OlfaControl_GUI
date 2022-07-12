@@ -68,6 +68,13 @@ class Vial(QGroupBox):
         self.setpoint_layout.addWidget(self.setpoint_send_btn)
         
         self.readFromThisVial = QPushButton(text="read flow vals", checkable=True, toggled=self.readFlow_btn_toggled)
+
+        self.calibrate_vial_edit = QLineEdit(text='100')
+        self.calibrate_vial_btn = QPushButton(text="calibrate")
+        self.calibrate_vial_btn.clicked.connect(self.calibrate_flow_sensor)
+        self.calibration_layout = QHBoxLayout()
+        self.calibration_layout.addWidget(self.calibrate_vial_edit)
+        self.calibration_layout.addWidget(self.calibrate_vial_btn)
         
         # - calibration table selection
         # - debug window
@@ -77,6 +84,7 @@ class Vial(QGroupBox):
         self.layout.addRow(self.vial_layout)
         self.layout.addRow(self.setpoint_layout)
         self.layout.addRow(self.readFromThisVial)
+        #self.layout.addRow(self.calibration_layout)
 
     # ACTIONS
     def setpoint_btn_clicked(self, value):
@@ -102,6 +110,20 @@ class Vial(QGroupBox):
             strToSend = 'MS_' + self.parent.name + self.vialNum
             self.parent.parent.send_to_master(strToSend)
         
+    def calibrate_flow_sensor(self):
+        value_to_calibrate = int(self.calibrate_vial_edit.text())
+        # set MFC to this value
+
+        # open proportional valve
+        open_pv_command = 'S_OC_' + self.parent.name + self.vialNum
+        self.parent.parent.send_to_master(open_pv_command)
+
+        # open isolation valve
+        open_iv_command = 'S_OV_5_' + self.parent.name + self.vialNum
+        self.parent.parent.send_to_master(open_iv_command)
+
+        # read flow values
+        # TODO
 
 class slave_8vials(QGroupBox):
 
