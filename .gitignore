@@ -1,0 +1,9 @@
+# ignore everything
+*
+
+
+# don't ignore these
+!.gitignore
+!*.py
+!*.json
+!requirements.txt
