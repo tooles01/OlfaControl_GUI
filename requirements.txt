@@ -2,6 +2,3 @@ pyqt5
 pyqt5.sip
 pyserial
 nidaqmx
-
-
-hi
