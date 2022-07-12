@@ -69,7 +69,7 @@ class Vial(QGroupBox):
         
         self.readFromThisVial = QPushButton(text="read flow vals", checkable=True, toggled=self.readFlow_btn_toggled)
 
-        self.calibrate_vial_edit = QLineEdit(maximum=200,value=100)
+        self.calibrate_vial_edit = QLineEdit(text='100')
         self.calibrate_vial_btn = QPushButton(text="calibrate")
         self.calibrate_vial_btn.clicked.connect(self.calibrate_flow_sensor)
         self.calibration_layout = QHBoxLayout()
@@ -84,7 +84,7 @@ class Vial(QGroupBox):
         self.layout.addRow(self.vial_layout)
         self.layout.addRow(self.setpoint_layout)
         self.layout.addRow(self.readFromThisVial)
-        self.layout.addRow(self.calibration_layout)
+        #self.layout.addRow(self.calibration_layout)
 
     # ACTIONS
     def setpoint_btn_clicked(self, value):
