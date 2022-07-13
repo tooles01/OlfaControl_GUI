@@ -13,6 +13,8 @@ number_of_vials = 8
 
 noPort_msg = "no ports detected :/"
 
+vial_default_flow_values = '10,14,27,52'
+
         
 
 class Vial(QGroupBox):
@@ -33,6 +35,7 @@ class Vial(QGroupBox):
         # checkbox
         self.vial_checkbox = QCheckBox()
         self.vial_checkbox.setToolTip('Include this vial in trial')
+        self.vial_checkbox.setChecked(True)
 
         # open vial
         self.vial_button = QPushButton(text=self.vialNum,checkable=True,toggled=self.vial_button_toggled)
@@ -52,6 +55,7 @@ class Vial(QGroupBox):
         self.vial_flow_list = QLineEdit()
         self.vial_flow_list.setPlaceholderText("Flows list")
         self.vial_flow_list.setToolTip('Enter list of flows for this trial')
+        self.vial_flow_list.setText(vial_default_flow_values)
         
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.vial_checkbox)
@@ -400,7 +404,7 @@ class olfactometer_window(QGroupBox):
 
         self.vials_layout = QVBoxLayout()
         for v in range(number_of_vials):
-            print(self.vials[v])
+            #print(self.vials[v])
             self.vials_layout.addWidget(self.vials[v])
 
         self.vials_groupbox.setLayout(self.vials_layout)
