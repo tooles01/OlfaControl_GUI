@@ -17,7 +17,9 @@ import olfa_original_procedures
 #import olfa_48line_procedures
 
 #main_datafile_directory = 'C:\\Users\\Admin\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
-main_datafile_directory = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
+#main_datafile_directory = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
+
+main_datafile_directory = 'C:\\GIT\\OlfaControl_GUI\\result_files'
 programs_48line = ['setpoint characterization','additive']
 programs_orig = ['the program']
         
