@@ -10,11 +10,11 @@
 
 
 import sys, time, logging
-#from tkinter import mainloop
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 import nidaqmx
-    
+from nidaqmx import stream_readers 
+import numpy as np
 noPortMsg = '~ No NI devices detected ~'
 analogChannel = 'ai0'   # TODO: fix this
 
@@ -24,6 +24,7 @@ timeBt_s = 1/timeBt_Hz
 
 class worker(QObject):
     sendData_from_worker = pyqtSignal(float)
+    send_data_to_list = pyqtSignal(float)
 
     def __init__(self, devName):
         super().__init__()
@@ -31,6 +32,9 @@ class worker(QObject):
         self.timeToSleep = timeBt_s
         self.devName = devName
         self.analogChan = analogChannel
+        self.save_values_to_list = False        
+
+        self.data_list = []
     
     @pyqtSlot()
     def read_from_ni_device(self):
@@ -41,13 +45,19 @@ class worker(QObject):
             value = t.read(1)
             value = value[0]
             self.sendData_from_worker.emit(value)
+            if self.save_values_to_list == True:
+                self.data_list.append(value)
+                
             time.sleep(self.timeToSleep)
 
 
 class NiDaq(QGroupBox):
 
-    def __init__(self):
+    def __init__(self,parent):
         super().__init__()
+        self.parent = parent
+
+        self.save_values_to_list = False
 
         self.generate_ui()
 
@@ -69,7 +79,6 @@ class NiDaq(QGroupBox):
         self.settingsBox.setFixedWidth(max_width)
 
         
-
 
     # CONNECT TO DEVICE
     def createConnectBox(self):
@@ -123,7 +132,6 @@ class NiDaq(QGroupBox):
 
     def toggled_connect(self, checked):
         if checked:
-            #logger.debug('clicked connect button')
             self.portWidget.setEnabled(False)
             self.refreshButton.setEnabled(False)
             self.connectButton.setText('Stop reading from ' + str(self.port))
@@ -133,7 +141,6 @@ class NiDaq(QGroupBox):
             self.worker_obj.readTheStuff = True
         
         else:
-            #logger.debug('disconnect')
             self.portWidget.setEnabled(True)
             self.connectButton.setText('Connect to ' + str(self.port))
             self.refreshButton.setEnabled(True)
@@ -147,6 +154,7 @@ class NiDaq(QGroupBox):
         self.worker_obj.moveToThread(self.thread1)
         self.worker_obj.sendData_from_worker.connect(self.receive_data_from_worker)
         self.thread1.started.connect(self.worker_obj.read_from_ni_device)
+         
 
     def createSettingsBox(self):
         self.settingsBox = QGroupBox("Settings")
@@ -199,9 +207,15 @@ class NiDaq(QGroupBox):
         self.mV_receive_box.append(str(round(value_mV,3)))
         self.window().receive_data_from_device('pid','mV',str(value_mV))
     
+    def start_making_data_list(self):
+        self.data_list = []                         # create empty data list
+        self.worker_obj.data_list = []
+        self.worker_obj.save_values_to_list = True  # tell working to start adding values to it
 
-
-
+    def stop_making_data_list(self):
+        self.worker_obj.save_values_to_list = False
+        self.data_list = self.worker_obj.data_list
+        
 
 if __name__ == "__main__":
 
