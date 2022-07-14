@@ -144,13 +144,13 @@ class mainWindow(QMainWindow):
         self.program_start_btn.setEnabled(True)
 
         if self.program_to_run == "the program":
-            self.pid_record_time_widget = QSpinBox(value=5)
+            self.iti_time_widget = QSpinBox(value=5)
             self.vial_open_time_widget = QSpinBox(value=5)
             self.num_repetitions_widget = QSpinBox(value=10)
 
-            self.program_parameters_layout.insertRow(0,QLabel('pid record time:'),self.pid_record_time_widget)
-            self.program_parameters_layout.insertRow(1,QLabel('vial open time:'),self.vial_open_time_widget)
-            self.program_parameters_layout.insertRow(2,QLabel('number of repetitions:'),self.num_repetitions_widget)
+            self.program_parameters_layout.insertRow(0,QLabel('Inter trial interval [s]:'),self.iti_time_widget)
+            self.program_parameters_layout.insertRow(1,QLabel('Vial open time [s]:'),self.vial_open_time_widget)
+            self.program_parameters_layout.insertRow(2,QLabel('Number of repetitions:'),self.num_repetitions_widget)
             
 
 
@@ -304,12 +304,12 @@ class mainWindow(QMainWindow):
         # .5 seconds is no longer enough
         time_to_pause_seconds = 1
 
+        # Connect olfactometer
+        self.olfactometer.setDefaultParams()
+        self.olfactometer.COM_settings_mfc['com_port'] = int(self.olfactometer.portStr[3:])
+        self.olfactometer.olfa_device.connect_olfa(self.olfactometer.MFC_settings, self.olfactometer.COM_settings_mfc, flow_units='SCCM', setflow=-1)   
 
-        # only check one vial just for today (7/13/22) for debugging
-        for v in self.olfactometer.vials:
-            v.vial_checkbox.setChecked(False)
-        self.olfactometer.vials[0].vial_checkbox.setChecked(True)
-        
+       
 
         # DATAFILE STUFF
         datafile_name = self.data_file_name_lineEdit.text()
@@ -335,9 +335,9 @@ class mainWindow(QMainWindow):
         n_rep = self.num_repetitions_widget.value()
         vial_open_duration = self.vial_open_time_widget.value()
         
-        
-        # TODO: pull this out, this is just for debugging today (7/13/2022)
-        n_rep = 1
+        iti_time = self.iti_time_widget.value()
+        # make sure you retrieve the last capacity value
+        self.olfactometer.olfa_device.mfc1_capacity = self.olfactometer.mfc1.mfc_capacity_set.value()
         # check PID box to connect
         self.pid_nidaq.connectButton.setChecked(True)
         # check olfa box to add
@@ -362,25 +362,32 @@ class mainWindow(QMainWindow):
         for stimulus in self.stimulus_list:
             vial_number = stimulus[0]
             flow_value = stimulus[1]
+            print(type(flow_value))
+            # set MFC 
 
+            self.olfactometer.olfa_device.set_flowrate(int(flow_value))
+            print("set mfc")
+            time.sleep(3)
             # tell pid to make an empty list, start adding values to it
             self.pid_nidaq.start_making_data_list()
 
             # open vial
             self.olfactometer.olfa_device._set_valveset(vial_number,valvestate=1,suppress_errors=False)
-            
+            print("Opening vial")
             # wait x sec
             time.sleep(vial_open_duration)
 
             # close vial
             self.olfactometer.olfa_device._set_valveset(vial_number,valvestate=0,suppress_errors=False)
-
+            print("Closing vial")
+            time.sleep(2)
             # get list of values from pid
             list_of_pid_values = []
             # tell pid to stop adding values to the list
             self.pid_nidaq.stop_making_data_list()
             list_of_pid_values = self.pid_nidaq.data_list
             
+
             # write this line to the csv file
             write_to_file = copy.copy(list_of_pid_values)
             write_to_file.insert(0,flow_value)
@@ -390,7 +397,7 @@ class mainWindow(QMainWindow):
                 writer = csv.writer(f,delimiter=',')
                 writer.writerow(write_to_file)
                 
-            
+            time.sleep(iti_time)
             
             
             #string_to_write_to_file = vial_number + ',' + 

@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import *
 #from PyQt5.QtCore import QObject
 from serial.tools import list_ports
 
-import time
+import time, utils
 import serial
 
 currentDate = str(datetime.date(datetime.now()))
@@ -15,6 +15,11 @@ noPort_msg = "no ports detected :/"
 
 vial_default_flow_values = '10,14,27,52'
 
+logger = logging.getLogger(name='main')
+logger.setLevel(logging.DEBUG)
+console_handler = utils.create_console_handler()
+#file_handler = utils.create_file_handler(main_datafile_directory)
+logger.addHandler(console_handler)
         
 
 class Vial(QGroupBox):
@@ -88,6 +93,10 @@ class MFC(QWidget):
         self.mfc_flow_set = QSpinBox(maximum=1000,value=100)
         self.mfc_flow_set.setToolTip('Set MFC flow')
 
+        self.mfc_capacity_set = QSpinBox(maximum=1000,value=100)
+        self.mfc_capacity_set.setToolTip('Set MFC flow')
+        self.mfc_capacity_set.valueChanged.connect(self.update_capacity)
+
         self.mfc_flow_update_btn = QPushButton(text='Update')
         self.mfc_flow_update_btn.setToolTip('Send flow value to MFC')
         self.mfc_flow_update_btn.clicked.connect(self.send_mfc_flow_update)
@@ -95,14 +104,22 @@ class MFC(QWidget):
         self.mainLayout = QHBoxLayout()
         self.mainLayout.addWidget(QLabel('MFC'))
         self.mainLayout.addWidget(self.mfc_flow_set)
+        self.mainLayout.addWidget(QLabel('Capacity'))
+        self.mainLayout.addWidget(self.mfc_capacity_set)
         self.mainLayout.addWidget(QLabel('SCCM'))
         self.mainLayout.addWidget(self.mfc_flow_update_btn)
+
+
+    def update_capacity(self):
+        self.capacity =  self.mfc_capacity_set.value()
+        self.teensy.mfc1_capacity = self.capacity
 
     def send_mfc_flow_update(self):
         print("I am sure I am here")
         new_flow_value = self.mfc_flow_set.text()
         logger.debug('updated MFC flow to %s sccm',new_flow_value)
         print(type(new_flow_value))
+        # make sure you retreve the correct capacity value
         self.teensy.set_flowrate( int(new_flow_value))
 
 
@@ -169,10 +186,11 @@ class TeensyOlfa():
         success = False
         start_time = time.time()
         # print "Setting rate of: ", flowrate
-        print( self.capacity)
-        if flowrate > self.capacity or flowrate < 0:
+        
+        print( self.mfc1_capacity)
+        if flowrate > self.mfc1_capacity or flowrate < 0:
             return success
-        flownum = (flowrate * 1. / self.capacity)*64000
+        flownum = (flowrate * 1. / self.mfc1_capacity)*64000
         flownum = int(flownum)
         command = "DMFC {0:d} {1:d} A{2:d}".format(self.slaveindex, self.arduino_port, flownum)
         print(command)
@@ -333,12 +351,20 @@ class olfactometer_window(QGroupBox):
     def __init__(self):
         super().__init__()
 
+        #self.make_logger()
         
         self.setTitle('Olfactometer')
         self.setDefaultParams()
         self.olfa_device = TeensyOlfa()
         self.generate_ui()
         #self.MFC_settings, self.COM_settings_mfc, flow_units='SCCM', setflow=-1
+    
+    #def make_logger(self):
+    
+    #    logger = logging.getLogger(name='main')
+    #    logger.setLevel(logging.DEBUG)
+    #    console_handler = utils.create_console_handler()
+    #    logger.addHandler(console_handler)
     
     def setDefaultParams(self):
         self.COM_settings_mfc = dict()
@@ -392,6 +418,8 @@ class olfactometer_window(QGroupBox):
         layout.addWidget(self.mfc1)
         layout.addWidget(self.mfc2)
         self.mfcs_groupbox.setLayout(layout)
+
+#        drlg.olgsz-frb
 
     
     def create_vials_box(self):
