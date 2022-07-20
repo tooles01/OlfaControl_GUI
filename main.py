@@ -294,22 +294,29 @@ class mainWindow(QMainWindow):
 
 
     def run_odor_calibration(self):
-        # TODO: check that PID is connected
+        logger.info('running odor calibration procedure')
+
+        # check that PID is a device & is connected
+        try:
+            if self.pid_nidaq.connectButton.isChecked() == False:
+                logger.debug('connecting to pid')
+                self.pid_nidaq.connectButton.toggle()
+        except AttributeError as err:
+            logger.warning('PID is not added as a device - adding now')
+            self.add_pid_btn.toggle()
+            logger.debug('connecting to pid')
+            self.pid_nidaq.connectButton.toggle()
+
 
         # TODO: change datafile location
 
-        # .3 seconds is not enough
-        # .4 seconds is enough
-        # .4 seconds is no longer enough
-        # .5 seconds is no longer enough
-        time_to_pause_seconds = 1
-
+        
         # Connect olfactometer
         self.olfactometer.setDefaultParams()
         self.olfactometer.COM_settings_mfc['com_port'] = int(self.olfactometer.portStr[3:])
         self.olfactometer.olfa_device.connect_olfa(self.olfactometer.MFC_settings, self.olfactometer.COM_settings_mfc, flow_units='SCCM', setflow=-1)   
 
-       
+
 
         # DATAFILE STUFF
         datafile_name = self.data_file_name_lineEdit.text()
@@ -320,11 +327,9 @@ class mainWindow(QMainWindow):
             File = datafile_name, ' '
             file_created_time = utils.get_current_time()
             file_created_time = file_created_time[:-4]
-            write_this_row = file_created_time,str(time_to_pause_seconds)
             with open(self.datafile_dir,'a',newline='') as f:
                 writer = csv.writer(f,delimiter=',')
                 writer.writerow(File)
-                writer.writerow(write_this_row)
                 writer.writerow("")
         else:
             logger.warning('file already exists!!!!!!!!')
@@ -514,7 +519,7 @@ if __name__ == "__main__":
     file_handler = utils.create_file_handler(main_datafile_directory)
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
-
+    logger.info('saving data to: %s', today_logDir)
 
 
 
