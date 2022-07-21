@@ -13,7 +13,7 @@ number_of_vials = 8
 
 noPort_msg = "no ports detected :/"
 
-vial_default_flow_values = '10,14,27,52'
+vial_default_flow_values = '10,50,100'
 
 logger = logging.getLogger(name='main')
 logger.setLevel(logging.DEBUG)
@@ -144,7 +144,10 @@ class TeensyOlfa():
             self.arduino_port = int(mfc_config['arduino_port_num'])
 
         self.serial = self.connect_serial(com_settings['com_port'], baudrate=com_settings['baudrate'], timeout=1, writeTimeout=1)
-     
+    
+    def disconnect_olfa(self):
+        if self.serial.isOpen():
+            self.serial.close()
     def connect_serial(self, port, baudrate, timeout=1, writeTimeout=1):
         """
         Return Serial object after making sure that the port is accessible and that the port is expressed as a string.
@@ -390,12 +393,18 @@ class olfactometer_window(QGroupBox):
         self.create_mfcs_box()
         self.create_vials_box()
         self.connect_box.setMaximumHeight(self.connect_box.sizeHint().height())
+        #self.mfcs_groupbox.setMaximumHeight(self.connect_box.size().height())
 
-        mainLayout = QVBoxLayout()
+        #mainLayout = QVBoxLayout()
+        mainLayout = QGridLayout()
         self.setLayout(mainLayout)
-        mainLayout.addWidget(self.connect_box)
-        mainLayout.addWidget(self.mfcs_groupbox)
-        mainLayout.addWidget(self.vials_groupbox)
+        mainLayout.addWidget(self.connect_box,0,0,1,1)
+        mainLayout.addLayout(self.mfcs_layout,0,1,1,1)
+        #mainLayout.addWidget(self.mfcs_groupbox,0,1,1,1)
+        mainLayout.addWidget(self.vials_groupbox,1,0,1,2)
+        #mainLayout.addWidget(self.connect_box)
+        #mainLayout.addWidget(self.mfcs_groupbox)
+        #mainLayout.addWidget(self.vials_groupbox)
         
     def create_connect_box(self):
         self.connect_box = QGroupBox("Connect to Teensy")
@@ -409,15 +418,16 @@ class olfactometer_window(QGroupBox):
         self.connect_box.setLayout(connect_box_layout)
 
     def create_mfcs_box(self):
-        self.mfcs_groupbox = QGroupBox('MFCs')
+
+        #self.mfcs_groupbox = QGroupBox('MFCs')
 
         self.mfc1 = MFC(self)
         self.mfc2 = MFC(self)
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.mfc1)
-        layout.addWidget(self.mfc2)
-        self.mfcs_groupbox.setLayout(layout)
+        self.mfcs_layout = QVBoxLayout()
+        self.mfcs_layout.addWidget(self.mfc1)
+        self.mfcs_layout.addWidget(self.mfc2)
+        #self.mfcs_groupbox.setLayout(self.mfcs_layout)
 
 #        drlg.olgsz-frb
 

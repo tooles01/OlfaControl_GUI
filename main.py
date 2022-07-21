@@ -362,7 +362,7 @@ class mainWindow(QMainWindow):
         for stimulus in self.stimulus_list:
             vial_number = stimulus[0]
             flow_value = stimulus[1]
-            print(type(flow_value))
+            #print(type(flow_value))
             # set MFC 
 
             self.olfactometer.olfa_device.set_flowrate(int(flow_value))
@@ -408,6 +408,8 @@ class mainWindow(QMainWindow):
             # kill urself
 
         logger.info('all done')
+        # Close connection to olfactometer
+        self.olfactometer.olfa_device.disconnect_olfa()
         self.last_datafile_number = self.this_datafile_number
         self.this_datafile_number = self.last_datafile_number + 1
         self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2)  # zero pad
