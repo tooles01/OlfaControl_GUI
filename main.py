@@ -19,8 +19,6 @@ import olfa_original_procedures
 #main_datafile_directory = 'C:\\GIT\\OlfaControl_GUI\\result_files'
 programs_48line = ['setpoint characterization','additive']
 programs_orig = ['the program']
-        
-# PLEASE DO SOMETHING
 
 
 class mainWindow(QMainWindow):
