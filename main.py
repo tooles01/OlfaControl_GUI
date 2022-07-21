@@ -11,15 +11,12 @@ import utils
 import olfa_driver_48line
 import NiDAQ_driver
 import olfa_driver_original
-#from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
-#import matplotlib.pyplot  as plt
 import olfa_original_procedures
-#import olfa_48line_procedures
 
 #main_datafile_directory = 'C:\\Users\\Admin\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
 #main_datafile_directory = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
 
-main_datafile_directory = 'C:\\GIT\\OlfaControl_GUI\\result_files'
+#main_datafile_directory = 'C:\\GIT\\OlfaControl_GUI\\result_files'
 programs_48line = ['setpoint characterization','additive']
 programs_orig = ['the program']
         
@@ -90,14 +87,6 @@ class mainWindow(QMainWindow):
         log_box_layout.addWidget(QLabel('Log messages:'),0,0,1,1)
         log_box_layout.addWidget(self.log_clear_btn,0,2,1,1)
         log_box_layout.addWidget(self.log_text_edit,1,0,1,3)
-        '''
-        custom_handler = logging.StreamHandler()
-        custom_handler.setLevel(logging.DEBUG)
-        custom_handler_formatter = logging.Formatter('%(name)-14s: %(levelname)-8s: %(message)s')
-        custom_handler.setFormatter(custom_handler_formatter)
-        custom_handler.setStream(self.log_text_edit)
-        logger.addHandler(custom_handler)
-        '''
         
         layout = QVBoxLayout()
         layout.addWidget(QLabel('Log file located at:'))
@@ -144,19 +133,17 @@ class mainWindow(QMainWindow):
         self.program_start_btn.setEnabled(True)
 
         if self.program_to_run == "the program":
-            self.iti_time_widget = QSpinBox(value=5)
+            self.pid_record_time_widget = QSpinBox(value=5)
             self.vial_open_time_widget = QSpinBox(value=5)
             self.num_repetitions_widget = QSpinBox(value=10)
 
-            self.program_parameters_layout.insertRow(0,QLabel('Inter trial interval [s]:'),self.iti_time_widget)
-            self.program_parameters_layout.insertRow(1,QLabel('Vial open time [s]:'),self.vial_open_time_widget)
-            self.program_parameters_layout.insertRow(2,QLabel('Number of repetitions:'),self.num_repetitions_widget)
-            
+            self.program_parameters_layout.insertRow(0,QLabel('pid record time:'),self.pid_record_time_widget)
+            self.program_parameters_layout.insertRow(1,QLabel('vial open time:'),self.vial_open_time_widget)
+            self.program_parameters_layout.insertRow(2,QLabel('number of repetitions:'),self.num_repetitions_widget)           
 
 
         if self.program_to_run == "setpoint characterization":
-            # add the widgets for this
-            pass
+            logger.warning('not set up')
 
     
     def create_datafile_box(self):
@@ -294,23 +281,21 @@ class mainWindow(QMainWindow):
 
 
     def run_odor_calibration(self):
-        # TODO: check that PID is connected
+        logger.info('running odor calibration procedure')
+        
+        # check that PID is a device & is connected
+        try:
+            if self.pid_nidaq.connectButton.isChecked() == False:
+                logger.debug('connecting to pid')
+                self.pid_nidaq.connectButton.toggle()
+        except AttributeError as err:
+            logger.warning('PID is not added as a device - adding now')
+            self.add_pid_btn.toggle()
+            logger.debug('connecting to pid')
+            self.pid_nidaq.connectButton.toggle()
+
 
         # TODO: change datafile location
-
-        # .3 seconds is not enough
-        # .4 seconds is enough
-        # .4 seconds is no longer enough
-        # .5 seconds is no longer enough
-        time_to_pause_seconds = 1
-
-        # Connect olfactometer
-        self.olfactometer.setDefaultParams()
-        self.olfactometer.COM_settings_mfc['com_port'] = int(self.olfactometer.portStr[3:])
-        self.olfactometer.olfa_device.connect_olfa(self.olfactometer.MFC_settings, self.olfactometer.COM_settings_mfc, flow_units='SCCM', setflow=-1)   
-
-       
-
         # DATAFILE STUFF
         datafile_name = self.data_file_name_lineEdit.text()
         self.datafile_dir = self.data_file_dir_lineEdit.text() + '\\' + datafile_name + '.csv'
@@ -320,11 +305,9 @@ class mainWindow(QMainWindow):
             File = datafile_name, ' '
             file_created_time = utils.get_current_time()
             file_created_time = file_created_time[:-4]
-            write_this_row = file_created_time,str(time_to_pause_seconds)
             with open(self.datafile_dir,'a',newline='') as f:
                 writer = csv.writer(f,delimiter=',')
                 writer.writerow(File)
-                writer.writerow(write_this_row)
                 writer.writerow("")
         else:
             logger.warning('file already exists!!!!!!!!')
@@ -335,12 +318,6 @@ class mainWindow(QMainWindow):
         n_rep = self.num_repetitions_widget.value()
         vial_open_duration = self.vial_open_time_widget.value()
         
-        iti_time = self.iti_time_widget.value()
-        # make sure you retrieve the last capacity value
-        self.olfactometer.olfa_device.mfc1_capacity = self.olfactometer.mfc1.mfc_capacity_set.value()
-        # check PID box to connect
-        self.pid_nidaq.connectButton.setChecked(True)
-        # check olfa box to add
 
 
         # CREATE STIMULUS LIST
@@ -362,32 +339,25 @@ class mainWindow(QMainWindow):
         for stimulus in self.stimulus_list:
             vial_number = stimulus[0]
             flow_value = stimulus[1]
-            print(type(flow_value))
-            # set MFC 
 
-            self.olfactometer.olfa_device.set_flowrate(int(flow_value))
-            print("set mfc")
-            time.sleep(3)
             # tell pid to make an empty list, start adding values to it
             self.pid_nidaq.start_making_data_list()
 
             # open vial
             self.olfactometer.olfa_device._set_valveset(vial_number,valvestate=1,suppress_errors=False)
-            print("Opening vial")
+            
             # wait x sec
             time.sleep(vial_open_duration)
 
             # close vial
             self.olfactometer.olfa_device._set_valveset(vial_number,valvestate=0,suppress_errors=False)
-            print("Closing vial")
-            time.sleep(2)
+
             # get list of values from pid
             list_of_pid_values = []
             # tell pid to stop adding values to the list
             self.pid_nidaq.stop_making_data_list()
             list_of_pid_values = self.pid_nidaq.data_list
             
-
             # write this line to the csv file
             write_to_file = copy.copy(list_of_pid_values)
             write_to_file.insert(0,flow_value)
@@ -397,7 +367,7 @@ class mainWindow(QMainWindow):
                 writer = csv.writer(f,delimiter=',')
                 writer.writerow(write_to_file)
                 
-            time.sleep(iti_time)
+            
             
             
             #string_to_write_to_file = vial_number + ',' + 
@@ -502,19 +472,19 @@ if __name__ == "__main__":
     current_date = utils.currentDate
 
     # LOGGING
-
     # if today folder doesn't exist, make it
+    main_datafile_directory = utils.find_datafile_directory()   # TODO: fix this
     today_logDir = main_datafile_directory + '\\' + current_date
     if not os.path.exists(today_logDir): os.mkdir(today_logDir)
 
-
     logger = logging.getLogger(name='main')
     logger.setLevel(logging.DEBUG)
+    if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
     console_handler = utils.create_console_handler()
     file_handler = utils.create_file_handler(main_datafile_directory)
     logger.addHandler(console_handler)
     logger.addHandler(file_handler)
-
+    logger.info('saving data to: %s', today_logDir)
 
 
 
