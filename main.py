@@ -14,7 +14,7 @@ import olfa_driver_original
 import olfa_original_procedures
 
 #main_datafile_directory = 'C:\\Users\\Admin\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
-#main_datafile_directory = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
+main_datafile_directory = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
 
 #main_datafile_directory = 'C:\\GIT\\OlfaControl_GUI\\result_files'
 programs_48line = ['setpoint characterization','additive']
@@ -473,7 +473,7 @@ if __name__ == "__main__":
 
     # LOGGING
     # if today folder doesn't exist, make it
-    main_datafile_directory = utils.find_datafile_directory()   # TODO: fix this
+    #main_datafile_directory = utils.find_datafile_directory()   # TODO: fix this
     today_logDir = main_datafile_directory + '\\' + current_date
     if not os.path.exists(today_logDir): os.mkdir(today_logDir)
 
