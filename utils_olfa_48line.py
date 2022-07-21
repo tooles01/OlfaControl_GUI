@@ -1,4 +1,4 @@
-import os, glob
+import os, glob, math
 
 def find_datafile_directory():
     # search C drive for OlfaControl_GUI
