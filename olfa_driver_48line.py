@@ -5,6 +5,9 @@ from PyQt5 import QtCore, QtSerialPort
 from PyQt5.QtWidgets import *
 from serial.tools import list_ports
 
+import os, csv, copy
+import utils_olfa_48line
+
 
 
 currentDate = str(datetime.date(datetime.now()))
@@ -28,6 +31,8 @@ slave_names = ['A',
                 'F']
         
 
+default_cal_table = 'Honeywell_3100V'
+
 class Vial(QGroupBox):
 
     def __init__(self, parent, vialNum):
@@ -35,15 +40,16 @@ class Vial(QGroupBox):
         self.parent = parent
         self.slaveName = parent.name
         self.vialNum = vialNum
+        self.full_vialNum = self.slaveName + self.vialNum
+        
+        self.cal_table = default_cal_table
 
         self.generate_stuff()
 
-        #self.vial_groupbox = QGroupBox()
-        #self.vial_groupbox.setLayout(self.layout)
         self.setLayout(self.layout)
         self.vial_button.setMaximumWidth(60)
         self.setpoint_send_btn.setMaximumWidth(60)
-        #self.readFromThisVial.setMaximumWidth(self.readFromThisVial.sizeHint().width())
+        self.cal_table_set_btn.setMaximumWidth(60)
         max_width = self.sizeHint().width()
         self.setMaximumWidth(max_width - 15)
         
@@ -59,7 +65,7 @@ class Vial(QGroupBox):
         self.vial_layout.addWidget(self.vial_duration_spinbox)
         self.vial_layout.addWidget(self.vial_button)
         
-        self.setpoint_value_box = QSpinBox(maximum=1024,value=800)
+        self.setpoint_value_box = QSpinBox(maximum=200,value=100)
         self.setpoint_send_btn = QPushButton(text="Update\nSpt")
         self.setpoint_send_btn.clicked.connect(lambda: self.setpoint_btn_clicked(self.setpoint_value_box.value()))
         self.setpoint_layout = QHBoxLayout()
@@ -69,27 +75,41 @@ class Vial(QGroupBox):
         
         self.readFromThisVial = QPushButton(text="read flow vals", checkable=True, toggled=self.readFlow_btn_toggled)
 
+        self.cal_table_combobox = QComboBox()
+        self.cal_table_combobox.addItems(self.parent.parent.sccm2Ard_dicts)
+        self.cal_table_combobox.setCurrentText(self.cal_table)  # TODO: change this to cycle through and find that cal table, set the index to that
+        self.cal_table_set_btn = QPushButton(text='Update')
+        self.cal_table_set_btn.clicked.connect(self.cal_table_updated)
+        self.cal_table_layout = QGridLayout()
+        self.cal_table_layout.addWidget(QLabel(text='Calibration Table:'),0,0,1,1)
+        self.cal_table_layout.addWidget(self.cal_table_combobox,1,0,1,1)
+        self.cal_table_layout.addWidget(self.cal_table_set_btn,0,1,2,1)
+        self.cal_table_updated()
+
+        '''
         self.calibrate_vial_edit = QLineEdit(text='100')
         self.calibrate_vial_btn = QPushButton(text="calibrate")
         self.calibrate_vial_btn.clicked.connect(self.calibrate_flow_sensor)
         self.calibration_layout = QHBoxLayout()
         self.calibration_layout.addWidget(self.calibrate_vial_edit)
         self.calibration_layout.addWidget(self.calibrate_vial_btn)
+        '''
         
-        # - calibration table selection
         # - debug window
         # - current flow value (?)
 
         self.layout = QFormLayout()
         self.layout.addRow(self.vial_layout)
         self.layout.addRow(self.setpoint_layout)
+        self.layout.addRow(self.cal_table_layout)
         self.layout.addRow(self.readFromThisVial)
         #self.layout.addRow(self.calibration_layout)
 
     # ACTIONS
     def setpoint_btn_clicked(self, value):
         # - convert from sccm to integer
-        setpoint_integer = value
+        setpoint_sccm = value
+        setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
 
         strToSend = 'S_Sp_' + str(setpoint_integer) + '_' + self.slaveName + self.vialNum
         self.parent.parent.send_to_master(strToSend)    # send to olfactometer_window
@@ -110,6 +130,7 @@ class Vial(QGroupBox):
             strToSend = 'MS_' + self.parent.name + self.vialNum
             self.parent.parent.send_to_master(strToSend)
         
+    '''
     def calibrate_flow_sensor(self):
         value_to_calibrate = int(self.calibrate_vial_edit.text())
         # set MFC to this value
@@ -124,6 +145,15 @@ class Vial(QGroupBox):
 
         # read flow values
         # TODO
+
+    '''
+    
+    def cal_table_updated(self):
+        self.cal_table = self.cal_table_combobox.currentText()
+
+        self.intToSccm_dict = self.parent.parent.ard2Sccm_dicts.get(self.cal_table)
+        self.sccmToInt_dict = self.parent.parent.sccm2Ard_dicts.get(self.cal_table)
+        print('Vial ' + self.full_vialNum  + ' calibration table:  '+ self.cal_table)
 
 class slave_8vials(QGroupBox):
 
@@ -172,6 +202,8 @@ class olfactometer_window(QGroupBox):
     def __init__(self):
         super().__init__()
 
+        self.get_calibration_tables()
+
         self.generate_ui()
         self.master_groupbox.setEnabled(False)
 
@@ -182,7 +214,63 @@ class olfactometer_window(QGroupBox):
         
         self.setTitle('Olfactometer')
 
-    
+    def get_calibration_tables(self):
+
+        self.flow_cal_dir = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\OlfaControl_GUI\\calibration_tables'
+
+        if os.path.exists(self.flow_cal_dir):
+            logger.debug('loading flow sensor calibration tables (%s)', self.flow_cal_dir)
+
+            file_type = '.txt'
+            cal_file_names = os.listdir(self.flow_cal_dir)
+            cal_file_names = [fn for fn in cal_file_names if fn.endswith(file_type)]    # only txt files # TODO: change to csv
+            if cal_file_names == []:
+                print('no cal files found')
+            else:
+                # create dictionaries
+                new_sccm2Ard_dicts = {}
+                new_ard2Sccm_dicts = {}
+                for cal_file in cal_file_names:
+                    x = 0       # what is this
+                    idx_ext = cal_file.find('.')
+                    file_name = cal_file[:idx_ext]
+                    sccm2Ard = {}
+                    ard2Sccm = {}
+                    cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
+                    with open(cal_file_full_dir, newline='') as f:
+                        # skip over header line
+                        csv_reader = csv.reader(f)
+                        firstLine = next(csv_reader)
+                        # get the shit
+                        reader = csv.DictReader(f, delimiter=',')
+                        for row in reader:
+                            if x == 0:
+                                try:
+                                    sccm2Ard[int(row['SCCM'])] = int(row['int'])
+                                    ard2Sccm[int(row['int'])] = int(row['SCCM'])
+                                except KeyError as err:
+                                    print('error: ', err)
+                                    #print(err)
+                                    #self.logger.debug('%s does not have correct headings for calibration files', cal_file)
+                                    x = 1   # don't keep trying to read this file
+                    if bool(sccm2Ard) == True:
+                        new_sccm2Ard_dicts[file_name] = sccm2Ard
+                        new_ard2Sccm_dicts[file_name] = ard2Sccm
+                
+                # if new dicts are not empty, replace the old ones
+                if len(new_sccm2Ard_dicts) != 0:
+                    self.sccm2Ard_dicts = new_sccm2Ard_dicts
+                    self.ard2Sccm_dicts = new_ard2Sccm_dicts
+                else:
+                    print('no calibration files found in this directory')
+                    #self.logger.info('no calibration files found in this directory')
+            
+        else:
+            print('cannot find flow cal directory')
+            #self.logger.info('Cannot find flow cal directory (%s)', self.flowCalDir)   # TODO this is big issue if none found
+
+
+
     def generate_ui(self):
         self.create_connect_box()
         self.create_master_groupbox()
@@ -369,6 +457,7 @@ class olfactometer_window(QGroupBox):
                     time.sleep(.3)
 
     def get_slave_addresses(self):
+        self.prev_active_slaves = copy.copy(self.active_slaves)
         self.active_slaves = []
         self.send_to_master('C')
 
@@ -428,6 +517,15 @@ class olfactometer_window(QGroupBox):
                     slave_address = text[charsToRemove:]
                     
                     
+                    '''
+                    for s in self.slave_objects:
+                        if s.name == slave_name_received:
+                            self.slave_layout.addWidget(s)
+                            self.slave_scrollArea.setWidget(self.slave_widget)
+                            self.nothing_layout.addWidget(self.slave_scrollArea)
+                            self.slave_groupbox.setLayout(self.nothing_layout)
+                    '''
+                    
                     # enable groupbox for this slave
                     for s in self.slave_objects:
                         if s.name == slave_name_received:
@@ -435,17 +533,6 @@ class olfactometer_window(QGroupBox):
                             # & add the address
                             address_label = 'Slave Address: {}'.format(slave_address)
                             s.slave_address_label.setText(address_label)
-                    '''
-                    # add groupbox to layout
-                    for s in self.slave_objects:
-                        if s.name == slave_name_received:
-                            self.slave_layout.addWidget(s)
-                            address_label = 'Slave Address: {}'.format(slave_address)
-                            s.slave_address_label.setText(address_label)
-                            self.slave_groupbox.setLayout(self.nothing_layout)
-                            
-                            #x=1
-                    '''
                         
                 # IF FLOW UPDATE WAS SENT
                 if len(text) == 17:
