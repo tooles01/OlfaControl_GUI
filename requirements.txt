@@ -3,4 +3,5 @@ pyqt5.sip
 pyserial
 nidaqmx
 numpy
+glob
 math
