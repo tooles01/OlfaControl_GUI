@@ -55,6 +55,8 @@ class worker_sptChar(QObject):
 
     @pyqtSlot()
     def exp(self):
+        time.sleep(waitBtSpAndOV)
+        time.sleep(waitBtSpAndOV)   # wait so olfa has time to set vial to debug mode
         for stimulus in self.complete_stimulus_list:
             if self.threadON == True:
                 full_vial_name = stimulus[0]
@@ -72,9 +74,6 @@ class worker_sptChar(QObject):
 
                 # wait for the time between trials
                 time.sleep(self.duration_off)
-
-                
-
 
 
 class mainWindow(QMainWindow):
@@ -222,7 +221,7 @@ class mainWindow(QMainWindow):
                 self.p_slave_select_wid.addItem(no_active_slaves_warning)
             else:
                 self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
-            self.p_slave_select_refresh = QPushButton(text="Refresh")
+            self.p_slave_select_refresh = QPushButton(text="Refresh Slave")
             self.p_slave_select_refresh.clicked.connect(self.active_slave_refresh)
             self.p_slave_select_layout = QHBoxLayout()
             self.p_slave_select_layout.addWidget(QLabel('Slave:'))
@@ -232,29 +231,36 @@ class mainWindow(QMainWindow):
 
             self.p_vial_wid = QComboBox()
             self.p_vial_wid.addItems(vials) # TODO: change this
-            self.p_vial_layout = QHBoxLayout()
-            self.p_vial_layout.addWidget(QLabel('vial:'))
-            self.p_vial_layout.addWidget(self.p_vial_wid)
+            #self.p_vial_layout = QHBoxLayout()
+            self.p_slave_select_layout.addWidget(QLabel('vial:'))
+            self.p_slave_select_layout.addWidget(self.p_vial_wid)
+            #self.p_vial_layout.addWidget(QLabel('vial:'))
+            #self.p_vial_layout.addWidget(self.p_vial_wid)
 
             self.p_setpoints_wid = QLineEdit()
             self.p_setpoints_wid.setPlaceholderText('Setpoints to run (sccm)')
             self.p_setpoints_wid.setText(default_setpoint)
             self.p_spt_layout = QHBoxLayout()
+            #self.p_vial_layout.addWidget(QLabel('Setpoint(s):'))
+            #self.p_vial_layout.addWidget(self.p_setpoints_wid)
+            #self.p_vial_layout.addWidget(QLabel('sccm'))
             self.p_spt_layout.addWidget(QLabel('Setpoint(s):'))
             self.p_spt_layout.addWidget(self.p_setpoints_wid)
             self.p_spt_layout.addWidget(QLabel('sccm'))
 
             self.p_dur_on_wid = QSpinBox(value=default_dur_ON)
             self.p_dur_off_wid = QSpinBox(value=default_dur_OFF)
+            self.p_numTrials_wid = QLineEdit()
+            self.p_numTrials_wid.setPlaceholderText('# of Trials at each setpoint')
+            self.p_numTrials_wid.setText(str(default_numTrials))
             self.p_dur_layout = QHBoxLayout()
             self.p_dur_layout.addWidget(QLabel('Dur. on (s):'))
             self.p_dur_layout.addWidget(self.p_dur_on_wid)
             self.p_dur_layout.addWidget(QLabel('Dur. off (s):'))
             self.p_dur_layout.addWidget(self.p_dur_off_wid)
+            self.p_dur_layout.addWidget(QLabel('# trials:'))
+            self.p_dur_layout.addWidget(self.p_numTrials_wid)
             
-            self.p_numTrials_wid = QLineEdit()
-            self.p_numTrials_wid.setPlaceholderText('# of Trials at each setpoint')
-            self.p_numTrials_wid.setText(str(default_numTrials))
             self.p_sp_order_wid = QComboBox()
             self.p_sp_order_wid.addItems(['Sequential','Random'])
 
@@ -268,9 +274,9 @@ class mainWindow(QMainWindow):
                 '''
                 
             self.program_parameters_layout.addRow(self.p_slave_select_layout)
-            self.program_parameters_layout.addRow(self.p_vial_layout)
-            self.program_parameters_layout.addRow(self.p_spt_layout)
-            self.program_parameters_layout.addRow(QLabel('# of trials:'),self.p_numTrials_wid)
+            #self.program_parameters_layout.addRow(self.p_vial_layout)
+            #self.program_parameters_layout.addRow(self.p_spt_layout)
+            #self.program_parameters_layout.addRow(QLabel('# of trials:'),self.p_numTrials_wid)
             self.program_parameters_layout.addRow(self.p_dur_layout)
             self.program_parameters_layout.addRow(self.program_start_btn)
 
@@ -322,10 +328,10 @@ class mainWindow(QMainWindow):
         self.data_file_name_lineEdit = QLineEdit(text=data_file_name)
         self.data_file_textedit = QTextEdit(readOnly=True)
 
-        self.begin_record_btn = QPushButton(text='Create File && Begin Recording',checkable=True)
-        self.end_record_btn = QPushButton(text='End Recording')
-        self.begin_record_btn.clicked.connect(self.begin_record_btn_toggled)
-        self.end_record_btn.clicked.connect(self.end_recording)
+        self.begin_record_btn = QPushButton(text='Create File && Begin Recording',checkable=True,clicked=self.begin_record_btn_clicked)
+        self.end_record_btn = QPushButton(text='End Recording',checkable=True,clicked=self.end_recording)
+        #self.begin_record_btn.clicked.connect(self.begin_record_btn_clicked)
+        #self.end_record_btn.clicked.connect(self.end_recording)
         self.end_record_btn.setEnabled(False)
         record_layout = QHBoxLayout()
         record_layout.addWidget(self.begin_record_btn)
@@ -540,10 +546,6 @@ class mainWindow(QMainWindow):
         data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
         self.data_file_name_lineEdit.setText(data_file_name)
         
-
-    ##############################
-    # PROGRAMS FOR 48-LINE OLFA
-
     def run_setpoint_characterization(self):
         logger.info('run setpoint characterization')                    
 
@@ -565,19 +567,12 @@ class mainWindow(QMainWindow):
             if self.olfactometer.connect_btn.isChecked() == False:
                 logger.warning('olfactometer not connected, attempting to connect')
                 self.olfactometer.connect_btn.toggle()
-        except AttributeError as err:
-            logger.error(err)
-
-        # check that there are active slaves
-        if self.p_slave_select_wid.currentText == no_active_slaves_warning:
-            logger.warning(no_active_slaves_warning)
-            self.program_start_btn.setEnabled(False)
-        else:
-            self.program_start_btn.setEnabled(True)
-
+        except AttributeError as err:   logger.error(err)
+        
+        '''
         # DATAFILE STUFF        # TODO this is a repeat
         datafile_name = self.data_file_name_lineEdit.text()
-        self.datafile_dir = self.data_file_dir_lineEdit.text() + '\\' + datafile_name + 'csv'
+        self.datafile_dir = self.data_file_dir_lineEdit.text() + '\\' + datafile_name + '.csv'
         # if file does not exist, create it
         if not os.path.exists(self.datafile_dir):
             logger.info('Creating new file: %s', datafile_name)
@@ -590,7 +585,12 @@ class mainWindow(QMainWindow):
                 writer.writerow("")
         else:
             logger.warning('file already exists!!!!!!!!')
-
+        '''
+        
+        # START RECORDING
+        if self.begin_record_btn.isChecked() == False:
+            logger.debug('clicking begin record button')
+            self.begin_record_btn.click()
 
         # GET PROGRAM PARAMETERS
         self.slave_to_run = self.p_slave_select_wid.currentText()
@@ -600,38 +600,39 @@ class mainWindow(QMainWindow):
         num_trials = int(self.p_numTrials_wid.text())
         dur_ON = self.p_dur_on_wid.value()
         dur_OFF = self.p_dur_off_wid.value()
-
         self.full_vial_name = self.slave_to_run + self.vial_to_run
 
-        # get dictionaries for this vial
-        thisVial = self.olfactometer.slave_objects[0].vials[0]  # WERE GONNA USE SLAVE A OKAY
-
-        vial_flows_complete_list = []
-
+        # get dictionaries for this vial TODO
+        vial_idx = int(self.vial_to_run) - 1
+        for s in self.olfactometer.slave_objects:
+            if s.name == self.slave_to_run:
+                thisVial = s.vials[vial_idx]
+        
         # CREATE STIMULUS LIST
+        vial_flows_complete_list = []
         setpoints_to_run_values = setpoints_to_run.split(",")
         for f in setpoints_to_run_values:
             temp = np.repmat([self.full_vial_name,f],num_trials,1)     # make number of repetitions of this
             vial_flows_complete_list.extend(temp.tolist())  # add to complete list
         if setpoint_order == 'Random':  random.shuffle(vial_flows_complete_list)    # randomize if needed
         
-        # send list to worker_sptChar
+        # SEND PARAMETERS TO WORKER
         self.obj_sptchar.complete_stimulus_list = copy.copy(vial_flows_complete_list)
         self.obj_sptchar.duration_on = copy.copy(dur_ON)
         self.obj_sptchar.duration_off = copy.copy(dur_OFF)
         
-        # START RECORDING
-        # TODO
-        self.begin_record_btn.toggle()
+        # SET VIAL TO DEBUG MODE
+        if thisVial.readFromThisVial.isChecked() == False:
+            thisVial.readFromThisVial.toggle()
 
-
-        # turn worker_sptChar on
+        # START WORKER THREAD
         self.obj_sptchar.threadON = True
         logger.info('starting thread_olfa')
-        # ITERATE THROUGH EACH STIMULUS
-        self.thread_olfa.start()            # # start thread -> worker_sptChar iterates through stimuli 
+        self.thread_olfa.start()            # # start thread -> worker_sptChar iterates through stimuli
 
 
+    ##############################
+    # PROGRAMS FOR 48-LINE OLFA
     def set_up_threads_sptchar(self):
         self.obj_sptchar = worker_sptChar()
         self.thread_olfa = QThread()
@@ -642,13 +643,19 @@ class mainWindow(QMainWindow):
         self.obj_sptchar.finished.connect(self.threadIsFinished)
         self.thread_olfa.started.connect(self.obj_sptchar.exp)
 
-    
-    # USER COMMANDS TO ARDUINO
+    def threadIsFinished(self):
+        self.obj_sptchar.threadON = False
+        self.thread_olfa.exit()
+        self.program_start_btn.setChecked(False)
+        self.program_start_btn.setText('Start')
+        #self.progSettingsBox.setEnabled(True)
+        logger.info('Finished program')
+
     def sendThisSetpoint(self, vial_name:str, sccmVal:int):
         # TODO: change worker_sptChar so it receives the entire vial object when it starts a program. then it'll already have the dictionary, etc
         
         '''
-        # find dictionary to use
+        # find dictionary to use TODO
         #for s in self.slaves:
         #    if s.slaveName == slave:
         #        for v in s.vials:
@@ -666,24 +673,19 @@ class mainWindow(QMainWindow):
     def send_OpenValve(self, vial_name:str, dur:int):
         strToSend = 'S_OV_' + str(dur) + '_' + vial_name
         self.olfactometer.send_to_master(strToSend)
-
-    def threadIsFinished(self):
-        self.obj_sptchar.threadON = False
-        self.thread_olfa.exit()
-        self.program_start_btn.setChecked(False)
-        self.program_start_btn.setText('Start')
-        #self.progSettingsBox.setEnabled(True)
-        logger.info('Finished program')
         
     # PROGRAMS FOR 48-LINE OLFA
     ##############################
     
-    def begin_record_btn_toggled(self):
+    def begin_record_btn_clicked(self):
         if self.begin_record_btn.isChecked() == True:
+            logger.debug('begin record button is checked')
+            self.begin_record_btn.setText('Pause Recording')
+            self.end_record_btn.setEnabled(True)
+
             # get file name & full directory
             datafile_name = self.data_file_name_lineEdit.text()
             self.datafile_dir = self.data_file_dir_lineEdit.text() + '\\' + datafile_name + '.csv'
-
             # if file does not exist: create it & write header
             if not os.path.exists(self.datafile_dir):
                 logger.info('Creating new file: %s', datafile_name)
@@ -702,10 +704,7 @@ class mainWindow(QMainWindow):
                 self.data_file_textedit.append('File Created: ' + str(current_date + ' ' + file_created_time))
                 self.data_file_textedit.append('Time, Instrument, Unit, Value')
             else:   # TODO: throw an error if the file already exists
-                logger.info('Recording resumed')
-            
-            self.begin_record_btn.setText('Pause Recording')
-            self.end_record_btn.setEnabled(True)
+                logger.info('Recording resumed')            
 
         else:
             logger.info('Recording paused')
@@ -726,6 +725,7 @@ class mainWindow(QMainWindow):
         self.begin_record_btn.setChecked(False)
         self.end_record_btn.setChecked(False)
         self.end_record_btn.setEnabled(False)
+        self.data_file_textedit.clear()
 
 
     def receive_data_from_device(self, device, unit, value):
