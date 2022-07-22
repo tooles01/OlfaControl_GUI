@@ -29,9 +29,10 @@ programs_orig = ['the program']
 # PARAMETERS FOR 48-LINE OLFACTOMETER
 vials = ['1','2','3','4','5','6','7','8']
 default_setpoint = '10,20,30,40,50,60,70,80,90,100'
-default_dur_ON = 5
-default_dur_OFF = 5
+default_dur_ON = 1
+default_dur_OFF = 1
 default_numTrials = 5
+no_active_slaves_warning = 'no active slaves pls connect olfa or something'
 
 waitBtSpAndOV = .5
 
@@ -54,8 +55,8 @@ class worker_sptChar(QObject):
 
     @pyqtSlot()
     def exp(self):
-        if self.threadON == True:
-            for stimulus in self.complete_stimulus_list:
+        for stimulus in self.complete_stimulus_list:
+            if self.threadON == True:
                 full_vial_name = stimulus[0]
                 this_setpoint_sccm = stimulus[1]
                 
@@ -71,6 +72,7 @@ class worker_sptChar(QObject):
 
                 # wait for the time between trials
                 time.sleep(self.duration_off)
+
                 
 
 
@@ -174,18 +176,15 @@ class mainWindow(QMainWindow):
     def create_program_parameters_box(self):
         self.program_parameters_box = QGroupBox('Program Parameters')
 
-        self.program_start_btn = QPushButton(text='Start')
-        self.program_start_btn.clicked.connect(self.program_start_clicked)
+        self.program_start_btn = QPushButton(text='Start',checkable=True,toggled=self.program_start_clicked)
         self.program_start_btn.setEnabled(False)
         
         
         self.program_parameters_layout = QFormLayout()
-        #self.program_parameters_layout.addWidget(self.program_start_btn)
         self.program_parameters_box.setLayout(self.program_parameters_layout)
 
     def create_program_widgets(self):
         if self.program_selection_picked.isChecked():
-            logger.debug('set up program to run')
             self.program_parameters_box.setEnabled(True)
 
             self.program_to_run = self.program_selection_combo.currentText()
@@ -200,7 +199,6 @@ class mainWindow(QMainWindow):
                 self.program_parameters_layout.insertRow(1,QLabel('vial open time:'),self.vial_open_time_widget)
                 self.program_parameters_layout.insertRow(2,QLabel('number of repetitions:'),self.num_repetitions_widget)
                 self.program_parameters_layout.addWidget(self.program_start_btn)
-
 
             if self.program_to_run == "setpoint characterization":
                 self.create_48line_program_widgets()
@@ -221,7 +219,7 @@ class mainWindow(QMainWindow):
             self.p_slave_select_wid.setToolTip('Only active slaves displayed')
             if self.olfactometer.active_slaves == []:
                 logger.warning('no active slaves pls connect olfa or something')
-                self.p_slave_select_wid.addItem('no active slaves pls connect olfa or something')
+                self.p_slave_select_wid.addItem(no_active_slaves_warning)
             else:
                 self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
             self.p_slave_select_refresh = QPushButton(text="Refresh")
@@ -230,6 +228,7 @@ class mainWindow(QMainWindow):
             self.p_slave_select_layout.addWidget(QLabel('Slave:'))
             self.p_slave_select_layout.addWidget(self.p_slave_select_wid)
             self.p_slave_select_layout.addWidget(self.p_slave_select_refresh)
+            self.active_slave_refresh()
 
             self.p_vial_wid = QComboBox()
             self.p_vial_wid.addItems(vials) # TODO: change this
@@ -262,12 +261,17 @@ class mainWindow(QMainWindow):
             if self.program_parameters_layout.count() > 0:
                 # clear this shit
                 logger.warning('gotta clear these widgets out')
-
+                '''
+                for w in range(0,self.program_parameters_layout.count()):
+                    self.program_parameters_layout.removeItem(self.program_parameters_layout.itemAt(w))
+                    sip.delete(self.program_parameters_layout.itemAt(w))
+                '''
+                
             self.program_parameters_layout.addRow(self.p_slave_select_layout)
             self.program_parameters_layout.addRow(self.p_vial_layout)
             self.program_parameters_layout.addRow(self.p_spt_layout)
+            self.program_parameters_layout.addRow(QLabel('# of trials:'),self.p_numTrials_wid)
             self.program_parameters_layout.addRow(self.p_dur_layout)
-            self.program_parameters_layout.addRow(self.p_setpoints_wid,self.p_numTrials_wid)
             self.program_parameters_layout.addRow(self.program_start_btn)
 
         else:
@@ -277,6 +281,11 @@ class mainWindow(QMainWindow):
     def active_slave_refresh(self):
         self.p_slave_select_wid.clear()
         self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
+        if self.p_slave_select_wid.count() == 0:
+            self.p_slave_select_wid.addItem(no_active_slaves_warning)
+            self.program_start_btn.setEnabled(False)
+        else:
+            self.program_start_btn.setEnabled(True)
     
     def create_datafile_box(self):
         self.datafile_groupbox = QGroupBox('Data file')
@@ -411,30 +420,20 @@ class mainWindow(QMainWindow):
             self.add_pid_btn.setText('Add PID')
         
     def program_start_clicked(self):
+        if self.program_start_btn.isChecked():
+            self.program_start_btn.setText('End Program')
 
-        if self.program_to_run == "the program":
-            self.run_odor_calibration()
-        
+            if self.program_to_run == "the program":
+                self.run_odor_calibration()
+            if self.program_to_run == 'setpoint characterization':
+                self.run_setpoint_characterization()
 
-        if self.program_to_run == 'setpoint characterization':
-            logger.info('run setpoint characterization')
+        else:
+            logger.info('program start button untoggled')
+            self.program_start_btn.setText('Start')
+            self.threadIsFinished()
 
-            # check that PID is a device & is connected # TODO this is a repeat
-            try:
-                if self.pid_nidaq.connectButton.isChecked() == False:
-                    logger.debug('connecting to pid')
-                    self.pid_nidaq.connectButton.toggle()
-            except AttributeError as err:
-                logger.warning('PID is not added as a device')
-                '''
-                self.add_pid_btn.toggle()
-                logger.debug('connecting to pid')
-                self.pid_nidaq.connectButton.toggle()
-                '''
                 
-            self.run_setpoint_characterization()    # check that olfactometer is connected
-
-             
 
     def run_odor_calibration(self):
         logger.info('running odor calibration procedure')
@@ -546,7 +545,35 @@ class mainWindow(QMainWindow):
     # PROGRAMS FOR 48-LINE OLFA
 
     def run_setpoint_characterization(self):
-        logger.info('starting setpoint characterization')
+        logger.info('run setpoint characterization')                    
+
+        # check that PID is a device & is connected # TODO this is a repeat
+        try:
+            if self.pid_nidaq.connectButton.isChecked() == False:
+                logger.debug('connecting to pid')
+                self.pid_nidaq.connectButton.toggle()
+        except AttributeError as err:
+            logger.warning('PID is not added as a device')
+            '''
+            self.add_pid_btn.toggle()
+            logger.debug('connecting to pid')
+            self.pid_nidaq.connectButton.toggle()
+            '''
+
+        # check that olfactometer is connected
+        try:
+            if self.olfactometer.connect_btn.isChecked() == False:
+                logger.warning('olfactometer not connected, attempting to connect')
+                self.olfactometer.connect_btn.toggle()
+        except AttributeError as err:
+            logger.error(err)
+
+        # check that there are active slaves
+        if self.p_slave_select_wid.currentText == no_active_slaves_warning:
+            logger.warning(no_active_slaves_warning)
+            self.program_start_btn.setEnabled(False)
+        else:
+            self.program_start_btn.setEnabled(True)
 
         # DATAFILE STUFF        # TODO this is a repeat
         datafile_name = self.data_file_name_lineEdit.text()
@@ -636,16 +663,15 @@ class mainWindow(QMainWindow):
         strToSend = 'S_Sp_' + str(ard_val) + '_' + vial_name
         self.olfactometer.send_to_master(strToSend)
         
-    #def send_OpenValve(self, slave:str, vial:int, dur:int):
     def send_OpenValve(self, vial_name:str, dur:int):
         strToSend = 'S_OV_' + str(dur) + '_' + vial_name
         self.olfactometer.send_to_master(strToSend)
-        #self.sendSlaveUpdate(strToSend)
 
     def threadIsFinished(self):
         self.obj_sptchar.threadON = False
         self.thread_olfa.exit()
-        #self.programStartButton.setChecked(False);  self.programStartButton.setText('Start')
+        self.program_start_btn.setChecked(False)
+        self.program_start_btn.setText('Start')
         #self.progSettingsBox.setEnabled(True)
         logger.info('Finished program')
         
