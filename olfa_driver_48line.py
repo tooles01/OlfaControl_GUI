@@ -9,7 +9,6 @@ import os, csv, copy
 import utils_olfa_48line
 
 
-
 currentDate = str(datetime.date(datetime.now()))
 
 
@@ -80,10 +79,14 @@ class Vial(QGroupBox):
         self.cal_table_combobox.setCurrentText(self.cal_table)  # TODO: change this to cycle through and find that cal table, set the index to that
         self.cal_table_set_btn = QPushButton(text='Update')
         self.cal_table_set_btn.clicked.connect(self.cal_table_updated)
-        self.cal_table_layout = QGridLayout()
-        self.cal_table_layout.addWidget(QLabel(text='Calibration Table:'),0,0,1,1)
-        self.cal_table_layout.addWidget(self.cal_table_combobox,1,0,1,1)
-        self.cal_table_layout.addWidget(self.cal_table_set_btn,0,1,2,1)
+        #self.cal_table_layout = QGridLayout()
+        #self.cal_table_layout.addWidget(QLabel(text='Calibration Table:'),0,0,1,1)
+        #self.cal_table_layout.addWidget(self.cal_table_combobox,1,0,1,1)
+        #self.cal_table_layout.addWidget(self.cal_table_set_btn,0,1,2,1)
+        self.cal_table_layout = QVBoxLayout()
+        self.cal_table_layout.addWidget(QLabel(text='Calibration Table:'))
+        self.cal_table_layout.addWidget(self.cal_table_combobox)
+        self.cal_table_layout.addWidget(self.cal_table_set_btn)
         self.cal_table_updated()
 
         '''
@@ -153,7 +156,7 @@ class Vial(QGroupBox):
 
         self.intToSccm_dict = self.parent.parent.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.parent.parent.sccm2Ard_dicts.get(self.cal_table)
-        print('Vial ' + self.full_vialNum  + ' calibration table:  '+ self.cal_table)
+        #print('Vial ' + self.full_vialNum  + ' calibration table:  '+ self.cal_table)
 
 class slave_8vials(QGroupBox):
 
@@ -219,7 +222,7 @@ class olfactometer_window(QGroupBox):
         self.flow_cal_dir = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\OlfaControl_GUI\\calibration_tables'
 
         if os.path.exists(self.flow_cal_dir):
-            logger.debug('loading flow sensor calibration tables (%s)', self.flow_cal_dir)
+            #logger.debug('loading flow sensor calibration tables (%s)', self.flow_cal_dir)
 
             file_type = '.txt'
             cal_file_names = os.listdir(self.flow_cal_dir)
@@ -460,6 +463,7 @@ class olfactometer_window(QGroupBox):
         self.prev_active_slaves = copy.copy(self.active_slaves)
         self.active_slaves = []
         self.send_to_master('C')
+        # TODO update program
 
         '''
         # once received, remove inactive slaves
