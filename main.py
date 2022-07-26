@@ -22,6 +22,7 @@ import utils_olfa_48line
 programs_48line = ['setpoint characterization','additive']
 programs_orig = ['the program']
 
+
 # PARAMETERS FOR 48-LINE OLFACTOMETER
 vials = ['1','2','3','4','5','6','7','8']
 default_setpoint = '10,20,30,40,50,60,70,80,90,100'
@@ -35,8 +36,10 @@ current_date = utils.currentDate
 
 # LOGGING
 main_datafile_directory = 'C:\\Users\\Admin\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
-#main_datafile_directory = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
-#main_datafile_directory = 'C:\\GIT\\OlfaControl_GUI\\result_files'
+"""
+main_datafile_directory = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
+main_datafile_directory = 'C:\\GIT\\OlfaControl_GUI\\result_files'
+"""
 # if today folder doesn't exist, make it
 #main_datafile_directory = utils_olfa_48line.find_datafile_directory()
 today_logDir = main_datafile_directory + '\\' + current_date
@@ -230,7 +233,7 @@ class mainWindow(QMainWindow):
         layout.addRow(record_layout)
         layout.addRow(self.data_file_textedit)
         self.datafile_groupbox.setLayout(layout)
-
+    
     def create_add_devices_box(self):
         self.add_devices_groupbox = QGroupBox("Devices")
 
@@ -307,42 +310,39 @@ class mainWindow(QMainWindow):
             self.p_slave_select_wid = QComboBox()
             self.p_slave_select_wid.setToolTip('Only active slaves displayed')
             if self.olfactometer.active_slaves == []:
-                logger.warning('no active slaves pls connect olfa or something')
                 self.p_slave_select_wid.addItem(no_active_slaves_warning)
             else:
                 self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
-            self.p_slave_select_refresh = QPushButton(text="Refresh Slave")
+            self.p_slave_select_refresh = QPushButton(text="Check Slave")
             self.p_slave_select_refresh.clicked.connect(self.active_slave_refresh)
-            self.p_slave_select_layout = QHBoxLayout()
-            self.p_slave_select_layout.addWidget(QLabel('Slave:'))
-            self.p_slave_select_layout.addWidget(self.p_slave_select_wid)
-            self.p_slave_select_layout.addWidget(self.p_slave_select_refresh)
-            self.active_slave_refresh()
-
             self.p_vial_wid = QComboBox()
             self.p_vial_wid.addItems(vials) # TODO: change this
-            #self.p_vial_layout = QHBoxLayout()
-            self.p_slave_select_layout.addWidget(QLabel('vial:'))
-            self.p_slave_select_layout.addWidget(self.p_vial_wid)
-            #self.p_vial_layout.addWidget(QLabel('vial:'))
-            #self.p_vial_layout.addWidget(self.p_vial_wid)
-
+            
+            self.p_vial_select_layout = QHBoxLayout()
+            self.p_vial_select_layout.addWidget(self.p_slave_select_refresh)
+            self.p_vial_select_layout.addWidget(QLabel('Slave:'))
+            self.p_vial_select_layout.addWidget(self.p_slave_select_wid)
+            self.p_vial_select_layout.addWidget(QLabel('vial:'))
+            self.p_vial_select_layout.addWidget(self.p_vial_wid)
+            self.active_slave_refresh()
+            
             self.p_setpoints_wid = QLineEdit()
             self.p_setpoints_wid.setPlaceholderText('Setpoints to run (sccm)')
             self.p_setpoints_wid.setText(default_setpoint)
+            self.p_sp_order_wid = QComboBox()
+            self.p_sp_order_wid.addItems(['Sequential','Random'])
+            
             self.p_spt_layout = QHBoxLayout()
-            #self.p_vial_layout.addWidget(QLabel('Setpoint(s):'))
-            #self.p_vial_layout.addWidget(self.p_setpoints_wid)
-            #self.p_vial_layout.addWidget(QLabel('sccm'))
-            self.p_spt_layout.addWidget(QLabel('Setpoint(s):'))
+            self.p_spt_layout.addWidget(QLabel('Setpoints (sccm):'))
             self.p_spt_layout.addWidget(self.p_setpoints_wid)
-            self.p_spt_layout.addWidget(QLabel('sccm'))
+            self.p_spt_layout.addWidget(self.p_sp_order_wid)
 
             self.p_dur_on_wid = QSpinBox(value=default_dur_ON)
             self.p_dur_off_wid = QSpinBox(value=default_dur_OFF)
             self.p_numTrials_wid = QLineEdit()
             self.p_numTrials_wid.setPlaceholderText('# of Trials at each setpoint')
             self.p_numTrials_wid.setText(str(default_numTrials))
+            
             self.p_dur_layout = QHBoxLayout()
             self.p_dur_layout.addWidget(QLabel('Dur. on (s):'))
             self.p_dur_layout.addWidget(self.p_dur_on_wid)
@@ -351,10 +351,7 @@ class mainWindow(QMainWindow):
             self.p_dur_layout.addWidget(QLabel('# trials:'))
             self.p_dur_layout.addWidget(self.p_numTrials_wid)
             
-            self.p_sp_order_wid = QComboBox()
-            self.p_sp_order_wid.addItems(['Sequential','Random'])
-
-            if self.program_parameters_layout.count() > 0:
+            if self.program_parameters_layout.count() > 0:  # TODO
                 # clear this shit
                 logger.warning('gotta clear these widgets out')
                 '''
@@ -363,10 +360,8 @@ class mainWindow(QMainWindow):
                     sip.delete(self.program_parameters_layout.itemAt(w))
                 '''
                 
-            self.program_parameters_layout.addRow(self.p_slave_select_layout)
-            #self.program_parameters_layout.addRow(self.p_vial_layout)
-            #self.program_parameters_layout.addRow(self.p_spt_layout)
-            #self.program_parameters_layout.addRow(QLabel('# of trials:'),self.p_numTrials_wid)
+            self.program_parameters_layout.addRow(self.p_vial_select_layout)
+            self.program_parameters_layout.addRow(self.p_spt_layout)
             self.program_parameters_layout.addRow(self.p_dur_layout)
             self.program_parameters_layout.addRow(self.program_start_btn)
 
