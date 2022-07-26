@@ -370,12 +370,18 @@ class mainWindow(QMainWindow):
             self.program_selection_groupbox.setEnabled(True)
             self.program_selection_combo.clear()
             self.program_selection_combo.addItems(programs_48line)
+            
             if self.program_parameters_box.isEnabled():
                 logger.info('refresh')
                 if self.program_to_run == 'setpoint characterization':
                     self.active_slave_refresh()
             
-            
+            # debugging: just for today (7/25/2022)
+            for s in self.olfactometer.slave_objects:
+                s.vials[0].setEnabled(False)
+                s.vials[2].setEnabled(False)
+                s.vials[7].setEnabled(False)
+                
         else:
             self.mainLayout.removeWidget(self.olfactometer)
             sip.delete(self.olfactometer)
