@@ -648,6 +648,14 @@ class mainWindow(QMainWindow):
         # SET VIAL TO DEBUG MODE
         if thisVial.readFromThisVial.isChecked() == False:
             thisVial.readFromThisVial.toggle()
+        # print a warning if any other vials are also printing
+        for s in self.olfactometer.slave_objects:
+            for v in s.vials:
+                if v.readFromThisVial.isChecked() == True:
+                    if v.full_vialNum == thisVial.full_vialNum:
+                        pass
+                    else:
+                        logger.warning('%s is set to debug mode', v.full_vialNum)
 
         # START WORKER THREAD
         self.obj_sptchar.threadON = True
