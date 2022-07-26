@@ -302,7 +302,12 @@ class mainWindow(QMainWindow):
             logger.warning('program selected is not set up')
 
 
-    def active_slave_refresh(self):
+    def active_slave_refresh(self):        
+        # if olfactometer is not connected, connect to it
+        if self.olfactometer.connect_btn.isChecked() == False:
+            utils_olfa_48line.connect_to_48line_olfa(self)
+        
+        # add the active slaves
         self.p_slave_select_wid.clear()
         self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
         if self.p_slave_select_wid.count() == 0:
