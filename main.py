@@ -571,9 +571,9 @@ class mainWindow(QMainWindow):
         self.data_file_name_lineEdit.setText(data_file_name)
         
     def run_setpoint_characterization(self):
-        logger.info('run setpoint characterization')                    
+        logger.info('run setpoint characterization')
 
-        # check that PID is a device & is connected # TODO this is a repeat
+        # CHECK THAT PID IS CONNECTED
         try:
             if self.pid_nidaq.connectButton.isChecked() == False:
                 logger.debug('connecting to pid')
@@ -586,11 +586,11 @@ class mainWindow(QMainWindow):
             self.pid_nidaq.connectButton.toggle()
             '''
 
-        # check that olfactometer is connected
+        # CHECK THAT OLFACTOMETER IS CONNECTED
         try:
             if self.olfactometer.connect_btn.isChecked() == False:
                 logger.warning('olfactometer not connected, attempting to connect')
-                self.olfactometer.connect_btn.toggle()
+                utils_olfa_48line.connect_to_48line_olfa(self)
         except AttributeError as err:   logger.error(err)
         
         '''
