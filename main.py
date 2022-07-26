@@ -99,7 +99,8 @@ class mainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.generate_ui()        
+        self.generate_ui()
+        self.set_up_threads_sptchar()
         
         self.mainLayout = QHBoxLayout()
         self.mainLayout.addWidget(self.settings_box)
@@ -173,8 +174,7 @@ class mainWindow(QMainWindow):
         
     def create_program_selection_groupbox(self):
         self.program_selection_groupbox = QGroupBox('Program Selection')
-        self.set_up_threads_sptchar()
-
+        
         self.olfa_type_label = QLabel()
 
         self.program_selection_combo = QComboBox()
@@ -380,7 +380,6 @@ class mainWindow(QMainWindow):
         layout.addWidget(self.add_olfa_48line_btn)
         layout.addWidget(self.add_olfa_orig_btn)
         self.add_devices_groupbox.setLayout(layout)
-
     
     def add_olfa_48line_toggled(self,checked):
         if checked:
@@ -437,7 +436,6 @@ class mainWindow(QMainWindow):
             self.program_selection_groupbox.setEnabled(False)
             self.program_parameters_box.setEnabled(False)
 
-
     def add_pid_toggled(self, checked):
         if checked:
             self.pid_nidaq = NiDAQ_driver.NiDaq(self)
@@ -467,7 +465,6 @@ class mainWindow(QMainWindow):
             logger.info('program start button untoggled')
             self.program_start_btn.setText('Start')
             self.threadIsFinished()
-
                 
 
     def run_odor_calibration(self):
