@@ -57,7 +57,6 @@ class worker_sptChar(QObject):
     w_send_OpenValve = pyqtSignal(str,int)
     w_incProgBar = pyqtSignal(int)
 
-
     def __init__(self):
         super().__init__()
         self.setpoint = 0
@@ -69,18 +68,23 @@ class worker_sptChar(QObject):
 
     @pyqtSlot()
     def exp(self):
+        # wait so olfa has time to set vial to debug mode
         time.sleep(waitBtSpAndOV)
-        time.sleep(waitBtSpAndOV)   # wait so olfa has time to set vial to debug mode
+        time.sleep(waitBtSpAndOV)
+        
+        # iterate through stimulus list
         for stimulus in self.complete_stimulus_list:
             if self.threadON == True:
                 full_vial_name = stimulus[0]
                 this_setpoint_sccm = stimulus[1]
                 
                 # send the setpoint
+                logger.info('%s set to %s sccm',full_vial_name,this_setpoint_sccm)
                 self.w_sendThisSp.emit(full_vial_name,this_setpoint_sccm)
                 time.sleep(waitBtSpAndOV)
                 
                 # open the vial
+                logger.info('Opening %s (%s seconds)',full_vial_name,self.duration_on)
                 self.w_send_OpenValve.emit(full_vial_name,self.duration_on)
                 
                 # wait until the vial closes
