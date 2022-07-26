@@ -178,7 +178,100 @@ class mainWindow(QMainWindow):
         self.general_settings_box.setLayout(layout)
         max_height = self.general_settings_box.sizeHint().height()
         self.general_settings_box.setMaximumHeight(max_height)
+    
+    def create_datafile_box(self):
+        self.datafile_groupbox = QGroupBox('Data file')
+
+        # find / make directory for today's files
+        today_datafile_dir = main_datafile_directory + '\\' + current_date        # TODO: update this to search any computer
+        if not os.path.exists(today_datafile_dir): os.mkdir(today_datafile_dir)
+
+        data_file_dir = today_datafile_dir
+        self.data_file_dir_lineEdit = QLineEdit(text=data_file_dir,readOnly=True)
+
+        # check what files are in this folder
+        list_of_files = os.listdir(data_file_dir)
+        list_of_files = [x for x in list_of_files if '.csv' in x]   # only csv files
+        if not list_of_files: self.last_datafile_number = -1
+        else:
+            # find the number of the last data file
+            last_datafile = list_of_files[len(list_of_files)-1]
+            idx_fileExt = last_datafile.rfind('.')
+            last_datafile = last_datafile[:idx_fileExt] # remove file extension
+            idx_underscore = last_datafile.rfind('_')   # find last underscore
+            last_datafile_num = last_datafile[idx_underscore+1:]
+            if last_datafile_num.isnumeric():   # if what's after the underscore is a number
+                self.last_datafile_number = int(last_datafile_num)
+            else:
+                self.last_datafile_number = 99
+                logger.warning('ew')    # TODO: finish this
+
+        self.this_datafile_number = self.last_datafile_number + 1
+        self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2) # zero pad
         
+        # create data file name
+        data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
+        self.data_file_name_lineEdit = QLineEdit(text=data_file_name)
+        self.data_file_textedit = QTextEdit(readOnly=True)
+
+        self.begin_record_btn = QPushButton(text='Create File && Begin Recording',checkable=True,clicked=self.begin_record_btn_clicked)
+        self.end_record_btn = QPushButton(text='End Recording',checkable=True,clicked=self.end_recording)
+        #self.begin_record_btn.clicked.connect(self.begin_record_btn_clicked)
+        #self.end_record_btn.clicked.connect(self.end_recording)
+        self.end_record_btn.setEnabled(False)
+        record_layout = QHBoxLayout()
+        record_layout.addWidget(self.begin_record_btn)
+        record_layout.addWidget(self.end_record_btn)
+
+
+        layout = QFormLayout()
+        layout.addRow(QLabel('Directory:'),self.data_file_dir_lineEdit)
+        layout.addRow(QLabel('File Name:'),self.data_file_name_lineEdit)
+        layout.addRow(record_layout)
+        layout.addRow(self.data_file_textedit)
+        self.datafile_groupbox.setLayout(layout)
+
+    def create_add_devices_box(self):
+        self.add_devices_groupbox = QGroupBox("Devices")
+
+        self.add_olfa_48line_btn = QPushButton(text='Add Olfactometer\n(48-line)',checkable=True,toggled=self.add_olfa_48line_toggled)
+        self.add_pid_btn = QPushButton(text='Add PID',checkable=True,toggled=self.add_pid_toggled)
+        self.add_olfa_orig_btn = QPushButton(text='Add Olfactometer\n(original)',checkable=True,toggled=self.add_olfa_orig_toggled)
+        
+        layout = QVBoxLayout()
+        layout.addWidget(self.add_pid_btn)
+        layout.addWidget(self.add_olfa_48line_btn)
+        layout.addWidget(self.add_olfa_orig_btn)
+        self.add_devices_groupbox.setLayout(layout)
+    
+    def create_program_widgets(self):
+        if self.program_selection_picked.isChecked():
+            self.program_parameters_box.setEnabled(True)
+
+            self.program_to_run = self.program_selection_combo.currentText()
+            self.program_start_btn.setEnabled(True)
+
+            if self.program_to_run == "the program":
+                self.pid_record_time_widget = QSpinBox(value=5)
+                self.vial_open_time_widget = QSpinBox(value=5)
+                self.num_repetitions_widget = QSpinBox(value=10)
+
+                self.program_parameters_layout.insertRow(0,QLabel('pid record time:'),self.pid_record_time_widget)
+                self.program_parameters_layout.insertRow(1,QLabel('vial open time:'),self.vial_open_time_widget)
+                self.program_parameters_layout.insertRow(2,QLabel('number of repetitions:'),self.num_repetitions_widget)
+                self.program_parameters_layout.addWidget(self.program_start_btn)
+
+            if self.program_to_run == "setpoint characterization":
+                self.create_48line_program_widgets()
+                '''
+                #logger.debug('setpoint characterization selected')
+                #programs_48lineolfa.create_sptchar_parameter_widgets(self.program_parameters_box)
+                '''
+
+        else:
+            logger.warning('program selection unchecked: remove program widgets')
+            self.program_parameters_box.setEnabled(False)
+    
     def create_program_selection_groupbox(self):
         self.program_selection_groupbox = QGroupBox('Program Selection')
         
@@ -207,34 +300,6 @@ class mainWindow(QMainWindow):
         self.program_parameters_layout = QFormLayout()
         self.program_parameters_box.setLayout(self.program_parameters_layout)
 
-    def create_program_widgets(self):
-        if self.program_selection_picked.isChecked():
-            self.program_parameters_box.setEnabled(True)
-
-            self.program_to_run = self.program_selection_combo.currentText()
-            self.program_start_btn.setEnabled(True)
-
-            if self.program_to_run == "the program":
-                self.pid_record_time_widget = QSpinBox(value=5)
-                self.vial_open_time_widget = QSpinBox(value=5)
-                self.num_repetitions_widget = QSpinBox(value=10)
-
-                self.program_parameters_layout.insertRow(0,QLabel('pid record time:'),self.pid_record_time_widget)
-                self.program_parameters_layout.insertRow(1,QLabel('vial open time:'),self.vial_open_time_widget)
-                self.program_parameters_layout.insertRow(2,QLabel('number of repetitions:'),self.num_repetitions_widget)
-                self.program_parameters_layout.addWidget(self.program_start_btn)
-
-            if self.program_to_run == "setpoint characterization":
-                self.create_48line_program_widgets()
-                '''
-                #logger.debug('setpoint characterization selected')
-                #programs_48lineolfa.create_sptchar_parameter_widgets(self.program_parameters_box)
-                '''
-
-        else:
-            logger.warning('program selection unchecked: remove program widgets')
-            self.program_parameters_box.setEnabled(False)
-            
     def create_48line_program_widgets(self):
         if self.program_to_run == "setpoint characterization":
             logger.debug('setpoint characterization selected')
@@ -307,8 +372,8 @@ class mainWindow(QMainWindow):
 
         else:
             logger.warning('program selected is not set up')
-
-
+    
+    
     def active_slave_refresh(self):        
         # if olfactometer is not connected, connect to it
         if self.olfactometer.connect_btn.isChecked() == False:
@@ -323,142 +388,6 @@ class mainWindow(QMainWindow):
         else:
             self.program_start_btn.setEnabled(True)
     
-    def create_datafile_box(self):
-        self.datafile_groupbox = QGroupBox('Data file')
-
-        # find / make directory for today's files
-        today_datafile_dir = main_datafile_directory + '\\' + current_date        # TODO: update this to search any computer
-        if not os.path.exists(today_datafile_dir): os.mkdir(today_datafile_dir)
-
-        data_file_dir = today_datafile_dir
-        self.data_file_dir_lineEdit = QLineEdit(text=data_file_dir,readOnly=True)
-
-        # check what files are in this folder
-        list_of_files = os.listdir(data_file_dir)
-        list_of_files = [x for x in list_of_files if '.csv' in x]   # only csv files
-        if not list_of_files: self.last_datafile_number = -1
-        else:
-            # find the number of the last data file
-            last_datafile = list_of_files[len(list_of_files)-1]
-            idx_fileExt = last_datafile.rfind('.')
-            last_datafile = last_datafile[:idx_fileExt] # remove file extension
-            idx_underscore = last_datafile.rfind('_')   # find last underscore
-            last_datafile_num = last_datafile[idx_underscore+1:]
-            if last_datafile_num.isnumeric():   # if what's after the underscore is a number
-                self.last_datafile_number = int(last_datafile_num)
-            else:
-                self.last_datafile_number = 99
-                logger.warning('ew')    # TODO: finish this
-
-        self.this_datafile_number = self.last_datafile_number + 1
-        self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2) # zero pad
-        
-        # create data file name
-        data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
-        self.data_file_name_lineEdit = QLineEdit(text=data_file_name)
-        self.data_file_textedit = QTextEdit(readOnly=True)
-
-        self.begin_record_btn = QPushButton(text='Create File && Begin Recording',checkable=True,clicked=self.begin_record_btn_clicked)
-        self.end_record_btn = QPushButton(text='End Recording',checkable=True,clicked=self.end_recording)
-        #self.begin_record_btn.clicked.connect(self.begin_record_btn_clicked)
-        #self.end_record_btn.clicked.connect(self.end_recording)
-        self.end_record_btn.setEnabled(False)
-        record_layout = QHBoxLayout()
-        record_layout.addWidget(self.begin_record_btn)
-        record_layout.addWidget(self.end_record_btn)
-
-
-        layout = QFormLayout()
-        layout.addRow(QLabel('Directory:'),self.data_file_dir_lineEdit)
-        layout.addRow(QLabel('File Name:'),self.data_file_name_lineEdit)
-        layout.addRow(record_layout)
-        layout.addRow(self.data_file_textedit)
-        self.datafile_groupbox.setLayout(layout)
-
-    def create_add_devices_box(self):
-        self.add_devices_groupbox = QGroupBox("Devices")
-
-        self.add_olfa_48line_btn = QPushButton(text='Add Olfactometer\n(48-line)',checkable=True,toggled=self.add_olfa_48line_toggled)
-        self.add_pid_btn = QPushButton(text='Add PID',checkable=True,toggled=self.add_pid_toggled)
-        self.add_olfa_orig_btn = QPushButton(text='Add Olfactometer\n(original)',checkable=True,toggled=self.add_olfa_orig_toggled)
-        
-        layout = QVBoxLayout()
-        layout.addWidget(self.add_pid_btn)
-        layout.addWidget(self.add_olfa_48line_btn)
-        layout.addWidget(self.add_olfa_orig_btn)
-        self.add_devices_groupbox.setLayout(layout)
-    
-    def add_olfa_48line_toggled(self,checked):
-        if checked:
-            self.olfactometer = olfa_driver_48line.olfactometer_window()
-            self.device_layout.addWidget(self.olfactometer)
-            logger.debug('created olfactometer object')
-            self.add_olfa_orig_btn.setEnabled(False)
-            self.add_olfa_48line_btn.setText('Remove olfactometer\n(48-line)')
-            self.olfa_type_label.setText('48-line olfa')
-            self.program_selection_groupbox.setEnabled(True)
-            self.program_selection_combo.clear()
-            self.program_selection_combo.addItems(programs_48line)
-            
-            if self.program_parameters_box.isEnabled():
-                logger.info('refresh')
-                if self.program_to_run == 'setpoint characterization':
-                    self.active_slave_refresh()
-            
-            # debugging: just for today (7/25/2022)
-            for s in self.olfactometer.slave_objects:
-                s.vials[0].setEnabled(False)
-                s.vials[2].setEnabled(False)
-                s.vials[7].setEnabled(False)
-                
-        else:
-            self.mainLayout.removeWidget(self.olfactometer)
-            sip.delete(self.olfactometer)
-            logger.debug('removed olfactometer object')
-            self.add_olfa_orig_btn.setEnabled(True)
-            self.add_olfa_48line_btn.setText('Add Olfactometer\n(48-line)')
-            self.olfa_type_label.setText(' ')
-            self.program_selection_groupbox.setEnabled(False)
-            self.program_parameters_box.setEnabled(False)
-
-    def add_olfa_orig_toggled(self, checked):
-        if checked:
-            self.olfactometer = olfa_driver_original.olfactometer_window()
-            self.device_layout.addWidget(self.olfactometer)
-            logger.debug('created olfactometer object')
-            self.add_olfa_48line_btn.setEnabled(False)
-            self.add_olfa_orig_btn.setText('Remove olfactometer\n(original)')
-            self.olfa_type_label.setText('original olfa')
-            self.program_selection_groupbox.setEnabled(True)
-            self.program_selection_combo.clear()
-            self.program_selection_combo.addItems(programs_orig)
-
-        else:
-            self.mainLayout.removeWidget(self.olfactometer)
-            sip.delete(self.olfactometer)
-            logger.debug('removed olfactometer object')
-            self.add_olfa_48line_btn.setEnabled(True)
-            self.add_olfa_orig_btn.setText('Add Olfactometer\n(original)')
-            self.olfa_type_label.setText(' ')
-            self.program_selection_groupbox.setEnabled(False)
-            self.program_parameters_box.setEnabled(False)
-
-    def add_pid_toggled(self, checked):
-        if checked:
-            self.pid_nidaq = NiDAQ_driver.NiDaq(self)
-            self.device_layout.insertWidget(0,self.pid_nidaq)
-            logger.debug('created pid object')
-
-            self.add_pid_btn.setText('Remove PID')
-            self.add_pid_btn.setToolTip('u sure?')
-            
-        else:
-            self.mainLayout.removeWidget(self.pid_nidaq)
-            sip.delete(self.pid_nidaq)
-            logger.debug('removed nidaq object')
-            
-            self.add_pid_btn.setText('Add PID')
-        
     def program_start_clicked(self):
         if self.program_start_btn.isChecked():
             self.program_start_btn.setText('End Program')
@@ -472,8 +401,7 @@ class mainWindow(QMainWindow):
             logger.info('program start button untoggled')
             self.program_start_btn.setText('Start')
             self.threadIsFinished()
-                
-
+    
     def run_odor_calibration(self):
         logger.info('running odor calibration procedure')
         
@@ -578,7 +506,8 @@ class mainWindow(QMainWindow):
         self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2)  # zero pad
         data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
         self.data_file_name_lineEdit.setText(data_file_name)
-        
+    
+    
     ##############################
     # PROGRAMS FOR 48-LINE OLFA
     def run_setpoint_characterization(self):
@@ -719,6 +648,78 @@ class mainWindow(QMainWindow):
         
     # PROGRAMS FOR 48-LINE OLFA
     ##############################
+
+    
+    def add_olfa_48line_toggled(self,checked):
+        if checked:
+            self.olfactometer = olfa_driver_48line.olfactometer_window()
+            self.device_layout.addWidget(self.olfactometer)
+            logger.debug('created olfactometer object')
+            self.add_olfa_orig_btn.setEnabled(False)
+            self.add_olfa_48line_btn.setText('Remove olfactometer\n(48-line)')
+            self.olfa_type_label.setText('48-line olfa')
+            self.program_selection_groupbox.setEnabled(True)
+            self.program_selection_combo.clear()
+            self.program_selection_combo.addItems(programs_48line)
+            
+            if self.program_parameters_box.isEnabled():
+                logger.info('refresh')
+                if self.program_to_run == 'setpoint characterization':
+                    self.active_slave_refresh()
+            
+            # debugging: just for today (7/25/2022)
+            for s in self.olfactometer.slave_objects:
+                s.vials[0].setEnabled(False)
+                s.vials[2].setEnabled(False)
+                s.vials[7].setEnabled(False)
+                
+        else:
+            self.mainLayout.removeWidget(self.olfactometer)
+            sip.delete(self.olfactometer)
+            logger.debug('removed olfactometer object')
+            self.add_olfa_orig_btn.setEnabled(True)
+            self.add_olfa_48line_btn.setText('Add Olfactometer\n(48-line)')
+            self.olfa_type_label.setText(' ')
+            self.program_selection_groupbox.setEnabled(False)
+            self.program_parameters_box.setEnabled(False)
+
+    def add_olfa_orig_toggled(self, checked):
+        if checked:
+            self.olfactometer = olfa_driver_original.olfactometer_window()
+            self.device_layout.addWidget(self.olfactometer)
+            logger.debug('created olfactometer object')
+            self.add_olfa_48line_btn.setEnabled(False)
+            self.add_olfa_orig_btn.setText('Remove olfactometer\n(original)')
+            self.olfa_type_label.setText('original olfa')
+            self.program_selection_groupbox.setEnabled(True)
+            self.program_selection_combo.clear()
+            self.program_selection_combo.addItems(programs_orig)
+
+        else:
+            self.mainLayout.removeWidget(self.olfactometer)
+            sip.delete(self.olfactometer)
+            logger.debug('removed olfactometer object')
+            self.add_olfa_48line_btn.setEnabled(True)
+            self.add_olfa_orig_btn.setText('Add Olfactometer\n(original)')
+            self.olfa_type_label.setText(' ')
+            self.program_selection_groupbox.setEnabled(False)
+            self.program_parameters_box.setEnabled(False)
+
+    def add_pid_toggled(self, checked):
+        if checked:
+            self.pid_nidaq = NiDAQ_driver.NiDaq(self)
+            self.device_layout.insertWidget(0,self.pid_nidaq)
+            logger.debug('created pid object')
+
+            self.add_pid_btn.setText('Remove PID')
+            self.add_pid_btn.setToolTip('u sure?')
+            
+        else:
+            self.mainLayout.removeWidget(self.pid_nidaq)
+            sip.delete(self.pid_nidaq)
+            logger.debug('removed nidaq object')
+            
+            self.add_pid_btn.setText('Add PID')
     
     def begin_record_btn_clicked(self):
         if self.begin_record_btn.isChecked() == True:
@@ -769,8 +770,7 @@ class mainWindow(QMainWindow):
         self.end_record_btn.setChecked(False)
         self.end_record_btn.setEnabled(False)
         self.data_file_textedit.clear()
-
-
+    
     def receive_data_from_device(self, device, unit, value):
         # if recording is ON: write to datafile
         if self.begin_record_btn.isChecked():
