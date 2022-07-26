@@ -18,13 +18,9 @@ import olfa_original_procedures
 #import programs_48lineolfa
 import utils_olfa_48line
 
-#main_datafile_directory = 'C:\\Users\\Admin\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
-main_datafile_directory = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
 
-#main_datafile_directory = 'C:\\GIT\\OlfaControl_GUI\\result_files'
 programs_48line = ['setpoint characterization','additive']
 programs_orig = ['the program']
-
 
 # PARAMETERS FOR 48-LINE OLFACTOMETER
 vials = ['1','2','3','4','5','6','7','8']
@@ -33,9 +29,27 @@ default_dur_ON = 1
 default_dur_OFF = 1
 default_numTrials = 5
 no_active_slaves_warning = 'no active slaves pls connect olfa or something'
-
 waitBtSpAndOV = .5
 
+current_date = utils.currentDate
+
+# LOGGING
+main_datafile_directory = 'C:\\Users\\Admin\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
+#main_datafile_directory = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
+#main_datafile_directory = 'C:\\GIT\\OlfaControl_GUI\\result_files'
+# if today folder doesn't exist, make it
+#main_datafile_directory = utils_olfa_48line.find_datafile_directory()
+today_logDir = main_datafile_directory + '\\' + current_date
+if not os.path.exists(today_logDir): os.mkdir(today_logDir)
+
+logger = logging.getLogger(name='main')
+logger.setLevel(logging.DEBUG)
+if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
+console_handler = utils.create_console_handler()
+file_handler = utils.create_file_handler(main_datafile_directory)
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
+logger.info('saving data to: %s', today_logDir)
 
 class worker_sptChar(QObject):
     finished = pyqtSignal()
@@ -759,30 +773,9 @@ class mainWindow(QMainWindow):
                 self.olfactometer.send_to_master(strToSend)
         '''
         
-        
 
 
 if __name__ == "__main__":
-    current_date = utils.currentDate
-
-    # LOGGING
-    # if today folder doesn't exist, make it
-    #main_datafile_directory = utils.find_datafile_directory()   # TODO: fix this
-    today_logDir = main_datafile_directory + '\\' + current_date
-    if not os.path.exists(today_logDir): os.mkdir(today_logDir)
-
-    logger = logging.getLogger(name='main')
-    logger.setLevel(logging.DEBUG)
-    if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
-    console_handler = utils.create_console_handler()
-    file_handler = utils.create_file_handler(main_datafile_directory)
-    logger.addHandler(console_handler)
-    logger.addHandler(file_handler)
-    logger.info('saving data to: %s', today_logDir)
-
-
-
-    # MAIN APP
     logger.debug('opening window')
     app1 = QApplication(sys.argv)
     theWindow = mainWindow()
