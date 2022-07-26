@@ -1,4 +1,12 @@
 import os, glob, math
+import logging, utils
+
+logger = logging.getLogger(name='utils_48line_olfa')
+logger.setLevel(logging.DEBUG)
+if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
+console_handler = utils.create_console_handler()
+logger.addHandler(console_handler)
+
 
 def find_datafile_directory():
     # search C drive for OlfaControl_GUI
@@ -27,8 +35,6 @@ def find_datafile_directory():
         if not os.path.exists(save_files_to): os.mkdir(save_files_to)
 
     return save_files_to
-
-
 
 def convertToInt(SCCMval, dictionary):
     SCCMval = float(SCCMval)
