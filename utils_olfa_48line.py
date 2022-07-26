@@ -36,6 +36,26 @@ def find_datafile_directory():
 
     return save_files_to
 
+
+# CONNECT TO 48 LINE OLFA
+def connect_to_48line_olfa(parent):
+    parent.olfactometer.get_ports()
+
+    # find Arduino port
+    for item_idx in range(0,parent.olfactometer.port_widget.count()):
+        this_item = parent.olfactometer.port_widget.itemText(item_idx)
+        if 'Arduino' in this_item:
+            break
+    # connect to Arduino port
+    if item_idx != []:
+        logger.debug('setting olfa port widget to arduino port')
+        parent.olfactometer.port_widget.setCurrentIndex(item_idx)
+        logger.debug('connecting olfactometer')
+        parent.olfactometer.connect_btn.toggle()
+    else:
+        logger.info('no arduinos detected')
+
+# FLOW SENSOR CONVERSIONS
 def convertToInt(SCCMval, dictionary):
     SCCMval = float(SCCMval)
     if SCCMval in dictionary:   ardVal = dictionary.get(SCCMval)
