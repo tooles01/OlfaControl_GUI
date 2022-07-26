@@ -42,13 +42,16 @@ class worker_nidaq(QObject):
         t = nidaqmx.Task()      # create a task
         t.ai_channels.add_ai_voltage_chan(channelIWant) # add analog input channel to this task
         while self.readTheStuff == True:
-            value = t.read(1)
-            value = value[0]
-            self.sendData_from_worker.emit(value)
-            if self.save_values_to_list == True:
-                self.data_list.append(value)
-                
-            time.sleep(self.timeToSleep)
+            try:
+                value = t.read(1)
+                value = value[0]
+                self.sendData_from_worker.emit(value)
+                if self.save_values_to_list == True:
+                    self.data_list.append(value)
+                    
+                time.sleep(self.timeToSleep)
+            except:
+                pass
 
 
 class NiDaq(QGroupBox):
