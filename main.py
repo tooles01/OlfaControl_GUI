@@ -51,6 +51,8 @@ logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 logger.info('saving data to: %s', today_logDir)
 
+
+
 class worker_sptChar(QObject):
     finished = pyqtSignal()
     w_sendThisSp = pyqtSignal(str,int)
@@ -65,6 +67,8 @@ class worker_sptChar(QObject):
 
         self.duration_on = 5
         self.duration_off = 5
+        self.sccm2Ard_dict = []
+        self.ard2Sccm_dict = []
 
     @pyqtSlot()
     def exp(self):
@@ -77,10 +81,13 @@ class worker_sptChar(QObject):
             if self.threadON == True:
                 full_vial_name = stimulus[0]
                 this_setpoint_sccm = stimulus[1]
+
+                # convert it to arduino integer
+                this_setpoint_int = utils_olfa_48line.convertToInt(this_setpoint_sccm,self.sccm2Ard_dict)
                 
                 # send the setpoint
                 logger.info('%s set to %s sccm',full_vial_name,this_setpoint_sccm)
-                self.w_sendThisSp.emit(full_vial_name,this_setpoint_sccm)
+                self.w_sendThisSp.emit(full_vial_name,this_setpoint_int)
                 time.sleep(waitBtSpAndOV)
                 
                 # open the vial
@@ -572,6 +579,8 @@ class mainWindow(QMainWindow):
         data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
         self.data_file_name_lineEdit.setText(data_file_name)
         
+    ##############################
+    # PROGRAMS FOR 48-LINE OLFA
     def run_setpoint_characterization(self):
         logger.info('run setpoint characterization')
 
@@ -627,12 +636,6 @@ class mainWindow(QMainWindow):
         dur_ON = self.p_dur_on_wid.value()
         dur_OFF = self.p_dur_off_wid.value()
         self.full_vial_name = self.slave_to_run + self.vial_to_run
-
-        # get dictionaries for this vial TODO
-        vial_idx = int(self.vial_to_run) - 1
-        for s in self.olfactometer.slave_objects:
-            if s.name == self.slave_to_run:
-                thisVial = s.vials[vial_idx]
         
         # CREATE STIMULUS LIST
         vial_flows_complete_list = []
@@ -642,8 +645,17 @@ class mainWindow(QMainWindow):
             vial_flows_complete_list.extend(temp.tolist())  # add to complete list
         if setpoint_order == 'Random':  random.shuffle(vial_flows_complete_list)    # randomize if needed
         
+        # GET DICTIONARIES FOR THIS VIAL
+        vial_idx = int(self.vial_to_run) - 1
+        for s in self.olfactometer.slave_objects:
+            if s.name == self.slave_to_run: thisVial = s.vials[vial_idx]; break
+        sccm2Ard_dict_to_use = self.olfactometer.sccm2Ard_dicts.get(thisVial.cal_table)
+        ard2Sccm_dict_to_use = self.olfactometer.ard2Sccm_dicts.get(thisVial.cal_table)
+        
         # SEND PARAMETERS TO WORKER
         self.obj_sptchar.complete_stimulus_list = copy.copy(vial_flows_complete_list)
+        self.obj_sptchar.sccm2Ard_dict = copy.copy(sccm2Ard_dict_to_use)
+        self.obj_sptchar.ard2Sccm_dict = copy.copy(ard2Sccm_dict_to_use)
         self.obj_sptchar.duration_on = copy.copy(dur_ON)
         self.obj_sptchar.duration_off = copy.copy(dur_OFF)
         
@@ -658,15 +670,12 @@ class mainWindow(QMainWindow):
                         pass
                     else:
                         logger.warning('%s is set to debug mode', v.full_vialNum)
-
+        
         # START WORKER THREAD
         self.obj_sptchar.threadON = True
         logger.info('starting thread_olfa')
         self.thread_olfa.start()            # # start thread -> worker_sptChar iterates through stimuli
-
-
-    ##############################
-    # PROGRAMS FOR 48-LINE OLFA
+    
     def set_up_threads_sptchar(self):
         self.obj_sptchar = worker_sptChar()
         self.thread_olfa = QThread()
