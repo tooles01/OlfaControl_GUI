@@ -3,7 +3,10 @@
 
 
 # don't ignore these
-!.gitignore
+#!.gitignore
 !*.py
 !*.json
 !requirements.txt
+
+# ignore this
+programs_48lineolfa.py
