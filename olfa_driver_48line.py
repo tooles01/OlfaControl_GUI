@@ -155,7 +155,6 @@ class Vial(QGroupBox):
 
         self.intToSccm_dict = self.parent.parent.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.parent.parent.sccm2Ard_dicts.get(self.cal_table)
-        #print('Vial ' + self.full_vialNum  + ' calibration table:  '+ self.cal_table)
 
 class slave_8vials(QGroupBox):
 
@@ -220,7 +219,7 @@ class olfactometer_window(QGroupBox):
         self.flow_cal_dir = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\OlfaControl_GUI\\calibration_tables'
 
         if os.path.exists(self.flow_cal_dir):
-            #logger.debug('loading flow sensor calibration tables (%s)', self.flow_cal_dir)
+            logger.debug('loading flow sensor calibration tables (%s)', self.flow_cal_dir)
 
             file_type = '.txt'
             cal_file_names = os.listdir(self.flow_cal_dir)
@@ -251,8 +250,7 @@ class olfactometer_window(QGroupBox):
                                     ard2Sccm[int(row['int'])] = int(row['SCCM'])
                                 except KeyError as err:
                                     print('error: ', err)
-                                    #print(err)
-                                    #self.logger.debug('%s does not have correct headings for calibration files', cal_file)
+                                    logger.debug('%s does not have correct headings for calibration files', cal_file)
                                     x = 1   # don't keep trying to read this file
                     if bool(sccm2Ard) == True:
                         new_sccm2Ard_dicts[file_name] = sccm2Ard
@@ -263,13 +261,10 @@ class olfactometer_window(QGroupBox):
                     self.sccm2Ard_dicts = new_sccm2Ard_dicts
                     self.ard2Sccm_dicts = new_ard2Sccm_dicts
                 else:
-                    print('no calibration files found in this directory')
-                    #self.logger.info('no calibration files found in this directory')
+                    logger.info('no calibration files found in this directory')
             
         else:
-            print('cannot find flow cal directory')
-            #self.logger.info('Cannot find flow cal directory (%s)', self.flowCalDir)   # TODO this is big issue if none found
-
+            logger.info('Cannot find flow cal directory (%s)', self.flowCalDir)   # TODO this is big issue if none found
 
 
     def generate_ui(self):
@@ -438,19 +433,21 @@ class olfactometer_window(QGroupBox):
     
     def set_connected(self, connected):
         if connected == True:
+            logger.debug('connected to Arduino')
             self.get_slave_addresses()
             self.master_groupbox.setEnabled(True)
             self.connect_btn.setText('Stop communication w/ ' + self.portStr)
             self.refresh_btn.setEnabled(False)
             self.port_widget.setEnabled(False)
         else:
+            logger.debug('disconnected from Arduino')
             self.master_groupbox.setEnabled(False)
             self.connect_btn.setText('Connect to ' + self.portStr)
             self.connect_btn.setChecked(False)
             self.refresh_btn.setEnabled(True)
             self.port_widget.setEnabled(True)
 
-            # set vials of all currently active slaves to not debug
+            # set vials of all currently active slaves to not debug TODO do this in a thread
             for slave in self.active_slaves:
                 for vial in range(0,vialsPerSlave):
                     strToSend = 'MS_' + slave + str(vial+1)
@@ -460,6 +457,7 @@ class olfactometer_window(QGroupBox):
     def get_slave_addresses(self):
         self.prev_active_slaves = copy.copy(self.active_slaves)
         self.active_slaves = []
+        logger.info('Checking slave addresses')
         self.send_to_master('C')
         # TODO update program
 
@@ -549,7 +547,11 @@ class olfactometer_window(QGroupBox):
                     device = 'olfactometer ' + slave_vial
                     unit = 'FL'
                     value = flowVal
-                    self.window().receive_data_from_device(device,unit,value)
+                    try:
+                        self.window().receive_data_from_device(device,unit,value)
+                    except AttributeError as err:
+                        # if main window is not open
+                        pass
             
             except UnicodeDecodeError as err:
                 print("Serial read error")
@@ -559,8 +561,8 @@ class olfactometer_window(QGroupBox):
         try:
             if self.serial.isOpen():
                 self.serial.write(bArr_send)
-                print("sent to", self.port, ":  ", strToSend)
                 self.raw_write_display.append(strToSend)
+                #logger.debug('sent to %s: %s', self.port, strToSend)
             else:
                 print('Serial port not open, cannot send parameter: %s', strToSend)
 
