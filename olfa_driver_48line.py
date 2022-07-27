@@ -21,7 +21,13 @@ slave_names = ['A',
                 'D',
                 'E',
                 'F']
+
+# DEFAULT VALUES
 default_cal_table = 'Honeywell_3100V'
+def_Kp_value = 0.0500
+def_Ki_value = 0.0001
+def_Kd_value = 0.0000
+
 
 # CREATE LOGGER
 logger = logging.getLogger(name='olfactometer')
@@ -41,28 +47,33 @@ class Vial(QGroupBox):
         self.full_vialNum = self.slaveName + self.vialNum
         
         self.cal_table = default_cal_table
+        self.Kp_value = def_Kp_value
+        self.Ki_value = def_Ki_value
+        self.Kd_value = def_Kd_value
 
         self.generate_stuff()
 
         self.setLayout(self.layout)
         self.vial_button.setMaximumWidth(60)
         self.setpoint_send_btn.setMaximumWidth(60)
-        self.cal_table_set_btn.setMaximumWidth(60)
+        #self.cal_table_set_btn.setMaximumWidth(60)
         max_width = self.sizeHint().width()
         self.setMaximumWidth(max_width - 15)
         
     
     def generate_stuff(self):
-        self.vial_duration_spinbox = QSpinBox(value=5)
+        # VALVE OPEN DURATION
+        self.valve_duration_spinbox = QSpinBox(value=5)
         self.vial_button = QPushButton(text=str("Open " + self.slaveName + self.vialNum),
             #checkable=True,
             toolTip="open vial")
         self.vial_button.clicked.connect(lambda: self.vial_button_clicked())
-        self.vial_layout = QHBoxLayout()
-        self.vial_layout.addWidget(QLabel("dur(s):"))
-        self.vial_layout.addWidget(self.vial_duration_spinbox)
-        self.vial_layout.addWidget(self.vial_button)
+        self.open_valve_layout = QHBoxLayout()
+        self.open_valve_layout.addWidget(QLabel("dur(s):"))
+        self.open_valve_layout.addWidget(self.valve_duration_spinbox)
+        self.open_valve_layout.addWidget(self.vial_button)
         
+        # SETPOINT
         self.setpoint_value_box = QSpinBox(maximum=200,value=100)
         self.setpoint_send_btn = QPushButton(text="Update\nSpt")
         self.setpoint_send_btn.clicked.connect(lambda: self.setpoint_btn_clicked(self.setpoint_value_box.value()))
@@ -71,22 +82,33 @@ class Vial(QGroupBox):
         self.setpoint_layout.addWidget(self.setpoint_value_box)
         self.setpoint_layout.addWidget(self.setpoint_send_btn)
         
-        self.readFromThisVial = QPushButton(text="read flow vals", checkable=True, toggled=self.readFlow_btn_toggled)
-
+        # CALIBRATION TABLE
         self.cal_table_combobox = QComboBox()
         self.cal_table_combobox.addItems(self.parent.parent.sccm2Ard_dicts)
         self.cal_table_combobox.setCurrentText(self.cal_table)  # TODO: change this to cycle through and find that cal table, set the index to that
+        self.cal_table_combobox.currentIndexChanged.connect(lambda: self.cal_table_updated(self.cal_table_combobox.currentText()))
+        '''
         self.cal_table_set_btn = QPushButton(text='Update')
         self.cal_table_set_btn.clicked.connect(self.cal_table_updated)
-        #self.cal_table_layout = QGridLayout()
-        #self.cal_table_layout.addWidget(QLabel(text='Calibration Table:'),0,0,1,1)
-        #self.cal_table_layout.addWidget(self.cal_table_combobox,1,0,1,1)
-        #self.cal_table_layout.addWidget(self.cal_table_set_btn,0,1,2,1)
+        self.cal_table_layout = QGridLayout()
+        self.cal_table_layout.addWidget(QLabel(text='Calibration Table:'),0,0,1,1)
+        self.cal_table_layout.addWidget(self.cal_table_combobox,1,0,1,1)
+        self.cal_table_layout.addWidget(self.cal_table_set_btn,0,1,2,1)
+        '''
         self.cal_table_layout = QVBoxLayout()
         self.cal_table_layout.addWidget(QLabel(text='Calibration Table:'))
         self.cal_table_layout.addWidget(self.cal_table_combobox)
-        self.cal_table_layout.addWidget(self.cal_table_set_btn)
-        self.cal_table_updated()
+        #self.cal_table_layout.addWidget(self.cal_table_set_btn)
+        self.cal_table_updated(self.cal_table_combobox.currentText())
+
+        # READ FLOW VALUES
+        self.readFromThisVial = QPushButton(text="read flow vals", checkable=True, toggled=self.readFlow_btn_toggled)
+        
+        # VIAL DETAILS
+        self.create_vial_details_window()
+        self.vial_details_btn = QPushButton('Vial Details',checkable=True)#,toggled=self.toggle_vial_details_window)
+        self.vial_details_btn.clicked.connect(lambda: self.vial_details_window.show())
+        #self.toggle_vial_details_window(self)
 
         '''
         self.calibrate_vial_edit = QLineEdit(text='100')
@@ -100,14 +122,118 @@ class Vial(QGroupBox):
         # - debug window
         # - current flow value (?)
 
+        # LAYOUT
         self.layout = QFormLayout()
-        self.layout.addRow(self.vial_layout)
+        self.layout.addRow(self.open_valve_layout)
         self.layout.addRow(self.setpoint_layout)
         self.layout.addRow(self.cal_table_layout)
         self.layout.addRow(self.readFromThisVial)
-        #self.layout.addRow(self.calibration_layout)
+        self.layout.addRow(self.vial_details_btn)
+    
+    def create_vial_details_window(self):
+        self.vial_details_window = QWidget()
+        self.vial_details_window.setWindowTitle('Vial ' + self.full_vialNum + ' - Debug')
 
+        # Flow Calibration Table
+        self.db_cal_table_wid = QComboBox()
+        self.db_cal_table_wid.addItems(self.parent.parent.ard2Sccm_dicts)
+        self.db_cal_table_wid.setCurrentText(self.cal_table)
+        self.db_cal_table_wid.currentIndexChanged.connect(lambda: self.cal_table_updated(self.db_cal_table_wid.currentText()))
+        self.db_calibrate_sensor_btn = QPushButton(text='Calibrate')
+        self.db_calibrate_sensor_btn.clicked.connect(self.calibrate_flow_sensor_btn_clicked)    # TODO
+        calibration_layout = QHBoxLayout()
+        calibration_layout.addWidget(QLabel('Calibration table:'))
+        calibration_layout.addWidget(self.db_cal_table_wid)
+        calibration_layout.addWidget(self.db_calibrate_sensor_btn)
+
+        # Setpoint
+        self.db_setpoint_value_box = QLineEdit(text='100')
+        self.db_setpoint_send_btn = QPushButton('Update Spt')
+        self.db_setpoint_send_btn.clicked.connect(lambda: self.setpoint_btn_clicked(self.db_setpoint_value_box.text()))
+        setpoint_layout = QHBoxLayout()
+        setpoint_layout.addWidget(QLabel('Setpoint:'))
+        setpoint_layout.addWidget(self.db_setpoint_value_box)
+        setpoint_layout.addWidget(self.db_setpoint_send_btn)
+
+        # Open Vial
+        self.db_open_valve_lbl = QLabel('Duration to open:')
+        self.db_open_valve_wid = QLineEdit(text='5')        # pos change to spinbox so min/max can be set
+        self.db_open_valve_btn = QPushButton('Open vial')
+        self.db_open_valve_btn.clicked.connect(self.vial_button_clicked)
+        open_valve_layout = QHBoxLayout()
+        open_valve_layout.addWidget(self.db_open_valve_lbl)
+        open_valve_layout.addWidget(self.db_open_valve_wid)
+        open_valve_layout.addWidget(self.db_open_valve_btn)
+
+        # Flow Control Parameters
+        self.flow_control_box = QGroupBox('Flow control parameters')
+        self.db_Kp_wid = QLineEdit(text=str(self.Kp_value))
+        self.db_Ki_wid = QLineEdit(text=str(self.Ki_value))
+        self.db_Kd_wid = QLineEdit(text=str(self.Kd_value))
+        self.db_Kp_send = QPushButton(text='Send')
+        self.db_Ki_send = QPushButton(text='Send')
+        self.db_Kd_send = QPushButton(text='Send')
+        self.db_Kp_send.clicked.connect(lambda: self.K_parameter_update('P',self.db_Kp_wid.text()))
+        self.db_Ki_send.clicked.connect(lambda: self.K_parameter_update('I',self.db_Ki_wid.text()))
+        self.db_Kd_send.clicked.connect(lambda: self.K_parameter_update('D',self.db_Kd_wid.text()))
+        KpRow = QHBoxLayout();  KpRow.addWidget(QLabel('Kp:'));   KpRow.addWidget(self.db_Kp_wid);   KpRow.addWidget(self.db_Kp_send)
+        KiRow = QHBoxLayout();  KiRow.addWidget(QLabel('Ki:'));   KiRow.addWidget(self.db_Ki_wid);   KiRow.addWidget(self.db_Ki_send)
+        KdRow = QHBoxLayout();  KdRow.addWidget(QLabel('Kd:'));   KdRow.addWidget(self.db_Kd_wid);   KdRow.addWidget(self.db_Kd_send)
+        flow_control_layout = QFormLayout()
+        flow_control_layout.addRow(KpRow)
+        flow_control_layout.addRow(KiRow)
+        flow_control_layout.addRow(KdRow)
+        self.flow_control_box.setLayout(flow_control_layout)
+
+        # Manual Debugging
+        self.manual_debug_box = QGroupBox('Manual debug')
+        self.db_PID_toggle_btn = QPushButton(text="Turn flow control on",checkable=True,toggled=self.toggled_PID)
+        self.db_ctrl_toggle_btn = QPushButton(text="Open prop valve",checkable=True,toggled=self.toggled_ctrlOpen)
+        self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True,toggled=self.toggled_valveOpen)
+        manual_debug_layout = QVBoxLayout()
+        manual_debug_layout.addWidget(self.db_PID_toggle_btn)
+        manual_debug_layout.addWidget(self.db_ctrl_toggle_btn)
+        manual_debug_layout.addWidget(self.db_vlve_toggle_btn)
+        self.manual_debug_box.setLayout(manual_debug_layout)
+
+        # Values Received
+        self.data_receive_lbl = QLabel(("Flow val (int), Flow (SCCM), Ctrl val (int)"))
+        self.data_receive_box = QTextEdit(readOnly=True)
+
+        # Advanced
+        self.db_advanced_btn = QPushButton(text='Enable Advanced Options',checkable=True)
+        self.db_advanced_btn.toggled.connect(self.toggled_advanced_settings)
+
+        # Layout
+        layout_column1 = QVBoxLayout()
+        layout_column1.addLayout(calibration_layout)
+        layout_column1.addLayout(setpoint_layout)
+        layout_column1.addLayout(open_valve_layout)
+        layout_column1.addWidget(self.db_advanced_btn)
+        layout_column1.addWidget(self.flow_control_box)
+        layout_column1.addWidget(self.manual_debug_box)
+
+        layout_column2 = QVBoxLayout()
+        layout_column2.addWidget(self.data_receive_lbl)
+        layout_column2.addWidget(self.data_receive_box)
+
+        self.vial_debug_window_layout = QHBoxLayout()
+        self.vial_debug_window_layout.addLayout(layout_column1)
+        self.vial_debug_window_layout.addLayout(layout_column2)
+        self.vial_details_window.setLayout(self.vial_debug_window_layout)
+        
+        # disable until advanced options toggled
+        self.flow_control_box.setEnabled(False)
+        self.manual_debug_box.setEnabled(False)
+
+        self.vial_details_window.hide()
+    
+    
     # ACTIONS
+    def K_parameter_update(self, Kx, value):
+        strToSend = 'S_Kx_' + Kx + str(value) + '_' + self.full_vialNum
+        self.parent.parent.send_to_master(strToSend)
+        
     def setpoint_btn_clicked(self, value):
         # - convert from sccm to integer
         setpoint_sccm = value
@@ -117,10 +243,10 @@ class Vial(QGroupBox):
         self.parent.parent.send_to_master(strToSend)    # send to olfactometer_window
         
     def vial_button_clicked(self):
-        # toggle it until the duration has passed
-
-        strToSend = 'S_OV_' + str(self.vial_duration_spinbox.value()) + '_' + self.parent.name + self.vialNum
+        # TODO toggle it until the duration has passed
+        strToSend = 'S_OV_' + str(self.valve_duration_spinbox.value()) + '_' + self.parent.name + self.vialNum
         self.parent.parent.send_to_master(strToSend)
+        logger.debug('Opening %s for %s seconds',self.parent.name + self.vialNum, self.valve_duration_spinbox.value())
         
     def readFlow_btn_toggled(self, checked):
         if checked:
@@ -132,6 +258,31 @@ class Vial(QGroupBox):
             strToSend = 'MS_' + self.parent.name + self.vialNum
             self.parent.parent.send_to_master(strToSend)
         
+    def toggled_PID(self):
+        # TODO
+        logger.info('PID toggled (not set up)')
+        
+    def toggled_ctrlOpen(self):
+        # TODO
+        logger.info('prop valve open toggled (not set up)')
+        
+    def toggled_valveOpen(self):
+        # TODO
+        logger.info('isolation valve open toggled (not set up)')
+        
+    def calibrate_flow_sensor_btn_clicked(self):
+        logger.warning('calibrate flow sensor not set up yet')
+
+    def toggled_advanced_settings(self, checked):
+        if checked:
+            self.flow_control_box.setEnabled(True)
+            self.manual_debug_box.setEnabled(True)
+            self.db_advanced_btn.setText('Disable Advanced Options')
+        else:
+            self.flow_control_box.setEnabled(False)
+            self.manual_debug_box.setEnabled(False)
+            self.db_advanced_btn.setText('Enable Advanced Options')
+    
     '''
     def calibrate_flow_sensor(self):
         value_to_calibrate = int(self.calibrate_vial_edit.text())
@@ -150,7 +301,7 @@ class Vial(QGroupBox):
 
     '''
     
-    def cal_table_updated(self):
+    def cal_table_updated(self, new_cal_table): # TODO
         self.cal_table = self.cal_table_combobox.currentText()
 
         self.intToSccm_dict = self.parent.parent.ard2Sccm_dicts.get(self.cal_table)
@@ -201,23 +352,24 @@ class olfactometer_window(QGroupBox):
     
     def __init__(self):
         super().__init__()
-
-        self.get_calibration_tables()
-
-        self.generate_ui()
-        self.master_groupbox.setEnabled(False)
-
+        self.sccm2Ard_dicts = {}
+        self.ard2Sccm_dicts = {}
         self.active_slaves = []
 
-        # TODO: upon first connect: set all vials to not debug
-
+        self.get_calibration_tables()
+        self.generate_ui()
         
+        self.master_groupbox.setEnabled(False)
+        # TODO: upon first connect: set all vials to not debug
         self.setTitle('Olfactometer')
 
+        # JUST FOR TODAY (7/26/2022)
+        self.slave_objects[0].setEnabled(True)
+    
     def get_calibration_tables(self):
-
-        self.flow_cal_dir = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\OlfaControl_GUI\\calibration_tables'
-
+        #self.flow_cal_dir = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\OlfaControl_GUI\\calibration_tables'
+        self.flow_cal_dir = 'C:\\Users\\Admin\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\OlfaControl_GUI\\calibration_tables'
+        
         if os.path.exists(self.flow_cal_dir):
             logger.debug('loading flow sensor calibration tables (%s)', self.flow_cal_dir)
 
@@ -250,7 +402,7 @@ class olfactometer_window(QGroupBox):
                                     ard2Sccm[int(row['int'])] = int(row['SCCM'])
                                 except KeyError as err:
                                     print('error: ', err)
-                                    logger.debug('%s does not have correct headings for calibration files', cal_file)
+                                    logger.warning('%s does not have correct headings for calibration files', cal_file)
                                     x = 1   # don't keep trying to read this file
                     if bool(sccm2Ard) == True:
                         new_sccm2Ard_dicts[file_name] = sccm2Ard
@@ -264,7 +416,7 @@ class olfactometer_window(QGroupBox):
                     logger.info('no calibration files found in this directory')
             
         else:
-            logger.info('Cannot find flow cal directory (%s)', self.flowCalDir)   # TODO this is big issue if none found
+            logger.warning('Cannot find flow cal directory (%s)', self.flow_cal_dir)   # TODO this is big issue if none found
 
 
     def generate_ui(self):
@@ -429,6 +581,7 @@ class olfactometer_window(QGroupBox):
                 self.set_connected(False)
                 self.serial.close()
             except AttributeError:
+                # TODO
                 pass
     
     def set_connected(self, connected):
