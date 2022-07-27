@@ -72,7 +72,7 @@ class worker_sptChar(QObject):
         self.duration_off = 5
         self.sccm2Ard_dict = []
         self.ard2Sccm_dict = []
-
+    
     @pyqtSlot()
     def exp(self):
         # wait so olfa has time to set vial to debug mode
@@ -103,6 +103,7 @@ class worker_sptChar(QObject):
                 # wait for the time between trials
                 time.sleep(self.duration_off)
 
+        self.finished.emit()
 
 class mainWindow(QMainWindow):
     
@@ -248,12 +249,10 @@ class mainWindow(QMainWindow):
         self.add_devices_groupbox.setLayout(layout)
     
     def create_program_widgets(self):
-        if self.program_selection_picked.isChecked():
+        if self.program_selection_btn.isChecked():
             self.program_parameters_box.setEnabled(True)
-
             self.program_to_run = self.program_selection_combo.currentText()
-            self.program_start_btn.setEnabled(True)
-
+            
             if self.program_to_run == "the program":
                 self.pid_record_time_widget = QSpinBox(value=5)
                 self.vial_open_time_widget = QSpinBox(value=5)
@@ -270,7 +269,7 @@ class mainWindow(QMainWindow):
                 #logger.debug('setpoint characterization selected')
                 #programs_48lineolfa.create_sptchar_parameter_widgets(self.program_parameters_box)
                 '''
-
+        
         else:
             logger.warning('program selection unchecked: remove program widgets')
             self.program_parameters_box.setEnabled(False)
@@ -279,17 +278,13 @@ class mainWindow(QMainWindow):
         self.program_selection_groupbox = QGroupBox('Program Selection')
         
         self.olfa_type_label = QLabel()
-
         self.program_selection_combo = QComboBox()
         self.program_selection_combo.addItems(programs_48line)
+        self.program_selection_btn = QPushButton(text='Select',checkable=True,toggled=self.create_program_widgets)
         
-        self.program_selection_picked = QPushButton(text='Select',checkable=True,toggled=self.create_program_widgets)
-        #self.program_selection_picked.clicked.connect(self.create_program_widgets)
-
         layout = QFormLayout()
         layout.addRow(QLabel('Olfactometer type:'),self.olfa_type_label)
-        layout.addRow(self.program_selection_combo,self.program_selection_picked)
-        #layout.addRow(self.program_start_btn)
+        layout.addRow(self.program_selection_combo,self.program_selection_btn)
         self.program_selection_groupbox.setLayout(layout)
         self.program_selection_groupbox.setEnabled(False)
 
@@ -299,10 +294,9 @@ class mainWindow(QMainWindow):
         self.program_start_btn = QPushButton(text='Start',checkable=True,toggled=self.program_start_clicked)
         self.program_start_btn.setEnabled(False)
         
-        
         self.program_parameters_layout = QFormLayout()
         self.program_parameters_box.setLayout(self.program_parameters_layout)
-
+    
     def create_48line_program_widgets(self):
         if self.program_to_run == "setpoint characterization":
             logger.debug('setpoint characterization selected')
@@ -367,7 +361,6 @@ class mainWindow(QMainWindow):
 
         else:
             logger.warning('program selected is not set up')
-    
     
     def active_slave_refresh(self):        
         # if olfactometer is not connected, connect to it
@@ -643,7 +636,7 @@ class mainWindow(QMainWindow):
         
     # PROGRAMS FOR 48-LINE OLFA
     ##############################
-
+    
     
     def add_olfa_48line_toggled(self,checked):
         if checked:
@@ -667,7 +660,7 @@ class mainWindow(QMainWindow):
                 s.vials[0].setEnabled(False)
                 s.vials[2].setEnabled(False)
                 s.vials[7].setEnabled(False)
-                
+        
         else:
             self.mainLayout.removeWidget(self.olfactometer)
             sip.delete(self.olfactometer)
@@ -790,8 +783,7 @@ class mainWindow(QMainWindow):
                 strToSend = 'MS_' + slave + str(vial+1)
                 self.olfactometer.send_to_master(strToSend)
         '''
-        
-
+    
 
 if __name__ == "__main__":
     logger.debug('opening window')
