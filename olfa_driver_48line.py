@@ -1,21 +1,14 @@
 import sys, logging, time
-from datetime import datetime
-
+import os, csv, copy
 from PyQt5 import QtCore, QtSerialPort
 from PyQt5.QtWidgets import *
 from serial.tools import list_ports
 
-import os, csv, copy
-import utils_olfa_48line
-
-
-currentDate = str(datetime.date(datetime.now()))
-
+import utils, utils_olfa_48line
 
 baudrate = 9600     # for communicating w/ master
 vialsPerSlave = 8
 noPort_msg = "no ports detected :/"
-
 master_modes = ["6: verbose",
                 "5: trace",
                 "4: notice",
@@ -28,9 +21,15 @@ slave_names = ['A',
                 'D',
                 'E',
                 'F']
-        
-
 default_cal_table = 'Honeywell_3100V'
+
+# CREATE LOGGER
+logger = logging.getLogger(name='olfactometer')
+logger.setLevel(logging.DEBUG)
+if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
+console_handler = utils.create_console_handler()
+logger.addHandler(console_handler)
+
 
 class Vial(QGroupBox):
 
@@ -198,7 +197,6 @@ class slave_8vials(QGroupBox):
         for v in range(vialsPerSlave):
             self.vials_layout.addWidget(self.vials[v])
 
-            
 
 class olfactometer_window(QGroupBox):
     
@@ -573,6 +571,7 @@ class olfactometer_window(QGroupBox):
 
 if __name__ == "__main__":
 
+    '''
     # LOGGING
     logger = logging.getLogger(name='olfactometer')
     logger.setLevel(logging.DEBUG)
@@ -583,6 +582,7 @@ if __name__ == "__main__":
     console_handler.setLevel(console_handler_level)
     console_handler.setFormatter(console_handler_formatter)
     logger.addHandler(console_handler)
+    '''
 
     
     # MAIN APP
