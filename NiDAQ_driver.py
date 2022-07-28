@@ -17,6 +17,8 @@ from nidaqmx import stream_readers
 import numpy as np
 noPortMsg = '~ No NI devices detected ~'
 analogChannel = 'ai0'   # TODO: fix this
+analog_input_max_voltage = 10.0
+analog_input_min_voltage = -10.0
 
 timeBt_Hz = 1000
 timeBt_s = 1/timeBt_Hz
@@ -41,15 +43,18 @@ class worker_nidaq(QObject):
         channelIWant = self.devName + '/' + self.analogChan
         t = nidaqmx.Task()      # create a task
         t.ai_channels.add_ai_voltage_chan(channelIWant) # add analog input channel to this task
+        t.ai_channels[0].ai_max = analog_input_max_voltage  # set analog input max voltage
+        t.ai_channels[0].ai_min = analog_input_min_voltage  # set analog input min voltage
+        
         while self.readTheStuff == True:
             try:
-                value = t.read(1)
-                value = value[0]
+                value = t.read(1)   # read 1 sample
+                value = value[0]    # convert from list to float
                 self.sendData_from_worker.emit(value)
                 if self.save_values_to_list == True:
                     self.data_list.append(value)
-                
                 time.sleep(self.timeToSleep)
+            
             except:
                 pass
 
