@@ -1,9 +1,19 @@
 import logging
 from datetime import datetime
 
+
+# TIME
 currentDate = str(datetime.date(datetime.now()))
 
+def get_current_time():
+    current_time = datetime.time(datetime.now())
+    current_time_f = current_time.strftime('%H:%M:%S.%f')
+    current_time_str = current_time_f[:-3]
 
+    return current_time_str
+
+
+# LOGGING
 def create_file_handler(log_dir):    # TODO: add file_name to variables it takes
     file_name = 'logfile_{}.txt'.format(currentDate)
     logFilePath = log_dir + '\\' + file_name
@@ -15,7 +25,6 @@ def create_file_handler(log_dir):    # TODO: add file_name to variables it takes
     file_handler.setFormatter(file_handler_formatter)
 
     return file_handler
-    
 
 def create_console_handler():   # TODO: user sends log level to this function
     console_handler_level = logging.DEBUG
@@ -28,9 +37,10 @@ def create_console_handler():   # TODO: user sends log level to this function
     return console_handler
 
 
-def get_current_time():
-    current_time = datetime.time(datetime.now())
-    current_time_f = current_time.strftime('%H:%M:%S.%f')
-    current_time_str = current_time_f[:-3]
 
-    return current_time_str
+# CREATE LOGGER
+logger = logging.getLogger(name='utils')
+logger.setLevel(logging.DEBUG)
+if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
+console_handler = create_console_handler()
+logger.addHandler(console_handler)
