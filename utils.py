@@ -38,7 +38,49 @@ def create_console_handler():   # TODO: user sends log level to this function
 
 
 
-# CREATE LOGGER
+# FIND DIRECTORIES
+def find_olfaControl_directory():
+    str_to_find = '/**/*OlfaControl_GUI*'
+    
+    # search C:\\GIT for OlfaControl_GUI
+    c_drive_path = os.path.expanduser('C:\\GIT\\')
+    path_list = glob.glob(c_drive_path + '/**/*' + str_to_find,recursive=True)
+    if not path_list:
+        # search in Dropbox
+        c_drive_path = os.path.expanduser('~\\Dropbox')
+        path_list = glob.glob(c_drive_path + '/**/*' + str_to_find,recursive=True)
+        if not path_list:
+            # search in Dropbox again
+            c_drive_path = os.path.expanduser('~\\Dropbox (NYU Langone Health)')
+            path_list = glob.glob(c_drive_path + str_to_find,recursive=True)
+    
+    # if you can't find it anywhere
+    if not path_list:
+        gui_directory = []
+        logger.warning('can\'t find OlfaControl_GUI folder :/')
+    else:
+        gui_directory = path_list[0]
+    
+    return gui_directory
+
+def find_datafile_directory():
+    olfaControl_dir = find_olfaControl_directory()
+
+    if not olfaControl_dir:
+        # yolo
+        c_drive_path = os.path.expanduser('C:\\')
+        save_files_to = c_drive_path + 'result_files'
+        if not os.path.exists(save_files_to): os.mkdir(save_files_to)
+    else:
+        save_files_to = olfaControl_dir + '\\result_files'
+    logger.debug('saving result files to %s',save_files_to)
+
+    return save_files_to
+
+
+
+
+############################################
 logger = logging.getLogger(name='utils')
 logger.setLevel(logging.DEBUG)
 if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
