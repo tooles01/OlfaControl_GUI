@@ -50,6 +50,7 @@ class worker_nidaq(QObject):
                     self.data_list.append(value)
                     
                 time.sleep(self.timeToSleep)
+            
             except:
                 pass
 
@@ -237,6 +238,6 @@ if __name__ == "__main__":
     # MAIN APP
     logger.debug('opening window')
     app1 = QApplication(sys.argv)
-    theWindow = NiDaq()
+    theWindow = NiDaq("")
     theWindow.show()
     sys.exit(app1.exec_())
