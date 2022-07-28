@@ -22,7 +22,7 @@ timeBt_Hz = 1000
 timeBt_s = 1/timeBt_Hz
 
 
-class worker(QObject):
+class worker_nidaq(QObject):
     sendData_from_worker = pyqtSignal(float)
     send_data_to_list = pyqtSignal(float)
 
@@ -137,23 +137,23 @@ class NiDaq(QGroupBox):
             self.connectButton.setText('Stop reading from ' + str(self.port))
 
             self.setUpThreads()
-            self.thread1.start()
-            self.worker_obj.readTheStuff = True
+            self.thread_nidaq.start()
+            self.worker_obj_nidaq.readTheStuff = True
         
         else:
             self.portWidget.setEnabled(True)
             self.connectButton.setText('Connect to ' + str(self.port))
             self.refreshButton.setEnabled(True)
 
-            self.worker_obj.readTheStuff = False
-            self.thread1.quit()
+            self.worker_obj_nidaq.readTheStuff = False
+            self.thread_nidaq.quit()
     
     def setUpThreads(self):
-        self.worker_obj = worker(self.port)
-        self.thread1 = QThread()
-        self.worker_obj.moveToThread(self.thread1)
-        self.worker_obj.sendData_from_worker.connect(self.receive_data_from_worker)
-        self.thread1.started.connect(self.worker_obj.read_from_ni_device)
+        self.worker_obj_nidaq = worker_nidaq(self.port)
+        self.thread_nidaq = QThread()
+        self.worker_obj_nidaq.moveToThread(self.thread_nidaq)
+        self.worker_obj_nidaq.sendData_from_worker.connect(self.receive_data_from_worker)
+        self.thread_nidaq.started.connect(self.worker_obj_nidaq.read_from_ni_device)
          
 
     def createSettingsBox(self):
@@ -209,12 +209,12 @@ class NiDaq(QGroupBox):
     
     def start_making_data_list(self):
         self.data_list = []                         # create empty data list
-        self.worker_obj.data_list = []
-        self.worker_obj.save_values_to_list = True  # tell working to start adding values to it
+        self.worker_obj_nidaq.data_list = []
+        self.worker_obj_nidaq.save_values_to_list = True  # tell working to start adding values to it
 
     def stop_making_data_list(self):
-        self.worker_obj.save_values_to_list = False
-        self.data_list = self.worker_obj.data_list
+        self.worker_obj_nidaq.save_values_to_list = False
+        self.data_list = self.worker_obj_nidaq.data_list
         
 
 if __name__ == "__main__":
