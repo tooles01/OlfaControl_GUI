@@ -1,4 +1,4 @@
-import logging
+import logging, os, glob
 from datetime import datetime
 
 
@@ -64,17 +64,21 @@ def find_olfaControl_directory():
     return gui_directory
 
 def find_datafile_directory():
+    folder_to_save_to = 'result_files'
+    
     olfaControl_dir = find_olfaControl_directory()
-
     if not olfaControl_dir:
         # yolo
         c_drive_path = os.path.expanduser('C:\\')
-        save_files_to = c_drive_path + 'result_files'
-        if not os.path.exists(save_files_to): os.mkdir(save_files_to)
+        save_files_to = c_drive_path + '\\' + folder_to_save_to
+        #if not os.path.exists(save_files_to): os.mkdir(save_files_to)
     else:
-        save_files_to = olfaControl_dir + '\\result_files'
-    logger.debug('saving result files to %s',save_files_to)
+        save_files_to = olfaControl_dir + '\\' + folder_to_save_to
+    #save_files_to = c_drive_path + '\\' + folder_to_save_to
+    if not os.path.exists(save_files_to): os.mkdir(save_files_to)
 
+    #logger.debug('saving result files to %s',save_files_to)
+    
     return save_files_to
 
 
