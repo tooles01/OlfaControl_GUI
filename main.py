@@ -632,7 +632,7 @@ class mainWindow(QMainWindow):
     
     def add_olfa_48line_toggled(self,checked):
         if checked:
-            # Create Olfactometer Object
+            # Create Olfactometer Objectgit st
             self.olfactometer = olfa_driver_48line.olfactometer_window()
             self.device_layout.addWidget(self.olfactometer)
             self.add_olfa_orig_btn.setEnabled(False)
