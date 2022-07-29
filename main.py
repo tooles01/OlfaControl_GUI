@@ -183,14 +183,11 @@ class mainWindow(QMainWindow):
         self.datafile_groupbox = QGroupBox('Data file')
         
         # find / make directory for today's files
-        today_datafile_dir = main_datafile_directory + '\\' + current_date        # TODO: update this to search any computer
-        if not os.path.exists(today_datafile_dir): os.mkdir(today_datafile_dir)
-        
-        data_file_dir = today_datafile_dir
-        self.data_file_dir_lineEdit = QLineEdit(text=data_file_dir,readOnly=True)
+        today_resultfiles_dir = main_datafile_directory + '\\' + current_date        # TODO: update this to search any computer
+        if not os.path.exists(today_resultfiles_dir): os.mkdir(today_resultfiles_dir)   # TODO does this need to be here? or should these be when we start recording to a file
         
         # check what files are in this folder
-        list_of_files = os.listdir(data_file_dir)
+        list_of_files = os.listdir(today_resultfiles_dir)
         list_of_files = [x for x in list_of_files if '.csv' in x]   # only csv files
         if not list_of_files: self.last_datafile_number = -1
         else:
@@ -215,6 +212,7 @@ class mainWindow(QMainWindow):
         self.data_file_name_lineEdit = QLineEdit(text=data_file_name)
         self.data_file_textedit = QTextEdit(readOnly=True)
         
+        self.data_file_dir_lineEdit = QLineEdit(text=today_resultfiles_dir,readOnly=True)
         self.begin_record_btn = QPushButton(text='Create File && Begin Recording',checkable=True,clicked=self.begin_record_btn_clicked)
         self.end_record_btn = QPushButton(text='End Recording',checkable=True,clicked=self.end_recording)
         self.end_record_btn.setEnabled(False)
@@ -634,11 +632,14 @@ class mainWindow(QMainWindow):
     
     def add_olfa_48line_toggled(self,checked):
         if checked:
+            # Create Olfactometer Object
             self.olfactometer = olfa_driver_48line.olfactometer_window()
             self.device_layout.addWidget(self.olfactometer)
             self.add_olfa_orig_btn.setEnabled(False)
             self.add_olfa_48line_btn.setText('Remove olfactometer\n(48-line)')
             self.olfa_type_label.setText('48-line olfa')
+
+            # Program Selection/Parameters
             self.program_selection_groupbox.setEnabled(True)
             self.program_selection_combo.clear()
             self.program_selection_combo.addItems(programs_48line)
@@ -647,6 +648,17 @@ class mainWindow(QMainWindow):
                 logger.info('refresh')
                 if self.program_to_run == 'setpoint characterization':
                     self.active_slave_refresh()
+            
+            # Results file name/directory
+            self.olfa_48line_resultfiles_dir = main_datafile_directory + '\\48-line olfa'
+            if not os.path.exists(self.olfa_48line_resultfiles_dir):
+                os.mkdir(self.olfa_48line_resultfiles_dir)
+                logger.debug('created 48-line olfa results files at %s',self.olfa_48line_resultfiles_dir)
+            self.today_olfa_48line_resultfiles_dir = main_datafile_directory + '\\48-line olfa' + '\\' + current_date
+            if not os.path.exists(self.today_olfa_48line_resultfiles_dir):
+                os.mkdir(self.today_olfa_48line_resultfiles_dir)
+                logger.debug('created today folder at %s',self.today_olfa_48line_resultfiles_dir)
+            self.data_file_dir_lineEdit.setText(self.today_olfa_48line_resultfiles_dir)
             
             # debugging: just for today (7/25/2022)
             for s in self.olfactometer.slave_objects:
