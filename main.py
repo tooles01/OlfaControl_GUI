@@ -161,30 +161,34 @@ class mainWindow(QMainWindow):
         self.log_text_edit.setMaximumHeight(65)
         self.log_clear_btn = QPushButton(text='Clear')
         self.log_clear_btn.clicked.connect(lambda: self.log_text_edit.clear())
+        '''
         log_box_layout = QGridLayout()
         log_box_layout.addWidget(QLabel('Log messages:'),0,0,1,1)
         log_box_layout.addWidget(self.log_clear_btn,0,2,1,1)
         log_box_layout.addWidget(self.log_text_edit,1,0,1,3)
+        '''
         
         layout = QVBoxLayout()
-        layout.addWidget(QLabel('Log file located at:'))
+        layout.addWidget(QLabel('Log file location:'))
         layout.addWidget(self.log_file_dir_label)
+        '''
         layout.addWidget(QLabel('\n'))
         layout.addLayout(log_box_layout)
+        '''
         self.general_settings_box.setLayout(layout)
         max_height = self.general_settings_box.sizeHint().height()
         self.general_settings_box.setMaximumHeight(max_height)
     
     def create_datafile_box(self):
         self.datafile_groupbox = QGroupBox('Data file')
-
+        
         # find / make directory for today's files
         today_datafile_dir = main_datafile_directory + '\\' + current_date        # TODO: update this to search any computer
         if not os.path.exists(today_datafile_dir): os.mkdir(today_datafile_dir)
-
+        
         data_file_dir = today_datafile_dir
         self.data_file_dir_lineEdit = QLineEdit(text=data_file_dir,readOnly=True)
-
+        
         # check what files are in this folder
         list_of_files = os.listdir(data_file_dir)
         list_of_files = [x for x in list_of_files if '.csv' in x]   # only csv files
@@ -200,8 +204,9 @@ class mainWindow(QMainWindow):
                 self.last_datafile_number = int(last_datafile_num)
             else:
                 self.last_datafile_number = 99
-                logger.warning('ew')    # TODO: finish this
-
+                logger.warning('ew')    # TODO
+        
+        # get data file number
         self.this_datafile_number = self.last_datafile_number + 1
         self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2) # zero pad
         
@@ -209,17 +214,14 @@ class mainWindow(QMainWindow):
         data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
         self.data_file_name_lineEdit = QLineEdit(text=data_file_name)
         self.data_file_textedit = QTextEdit(readOnly=True)
-
+        
         self.begin_record_btn = QPushButton(text='Create File && Begin Recording',checkable=True,clicked=self.begin_record_btn_clicked)
         self.end_record_btn = QPushButton(text='End Recording',checkable=True,clicked=self.end_recording)
-        #self.begin_record_btn.clicked.connect(self.begin_record_btn_clicked)
-        #self.end_record_btn.clicked.connect(self.end_recording)
         self.end_record_btn.setEnabled(False)
         record_layout = QHBoxLayout()
         record_layout.addWidget(self.begin_record_btn)
         record_layout.addWidget(self.end_record_btn)
-
-
+        
         layout = QFormLayout()
         layout.addRow(QLabel('Directory:'),self.data_file_dir_lineEdit)
         layout.addRow(QLabel('File Name:'),self.data_file_name_lineEdit)
