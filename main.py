@@ -35,16 +35,8 @@ waitBtSpAndOV = .5
 current_date = utils.currentDate
 
 # LOGGING
-main_datafile_directory = 'C:\\Users\\Admin\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
-"""
-main_datafile_directory = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\logfiles\\8-line_v1'
-main_datafile_directory = 'C:\\GIT\\OlfaControl_GUI\\result_files'
-"""
-# if today folder doesn't exist, make it
-#main_datafile_directory = utils_olfa_48line.find_datafile_directory()
-today_logDir = main_datafile_directory + '\\' + current_date
-if not os.path.exists(today_logDir): os.mkdir(today_logDir)
-
+main_datafile_directory = utils.find_datafile_directory()
+if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory)   # if folder doesn't exist, make it
 logger = logging.getLogger(name='main')
 logger.setLevel(logging.DEBUG)
 if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
@@ -52,7 +44,7 @@ console_handler = utils.create_console_handler()
 file_handler = utils.create_file_handler(main_datafile_directory)
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
-logger.info('saving data to: %s', today_logDir)
+logger.debug('log file located at: %s', main_datafile_directory)
 
 
 
@@ -109,7 +101,7 @@ class mainWindow(QMainWindow):
     
     def __init__(self):
         super().__init__()
-
+        
         self.generate_ui()
         self.set_up_threads_sptchar()
         
@@ -292,7 +284,7 @@ class mainWindow(QMainWindow):
         self.program_parameters_box = QGroupBox('Program Parameters')
 
         self.program_start_btn = QPushButton(text='Start',checkable=True,toggled=self.program_start_clicked)
-        self.program_start_btn.setEnabled(False)
+        #self.program_start_btn.setEnabled(False)
         
         self.program_parameters_layout = QFormLayout()
         self.program_parameters_box.setLayout(self.program_parameters_layout)
@@ -386,7 +378,7 @@ class mainWindow(QMainWindow):
                 self.run_setpoint_characterization()
 
         else:
-            logger.info('program start button untoggled')
+            logger.info('program start button unclicked')
             self.program_start_btn.setText('Start')
             self.threadIsFinished()
     
@@ -642,7 +634,6 @@ class mainWindow(QMainWindow):
         if checked:
             self.olfactometer = olfa_driver_48line.olfactometer_window()
             self.device_layout.addWidget(self.olfactometer)
-            logger.debug('created olfactometer object')
             self.add_olfa_orig_btn.setEnabled(False)
             self.add_olfa_48line_btn.setText('Remove olfactometer\n(48-line)')
             self.olfa_type_label.setText('48-line olfa')
@@ -711,7 +702,7 @@ class mainWindow(QMainWindow):
     
     def begin_record_btn_clicked(self):
         if self.begin_record_btn.isChecked() == True:
-            logger.debug('begin record button is checked')
+            logger.debug('begin record button clicked')
             self.begin_record_btn.setText('Pause Recording')
             self.end_record_btn.setEnabled(True)
 
@@ -786,7 +777,6 @@ class mainWindow(QMainWindow):
     
 
 if __name__ == "__main__":
-    logger.debug('opening window')
     app1 = QApplication(sys.argv)
     theWindow = mainWindow()
     theWindow.show()
