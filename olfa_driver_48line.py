@@ -100,7 +100,7 @@ class Vial(QGroupBox):
         self.cal_table_layout.addWidget(self.cal_table_combobox)
         #self.cal_table_layout.addWidget(self.cal_table_set_btn)
         self.cal_table_updated(self.cal_table_combobox.currentText())
-
+        
         # READ FLOW VALUES
         self.readFromThisVial = QPushButton(text="read flow vals", checkable=True, toggled=self.readFlow_btn_toggled)
         
@@ -108,8 +108,7 @@ class Vial(QGroupBox):
         self.create_vial_details_window()
         self.vial_details_btn = QPushButton('Vial Details',checkable=True)#,toggled=self.toggle_vial_details_window)
         self.vial_details_btn.clicked.connect(lambda: self.vial_details_window.show())
-        #self.toggle_vial_details_window(self)
-
+        
         '''
         self.calibrate_vial_edit = QLineEdit(text='100')
         self.calibrate_vial_btn = QPushButton(text="calibrate")
@@ -121,7 +120,7 @@ class Vial(QGroupBox):
         
         # - debug window
         # - current flow value (?)
-
+        
         # LAYOUT
         self.layout = QFormLayout()
         self.layout.addRow(self.open_valve_layout)
@@ -225,7 +224,7 @@ class Vial(QGroupBox):
         # disable until advanced options toggled
         self.flow_control_box.setEnabled(False)
         self.manual_debug_box.setEnabled(False)
-
+        
         self.vial_details_window.hide()
     
     
@@ -233,7 +232,7 @@ class Vial(QGroupBox):
     def K_parameter_update(self, Kx, value):
         strToSend = 'S_Kx_' + Kx + str(value) + '_' + self.full_vialNum
         self.parent.parent.send_to_master(strToSend)
-        
+    
     def setpoint_btn_clicked(self, value):
         # - convert from sccm to integer
         setpoint_sccm = value
@@ -265,14 +264,15 @@ class Vial(QGroupBox):
     def toggled_ctrlOpen(self):
         # TODO
         logger.info('prop valve open toggled (not set up)')
-        
+    
     def toggled_valveOpen(self):
         # TODO
         logger.info('isolation valve open toggled (not set up)')
         
     def calibrate_flow_sensor_btn_clicked(self):
+        # TODO
         logger.warning('calibrate flow sensor not set up yet')
-
+    
     def toggled_advanced_settings(self, checked):
         if checked:
             self.flow_control_box.setEnabled(True)
@@ -367,8 +367,11 @@ class olfactometer_window(QGroupBox):
         self.slave_objects[0].setEnabled(True)
     
     def get_calibration_tables(self):
+        '''
         #self.flow_cal_dir = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\OlfaControl_GUI\\calibration_tables'
         self.flow_cal_dir = 'C:\\Users\\Admin\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\OlfaControl_GUI\\calibration_tables'
+        '''
+        self.flow_cal_dir = utils.find_olfaControl_directory() + '\\calibration_tables' # NOTE: this takes a super long time
         
         if os.path.exists(self.flow_cal_dir):
             logger.debug('loading flow sensor calibration tables (%s)', self.flow_cal_dir)
@@ -416,9 +419,8 @@ class olfactometer_window(QGroupBox):
                     logger.info('no calibration files found in this directory')
             
         else:
-            logger.warning('Cannot find flow cal directory (%s)', self.flow_cal_dir)   # TODO this is big issue if none found
-
-
+            logger.warning('Cannot find flow cal directory (searched in %s)', self.flow_cal_dir)   # TODO this is big issue if none found
+    
     def generate_ui(self):
         self.create_connect_box()
         self.create_master_groupbox()
