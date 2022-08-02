@@ -45,6 +45,7 @@ class Vial(QGroupBox):
         self.slaveName = parent.name
         self.vialNum = vialNum
         self.full_vialNum = self.slaveName + self.vialNum
+        self.olfactometer_parent_object = self.parent.parent
         
         self.cal_table = default_cal_table
         self.Kp_value = def_Kp_value
@@ -84,7 +85,8 @@ class Vial(QGroupBox):
         
         # CALIBRATION TABLE
         self.cal_table_combobox = QComboBox()
-        self.cal_table_combobox.addItems(self.parent.parent.sccm2Ard_dicts)
+        #self.cal_table_combobox.addItems(self.parent.parent.sccm2Ard_dicts)
+        self.cal_table_combobox.addItems(self.olfactometer_parent_object.sccm2Ard_dicts)
         self.cal_table_combobox.setCurrentText(self.cal_table)  # TODO: change this to cycle through and find that cal table, set the index to that
         self.cal_table_combobox.currentIndexChanged.connect(lambda: self.cal_table_updated(self.cal_table_combobox.currentText()))
         '''
@@ -135,7 +137,7 @@ class Vial(QGroupBox):
 
         # Flow Calibration Table
         self.db_cal_table_wid = QComboBox()
-        self.db_cal_table_wid.addItems(self.parent.parent.ard2Sccm_dicts)
+        self.db_cal_table_wid.addItems(self.olfactometer_parent_object.ard2Sccm_dicts)
         self.db_cal_table_wid.setCurrentText(self.cal_table)
         self.db_cal_table_wid.currentIndexChanged.connect(lambda: self.cal_table_updated(self.db_cal_table_wid.currentText()))
         self.db_calibrate_sensor_btn = QPushButton(text='Calibrate')
@@ -231,7 +233,7 @@ class Vial(QGroupBox):
     # ACTIONS
     def K_parameter_update(self, Kx, value):
         strToSend = 'S_Kx_' + Kx + str(value) + '_' + self.full_vialNum
-        self.parent.parent.send_to_master(strToSend)
+        self.olfactometer_parent_object.send_to_master(strToSend)
     
     def setpoint_btn_clicked(self, value):
         # - convert from sccm to integer
@@ -239,23 +241,37 @@ class Vial(QGroupBox):
         setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
 
         strToSend = 'S_Sp_' + str(setpoint_integer) + '_' + self.slaveName + self.vialNum
-        self.parent.parent.send_to_master(strToSend)    # send to olfactometer_window
+        self.olfactometer_parent_object.send_to_master(strToSend)    # send to olfactometer_window
         
     def vial_button_clicked(self):
+        # TODO: sync this with the other vial button toggled function
+
         # TODO toggle it until the duration has passed
         strToSend = 'S_OV_' + str(self.valve_duration_spinbox.value()) + '_' + self.parent.name + self.vialNum
-        self.parent.parent.send_to_master(strToSend)
+        self.olfactometer_parent_object.send_to_master(strToSend)
         logger.debug('Opening %s for %s seconds',self.parent.name + self.vialNum, self.valve_duration_spinbox.value())
+        
+        # TODO change this to a function within olfa driver perhap
+        # send to main GUI window (to write to datafile)
+        device = 'olfactometer ' + self.full_vialNum
+        unit = 'OV'
+        value = str(self.valve_duration_spinbox.value())
+        try:
+            self.olfactometer_parent_object.window().receive_data_from_device(device,unit,value)
+        except AttributeError as err: # if main window now open
+            pass
+
+
         
     def readFlow_btn_toggled(self, checked):
         if checked:
             self.readFromThisVial.setText("stop getting flow vals")
             strToSend = 'MS_debug_' + self.parent.name + self.vialNum
-            self.parent.parent.send_to_master(strToSend)
+            self.olfactometer_parent_object.send_to_master(strToSend)
         else:
             self.readFromThisVial.setText("read flow vals")
             strToSend = 'MS_' + self.parent.name + self.vialNum
-            self.parent.parent.send_to_master(strToSend)
+            self.olfactometer_parent_object.send_to_master(strToSend)
         
     def toggled_PID(self):
         # TODO
@@ -290,11 +306,11 @@ class Vial(QGroupBox):
 
         # open proportional valve
         open_pv_command = 'S_OC_' + self.parent.name + self.vialNum
-        self.parent.parent.send_to_master(open_pv_command)
+        self.olfactometer_parent_object.send_to_master(open_pv_command)
 
         # open isolation valve
         open_iv_command = 'S_OV_5_' + self.parent.name + self.vialNum
-        self.parent.parent.send_to_master(open_iv_command)
+        self.olfactometer_parent_object.send_to_master(open_iv_command)
 
         # read flow values
         # TODO
@@ -304,8 +320,8 @@ class Vial(QGroupBox):
     def cal_table_updated(self, new_cal_table): # TODO
         self.cal_table = self.cal_table_combobox.currentText()
 
-        self.intToSccm_dict = self.parent.parent.ard2Sccm_dicts.get(self.cal_table)
-        self.sccmToInt_dict = self.parent.parent.sccm2Ard_dicts.get(self.cal_table)
+        self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
+        self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)
 
 class slave_8vials(QGroupBox):
 
@@ -650,9 +666,8 @@ class olfactometer_window(QGroupBox):
                 text = text.rstrip('\r\n')
                 self.raw_read_display.append(text)
 
+                # IF NAME/ADDRESS WERE SENT: enable this slave
                 strToFind = 'name: '
-                
-                # IF NAME/ADDRESS WERE SENT
                 if strToFind in text:
                     text=text[3:]       # remove logging info
                     
@@ -671,7 +686,6 @@ class olfactometer_window(QGroupBox):
                     charsToRemove = len(strToFind) + beginning_idx
                     slave_address = text[charsToRemove:]
                     
-                    
                     '''
                     for s in self.slave_objects:
                         if s.name == slave_name_received:
@@ -680,16 +694,14 @@ class olfactometer_window(QGroupBox):
                             self.nothing_layout.addWidget(self.slave_scrollArea)
                             self.slave_groupbox.setLayout(self.nothing_layout)
                     '''
-                    
-                    # enable groupbox for this slave
+                    # enable groupbox for this slave & add the address
                     for s in self.slave_objects:
                         if s.name == slave_name_received:
                             s.setEnabled(True)
-                            # & add the address
                             address_label = 'Slave Address: {}'.format(slave_address)
                             s.slave_address_label.setText(address_label)
                         
-                # IF FLOW UPDATE WAS SENT
+                # IF FLOW UPDATE WAS SENT: send to main GUI window (to write to datafile)
                 if len(text) == 17:
                     text = text[3:]     # remove arduino logging info
 
@@ -704,8 +716,7 @@ class olfactometer_window(QGroupBox):
                     value = flowVal
                     try:
                         self.window().receive_data_from_device(device,unit,value)
-                    except AttributeError as err:
-                        # if main window is not open
+                    except AttributeError as err:   # if main window is not open
                         pass
             
             except UnicodeDecodeError as err:
@@ -715,12 +726,10 @@ class olfactometer_window(QGroupBox):
         bArr_send = strToSend.encode()
         try:
             if self.serial.isOpen():
-                self.serial.write(bArr_send)
-                self.raw_write_display.append(strToSend)
-                #logger.debug('sent to %s: %s', self.port, strToSend)
+                self.serial.write(bArr_send)                # send to Arduino
+                self.raw_write_display.append(strToSend)    # display string that was sent
             else:
                 print('Serial port not open, cannot send parameter: %s', strToSend)
-
         except AttributeError as err:
             print('(Attribute Error) Serial port not open, cannot send parameter: %s', strToSend)
 
