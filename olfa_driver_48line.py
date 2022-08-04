@@ -152,12 +152,12 @@ class Vial(QGroupBox):
         self.db_std_widgets_box = QGroupBox()
 
         # Open Vial
-        self.db_open_valve_wid = QLineEdit(text='5')        # pos change to spinbox so min/max can be set
+        self.db_open_valve_wid = QLineEdit(text='5',returnPressed=lambda: self.vial_button_clicked)        # pos change to spinbox so min/max can be set
         self.db_open_valve_btn = QPushButton('Open vial')
         self.db_open_valve_btn.clicked.connect(self.vial_button_clicked)
         
         # Setpoint
-        self.db_setpoint_value_box = QLineEdit(text='100')
+        self.db_setpoint_value_box = QLineEdit(text=default_setpoint,returnPressed=lambda: self.setpoint_btn_clicked(self.db_setpoint_value_box.text()))
         self.db_setpoint_send_btn = QPushButton('Update Spt')
         self.db_setpoint_send_btn.clicked.connect(lambda: self.setpoint_btn_clicked(self.db_setpoint_value_box.text()))
         
@@ -167,7 +167,7 @@ class Vial(QGroupBox):
         self.db_cal_table_combobox.setCurrentText(self.cal_table)
         self.db_cal_table_combobox.currentIndexChanged.connect(lambda: self.cal_table_updated(self.db_cal_table_combobox.currentText()))
         self.db_calibrate_sensor_btn = QPushButton(text='Calibrate')
-        self.db_calibrate_sensor_btn.clicked.connect(self.calibrate_flow_sensor_btn_clicked)    # TODO
+        self.db_calibrate_sensor_btn.clicked.connect(self.calibrate_flow_sensor_btn_clicked)
 
         # set second widgets to the same width
         width_to_use = self.db_cal_table_combobox.sizeHint().width()
@@ -197,7 +197,7 @@ class Vial(QGroupBox):
     def vial_details_create_flow_ctrl_box(self):
         self.db_flow_control_box = QGroupBox('Flow control parameters')
 
-        self.db_Kp_wid = QLineEdit(text=str(self.Kp_value)) # make these smaller width
+        self.db_Kp_wid = QLineEdit(text=str(self.Kp_value))
         self.db_Ki_wid = QLineEdit(text=str(self.Ki_value))
         self.db_Kd_wid = QLineEdit(text=str(self.Kd_value))
         self.db_Kp_send = QPushButton(text='Send')
@@ -210,6 +210,9 @@ class Vial(QGroupBox):
         self.db_Kp_wid.setMaximumWidth(100)
         self.db_Ki_wid.setMaximumWidth(100)
         self.db_Kd_wid.setMaximumWidth(100)
+        self.db_Kp_send.setMaximumWidth(80)
+        self.db_Ki_send.setMaximumWidth(80)
+        self.db_Kd_send.setMaximumWidth(80)
         
         flow_control_lbls = QVBoxLayout()
         flow_control_lbls.addWidget(QLabel('Kp:'))
@@ -431,7 +434,7 @@ class olfactometer_window(QGroupBox):
             cal_file_names = os.listdir(self.flow_cal_dir)
             cal_file_names = [fn for fn in cal_file_names if fn.endswith(file_type)]    # only txt files # TODO: change to csv
             if cal_file_names == []:
-                print('no cal files found')
+                logger.warning('no cal files found')
             else:
                 # create dictionaries
                 new_sccm2Ard_dicts = {}
@@ -455,7 +458,7 @@ class olfactometer_window(QGroupBox):
                                     sccm2Ard[int(row['SCCM'])] = int(row['int'])
                                     ard2Sccm[int(row['int'])] = int(row['SCCM'])
                                 except KeyError as err:
-                                    print('error: ', err)
+                                    logger.warning('error: %s',err)
                                     logger.warning('%s does not have correct headings for calibration files', cal_file)
                                     x = 1   # don't keep trying to read this file
                     if bool(sccm2Ard) == True:
@@ -633,9 +636,8 @@ class olfactometer_window(QGroupBox):
             try:
                 self.set_connected(False)
                 self.serial.close()
-            except AttributeError:
-                # TODO
-                pass
+            except AttributeError as err:
+                logger.error("error :( --> %s", err)
     
     def set_connected(self, connected):
         if connected == True:
@@ -763,11 +765,11 @@ class olfactometer_window(QGroupBox):
             if self.serial.isOpen():
                 self.serial.write(bArr_send)                # send to Arduino
                 self.raw_write_display.append(strToSend)    # display string that was sent
-            else:
-                print('Serial port not open, cannot send parameter: %s', strToSend)
-        except AttributeError as err:
-            print('(Attribute Error) Serial port not open, cannot send parameter: %s', strToSend)
 
+            else:
+                logger.warning('Serial port not open, cannot send parameter: %s', strToSend)
+        except AttributeError as err:
+            logger.warning('(Attribute Error) Serial port not open, cannot send parameter: %s', strToSend)
 
 
 if __name__ == "__main__":
