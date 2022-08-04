@@ -31,6 +31,7 @@ default_dur_OFF = 5
 default_numTrials = 5
 no_active_slaves_warning = 'no active slaves pls connect olfa or something'
 waitBtSpAndOV = .5
+default_pid_gain = '10x'
 
 current_date = utils.currentDate
 
