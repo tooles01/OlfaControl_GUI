@@ -339,6 +339,9 @@ class mainWindow(QMainWindow):
             self.p_dur_layout.addWidget(self.p_dur_off_wid)
             self.p_dur_layout.addWidget(QLabel('# trials:'))
             self.p_dur_layout.addWidget(self.p_numTrials_wid)
+
+            self.p_pid_gain = QLineEdit(text=default_pid_gain)
+            
             
             if self.program_parameters_layout.count() > 0:  # TODO
                 # clear this shit
@@ -352,7 +355,38 @@ class mainWindow(QMainWindow):
             self.program_parameters_layout.addRow(self.p_vial_select_layout)
             self.program_parameters_layout.addRow(self.p_spt_layout)
             self.program_parameters_layout.addRow(self.p_dur_layout)
+            self.program_parameters_layout.addRow(QLabel('PID gain:'),self.p_pid_gain)
             self.program_parameters_layout.addRow(self.program_start_btn)
+
+            # change datafile name
+            olfa_48line_results_dir = main_datafile_directory + '\\48-line olfa' + '\\' + current_date
+            if not os.path.exists(olfa_48line_results_dir): os.mkdir(olfa_48line_results_dir)
+
+            # check what files are in this folder
+            list_of_files = os.listdir(olfa_48line_results_dir)
+            list_of_files = [x for x in list_of_files if '.csv' in x]   # only csv files
+            if not list_of_files: self.last_datafile_number = -1
+            else:
+                # find the number of the last data file
+                last_datafile = list_of_files[len(list_of_files)-1]
+                idx_fileExt = last_datafile.rfind('.')
+                last_datafile = last_datafile[:idx_fileExt] # remove file extension
+                idx_underscore = last_datafile.rfind('_')   # find last underscore
+                last_datafile_num = last_datafile[idx_underscore+1:]
+                if last_datafile_num.isnumeric():   # if what's after the underscore is a number
+                    self.last_datafile_number = int(last_datafile_num)
+                else:
+                    self.last_datafile_number = 99
+                    logger.warning('ew')    # TODO
+
+            # get data file number
+            self.this_datafile_number = self.last_datafile_number + 1
+            self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2) # zero pad
+            
+            # create data file name
+            data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
+            self.data_file_name_lineEdit.setText(data_file_name)
+
 
         else:
             logger.warning('program selected is not set up')
