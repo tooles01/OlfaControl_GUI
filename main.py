@@ -26,8 +26,8 @@ programs_orig = ['the program']
 # PARAMETERS FOR 48-LINE OLFACTOMETER
 vials = ['1','2','3','4','5','6','7','8']
 default_setpoint = '10,20,30,40,50,60,70,80,90,100'
-default_dur_ON = 1
-default_dur_OFF = 1
+default_dur_ON = 5
+default_dur_OFF = 5
 default_numTrials = 5
 no_active_slaves_warning = 'no active slaves pls connect olfa or something'
 waitBtSpAndOV = .5
@@ -136,7 +136,10 @@ class mainWindow(QMainWindow):
         self.device_layout = QVBoxLayout()
         self.device_groupbox.setLayout(self.device_layout)
 
-
+        w = self.datafile_groupbox.sizeHint().width()
+        self.datafile_groupbox.setFixedWidth(w + 5)
+        self.settings_box.setMinimumWidth(w+5)
+    
     def create_general_settings_box(self):
         self.general_settings_box = QGroupBox('General Settings')
 
@@ -183,7 +186,7 @@ class mainWindow(QMainWindow):
         self.datafile_groupbox = QGroupBox('Data file')
         
         # find / make directory for today's files
-        today_resultfiles_dir = main_datafile_directory + '\\' + current_date        # TODO: update this to search any computer
+        today_resultfiles_dir = main_datafile_directory + '\\' + current_date
         if not os.path.exists(today_resultfiles_dir): os.mkdir(today_resultfiles_dir)   # TODO does this need to be here? or should these be when we start recording to a file
         
         # check what files are in this folder
@@ -569,12 +572,12 @@ class mainWindow(QMainWindow):
         self.obj_sptchar.duration_off = copy.copy(dur_OFF)
         
         # SET VIAL TO DEBUG MODE
-        if thisVial.readFromThisVial.isChecked() == False:
-            thisVial.readFromThisVial.toggle()
+        if thisVial.read_flow_vals_btn.isChecked() == False:
+            thisVial.read_flow_vals_btn.toggle()
         # print a warning if any other vials are also printing
         for s in self.olfactometer.slave_objects:
             for v in s.vials:
-                if v.readFromThisVial.isChecked() == True:
+                if v.read_flow_vals_btn.isChecked() == True:
                     if v.full_vialNum == thisVial.full_vialNum:
                         pass
                     else:
@@ -582,7 +585,7 @@ class mainWindow(QMainWindow):
         
         # START WORKER THREAD
         self.obj_sptchar.threadON = True
-        logger.info('starting thread_olfa')
+        logger.debug('starting thread_olfa')
         self.thread_olfa.start()            # # start thread -> worker_sptChar iterates through stimuli
     
     def set_up_threads_sptchar(self):
@@ -625,6 +628,9 @@ class mainWindow(QMainWindow):
     def send_OpenValve(self, vial_name:str, dur:int):
         strToSend = 'S_OV_' + str(dur) + '_' + vial_name
         self.olfactometer.send_to_master(strToSend)
+
+        # write to datafile
+        self.receive_data_from_device('olfactometer ' + vial_name,'OV',str(dur))
         
     # PROGRAMS FOR 48-LINE OLFA
     ##############################
