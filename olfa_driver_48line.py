@@ -24,6 +24,7 @@ slave_names = ['A',
                 'F']
 
 # DEFAULT VALUES
+default_setpoint = '50'
 default_cal_table = 'Honeywell_3100V'
 def_Kp_value = '0.0500'
 def_Ki_value = '0.0001'
@@ -75,7 +76,7 @@ class Vial(QGroupBox):
         self.open_valve_layout.addWidget(self.valve_open_btn)
         
         # SETPOINT
-        self.setpoint_value_box = QSpinBox(maximum=200,value=100)
+        self.setpoint_value_box = QSpinBox(maximum=200,value=int(default_setpoint))
         self.setpoint_send_btn = QPushButton(text="Update\nSpt")
         self.setpoint_send_btn.clicked.connect(lambda: self.setpoint_btn_clicked(self.setpoint_value_box.value()))
         self.setpoint_layout = QHBoxLayout()
@@ -277,30 +278,29 @@ class Vial(QGroupBox):
         # - convert from sccm to integer
         setpoint_sccm = value
         setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
-
+        
+        # send to olfactometer_window (to send to Arduino)
         strToSend = 'S_Sp_' + str(setpoint_integer) + '_' + self.slaveName + self.vialNum
-        self.olfactometer_parent_object.send_to_master(strToSend)    # send to olfactometer_window
+        self.olfactometer_parent_object.send_to_master(strToSend)    
+        
+        # send to main GUI window (to write to datafile)
+        device = 'olfactometer ' + self.full_vialNum
+        self.write_to_datafile(device,'Sp',setpoint_integer)
         
     def vial_button_clicked(self):
         # TODO: sync this with the other vial button toggled function
-
-        # TODO toggle it until the duration has passed
+        
+        # send to olfactometer_window (to send to Arduino)
         strToSend = 'S_OV_' + str(self.valve_duration_spinbox.value()) + '_' + self.parent.name + self.vialNum
-        self.olfactometer_parent_object.send_to_master(strToSend)
+        self.olfactometer_parent_object.send_to_master(strToSend)   # TODO toggle it until the duration has passed
         logger.debug('Opening %s for %s seconds',self.parent.name + self.vialNum, self.valve_duration_spinbox.value())
         
-        # TODO change this to a function within olfa driver perhap
         # send to main GUI window (to write to datafile)
         device = 'olfactometer ' + self.full_vialNum
-        unit = 'OV'
         value = str(self.valve_duration_spinbox.value())
-        try:
-            self.olfactometer_parent_object.window().receive_data_from_device(device,unit,value)
-        except AttributeError as err: # if main window now open
-            pass
-
-
-        
+        self.write_to_datafile(device,'OV',value)
+    
+    
     def readFlow_btn_toggled(self, checked):
         if checked:
             self.read_flow_vals_btn.setText("stop getting flow vals")
@@ -360,6 +360,13 @@ class Vial(QGroupBox):
 
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)
+    
+    def write_to_datafile(self,device,unit,value):
+        try:
+            self.olfactometer_parent_object.window().receive_data_from_device(device,unit,value)
+        except AttributeError:
+            pass    # main window not open
+
 
 class slave_8vials(QGroupBox):
 
@@ -383,7 +390,7 @@ class slave_8vials(QGroupBox):
 
         self.slave_address_label = QLabel(text='Slave address:')
         self.temp_label = QLabel("slave active, whatever")
-        # add a way to apply commands to multiple vials at once
+        # add a way to apply commands to multiple vials at once # TODO
         # ex: check the ones you want to apply this setpoint to
 
         self.slaveInfo_layout = QVBoxLayout()
@@ -757,7 +764,7 @@ class olfactometer_window(QGroupBox):
                         pass
             
             except UnicodeDecodeError as err:
-                print("Serial read error")
+                logger.warning("Serial read error")
 
     def send_to_master(self, strToSend):
         bArr_send = strToSend.encode()
