@@ -40,66 +40,6 @@ if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log 
 console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
 
-class vial_timer(QWidget):
-
-    def __init__(self, parent):
-        super().__init__()
-        self.parent = parent
-        self.name = self.parent.full_vialNum
-        
-        self.duration = 1
-
-        self.generate_ui()
-        self.setWindowTitle(self.name + ' timer')
-        
-        self.hide()
-
-        
-    def generate_ui(self):        
-        self.theTimer = QTimer()
-        self.theTimer.timeout.connect(self.show_time)
-        
-        self.valve_duration_label = QLabel()
-        self.stopBtn = QPushButton(text='Close valve', clicked=self.end_early)
-
-        layout = QFormLayout()
-        layout.addRow(QLabel(self.name + ' open:'),self.valve_duration_label)
-        layout.addRow(self.stopBtn)
-        self.setLayout(layout)
-        
-    def show_time(self):
-        curTime = datetime.now()
-        curValveDur = curTime - self.valveOpenTime
-        if curValveDur >= self.valve_open_duration:
-            self.end_timer()
-        
-        '''
-        curTimeDisplay = curTime.strftime("%H:%M:%S.%f")
-        curTimeDisplay = curTimeDisplay[:-3]
-        self.timeLabel.setText(curTimeDisplay)
-        '''
-        valve_dur_display_value = str(curValveDur)
-        self.valve_duration_label.setText(valve_dur_display_value)
-
-    def start_timer(self):
-        self.valveOpenTime = datetime.now()
-        self.valve_open_duration = timedelta(0, self.duration)
-        
-        updateFrequency = 50
-        self.theTimer.start(updateFrequency)
-    
-    def end_early(self):
-        self.theTimer.stop()
-        self.hide()
-        self.parent.close_valve_early()
-
-    def end_timer(self):
-        self.theTimer.stop()
-        self.hide()
-        self.parent.valve_timer_finished()
-
-
-
 class Vial(QGroupBox):
 
     def __init__(self, parent, vialNum):
@@ -127,10 +67,9 @@ class Vial(QGroupBox):
     def generate_stuff(self):
         # VALVE OPEN DURATION
         self.valve_duration_spinbox = QSpinBox(value=5)
-        self.valve_open_btn = QPushButton(text=str("Open " + self.slaveName + self.vialNum),
-            #checkable=True,
+        self.valve_open_btn = QPushButton(text=str("Open " + self.slaveName + self.vialNum),checkable=True,
             toolTip="open vial")
-        self.valve_open_btn.clicked.connect(lambda: self.open_valve_btn_clicked(self.valve_duration_spinbox.value()))
+        self.valve_open_btn.toggled.connect(self.mainwin_vialOpen_toggled)
         self.open_valve_layout = QHBoxLayout()
         self.open_valve_layout.addWidget(self.valve_open_btn)
         self.open_valve_layout.addWidget(QLabel("dur(s):"))
@@ -161,6 +100,15 @@ class Vial(QGroupBox):
         # VIAL DETAILS
         self.create_vial_details_window()
         self.vial_details_btn = QPushButton('Vial\nDetails',checkable=True,toggled=self.vial_details_btn_toggled)
+
+        # VIAL TIMER
+        self.valve_timer = QTimer()
+        self.valve_timer.timeout.connect(self.show_time)
+        self.valveTimer_lbl = QLabel(self.full_vialNum + ' open:')
+        self.valveTimer_duration_label = QLabel()
+        self.valveTimer_layout = QHBoxLayout()
+        self.valveTimer_layout.addWidget(self.valveTimer_lbl)
+        self.valveTimer_layout.addWidget(self.valveTimer_duration_label)
         
         '''
         self.calibrate_vial_edit = QLineEdit(text='100')
@@ -172,10 +120,9 @@ class Vial(QGroupBox):
         '''
         # - current flow value (?)
 
-        self.valve_timer_window = vial_timer(self)
-        
         # LAYOUT
         self.layout = QFormLayout()
+        self.layout.addRow(self.valveTimer_layout)
         self.layout.addRow(self.open_valve_layout)
         self.layout.addRow(self.setpoint_layout)
         self.layout.addRow(self.cal_table_layout)
@@ -183,7 +130,7 @@ class Vial(QGroupBox):
         
     def create_vial_details_window(self):
         self.vial_details_window = QWidget()
-        self.vial_details_window.setWindowTitle('Vial ' + self.full_vialNum + ' - Debug')
+        self.vial_details_window.setWindowTitle('Vial ' + self.full_vialNum + ' - Details')
         
         self.vial_details_create_std_widgets_box()
         self.db_advanced_btn = QPushButton(text='Enable Advanced Options',checkable=True,toggled=self.toggled_advanced_settings)    #self.db_advanced_btn.toggled.connect(self.toggled_advanced_settings)        
@@ -209,6 +156,13 @@ class Vial(QGroupBox):
         self.vial_debug_window_layout.addLayout(layout_col2_data)
         self.vial_details_window.setLayout(self.vial_debug_window_layout)
         
+        # set boxes to the same height
+        h1 = self.db_flow_control_box.sizeHint().height()
+        h2 = self.db_manual_control_box.sizeHint().height()
+        h_to_use = max(h1,h2)
+        self.db_flow_control_box.setFixedHeight(h_to_use)
+        self.db_manual_control_box.setFixedHeight(h_to_use)
+
         self.vial_details_window.hide()
     
     def vial_details_create_std_widgets_box(self):
@@ -216,10 +170,9 @@ class Vial(QGroupBox):
 
         # Open Vial
         self.db_open_valve_wid = QLineEdit(text='5')        # pos change to spinbox so min/max can be set
-        self.db_open_valve_btn = QPushButton('Open vial')
-        #self.db_open_valve_wid.returnPressed.connect(self.open_valve_btn_clicked)
-        self.db_open_valve_wid.returnPressed.connect(lambda: self.open_valve_btn_clicked(self.db_open_valve_wid.text()))
-        self.db_open_valve_btn.clicked.connect(lambda: self.open_valve_btn_clicked(self.db_open_valve_wid.text()))
+        self.db_open_valve_btn = QPushButton('Open vial',checkable=True)
+        self.db_open_valve_btn.toggled.connect(self.debugwin_vialOpen_toggled)
+        #self.db_open_valve_wid.returnPressed.connect(lambda: self.open_valve_btn_clicked(self.db_open_valve_wid.text()))
         
         # Setpoint
         self.db_setpoint_value_box = QLineEdit(text=default_setpoint)
@@ -300,11 +253,11 @@ class Vial(QGroupBox):
 
     def vial_details_create_man_control_box(self):
         self.db_manual_control_box = QGroupBox('Manual Controls')
-        self.db_PID_toggle_btn = QPushButton(text="Turn flow control off",checkable=True,toggled=self.flow_ctrl_toggled)
+        self.db_PID_toggle_btn = QPushButton(text="Turn flow control off",checkable=True,toggled=self.flowCtrl_toggled)
         self.db_PID_toggle_btn.setMinimumWidth(self.db_PID_toggle_btn.sizeHint().width())   # just for sizing
         self.db_PID_toggle_btn.setText('Turn flow control on')                              # just for sizing
-        self.db_ctrl_toggle_btn = QPushButton(text="Open prop valve",checkable=True,toggled=self.ctrl_open_toggled)
-        self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True,toggled=self.valve_open_toggled)
+        self.db_ctrl_toggle_btn = QPushButton(text="Open prop valve",checkable=True,toggled=self.propValve_toggled)
+        self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True)#,toggled=self.vialOpen_toggled)
         manual_debug_layout = QVBoxLayout()
         manual_debug_layout.addWidget(self.db_PID_toggle_btn)
         manual_debug_layout.addWidget(self.db_ctrl_toggle_btn)
@@ -316,8 +269,8 @@ class Vial(QGroupBox):
     
     # ACTIONS / BUTTON FUNCTIONS
     def vial_details_btn_toggled(self, checked):
-        # Show vial details window
         if checked:
+            # Show vial details window
             self.vial_details_window.show()
             self.vial_details_btn.setText('Close Vial\nDetails')
             # disable the other buttons
@@ -327,8 +280,8 @@ class Vial(QGroupBox):
             self.setpoint_send_btn.setEnabled(False)
             self.cal_table_combobox.setEnabled(False)
             self.read_flow_vals_btn.setEnabled(False)
-        # Close vial details window
         else:
+            # Close vial details window
             self.vial_details_window.hide()
             self.vial_details_btn.setText('Vial\nDetails')
             # enable the other buttons
@@ -355,6 +308,33 @@ class Vial(QGroupBox):
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)    
     
+    def start_valve_timer(self, duration):
+        logger.debug('starting valve timer')
+        self.valve_open_time = datetime.now()
+        self.valve_open_duration = timedelta(0,int(duration))
+
+        update_frequency = 50
+        self.valve_timer.start(update_frequency)
+    
+    def show_time(self):
+        current_time = datetime.now()
+        current_valve_dur = current_time - self.valve_open_time
+        if current_valve_dur >= self.valve_open_duration:
+            self.end_valve_timer()
+
+        valve_dur_display_value = str(current_valve_dur)
+        self.valveTimer_duration_label.setText(valve_dur_display_value)
+
+    def end_valve_timer(self):
+        logger.debug('ending valve timer')
+        self.valve_timer.stop()
+
+        # check which button to untoggle
+        if self.db_open_valve_btn.isChecked():
+            logger.debug('untoggling debug window open valve button')
+            self.db_open_valve_btn.toggle()
+        if self.valve_open_btn.isChecked():
+            self.valve_open_btn.toggle()
     
     # COMMANDS
     def K_parameter_update(self, Kx, value):
@@ -374,24 +354,6 @@ class Vial(QGroupBox):
         device = 'olfactometer ' + self.full_vialNum
         self.write_to_datafile(device,'Sp',setpoint_integer)
         
-    def open_valve_btn_clicked(self, duration):
-        # TODO: sync this with the other vial button toggled function
-        
-        # send to olfactometer_window (to send to Arduino)
-        strToSend = 'S_OV_' + str(duration) + '_' + self.parent.name + self.vialNum
-        self.olfactometer_parent_object.send_to_master(strToSend)   # TODO toggle it until the duration has passed
-        logger.debug('Opening %s for %s seconds',self.parent.name + self.vialNum, str(duration))
-        
-        # send to main GUI window (to write to datafile)
-        device = 'olfactometer ' + self.full_vialNum
-        value = str(duration)
-        self.write_to_datafile(device,'OV',value)
-
-        # open valve timer popup window
-        self.valve_timer_window.duration = duration
-        self.valve_timer_window.show()
-        self.valve_timer_window.start_timer()
-    
     def readFlow_btn_toggled(self, checked):
         if checked:
             self.read_flow_vals_btn.setText("stop getting flow vals")
@@ -402,7 +364,7 @@ class Vial(QGroupBox):
             strToSend = 'MS_' + self.parent.name + self.vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
     
-    def flow_ctrl_toggled(self, checked):
+    def flowCtrl_toggled(self, checked):
         # Turn PID (flow control) on
         if checked:
             logger.debug('Flow control manually turned on')
@@ -416,23 +378,64 @@ class Vial(QGroupBox):
             self.olfactometer_parent_object.send_to_master(strToSend)
             self.db_PID_toggle_btn.setText('Turn flow control on')        
     
-    def ctrl_open_toggled(self, checked):
-        # Open proportional valve
+    def propValve_toggled(self, checked):
         if checked:
             logger.debug('Proportional valve manually opened')
             strToSend = 'S_OC_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
             self.db_ctrl_toggle_btn.setText('Close prop valve')
-        # Close proportional valve
         else:
             logger.debug('Proportional valve manually closed')
             strToSend = 'S_CC_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
             self.db_ctrl_toggle_btn.setText('Open prop valve')
         
-    def valve_open_toggled(self):
-        logger.info('isolation valve open toggled (not set up)')    # TODO
+    def mainwin_vialOpen_toggled(self, checked):
+        if checked:
+            logger.debug('main window vial open checked')
+            self.valve_open_btn.setText('Close ' + self.full_vialNum)
+            duration = self.valve_duration_spinbox.value()
+            self.vialOpen_checked(duration)
+        else:
+            self.valve_open_btn.setText('Open ' + self.full_vialNum)
+            self.vialOpen_unchecked()
+
+    def debugwin_vialOpen_toggled(self, checked):
+        if checked:
+            logger.debug('debug window vial open checked')
+            self.db_open_valve_btn.setText('Close vial')
+            duration = self.db_open_valve_wid.text()
+            self.vialOpen_checked(duration)
+        else:
+            self.db_open_valve_btn.setText('Open vial')
+            self.vialOpen_unchecked()
     
+    def vialOpen_checked(self, duration):
+        # send to olfactometer_window (to send to Arduino)
+        strToSend = 'S_OV_' + str(duration) + '_' + self.full_vialNum
+        self.olfactometer_parent_object.send_to_master(strToSend)
+        
+        # send to main GUI window (to write to datafile)
+        device = 'olfactometer ' + self.full_vialNum
+        self.write_to_datafile(device,'OV',str(duration))
+
+        # start valve timer
+        self.start_valve_timer(duration)
+    
+    def vialOpen_unchecked(self):
+        # if timer is still going: end it and make a note
+        if self.valve_timer.isActive():
+            logger.debug('valve was closed early')
+            self.end_valve_timer()
+
+            # send to olfactometer_window (to send to Arduino)
+            strToSend = 'S_CV_' + self.full_vialNum
+            self.olfactometer_parent_object.send_to_master(strToSend)
+
+            # send to main GUI window (to write to datafile)
+            device = 'olfactometer ' + self.full_vialNum
+            self.write_to_datafile(device,'CV','0')
+
     def calibrate_flow_sensor_btn_clicked(self):
         logger.warning('calibrate flow sensor not set up yet')  # TODO
     
@@ -454,30 +457,13 @@ class Vial(QGroupBox):
 
     '''
     
-    
     def write_to_datafile(self,device,unit,value):
         try:
             self.olfactometer_parent_object.window().receive_data_from_device(device,unit,value)
         except AttributeError:
             pass    # main window not open
     
-    # FOR VIAL TIMER    
-    def close_valve_early(self):
-        logger.debug('Vial ' + self.full_vialNum + 'closed early')
-        
-        # send to olfactometer_window (to send to Arduino)
-        strToSend = 'S_CV_' + self.full_vialNum
-        self.olfactometer_parent_object.send_to_master(strToSend)
 
-        # send to main GUI window (to write to datafile)
-        device = 'olfactometer ' + self.full_vialNum
-        self.write_to_datafile(device,'CV','0')
-    
-    def valve_timer_finished(self):
-        # untoggle vial button
-        logger.debug('timer finished called')
-        
-    
 class slave_8vials(QGroupBox):
 
     def __init__(self, parent, name):
