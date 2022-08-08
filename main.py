@@ -25,7 +25,8 @@ programs_orig = ['the program']
 
 # PARAMETERS FOR 48-LINE OLFACTOMETER
 vials = ['1','2','3','4','5','6','7','8']
-default_setpoint = '10,20,30,40,50,60,70,80,90,100'
+#default_setpoint = '10,20,30,40,50,60,70,80,90,100'
+default_setpoint = '10,20,30,40,50'
 default_dur_ON = 5
 default_dur_OFF = 5
 default_numTrials = 5
@@ -138,7 +139,7 @@ class mainWindow(QMainWindow):
         self.device_groupbox.setLayout(self.device_layout)
 
         w = self.datafile_groupbox.sizeHint().width()
-        self.datafile_groupbox.setFixedWidth(w + 5)
+        self.datafile_groupbox.setFixedWidth(w + 15)
         self.settings_box.setMinimumWidth(w+5)
     
     def create_general_settings_box(self):
@@ -237,11 +238,13 @@ class mainWindow(QMainWindow):
         self.add_olfa_48line_btn = QPushButton(text='Add Olfactometer\n(48-line)',checkable=True,toggled=self.add_olfa_48line_toggled)
         self.add_pid_btn = QPushButton(text='Add PID',checkable=True,toggled=self.add_pid_toggled)
         self.add_olfa_orig_btn = QPushButton(text='Add Olfactometer\n(original)',checkable=True,toggled=self.add_olfa_orig_toggled)
+        #self.add_flow_sens_btn = QPushButton(text='Add Honeywell 5100V')
         
         layout = QVBoxLayout()
         layout.addWidget(self.add_pid_btn)
         layout.addWidget(self.add_olfa_48line_btn)
         layout.addWidget(self.add_olfa_orig_btn)
+        #layout.addWidget(self.add_flow_sens_btn)
         self.add_devices_groupbox.setLayout(layout)
     
     def create_program_widgets(self):
@@ -641,7 +644,12 @@ class mainWindow(QMainWindow):
         #self.progSettingsBox.setEnabled(True)
         logger.info('Finished program')
 
-    def sendThisSetpoint(self, vial_name:str, sccmVal:int):
+        # end recording
+        if self.begin_record_btn.isChecked():
+            self.end_record_btn.click()
+
+
+    def sendThisSetpoint(self, vial_name:str, ard_val:int):
         # TODO: change worker_sptChar so it receives the entire vial object when it starts a program. then it'll already have the dictionary, etc
         
         '''
@@ -656,7 +664,7 @@ class mainWindow(QMainWindow):
         #ardVal = utils.convertToInt(float(sccmVal),dictToUse)
         '''
         
-        ard_val = 700   # fix this
+        #ard_val = 700   # fix this
         strToSend = 'S_Sp_' + str(ard_val) + '_' + vial_name
         self.olfactometer.send_to_master(strToSend)
         
@@ -772,15 +780,24 @@ class mainWindow(QMainWindow):
                 file_created_time = file_created_time[:-4]
                 Time = 'File Created: ', str(current_date + ' ' + file_created_time)
                 DataHead = 'Time','Instrument','Unit','Value'
+                #pid_line = str(self.p_pid_gain.text())
+                #pid_line_header = 'PIDgain',pid_line
                 with open(self.datafile_dir,'a',newline='') as f:
                     writer = csv.writer(f,delimiter=',')
                     writer.writerow(File)
                     writer.writerow(Time)
+                    #if self.program_to_run == 'setpoint characterization':
+                    #    writer.writerow(pid_line_header)
+                    #else:
+                    #    writer.writerow("")
                     writer.writerow("")
                     writer.writerow(DataHead)
                 self.data_file_textedit.append(datafile_name)
                 self.data_file_textedit.append('File Created: ' + str(current_date + ' ' + file_created_time))
-                self.data_file_textedit.append('Time, Instrument, Unit, Value')
+                # if setpoint char: write pid gain
+                #if self.program_to_run == 'setpoint characterization':
+                #    self.data_file_textedit.append('PID gain,' + pid_line)
+                #self.data_file_textedit.append('Time, Instrument, Unit, Value')
             else:   # TODO: throw an error if the file already exists
                 logger.info('Recording resumed')            
 
