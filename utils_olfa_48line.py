@@ -60,3 +60,31 @@ def convertToInt(SCCMval, dictionary):
     
     ardVal = round(ardVal)
     return int(ardVal)
+
+
+def convertToSCCM(ardVal, dictionary):
+    if ardVal in dictionary:    val_SCCM = dictionary.get(ardVal)
+    else:
+        minVal = min(dictionary)
+        maxVal = max(dictionary)
+        if ardVal < minVal:     val_SCCM = dictionary.get(minVal)
+        elif ardVal > maxVal:   val_SCCM = dictionary.get(maxVal)
+        else:
+            val1 = ardVal-1
+            flow1 = dictionary.get(val1)
+            while flow1 is None:
+                val1 = val1-1
+                flow1 = dictionary.get(val1)
+            val2 = ardVal+1
+            flow2 = dictionary.get(val2)
+            while flow2 is None:
+                val2 = val2+1
+                flow2 = dictionary.get(val2)
+            
+            slope = (flow2-flow1)/(val2-val1)
+            x1 = ardVal - val1
+            addNum = x1*slope
+            val_SCCM = flow1 + addNum
+            val_SCCM = round(val_SCCM,1)
+
+    return val_SCCM
