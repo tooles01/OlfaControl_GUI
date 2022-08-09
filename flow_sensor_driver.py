@@ -31,14 +31,16 @@ class flowSensor(QGroupBox):
 
         self.connected = False
 
-        self.className = type(self).__name__
-
         self.createConnectBox()
+        self.create_settings_box()
+        self.create_raw_data_box()
         self.createDataReceiveBoxes()
 
-        mainLayout = QHBoxLayout()
-        mainLayout.addWidget(self.connectBox)
-        mainLayout.addWidget(self.dataReceiveBox)
+        mainLayout = QGridLayout()
+        mainLayout.addWidget(self.connectBox,0,0,1,1)
+        mainLayout.addWidget(self.settings_box,1,0,1,1)
+        mainLayout.addWidget(self.raw_data_box,2,0,1,1)
+        mainLayout.addWidget(self.dataReceiveBox,0,1,3,1)
         self.setLayout(mainLayout)
     
     
@@ -47,27 +49,52 @@ class flowSensor(QGroupBox):
         self.connectBox = QGroupBox("Connect")
 
         self.portLbl = QLabel(text="Port/Device:")
-        self.portWidget = QComboBox(currentIndexChanged=self.portChanged)
+        self.port_widget = QComboBox(currentIndexChanged=self.portChanged)
         self.connectButton = QPushButton(checkable=True,toggled=self.toggled_connect)
         self.refreshButton = QPushButton(text="Refresh",clicked=self.getPorts)
         self.getPorts()
 
+        #readLbl = QLabel(text="raw data from serial port:")
+        #self.rawReadDisplay = QTextEdit(readOnly=True)
+        #self.rawReadSpace = QWidget()
+        #readLayout = QVBoxLayout()
+        #readLayout.addWidget(readLbl)
+        #readLayout.addWidget(self.rawReadDisplay)
+        #self.rawReadSpace.setLayout(readLayout)
+
+        self.connectBoxLayout = QFormLayout()
+        self.connectBoxLayout.addRow(self.portLbl,self.port_widget)
+        self.connectBoxLayout.addRow(self.refreshButton,self.connectButton)
+        #self.connectBoxLayout.addRow(self.rawReadSpace)
+        self.connectBox.setLayout(self.connectBoxLayout)
+
+    def create_settings_box(self):
+        self.settings_box = QGroupBox('Settings')
+
+        self.timebtreqs_wid = QLineEdit(text='100',returnPressed=lambda:self.send_to_arduino('MM_timebt_' + self.timebtreqs_wid.text()))
+        self.timebtreqs_btn = QPushButton(text="Send", clicked=lambda:self.send_to_arduino('MM_timebt_' + self.timebtreqs_wid.text()))
+        
+        layout = QHBoxLayout()
+        layout.addWidget(QLabel(text="Time b/t requests for slave data (ms):"))
+        layout.addWidget(self.timebtreqs_wid)
+        layout.addWidget(self.timebtreqs_btn)
+        self.settings_box.setLayout(layout)
+
+
+    def create_raw_data_box(self):
+        self.raw_data_box = QGroupBox('Raw Data')
+
         readLbl = QLabel(text="raw data from serial port:")
         self.rawReadDisplay = QTextEdit(readOnly=True)
         self.rawReadSpace = QWidget()
-        readLayout = QVBoxLayout()
-        readLayout.addWidget(readLbl)
-        readLayout.addWidget(self.rawReadDisplay)
-        self.rawReadSpace.setLayout(readLayout)
-
-        self.connectBoxLayout = QFormLayout()
-        self.connectBoxLayout.addRow(self.portLbl,self.portWidget)
-        self.connectBoxLayout.addRow(self.refreshButton,self.connectButton)
-        self.connectBoxLayout.addRow(self.rawReadSpace)
-        self.connectBox.setLayout(self.connectBoxLayout)
-
+        
+        layout = QVBoxLayout()
+        layout.addWidget(readLbl)
+        layout.addWidget(self.rawReadDisplay)
+        self.raw_data_box.setLayout(layout)
+    
     def getPorts(self):
-        self.portWidget.clear()
+        self.port_widget.clear()
         ports = list_ports.comports()
         if ports:
             for ser in ports:
@@ -77,13 +104,24 @@ class flowSensor(QGroupBox):
                     idx1 = port_description.find(port_device)
                     port_description = port_description[:idx1-2]
                 ser_str = ('{}: {}').format(port_device,port_description)
-                self.portWidget.addItem(ser_str)
+                self.port_widget.addItem(ser_str)
         else:
-            self.portWidget.addItem(noPortMsg)
+            self.port_widget.addItem(noPortMsg)
 
+        # if any are 'Arduino', set the first one to the current index
+        for item_idx in range(0,self.port_widget.count()):
+            this_item = self.port_widget.itemText(item_idx)
+            if 'Arduino' in this_item:
+                break
+        if item_idx != []:
+            logger.debug('setting olfa port widget to arduino port')
+            self.port_widget.setCurrentIndex(item_idx)
+        else:
+            logger.debug('no Arduinos detected :(')
+    
     def portChanged(self):
-        if self.portWidget.count() != 0:
-            self.port = self.portWidget.currentText()
+        if self.port_widget.count() != 0:
+            self.port = self.port_widget.currentText()
             if self.port == noPortMsg:
                 self.connectButton.setEnabled(False)
                 self.connectButton.setText(noPortMsg)
@@ -126,6 +164,17 @@ class flowSensor(QGroupBox):
             self.connectButton.setChecked(False)
             self.refreshButton.setEnabled(True)
     
+    def send_to_arduino(self, strToSend):
+        bArr_send = strToSend.encode()
+        try:
+            if self.serial.isOpen():
+                self.serial.write(bArr_send)                # send to Arduino
+                #self.raw_write_display.append(strToSend)    # display string that was sent
+            else:
+                logger.warning('Serial port not open, cannot send parameter: %s', strToSend)
+        except AttributeError as err:
+            logger.warning('(Attribute Error) Serial port not open, cannot send parameter: %s', strToSend)
+
     
     # RECEIVE DATA
     def createDataReceiveBoxes(self):
@@ -161,6 +210,7 @@ class flowSensor(QGroupBox):
                         pass
             except UnicodeDecodeError as err:
                 logger.error('Serial read error: %s',err)
+
 
 if __name__ == "__main__":
     logger.debug('opening window')
