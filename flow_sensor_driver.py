@@ -37,9 +37,10 @@ class flowSensor(QGroupBox):
         mainLayout = QGridLayout()
         mainLayout.addWidget(self.connectBox,0,0,)
         mainLayout.addWidget(self.settings_box,1,0)
-        mainLayout.addWidget(self.cal_table_box,2,0)
-        mainLayout.addWidget(self.dataReceiveBox,0,1,3,1)
+        mainLayout.addWidget(self.cal_table_box,0,1,2,1)
+        mainLayout.addWidget(self.dataReceiveBox,0,2,2,1)
         self.setLayout(mainLayout)
+        self.setTitle('Flow Sensor')
 
         self.settings_box.setMaximumHeight(self.settings_box.sizeHint().height())
         self.cal_table_widget.setFixedHeight(100)
@@ -250,13 +251,11 @@ class flowSensor(QGroupBox):
             try:
                 text = text.decode("utf-8")
                 text = text.rstrip('\r\n')
-                self.rawReadDisplay.append(text)
                 if text.isnumeric():
                     str_value = text
                     flowVal_int = int(text)
                     val_SCCM = utils_olfa_48line.convertToSCCM(flowVal_int,self.intToSccm_dict)
                     dataStr = str_value + '\t' + str(val_SCCM)
-                    #dataStr = str_value + '\t' + str(flowVal_int)
                     self.receiveBox.append(dataStr)
                     try: self.window().receive_data_from_device('flow sensor','FL',str_value)
                     except AttributeError as err: pass
