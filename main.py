@@ -14,6 +14,7 @@ import utils
 import olfa_driver_48line
 import NiDAQ_driver
 import olfa_driver_original
+import flow_sensor_driver
 import olfa_original_procedures
 #import programs_48lineolfa
 import utils_olfa_48line
@@ -238,13 +239,13 @@ class mainWindow(QMainWindow):
         self.add_olfa_48line_btn = QPushButton(text='Add Olfactometer\n(48-line)',checkable=True,toggled=self.add_olfa_48line_toggled)
         self.add_pid_btn = QPushButton(text='Add PID',checkable=True,toggled=self.add_pid_toggled)
         self.add_olfa_orig_btn = QPushButton(text='Add Olfactometer\n(original)',checkable=True,toggled=self.add_olfa_orig_toggled)
-        #self.add_flow_sens_btn = QPushButton(text='Add Honeywell 5100V')
+        self.add_flow_sens_btn = QPushButton(text='Add\nHoneywell 5100V',checkable=True,toggled=self.add_flow_sens_toggled)
         
         layout = QVBoxLayout()
         layout.addWidget(self.add_pid_btn)
         layout.addWidget(self.add_olfa_48line_btn)
         layout.addWidget(self.add_olfa_orig_btn)
-        #layout.addWidget(self.add_flow_sens_btn)
+        layout.addWidget(self.add_flow_sens_btn)
         self.add_devices_groupbox.setLayout(layout)
     
     def create_program_widgets(self):
@@ -762,6 +763,19 @@ class mainWindow(QMainWindow):
             logger.debug('removed nidaq object')
             
             self.add_pid_btn.setText('Add PID')
+    
+    def add_flow_sens_toggled(self, checked):
+        if checked:
+            self.flow_sensor = flow_sensor_driver.flowSensor(port=' ')
+            self.device_layout.insertWidget(0,self.flow_sensor)
+            logger.debug('created flow sensor object')
+            self.add_flow_sens_btn.setText('Remove\nHoneywell 5100V')
+
+        else:
+            self.mainLayout.removeWidget(self.flow_sensor)
+            sip.delete(self.flow_sensor)
+            logger.debug('removed flow sensor object')
+            self.add_flow_sens_btn.setText('Add\nHoneywell 5100V')
     
     def begin_record_btn_clicked(self):
         if self.begin_record_btn.isChecked() == True:
