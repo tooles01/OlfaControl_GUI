@@ -44,11 +44,10 @@ class Vial(QGroupBox):
 
     def __init__(self, parent, vialNum):
         super().__init__()
-        self.parent = parent
         self.slaveName = parent.name
         self.vialNum = vialNum
         self.full_vialNum = self.slaveName + self.vialNum
-        self.olfactometer_parent_object = self.parent.parent
+        self.olfactometer_parent_object = parent.parent
         
         self.cal_table = default_cal_table
         self.Kp_value = def_Kp_value
@@ -62,6 +61,8 @@ class Vial(QGroupBox):
         self.setpoint_send_btn.setMaximumWidth(60)
         max_width = self.sizeHint().width()
         self.setMaximumWidth(max_width - 10)
+        self.db_open_valve_wid.returnPressed.connect(lambda: self.db_open_valve_btn.setChecked(True))
+
     
     # GUI FEATURES
     def generate_stuff(self):
@@ -127,6 +128,8 @@ class Vial(QGroupBox):
         self.layout.addRow(self.setpoint_layout)
         self.layout.addRow(self.cal_table_layout)
         self.layout.addRow(self.read_flow_vals_btn,self.vial_details_btn)
+        self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
+        self.read_flow_vals_btn.setFixedWidth(self.read_flow_vals_btn.sizeHint().width())      # TODO figure out why flow vals button keeps going away
         
     def create_vial_details_window(self):
         self.vial_details_window = QWidget()
@@ -172,7 +175,6 @@ class Vial(QGroupBox):
         self.db_open_valve_wid = QLineEdit(text='5')        # pos change to spinbox so min/max can be set
         self.db_open_valve_btn = QPushButton('Open vial',checkable=True)
         self.db_open_valve_btn.toggled.connect(self.debugwin_vialOpen_toggled)
-        #self.db_open_valve_wid.returnPressed.connect(lambda: self.open_valve_btn_clicked(self.db_open_valve_wid.text()))
         
         # Setpoint
         self.db_setpoint_value_box = QLineEdit(text=default_setpoint)
@@ -308,33 +310,30 @@ class Vial(QGroupBox):
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)    
     
-    def start_valve_timer(self, duration):
-        logger.debug('starting valve timer')
-        self.valve_open_time = datetime.now()
-        self.valve_open_duration = timedelta(0,int(duration))
+    def vialOpen_checked(self, duration):
+        # send to olfactometer_window (to send to Arduino)
+        strToSend = 'S_OV_' + str(duration) + '_' + self.full_vialNum
+        self.olfactometer_parent_object.send_to_master(strToSend)
+        
+        # send to main GUI window (to write to datafile)
+        device = 'olfactometer ' + self.full_vialNum
+        self.write_to_datafile(device,'OV',str(duration))
 
-        update_frequency = 50
-        self.valve_timer.start(update_frequency)
+        # start valve timer
+        self.start_valve_timer(duration)
     
-    def show_time(self):
-        current_time = datetime.now()
-        current_valve_dur = current_time - self.valve_open_time
-        if current_valve_dur >= self.valve_open_duration:
+    def vialOpen_unchecked(self):
+        if self.valve_timer.isActive():
+            logger.debug('valve was closed early')
             self.end_valve_timer()
 
-        valve_dur_display_value = str(current_valve_dur)
-        self.valveTimer_duration_label.setText(valve_dur_display_value)
+            # send to olfactometer_window (to send to Arduino)
+            strToSend = 'S_CV_' + self.full_vialNum
+            self.olfactometer_parent_object.send_to_master(strToSend)
 
-    def end_valve_timer(self):
-        logger.debug('ending valve timer')
-        self.valve_timer.stop()
-
-        # check which button to untoggle
-        if self.db_open_valve_btn.isChecked():
-            logger.debug('untoggling debug window open valve button')
-            self.db_open_valve_btn.toggle()
-        if self.valve_open_btn.isChecked():
-            self.valve_open_btn.toggle()
+            # send to main GUI window (to write to datafile)
+            device = 'olfactometer ' + self.full_vialNum
+            self.write_to_datafile(device,'CV','0')
     
     # COMMANDS
     def K_parameter_update(self, Kx, value):
@@ -357,11 +356,11 @@ class Vial(QGroupBox):
     def readFlow_btn_toggled(self, checked):
         if checked:
             self.read_flow_vals_btn.setText("stop getting flow vals")
-            strToSend = 'MS_debug_' + self.parent.name + self.vialNum
+            strToSend = 'MS_debug_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
         else:
             self.read_flow_vals_btn.setText("read flow vals")
-            strToSend = 'MS_' + self.parent.name + self.vialNum
+            strToSend = 'MS_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
     
     def flowCtrl_toggled(self, checked):
@@ -392,76 +391,73 @@ class Vial(QGroupBox):
         
     def mainwin_vialOpen_toggled(self, checked):
         if checked:
-            logger.debug('main window vial open checked')
             self.valve_open_btn.setText('Close ' + self.full_vialNum)
-            duration = self.valve_duration_spinbox.value()
-            self.vialOpen_checked(duration)
+            self.vialOpen_checked(self.valve_duration_spinbox.value())
         else:
             self.valve_open_btn.setText('Open ' + self.full_vialNum)
             self.vialOpen_unchecked()
 
     def debugwin_vialOpen_toggled(self, checked):
         if checked:
-            logger.debug('debug window vial open checked')
             self.db_open_valve_btn.setText('Close vial')
-            duration = self.db_open_valve_wid.text()
-            self.vialOpen_checked(duration)
+            self.vialOpen_checked(self.db_open_valve_wid.text())
         else:
             self.db_open_valve_btn.setText('Open vial')
             self.vialOpen_unchecked()
     
-    def vialOpen_checked(self, duration):
-        # send to olfactometer_window (to send to Arduino)
-        strToSend = 'S_OV_' + str(duration) + '_' + self.full_vialNum
-        self.olfactometer_parent_object.send_to_master(strToSend)
-        
-        # send to main GUI window (to write to datafile)
-        device = 'olfactometer ' + self.full_vialNum
-        self.write_to_datafile(device,'OV',str(duration))
-
-        # start valve timer
-        self.start_valve_timer(duration)
-    
-    def vialOpen_unchecked(self):
-        # if timer is still going: end it and make a note
-        if self.valve_timer.isActive():
-            logger.debug('valve was closed early')
-            self.end_valve_timer()
-
-            # send to olfactometer_window (to send to Arduino)
-            strToSend = 'S_CV_' + self.full_vialNum
-            self.olfactometer_parent_object.send_to_master(strToSend)
-
-            # send to main GUI window (to write to datafile)
-            device = 'olfactometer ' + self.full_vialNum
-            self.write_to_datafile(device,'CV','0')
-
     def calibrate_flow_sensor_btn_clicked(self):
         logger.warning('calibrate flow sensor not set up yet')  # TODO
-    
-    '''
-    def calibrate_flow_sensor(self):
+        '''
         value_to_calibrate = int(self.calibrate_vial_edit.text())
         # set MFC to this value
 
         # open proportional valve
-        open_pv_command = 'S_OC_' + self.parent.name + self.vialNum
+        open_pv_command = 'S_OC_' + self.full_vialNum
         self.olfactometer_parent_object.send_to_master(open_pv_command)
 
         # open isolation valve
-        open_iv_command = 'S_OV_5_' + self.parent.name + self.vialNum
+        open_iv_command = 'S_OV_5_' + self.full_vialNum
         self.olfactometer_parent_object.send_to_master(open_iv_command)
 
         # read flow values
         # TODO
 
-    '''
+        '''
     
     def write_to_datafile(self,device,unit,value):
         try:
             self.olfactometer_parent_object.window().receive_data_from_device(device,unit,value)
         except AttributeError:
             pass    # main window not open
+    
+    # VALVE TIMER
+    def start_valve_timer(self, duration):
+        logger.debug('starting valve timer')
+        self.valve_open_time = datetime.now()
+        self.valve_open_duration = timedelta(0,int(duration))
+
+        update_frequency = 50
+        self.valve_timer.start(update_frequency)
+    
+    def show_time(self):
+        current_time = datetime.now()
+        current_valve_dur = current_time - self.valve_open_time
+        if current_valve_dur >= self.valve_open_duration:
+            self.end_valve_timer()
+
+        valve_dur_display_value = str(current_valve_dur)
+        self.valveTimer_duration_label.setText(valve_dur_display_value)
+    
+    def end_valve_timer(self):
+        logger.debug('ending valve timer')
+        self.valve_timer.stop()
+
+        # check which button to untoggle
+        if self.db_open_valve_btn.isChecked():
+            logger.debug('untoggling debug window open valve button')
+            self.db_open_valve_btn.toggle()
+        if self.valve_open_btn.isChecked():
+            self.valve_open_btn.toggle()
     
 
 class slave_8vials(QGroupBox):
@@ -550,9 +546,8 @@ class olfactometer_window(QGroupBox):
                     ard2Sccm = {}
                     cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
                     with open(cal_file_full_dir, newline='') as f:
-                        # skip over header line
                         csv_reader = csv.reader(f)
-                        firstLine = next(csv_reader)
+                        firstLine = next(csv_reader)    # skip over header line
                         # get the shit
                         reader = csv.DictReader(f, delimiter=',')
                         for row in reader:
@@ -711,6 +706,18 @@ class olfactometer_window(QGroupBox):
                 self.port_widget.addItem(ser_str)
         else:
             self.port_widget.addItem(noPort_msg)
+        
+        # if any are 'Arduino', set the first one to the current index
+        # TODO ooooh what if this could be a lil list of items
+        for item_idx in range(0,self.port_widget.count()):
+            this_item = self.port_widget.itemText(item_idx)
+            if 'Arduino' in this_item:
+                break
+        if item_idx != []:
+            logger.debug('setting olfa port widget to arduino port')
+            self.port_widget.setCurrentIndex(item_idx)
+        else:
+            logger.debug('no Arduinos detected :(')
     
     def port_changed(self):
         if self.port_widget.count() != 0:
