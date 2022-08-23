@@ -190,38 +190,48 @@ class mainWindow(QMainWindow):
     
     def create_datafile_box(self):
         self.datafile_groupbox = QGroupBox('Data file')
+
+        # get today's file directory
+        self.today_resultfiles_dir = main_datafile_directory + '\\' + current_date
+        '''
+        # TODO does this need to be here? or should these be when we start recording to a file
+        # if this directory does not exist:
+        if not os.path.exists(self.today_resultfiles_dir):
+            os.mkdir(self.today_resultfiles_dir)
+        '''
         
-        # find / make directory for today's files
-        today_resultfiles_dir = main_datafile_directory + '\\' + current_date
-        if not os.path.exists(today_resultfiles_dir): os.mkdir(today_resultfiles_dir)   # TODO does this need to be here? or should these be when we start recording to a file
-        
-        # check what files are in this folder
-        list_of_files = os.listdir(today_resultfiles_dir)
-        list_of_files = [x for x in list_of_files if '.csv' in x]   # only csv files
-        if not list_of_files: self.last_datafile_number = -1
-        else:
-            # find the number of the last data file
-            last_datafile = list_of_files[len(list_of_files)-1]
-            idx_fileExt = last_datafile.rfind('.')
-            last_datafile = last_datafile[:idx_fileExt] # remove file extension
-            idx_underscore = last_datafile.rfind('_')   # find last underscore
-            last_datafile_num = last_datafile[idx_underscore+1:]
-            if last_datafile_num.isnumeric():   # if what's after the underscore is a number
-                self.last_datafile_number = int(last_datafile_num)
+        # if this directory exists: get number of last datafile in it
+        if os.path.exists(self.today_resultfiles_dir):
+            # check what files are in this folder
+            list_of_files = os.listdir(self.today_resultfiles_dir)
+            list_of_files = [x for x in list_of_files if '.csv' in x]   # only get csv files
+            if not list_of_files:
+                self.last_datafile_number = -1  # if there are no files
             else:
-                self.last_datafile_number = 99
-                logger.warning('ew')    # TODO
-        
-        # get data file number
-        self.this_datafile_number = self.last_datafile_number + 1
-        self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2) # zero pad
+                # find the number of the last data file
+                last_datafile = list_of_files[len(list_of_files)-1]
+                idx_fileExt = last_datafile.rfind('.')
+                last_datafile = last_datafile[:idx_fileExt] # remove file extension
+                idx_underscore = last_datafile.rfind('_')   # find last underscore
+                last_datafile_num = last_datafile[idx_underscore+1:]
+                if last_datafile_num.isnumeric():   # if what's after the underscore is a number
+                    self.last_datafile_number = int(last_datafile_num)
+                else:
+                    self.last_datafile_number = 98  # if the last file doesn't have a number
+                    logger.warning('last datafile in this folder is %s',last_datafile)
+        # if this directory does not exist
+        else:
+            self.last_datafile_number = -1
         
         # create data file name
+        self.this_datafile_number = self.last_datafile_number + 1
+        self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2) # zero pad
         data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
+        
+        # GUI FEATURES
         self.data_file_name_lineEdit = QLineEdit(text=data_file_name)
         self.data_file_textedit = QTextEdit(readOnly=True)
-        
-        self.data_file_dir_lineEdit = QLineEdit(text=today_resultfiles_dir,readOnly=True)
+        self.data_file_dir_lineEdit = QLineEdit(text=self.today_resultfiles_dir,readOnly=True)
         self.begin_record_btn = QPushButton(text='Create File && Begin Recording',checkable=True,clicked=self.begin_record_btn_clicked)
         self.end_record_btn = QPushButton(text='End Recording',checkable=True,clicked=self.end_recording)
         self.end_record_btn.setEnabled(False)
@@ -229,6 +239,7 @@ class mainWindow(QMainWindow):
         record_layout.addWidget(self.begin_record_btn)
         record_layout.addWidget(self.end_record_btn)
         
+        # LAYOUT
         layout = QFormLayout()
         layout.addRow(QLabel('Directory:'),self.data_file_dir_lineEdit)
         layout.addRow(QLabel('File Name:'),self.data_file_name_lineEdit)
@@ -399,20 +410,6 @@ class mainWindow(QMainWindow):
         else:
             logger.warning('program selected is not set up')
     
-    def active_slave_refresh(self):        
-        # if olfactometer is not connected, connect to it
-        if self.olfactometer.connect_btn.isChecked() == False:
-            utils_olfa_48line.connect_to_48line_olfa(self)
-        
-        # add the active slaves
-        self.p_slave_select_wid.clear()
-        self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
-        if self.p_slave_select_wid.count() == 0:
-            self.p_slave_select_wid.addItem(no_active_slaves_warning)
-            self.program_start_btn.setEnabled(False)
-        else:
-            self.program_start_btn.setEnabled(True)
-    
     def program_start_clicked(self):
         if self.program_start_btn.isChecked():
             self.program_start_btn.setText('End Program')
@@ -533,8 +530,8 @@ class mainWindow(QMainWindow):
         self.data_file_name_lineEdit.setText(data_file_name)
     
     
-    ##############################
     # PROGRAMS FOR 48-LINE OLFA
+    ##############################
     def run_setpoint_characterization(self):
         logger.info('run setpoint characterization')
 
@@ -655,6 +652,20 @@ class mainWindow(QMainWindow):
             self.end_record_btn.click()
 
 
+    def active_slave_refresh(self):        
+        # if olfactometer is not connected, connect to it
+        if self.olfactometer.connect_btn.isChecked() == False:
+            utils_olfa_48line.connect_to_48line_olfa(self)
+        
+        # add the active slaves
+        self.p_slave_select_wid.clear()
+        self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
+        if self.p_slave_select_wid.count() == 0:
+            self.p_slave_select_wid.addItem(no_active_slaves_warning)
+            self.program_start_btn.setEnabled(False)
+        else:
+            self.program_start_btn.setEnabled(True)
+    
     def sendThisSetpoint(self, vial_name:str, ard_val:int):
         # TODO: change worker_sptChar so it receives the entire vial object when it starts a program. then it'll already have the dictionary, etc
         
@@ -680,8 +691,6 @@ class mainWindow(QMainWindow):
 
         # write to datafile
         self.receive_data_from_device('olfactometer ' + vial_name,'OV',str(dur))
-        
-    # PROGRAMS FOR 48-LINE OLFA
     ##############################
     
     
@@ -791,15 +800,18 @@ class mainWindow(QMainWindow):
             # get file name & full directory
             datafile_name = self.data_file_name_lineEdit.text()
             self.datafile_dir = self.data_file_dir_lineEdit.text() + '\\' + datafile_name + '.csv'
+            # if directory does not exist, make it
+            if not os.path.exists(self.data_file_dir_lineEdit.text()):
+                os.mkdir(self.data_file_dir_lineEdit.text())
             # if file does not exist: create it & write header
             if not os.path.exists(self.datafile_dir):
-                logger.info('Creating new file: %s', datafile_name)
+                logger.info('Creating new file: %s (%s)', datafile_name, self.datafile_dir)
                 File = datafile_name, ' '
                 file_created_time = utils.get_current_time()
                 file_created_time = file_created_time[:-4]
                 Time = 'File Created: ', str(current_date + ' ' + file_created_time)
                 DataHead = 'Time','Instrument','Unit','Value'
-                #pid_line = str(self.p_pid_gain.text())
+                #pid_line = str(self.p_pid_gain.text()) # TODO
                 #pid_line_header = 'PIDgain',pid_line
                 with open(self.datafile_dir,'a',newline='') as f:
                     writer = csv.writer(f,delimiter=',')
