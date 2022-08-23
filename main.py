@@ -73,6 +73,9 @@ class worker_sptChar(QObject):
         # wait so olfa has time to set vial to debug mode
         time.sleep(waitBtSpAndOV)
         time.sleep(waitBtSpAndOV)
+
+        # do an off duration so we have a better baseline
+        time.sleep(self.duration_off)
         
         # iterate through stimulus list
         for stimulus in self.complete_stimulus_list:
@@ -135,7 +138,7 @@ class mainWindow(QMainWindow):
         self.settings_box.setFixedWidth(self.settings_box.sizeHint().width() - 50)
 
         # DEVICES GROUPBOX
-        self.device_groupbox = QGroupBox('Devices')
+        self.device_groupbox = QGroupBox('Devices:')
         self.device_layout = QVBoxLayout()
         self.device_groupbox.setLayout(self.device_layout)
 
@@ -234,7 +237,7 @@ class mainWindow(QMainWindow):
         self.datafile_groupbox.setLayout(layout)
     
     def create_add_devices_box(self):
-        self.add_devices_groupbox = QGroupBox("Devices")
+        self.add_devices_groupbox = QGroupBox("Add/Remove Devices")
 
         self.add_olfa_48line_btn = QPushButton(text='Add Olfactometer\n(48-line)',checkable=True,toggled=self.add_olfa_48line_toggled)
         self.add_pid_btn = QPushButton(text='Add PID',checkable=True,toggled=self.add_pid_toggled)
@@ -243,9 +246,9 @@ class mainWindow(QMainWindow):
         
         layout = QVBoxLayout()
         layout.addWidget(self.add_pid_btn)
+        layout.addWidget(self.add_flow_sens_btn)
         layout.addWidget(self.add_olfa_48line_btn)
         layout.addWidget(self.add_olfa_orig_btn)
-        layout.addWidget(self.add_flow_sens_btn)
         self.add_devices_groupbox.setLayout(layout)
     
     def create_program_widgets(self):
@@ -547,7 +550,9 @@ class mainWindow(QMainWindow):
             logger.debug('connecting to pid')
             self.pid_nidaq.connectButton.toggle()
             '''
-
+        except RuntimeError as err:
+            logger.debug('no pid')
+        
         # CHECK THAT OLFACTOMETER IS CONNECTED
         try:
             if self.olfactometer.connect_btn.isChecked() == False:
