@@ -26,14 +26,15 @@ programs_orig = ['the program']
 
 # PARAMETERS FOR 48-LINE OLFACTOMETER
 vials = ['1','2','3','4','5','6','7','8']
-#default_setpoint = '10,20,30,40,50,60,70,80,90,100'
-default_setpoint = '10,20,30,40,50'
+default_setpoint = '10,20,30,40,50,60,70,80,90,100'
+#default_setpoint = '5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100'
+#default_setpoint = '10,20,30,40,50'
 default_dur_ON = 5
 default_dur_OFF = 5
 default_numTrials = 5
 no_active_slaves_warning = 'no active slaves pls connect olfa or something'
 waitBtSpAndOV = .5
-default_pid_gain = '10x'
+default_pid_gain = '1x'
 
 current_date = utils.currentDate
 
@@ -694,9 +695,9 @@ class mainWindow(QMainWindow):
     ##############################
     
     
-    def add_olfa_48line_toggled(self,checked):
+    def add_olfa_48line_toggled(self,checked):  # TODO make sure this can't be untoggled while a program is running
         if checked:
-            # Create Olfactometer Objectgit st
+            # Create Olfactometer Object
             self.olfactometer = olfa_driver_48line.olfactometer_window()
             self.device_layout.addWidget(self.olfactometer)
             self.add_olfa_orig_btn.setEnabled(False)
@@ -715,21 +716,49 @@ class mainWindow(QMainWindow):
             
             # Results file name/directory
             self.olfa_48line_resultfiles_dir = main_datafile_directory + '\\48-line olfa'
+            # create directory for 48-line olfa
             if not os.path.exists(self.olfa_48line_resultfiles_dir):
                 os.mkdir(self.olfa_48line_resultfiles_dir)
                 logger.debug('created 48-line olfa results files at %s',self.olfa_48line_resultfiles_dir)
+            # create directory for 48-line olfa for today, get datafile number
             self.today_olfa_48line_resultfiles_dir = main_datafile_directory + '\\48-line olfa' + '\\' + current_date
+            if os.path.exists(self.today_olfa_48line_resultfiles_dir):
+                # check what files are in this folder
+                list_of_files = os.listdir(self.today_olfa_48line_resultfiles_dir)
+                list_of_files = [x for x in list_of_files if '.csv' in x]   # only get csv files
+                if not list_of_files:
+                    self.last_datafile_number = -1  # if there are no files
+                else:
+                    # find the number of the last data file
+                    last_datafile = list_of_files[len(list_of_files)-1]
+                    idx_fileExt = last_datafile.rfind('.')
+                    last_datafile = last_datafile[:idx_fileExt] # remove file extension
+                    idx_underscore = last_datafile.rfind('_')   # find last underscore
+                    last_datafile_num = last_datafile[idx_underscore+1:]
+                    if last_datafile_num.isnumeric():   # if what's after the underscore is a number
+                        self.last_datafile_number = int(last_datafile_num)
+                    else:
+                        self.last_datafile_number = 98  # if the last file doesn't have a number
+                        logger.warning('last datafile in this folder is %s',last_datafile)
             if not os.path.exists(self.today_olfa_48line_resultfiles_dir):
                 os.mkdir(self.today_olfa_48line_resultfiles_dir)
-                logger.debug('created today folder at %s',self.today_olfa_48line_resultfiles_dir)
+                logger.debug('created today folder at %s',self.today_olfa_48line_resultfiles_dir)   # TODO don't make this folder until it's time to start recording
+                self.last_datafile_number = -1
             self.data_file_dir_lineEdit.setText(self.today_olfa_48line_resultfiles_dir)
-            
+            # update datafile number
+            self.this_datafile_number = self.last_datafile_number + 1
+            self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2) # zero pad
+            data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
+            self.data_file_name_lineEdit.setText(data_file_name)
+        
+            '''
             # debugging: just for today (7/25/2022)
             for s in self.olfactometer.slave_objects:
-                s.vials[0].setEnabled(False)
+                s.vials[0].setEnabled(False)    # vial 1 is not connected to anything on the mixing chamber
                 s.vials[2].setEnabled(False)
                 s.vials[7].setEnabled(False)
-        
+            '''
+            
         else:
             self.mainLayout.removeWidget(self.olfactometer)
             sip.delete(self.olfactometer)
