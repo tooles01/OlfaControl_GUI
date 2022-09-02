@@ -325,7 +325,7 @@ class mainWindow(QMainWindow):
             self.p_slave_select_refresh = QPushButton(text="Check Slave")
             self.p_slave_select_refresh.clicked.connect(self.active_slave_refresh)
             self.p_vial_wid = QComboBox()
-            self.p_vial_wid.addItems(vials) # TODO: change this
+            self.p_vial_wid.addItems(vials)
             
             self.p_vial_select_layout = QHBoxLayout()
             self.p_vial_select_layout.addWidget(self.p_slave_select_refresh)
@@ -555,7 +555,7 @@ class mainWindow(QMainWindow):
         try:
             if self.olfactometer.connect_btn.isChecked() == False:
                 logger.warning('olfactometer not connected, attempting to connect')
-                utils_olfa_48line.connect_to_48line_olfa(self)
+                utils_olfa_48line.connect_to_48line_olfa(self.olfactometer)
         except AttributeError as err:   logger.error(err)
         
         '''
@@ -656,7 +656,7 @@ class mainWindow(QMainWindow):
     def active_slave_refresh(self):        
         # if olfactometer is not connected, connect to it
         if self.olfactometer.connect_btn.isChecked() == False:
-            utils_olfa_48line.connect_to_48line_olfa(self)
+            utils_olfa_48line.connect_to_48line_olfa(self.olfactometer)
         
         # add the active slaves
         self.p_slave_select_wid.clear()
