@@ -287,7 +287,67 @@ class mainWindow(QMainWindow):
         
         else:
             logger.warning('program selection unchecked: remove program widgets')
+            logger.error('THIS DOES NOT WORK')
+
             self.program_parameters_box.setEnabled(False)
+            # remove these widgets
+            #TODO
+            '''
+            if self.program_to_run == "setpoint characterization":
+                # the widgets are LIKELY already there
+                # so.. delete them
+                numWids = self.program_parameters_layout.count() - 1
+                for n in range(numWids):
+                    print(self.program_parameters_layout.itemAt(n))
+                    this_item = self.program_parameters_layout.itemAt(n)
+                    try:
+                        # if this_item is a layout:
+                        if this_item.isWidgetType() == False:
+                            print('  this item: layout')
+                            # cycle through and remove each widget
+                            numWidgets_in_item = this_item.count()
+                            print('\t', numWidgets_in_item, ' widgets')
+                            
+                            for p in range(numWidgets_in_item):
+                                this_widget = this_item.itemAt(p)
+                                #print('\t\t', this_widget)
+                                
+                                # remove from layout & delete
+                                this_item.removeItem(this_item.itemAt(p))
+                                try:
+                                    sip.delete(this_item.itemAt(p))
+                                    print('\t\tdeleted')
+                                except TypeError:
+                                    pass
+                    
+                    except AttributeError:
+                        # if this_item is a widget:
+                        print('  this item: widget')
+
+                        # remove from layout & delete
+                        self.program_parameters_layout.removeItem(self.program_parameters_layout.itemAt(n))
+                        try:
+                            sip.delete(self.program_parameters_layout.itemAt(n))
+                            print('\t\tdeleted')
+                        except TypeError:
+                            pass
+                        
+
+
+                        # remove the widget
+                    # if it's a layout:
+                    # remove each widget individually
+                    # if not:
+                    # just remove this widget
+                    #self.program_parameters_layout.removeItem(self.program_parameters_layout.itemAt(n))
+                    #sip.delete(self.program_parameters_layout.itemAt(n))
+                    #try:
+                    #    self.program_parameters_layout.removeRow(self.program_parameters_layout.itemAt(n))
+                    #except TypeError as err:
+                    #    self.program_parameters_layout.removeWidget(self.program_parameters_layout.itemAt(n))
+                    
+                    x=1
+            '''                
     
     def create_program_selection_groupbox(self):
         self.program_selection_groupbox = QGroupBox('Program Selection')
@@ -406,7 +466,6 @@ class mainWindow(QMainWindow):
             # create data file name
             data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
             self.data_file_name_lineEdit.setText(data_file_name)
-
 
         else:
             logger.warning('program selected is not set up')
@@ -821,46 +880,102 @@ class mainWindow(QMainWindow):
             self.add_flow_sens_btn.setText('Add\nHoneywell 5100V')
     
     def begin_record_btn_clicked(self):
+        # Record button was checked- Begin Recording
         if self.begin_record_btn.isChecked() == True:
             logger.debug('begin record button clicked')
             self.begin_record_btn.setText('Pause Recording')
             self.end_record_btn.setEnabled(True)
 
-            # get file name & full directory
+            # Get file name & directory from GUI
             datafile_name = self.data_file_name_lineEdit.text()
             self.datafile_dir = self.data_file_dir_lineEdit.text() + '\\' + datafile_name + '.csv'
-            # if directory does not exist, make it
+            
+            # If directory does not already exist: Create it
             if not os.path.exists(self.data_file_dir_lineEdit.text()):
                 os.mkdir(self.data_file_dir_lineEdit.text())
-            # if file does not exist: create it & write header
+            
+            # If file does not already exist: Create it & write header
             if not os.path.exists(self.datafile_dir):
                 logger.info('Creating new file: %s (%s)', datafile_name, self.datafile_dir)
                 File = datafile_name, ' '
                 file_created_time = utils.get_current_time()
                 file_created_time = file_created_time[:-4]
-                Time = 'File Created: ', str(current_date + ' ' + file_created_time)
-                DataHead = 'Time','Instrument','Unit','Value'
-                #pid_line = str(self.p_pid_gain.text()) # TODO
-                #pid_line_header = 'PIDgain',pid_line
+                Time = 'File Created:', str(current_date + ' ' + file_created_time)
+                # TODO add pid gain to header
+                '''
+                pid_line = str(self.p_pid_gain.text())
+                pid_line_header = 'PIDgain',pid_line
+                # if setpoint char: write pid gain
+                if self.program_to_run == 'setpoint characterization':
+                    self.data_file_textedit.append('PID gain,' + pid_line)
+                '''
+                
+                # Write file header
                 with open(self.datafile_dir,'a',newline='') as f:
                     writer = csv.writer(f,delimiter=',')
                     writer.writerow(File)
                     writer.writerow(Time)
-                    #if self.program_to_run == 'setpoint characterization':
-                    #    writer.writerow(pid_line_header)
-                    #else:
-                    #    writer.writerow("")
+                    '''
+                    if self.program_to_run == 'setpoint characterization':
+                        writer.writerow(pid_line_header)
+                    else:
+                        writer.writerow("")
+                    '''
+                
+                # If olfactometer exists: Write calibration tables to file
+                try:
+                    # if it's the 48-line one
+                    if self.add_olfa_48line_btn.isChecked() == True:
+                        # if she is connected
+                        if self.olfactometer.connect_btn.isChecked() == True:
+                            # open file so we can write to it
+                            with open(self.datafile_dir,'a',newline='') as f:
+                                writer = csv.writer(f,delimiter=',')
+                                writer.writerow("")
+                                write_this_row = 'Calibration Tables:',' '
+                                writer.writerow(write_this_row)
+
+                                self.vials_to_get = ['A1','A2','A3','A4','A5','A6','A7','A8']  # vials we want tables for
+                                # TODO figure out if we should just write all of them (this can probably be figured out once u write multi line programs)
+                                
+                                # Get calibration tables & write to file
+                                for full_vial_name in self.vials_to_get:
+                                    slave_name = full_vial_name[0]
+                                    for s in self.olfactometer.slave_objects:
+                                        # find the slave we want
+                                        if s.name == slave_name:
+                                            # find the vial we want
+                                            vial_num = full_vial_name[1]
+                                            vial_idx = int(vial_num) - 1
+                                            this_vial = s.vials[vial_idx]
+                                            this_vial_name = this_vial.full_vialNum
+                                            this_vial_dict_name = this_vial.cal_table
+                                            # write it to the file
+                                            write_to_file = this_vial_name,this_vial_dict_name
+                                            writer.writerow(write_to_file)
+                
+                # If olfactometer does not exist: Skip all this
+                except AttributeError:
+                    pass
+                
+                # Write variable headers to file
+                DataHead = 'Time','Instrument','Unit','Value'
+                with open(self.datafile_dir,'a',newline='') as f:
+                    writer = csv.writer(f,delimiter=',')
+                    writer.writerow("")
                     writer.writerow("")
                     writer.writerow(DataHead)
+                
+                # Display (for the user)
                 self.data_file_textedit.append(datafile_name)
                 self.data_file_textedit.append('File Created: ' + str(current_date + ' ' + file_created_time))
-                # if setpoint char: write pid gain
-                #if self.program_to_run == 'setpoint characterization':
-                #    self.data_file_textedit.append('PID gain,' + pid_line)
-                #self.data_file_textedit.append('Time, Instrument, Unit, Value')
-            else:   # TODO: throw an error if the file already exists
+                
+            # If file already exists
+            else:
+                # TODO: throw an error if the file already exists
                 logger.info('Recording resumed')            
 
+        # Record button was unchecked - Pause Recording
         else:
             logger.info('Recording paused')
             self.begin_record_btn.setText('Resume Recording')
