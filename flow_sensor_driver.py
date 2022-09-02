@@ -395,6 +395,7 @@ class flowSensor(QGroupBox):
         if self.port_widget.count() != 0:
             self.port = self.port_widget.currentText()
             if self.port == noPortMsg:
+                self.portStr = noPortMsg
                 self.connectButton.setEnabled(False)
                 self.connectButton.setText(noPortMsg)
             else:
