@@ -7,7 +7,7 @@ from PyQt5.QtCore import QTimer
 from serial.tools import list_ports
 from datetime import datetime, timedelta
 
-import utils, utils_olfa_48line
+import utils, utils_olfa_48line, vial_popup
 
 baudrate = 9600     # for communicating w/ master
 vialsPerSlave = 8
@@ -40,6 +40,7 @@ if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log 
 console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
 
+    
 class Vial(QGroupBox):
 
     def __init__(self, parent, vialNum):
@@ -56,13 +57,17 @@ class Vial(QGroupBox):
 
         self.generate_stuff()
 
+        self.vial_details_window.db_open_valve_wid.returnPressed.connect(lambda: self.vial_details_window.db_open_valve_btn.setChecked(True))
+        #self.db_open_valve_wid.returnPressed.connect(lambda: self.db_open_valve_btn.setChecked(True))
+        
         self.setLayout(self.layout)
+        
         self.valve_open_btn.setMaximumWidth(60)
         self.setpoint_send_btn.setMaximumWidth(60)
+        self.cal_table_combobox.setFixedWidth(self.read_flow_vals_btn.size().width() + self.vial_details_btn.size().width())
         max_width = self.sizeHint().width()
         self.setMaximumWidth(max_width - 10)
-        self.db_open_valve_wid.returnPressed.connect(lambda: self.db_open_valve_btn.setChecked(True))
-
+    
     
     # GUI FEATURES
     def generate_stuff(self):
@@ -96,10 +101,11 @@ class Vial(QGroupBox):
         self.cal_table_updated(self.cal_table_combobox.currentText())
         
         # READ FLOW VALUES
-        self.read_flow_vals_btn = QPushButton(text="read\nflow vals", checkable=True, toggled=self.readFlow_btn_toggled)
+        self.read_flow_vals_btn = QPushButton(text="read\nflow vals", checkable=True)
+        self.read_flow_vals_btn.toggled.connect(lambda: self.readFlow_btn_toggled(self.read_flow_vals_btn))
         
         # VIAL DETAILS
-        self.create_vial_details_window()
+        self.vial_details_window = vial_popup.VialDetailsPopup(self)
         self.vial_details_btn = QPushButton('Vial\nDetails',checkable=True,toggled=self.vial_details_btn_toggled)
 
         # VIAL TIMER
@@ -130,8 +136,13 @@ class Vial(QGroupBox):
         self.layout.addRow(self.read_flow_vals_btn,self.vial_details_btn)
         self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
         self.read_flow_vals_btn.setFixedWidth(self.read_flow_vals_btn.sizeHint().width())      # TODO figure out why flow vals button keeps going away
-        
+    
+    '''
+    # VIAL DETAILS WINDOW
     def create_vial_details_window(self):
+        #self.vial_details_window = VialDetailsPopup(self)
+        self.vial_details_window = vial_popup.VialDetailsPopup(self)
+
         self.vial_details_window = QWidget()
         self.vial_details_window.setWindowTitle('Vial ' + self.full_vialNum + ' - Details')
         
@@ -259,7 +270,7 @@ class Vial(QGroupBox):
         self.db_PID_toggle_btn.setMinimumWidth(self.db_PID_toggle_btn.sizeHint().width())   # just for sizing
         self.db_PID_toggle_btn.setText('Turn flow control on')                              # just for sizing
         self.db_ctrl_toggle_btn = QPushButton(text="Open prop valve",checkable=True,toggled=self.propValve_toggled)
-        self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True)#,toggled=self.vialOpen_toggled)
+        self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True)#,toggled=self.vialOpen_toggled) # TODO
         manual_debug_layout = QVBoxLayout()
         manual_debug_layout.addWidget(self.db_PID_toggle_btn)
         manual_debug_layout.addWidget(self.db_ctrl_toggle_btn)
@@ -268,6 +279,7 @@ class Vial(QGroupBox):
         
         self.db_manual_control_box.setEnabled(False)     # disable until advanced options toggled
     
+    '''
     
     # ACTIONS / BUTTON FUNCTIONS
     def vial_details_btn_toggled(self, checked):
@@ -296,19 +308,20 @@ class Vial(QGroupBox):
     
     def toggled_advanced_settings(self, checked):
         if checked:
-            self.db_flow_control_box.setEnabled(True)
-            self.db_manual_control_box.setEnabled(True)
-            self.db_advanced_btn.setText('Disable Advanced Options')
+            self.vial_details_window.db_flow_control_box.setEnabled(True)
+            self.vial_details_window.db_manual_control_box.setEnabled(True)
+            self.vial_details_window.db_advanced_btn.setText('Disable Advanced Options')
         else:
-            self.db_flow_control_box.setEnabled(False)
-            self.db_manual_control_box.setEnabled(False)
-            self.db_advanced_btn.setText('Enable Advanced Options')
+            self.vial_details_window.db_flow_control_box.setEnabled(False)
+            self.vial_details_window.db_manual_control_box.setEnabled(False)
+            self.vial_details_window.db_advanced_btn.setText('Enable Advanced Options')
     
-    def cal_table_updated(self, new_cal_table): # TODO
-        self.cal_table = self.cal_table_combobox.currentText()
-
+    def cal_table_updated(self, new_cal_table):
+        self.cal_table = new_cal_table
+        logger.debug('cal table for vial %s set to %s', self.full_vialNum, self.cal_table)
+        
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
-        self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)    
+        self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)
     
     def vialOpen_checked(self, duration):
         # send to olfactometer_window (to send to Arduino)
@@ -353,6 +366,7 @@ class Vial(QGroupBox):
         device = 'olfactometer ' + self.full_vialNum
         self.write_to_datafile(device,'Sp',setpoint_integer)
         
+    '''
     def readFlow_btn_toggled(self, checked):
         if checked:
             self.read_flow_vals_btn.setText("stop getting flow vals")
@@ -362,6 +376,17 @@ class Vial(QGroupBox):
             self.read_flow_vals_btn.setText("read flow vals")
             strToSend = 'MS_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
+    '''
+    
+    def readFlow_btn_toggled(self, btn_to_check):
+        if btn_to_check.isChecked():
+            btn_to_check.setText("stop\nreading flow")
+            strToSend = 'MS_debug_' + self.full_vialNum
+            self.olfactometer_parent_object.send_to_master(strToSend)
+        else:
+            btn_to_check.setText("read\nflow vals")
+            strToSend = 'MS_' + self.full_vialNum
+            self.olfactometer_parent_object.send_to_master(strToSend)
     
     def flowCtrl_toggled(self, checked):
         # Turn PID (flow control) on
@@ -369,25 +394,25 @@ class Vial(QGroupBox):
             logger.debug('Flow control manually turned on')
             strToSend = 'S_ON_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
-            self.db_PID_toggle_btn.setText('Turn flow control off')
+            self.vial_details_window.db_PID_toggle_btn.setText('Turn flow control off')
         # Turn PID (flow control) off
         else:
             logger.debug('Flow control manually turned off')
             strToSend = 'S_OF_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
-            self.db_PID_toggle_btn.setText('Turn flow control on')        
+            self.vial_details_window.db_PID_toggle_btn.setText('Turn flow control on')        
     
     def propValve_toggled(self, checked):
         if checked:
             logger.debug('Proportional valve manually opened')
             strToSend = 'S_OC_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
-            self.db_ctrl_toggle_btn.setText('Close prop valve')
+            self.vial_details_window.db_ctrl_toggle_btn.setText('Close prop valve')
         else:
             logger.debug('Proportional valve manually closed')
             strToSend = 'S_CC_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
-            self.db_ctrl_toggle_btn.setText('Open prop valve')
+            self.vial_details_window.db_ctrl_toggle_btn.setText('Open prop valve')
         
     def mainwin_vialOpen_toggled(self, checked):
         if checked:
@@ -399,10 +424,10 @@ class Vial(QGroupBox):
 
     def debugwin_vialOpen_toggled(self, checked):
         if checked:
-            self.db_open_valve_btn.setText('Close vial')
-            self.vialOpen_checked(self.db_open_valve_wid.text())
+            self.vial_details_window.db_open_valve_btn.setText('Close vial')
+            self.vialOpen_checked(self.vial_details_window.db_open_valve_wid.text())
         else:
-            self.db_open_valve_btn.setText('Open vial')
+            self.vial_details_window.db_open_valve_btn.setText('Open vial')
             self.vialOpen_unchecked()
     
     def calibrate_flow_sensor_btn_clicked(self):
@@ -453,9 +478,9 @@ class Vial(QGroupBox):
         self.valve_timer.stop()
 
         # check which button to untoggle
-        if self.db_open_valve_btn.isChecked():
+        if self.vial_details_window.db_open_valve_btn.isChecked():
             logger.debug('untoggling debug window open valve button')
-            self.db_open_valve_btn.toggle()
+            self.vial_details_window.db_open_valve_btn.toggle()
         if self.valve_open_btn.isChecked():
             self.valve_open_btn.toggle()
     
@@ -499,6 +524,11 @@ class slave_8vials(QGroupBox):
         self.vials_layout = QHBoxLayout()
         for v in range(vialsPerSlave):
             self.vials_layout.addWidget(self.vials[v])
+
+        # FOR TODAY (8/30/2022) since mixing chamber pinout is bad
+        self.vials[0].setEnabled(False) # Vial 1: not connected to anything on the mixing chamber
+        self.vials[4].setEnabled(False) # Vial 5: J4 is broken
+        self.vials[6].setEnabled(False) # Vial 7: J6 is broken
 
 
 class olfactometer_window(QGroupBox):
@@ -553,11 +583,14 @@ class olfactometer_window(QGroupBox):
                         for row in reader:
                             if x == 0:
                                 try:
-                                    sccm2Ard[int(row['SCCM'])] = int(row['int'])
+                                    sccm2Ard[int(row['SCCM'])] = int(row['int'])    # TODO allow float values
                                     ard2Sccm[int(row['int'])] = int(row['SCCM'])
                                 except KeyError as err:
                                     logger.warning('error: %s',err)
                                     logger.warning('%s does not have correct headings for calibration files', cal_file)
+                                    x = 1   # don't keep trying to read this file
+                                except ValueError as err:
+                                    logger.warning('missing some values, skipping calibration file %s', cal_file)
                                     x = 1   # don't keep trying to read this file
                     if bool(sccm2Ard) == True:
                         new_sccm2Ard_dicts[file_name] = sccm2Ard
@@ -851,11 +884,11 @@ class olfactometer_window(QGroupBox):
                 # IF FLOW UPDATE WAS SENT: send to main GUI window (to write to datafile)
                 if len(text) == 17:
                     text = text[3:]     # remove arduino logging info
-
+                    
                     # split up for writing to datafile
-                    slave_vial = text[0:2]
-                    flowVal = text[2:6]
-                    ctrlVal = text[6:10]
+                    slave_vial = text[0:2]  # 'A1'
+                    flowVal = text[2:6]     # '0148'
+                    ctrlVal = text[6:10]    # '0255'
 
                     # send to main GUI
                     device = 'olfactometer ' + slave_vial
@@ -865,6 +898,20 @@ class olfactometer_window(QGroupBox):
                         self.window().receive_data_from_device(device,unit,value)
                     except AttributeError as err:   # if main window is not open
                         pass
+                    
+                    # write it to the vial details box
+                    for s in self.slave_objects:    # find out which vial this is
+                        for v in s.vials:
+                            if v.full_vialNum == slave_vial:
+                                flowVal_raw = int(flowVal)
+                                #this_dict_name = v.cal_table # this is only the name, u need the actual table
+                                flowVal_sccm = utils_olfa_48line.convertToSCCM(flowVal_raw,v.intToSccm_dict)
+                                
+                                dataStr = str(flowVal) + '\t' + str(flowVal_sccm) + '\t' + str(ctrlVal)
+                                
+                                v.vial_details_window.data_receive_box.append(dataStr)
+
+
             
             except UnicodeDecodeError as err:
                 logger.warning("Serial read error")
