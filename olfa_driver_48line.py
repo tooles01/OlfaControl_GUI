@@ -31,6 +31,7 @@ default_cal_table = 'Honeywell_3100V'
 def_Kp_value = '0.0500'
 def_Ki_value = '0.0001'
 def_Kd_value = '0.0000'
+def_manual_cmd = 'S_PV_150_A2'
 
 
 # CREATE LOGGER
@@ -318,7 +319,7 @@ class Vial(QGroupBox):
     
     def cal_table_updated(self, new_cal_table):
         self.cal_table = new_cal_table
-        logger.debug('cal table for vial %s set to %s', self.full_vialNum, self.cal_table)
+        #logger.debug('cal table for vial %s set to %s', self.full_vialNum, self.cal_table)
         
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)
@@ -550,10 +551,6 @@ class olfactometer_window(QGroupBox):
         self.slave_objects[0].setEnabled(True)
     
     def get_calibration_tables(self):
-        '''
-        #self.flow_cal_dir = 'C:\\Users\\SB13FLLT004\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\OlfaControl_GUI\\calibration_tables'
-        self.flow_cal_dir = 'C:\\Users\\Admin\\Dropbox (NYU Langone Health)\\OlfactometerEngineeringGroup (2)\\Control\\a_software\\OlfaControl_GUI\\calibration_tables'
-        '''
         self.flow_cal_dir = utils.find_olfaControl_directory() + '\\calibration_tables' # NOTE: this takes a super long time
         
         if os.path.exists(self.flow_cal_dir):
@@ -661,7 +658,7 @@ class olfactometer_window(QGroupBox):
         timebt_layout.addWidget(self.m_timebtreqs)
         timebt_layout.addWidget(self.m_timebtreqs_btn)
 
-        self.m_manualcmd = QLineEdit(text='xx',#defManualCmd,
+        self.m_manualcmd = QLineEdit(text=def_manual_cmd,
             returnPressed=lambda: self.send_to_master(self.m_manualcmd.text()))
         self.m_manualcmd_btn = QPushButton(text="Send",
             clicked=lambda: self.send_to_master(self.m_manualcmd.text()))
@@ -740,17 +737,17 @@ class olfactometer_window(QGroupBox):
         else:
             self.port_widget.addItem(noPort_msg)
         
-        # if any are 'Arduino', set the first one to the current index
-        # TODO ooooh what if this could be a lil list of items
+        # TODO replace everything below with utils_48 function "connect_to_48line_olfa"
+        # if any are 'Arduino', set the first one to the current index  # TODO ooooh what if this could be a lil list of items
+        
+        # find Arduino port
         for item_idx in range(0,self.port_widget.count()):
             this_item = self.port_widget.itemText(item_idx)
-            if 'Arduino' in this_item:
+            if 'Arduino' in this_item: 
                 break
-        if item_idx != []:
+        if item_idx != 0:
             logger.debug('setting olfa port widget to arduino port')
             self.port_widget.setCurrentIndex(item_idx)
-        else:
-            logger.debug('no Arduinos detected :(')
     
     def port_changed(self):
         if self.port_widget.count() != 0:
@@ -898,6 +895,15 @@ class olfactometer_window(QGroupBox):
                         self.window().receive_data_from_device(device,unit,value)
                     except AttributeError as err:   # if main window is not open
                         pass
+
+                    # send ctrl val to main GUI
+                    unit = 'Ctrl'
+                    value = ctrlVal
+                    try:
+                        self.window().receive_data_from_device(device,unit,value)
+                    except AttributeError as err:   # if main window is not open
+                        pass
+
                     
                     # write it to the vial details box
                     for s in self.slave_objects:    # find out which vial this is
