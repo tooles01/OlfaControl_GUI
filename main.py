@@ -900,7 +900,7 @@ class mainWindow(QMainWindow):
                 File = datafile_name, ' '
                 file_created_time = utils.get_current_time()
                 file_created_time = file_created_time[:-4]
-                Time = 'File Created:', str(current_date + ' ' + file_created_time)
+                Time = 'File Created: ', str(current_date + ' ' + file_created_time)
                 # TODO add pid gain to header
                 '''
                 pid_line = str(self.p_pid_gain.text())
