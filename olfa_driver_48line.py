@@ -580,8 +580,8 @@ class olfactometer_window(QGroupBox):
                         for row in reader:
                             if x == 0:
                                 try:
-                                    sccm2Ard[int(row['SCCM'])] = int(row['int'])    # TODO allow float values
-                                    ard2Sccm[int(row['int'])] = int(row['SCCM'])
+                                    sccm2Ard[float(row['SCCM'])] = float(row['int'])
+                                    ard2Sccm[float(row['int'])] = float(row['SCCM'])
                                 except KeyError as err:
                                     logger.warning('error: %s',err)
                                     logger.warning('%s does not have correct headings for calibration files', cal_file)
