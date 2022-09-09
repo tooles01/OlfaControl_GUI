@@ -144,7 +144,8 @@ class mainWindow(QMainWindow):
         self.device_groupbox.setLayout(self.device_layout)
 
         w = self.datafile_groupbox.sizeHint().width()
-        self.datafile_groupbox.setFixedWidth(w + 15)
+        #self.datafile_groupbox.setFixedWidth(w)
+        #self.datafile_groupbox.setFixedWidth(w + 15)
         self.settings_box.setMinimumWidth(w+5)
     
     def create_general_settings_box(self):
@@ -233,6 +234,12 @@ class mainWindow(QMainWindow):
         self.data_file_name_lineEdit = QLineEdit(text=data_file_name)
         self.data_file_textedit = QTextEdit(readOnly=True)
         self.data_file_dir_lineEdit = QLineEdit(text=self.today_resultfiles_dir,readOnly=True)
+
+        # things for header
+        self.data_file_pid_gain_lbl = QLabel('PID gain: ')
+        self.data_file_pid_gain = QLineEdit(text=default_pid_gain)
+        
+        # BUTTONS
         self.begin_record_btn = QPushButton(text='Create File && Begin Recording',checkable=True,clicked=self.begin_record_btn_clicked)
         self.end_record_btn = QPushButton(text='End Recording',checkable=True,clicked=self.end_recording)
         self.end_record_btn.setEnabled(False)
@@ -244,6 +251,10 @@ class mainWindow(QMainWindow):
         layout = QFormLayout()
         layout.addRow(QLabel('Directory:'),self.data_file_dir_lineEdit)
         layout.addRow(QLabel('File Name:'),self.data_file_name_lineEdit)
+        layout.addRow(QLabel('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'))
+        layout.addRow(QLabel('Things for file header:'))
+        layout.addRow(self.data_file_pid_gain_lbl,self.data_file_pid_gain)
+        layout.addRow(QLabel('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'))
         layout.addRow(record_layout)
         layout.addRow(self.data_file_textedit)
         self.datafile_groupbox.setLayout(layout)
@@ -440,7 +451,7 @@ class mainWindow(QMainWindow):
 
             # change datafile name
             olfa_48line_results_dir = main_datafile_directory + '\\48-line olfa' + '\\' + current_date
-            if not os.path.exists(olfa_48line_results_dir): os.mkdir(olfa_48line_results_dir)
+            if not os.path.exists(olfa_48line_results_dir): os.mkdir(olfa_48line_results_dir); self.logger.debug('created folder at %s', olfa_48line_results_dir)
 
             # check what files are in this folder
             list_of_files = os.listdir(olfa_48line_results_dir)
@@ -893,6 +904,7 @@ class mainWindow(QMainWindow):
             # If directory does not already exist: Create it
             if not os.path.exists(self.data_file_dir_lineEdit.text()):
                 os.mkdir(self.data_file_dir_lineEdit.text())
+                logger.debug('created folder at %s', self.data_file_dir_lineEdit.text())
             
             # If file does not already exist: Create it & write header
             if not os.path.exists(self.datafile_dir):
@@ -901,26 +913,26 @@ class mainWindow(QMainWindow):
                 file_created_time = utils.get_current_time()
                 file_created_time = file_created_time[:-4]
                 Time = 'File Created: ', str(current_date + ' ' + file_created_time)
-                # TODO add pid gain to header
-                '''
-                pid_line = str(self.p_pid_gain.text())
-                pid_line_header = 'PIDgain',pid_line
-                # if setpoint char: write pid gain
-                if self.program_to_run == 'setpoint characterization':
-                    self.data_file_textedit.append('PID gain,' + pid_line)
-                '''
-                
                 # Write file header
                 with open(self.datafile_dir,'a',newline='') as f:
                     writer = csv.writer(f,delimiter=',')
                     writer.writerow(File)
                     writer.writerow(Time)
-                    '''
-                    if self.program_to_run == 'setpoint characterization':
-                        writer.writerow(pid_line_header)
-                    else:
-                        writer.writerow("")
-                    '''
+                # Display (for the user)
+                self.data_file_textedit.append(datafile_name)
+                self.data_file_textedit.append('File Created: ' + str(current_date + ' ' + file_created_time))
+                
+                # If PID exists: write gain to file
+                if self.add_pid_btn.isChecked() == True:
+                    # if we are connected to it
+                    if self.pid_nidaq.connectButton.isChecked() == True:
+                        self.pid_gain = self.data_file_pid_gain.text()  # get value from widget
+                        pid_line_header = 'PID gain: ', self.pid_gain
+                        # write gain to file
+                        with open(self.datafile_dir,'a',newline='') as f:
+                            writer = csv.writer(f,delimiter=',')
+                            writer.writerow(pid_line_header)
+                        self.data_file_textedit.append('PID Gain: ' + self.pid_gain)
                 
                 # If olfactometer exists: Write calibration tables to file
                 try:
@@ -966,9 +978,6 @@ class mainWindow(QMainWindow):
                     writer.writerow("")
                     writer.writerow(DataHead)
                 
-                # Display (for the user)
-                self.data_file_textedit.append(datafile_name)
-                self.data_file_textedit.append('File Created: ' + str(current_date + ' ' + file_created_time))
                 
             # If file already exists
             else:
