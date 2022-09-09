@@ -144,9 +144,10 @@ class mainWindow(QMainWindow):
         self.device_groupbox.setLayout(self.device_layout)
 
         w = self.datafile_groupbox.sizeHint().width()
-        #self.datafile_groupbox.setFixedWidth(w)
-        #self.datafile_groupbox.setFixedWidth(w + 15)
-        self.settings_box.setMinimumWidth(w+5)
+        # so that datafile stuff is all on one row
+        self.datafile_groupbox.setFixedWidth(w)
+        self.datafile_groupbox.setFixedWidth(w + 15)
+        #self.settings_box.setMinimumWidth(w+5)
     
     def create_general_settings_box(self):
         self.general_settings_box = QGroupBox('General Settings')
@@ -468,7 +469,8 @@ class mainWindow(QMainWindow):
                     self.last_datafile_number = int(last_datafile_num)
                 else:
                     self.last_datafile_number = 99
-                    logger.warning('ew')    # TODO
+
+                    logger.debug('last datafile in this folder does not have a number (%s), setting default datafile number to 00', last_datafile)
 
             # get data file number
             self.this_datafile_number = self.last_datafile_number + 1
@@ -628,24 +630,6 @@ class mainWindow(QMainWindow):
                 utils_olfa_48line.connect_to_48line_olfa(self.olfactometer)
         except AttributeError as err:   logger.error(err)
         
-        '''
-        # DATAFILE STUFF        # TODO this is a repeat
-        datafile_name = self.data_file_name_lineEdit.text()
-        self.datafile_dir = self.data_file_dir_lineEdit.text() + '\\' + datafile_name + '.csv'
-        # if file does not exist, create it
-        if not os.path.exists(self.datafile_dir):
-            logger.info('Creating new file: %s', datafile_name)
-            File = datafile_name, ' '
-            file_created_time = utils.get_current_time()
-            file_created_time = file_created_time[:-4]
-            with open(self.datafile_dir,'a',newline='') as f:
-                writer = csv.writer(f,delimiter=',')
-                writer.writerow(File)
-                writer.writerow("")
-        else:
-            logger.warning('file already exists!!!!!!!!')
-        '''
-        
         # START RECORDING
         if self.begin_record_btn.isChecked() == False:
             logger.debug('clicking begin record button')
@@ -738,21 +722,6 @@ class mainWindow(QMainWindow):
             self.program_start_btn.setEnabled(True)
     
     def sendThisSetpoint(self, vial_name:str, ard_val:int):
-        # TODO: change worker_sptChar so it receives the entire vial object when it starts a program. then it'll already have the dictionary, etc
-        
-        '''
-        # find dictionary to use TODO
-        #for s in self.slaves:
-        #    if s.slaveName == slave:
-        #        for v in s.vials:
-        #            if v.vialNum == str(vial):
-        #                sensDictName = v.calTable
-        #dictToUse = self.sccm2Ard_dicts.get(sensDictName)
-        # convert to integer and send
-        #ardVal = utils.convertToInt(float(sccmVal),dictToUse)
-        '''
-        
-        #ard_val = 700   # fix this
         strToSend = 'S_Sp_' + str(ard_val) + '_' + vial_name
         self.olfactometer.send_to_master(strToSend)
         
@@ -981,8 +950,7 @@ class mainWindow(QMainWindow):
                 
             # If file already exists
             else:
-                # TODO: throw an error if the file already exists
-                logger.info('Recording resumed')            
+                logger.warning('File already exists: resuming recording to %s',self.datafile_dir)
 
         # Record button was unchecked - Pause Recording
         else:
@@ -990,9 +958,7 @@ class mainWindow(QMainWindow):
             self.begin_record_btn.setText('Resume Recording')
     
     def end_recording(self):
-        logger.info('Ended recording to file: %s', self.data_file_name_lineEdit.text())
-        # TODO: add a bunch of newlines
-
+        logger.info('Ended recording to file: %s', self.data_file_name_lineEdit.text())        
         
         # update file number in box
         self.this_datafile_number = self.this_datafile_number + 1
