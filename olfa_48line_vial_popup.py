@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
 from serial.tools import list_ports
 from datetime import datetime, timedelta
+import numpy as np
+from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, QTimer
 
 import utils, utils_olfa_48line
 
@@ -31,6 +33,8 @@ default_cal_table = 'Honeywell_3100V'
 def_Kp_value = '0.0500'
 def_Ki_value = '0.0001'
 def_Kd_value = '0.0000'
+def_calfile_name = 'A2_test_cal_file'
+def_mfc_cal_value = '100'
 
 
 # CREATE LOGGER
@@ -39,6 +43,27 @@ logger.setLevel(logging.DEBUG)
 if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
 console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
+
+
+class calibration_worker(QObject):
+    def __init__(self):
+        super().__init__()
+
+        self.calibration_setpoint = 0
+
+    @pyqtSlot()
+    def read_flow_values(self):
+        t_1 = time.time()
+        t_2 = 0
+        serial_values = []
+        while t_2 < t_1 + 1:
+            t_2 = time.time()
+            this_read = 1
+            serial_values.append(this_read)
+
+        serial_converted = [float(i) for i in serial_values]
+
+
 
 class VialDetailsPopup(QWidget):
     def __init__(self, parent):
@@ -58,6 +83,7 @@ class VialDetailsPopup(QWidget):
         
         self.vial_details_create_flow_ctrl_box()
         self.vial_details_create_man_control_box()
+        self.vial_details_create_calibration_box()
 
         # Values Received
         self.data_receive_lbl = QLabel(("Flow val (int), Flow (SCCM), Ctrl val (int)"))
@@ -66,12 +92,11 @@ class VialDetailsPopup(QWidget):
         # Layout
         layout_col1_widgets = QGridLayout()
         layout_col1_widgets.addWidget(self.db_std_widgets_box,0,0,1,2)  # row 0 col 0
-        
-        layout_col1_widgets.addWidget(self.db_readflow_btn,1,0,1,1)     # row 1 col 0
-        layout_col1_widgets.addWidget(self.db_advanced_btn,1,1,1,2)     # row 1 col 1
-        
-        layout_col1_widgets.addWidget(self.db_flow_control_box,2,0,1,1)     # row 2 col 0
-        layout_col1_widgets.addWidget(self.db_manual_control_box,2,1,1,1)   # row 2 col 1
+        layout_col1_widgets.addWidget(self.cal_box,1,0,1,2)             # row 1 col 0
+        layout_col1_widgets.addWidget(self.db_readflow_btn,2,0,1,1)     # row 2 col 0
+        layout_col1_widgets.addWidget(self.db_advanced_btn,2,1,1,2)     # row 2 col 1
+        layout_col1_widgets.addWidget(self.db_flow_control_box,3,0,1,1)     # row 3 col 0
+        layout_col1_widgets.addWidget(self.db_manual_control_box,3,1,1,1)   # row 3 col 1
         layout_col2_data = QVBoxLayout()
         layout_col2_data.addWidget(self.data_receive_lbl)
         layout_col2_data.addWidget(self.data_receive_box)
@@ -187,6 +212,142 @@ class VialDetailsPopup(QWidget):
         self.db_manual_control_box.setLayout(manual_debug_layout)
         
         self.db_manual_control_box.setEnabled(False)     # disable until advanced options toggled
+    
+    def vial_details_create_calibration_box(self):
+        self.cal_box = QGroupBox('Calibration')
+
+        self.cal_file_name_lineedit = QLineEdit(text=def_calfile_name)
+        self.cal_file_dir_lineedit = QLineEdit(text=self.parent.olfactometer_parent_object.flow_cal_dir)
+
+        self.create_new_cal_file_btn = QPushButton(text='Create file',checkable=True)
+        self.create_new_cal_file_btn.toggled.connect(self.create_new_cal_file_clicked)
+
+        self.mfc_value_lineedit = QLineEdit(text=def_mfc_cal_value)
+        self.mfc_value_set_btn = QPushButton(text='Start',checkable=True)
+        #self.mfc_value_lineedit.returnPressed.connect(self.new_mfc_value_set)  # TODO
+        self.mfc_value_set_btn.toggled.connect(self.new_mfc_value_set)
+        self.mfc_value_lineedit.setEnabled(False)
+        self.mfc_value_set_btn.setEnabled(False)
+        
+        layout_labels = QVBoxLayout()
+        layout_labels.addWidget(QLabel('Directory:'))
+        layout_labels.addWidget(QLabel('File Name:'))
+        layout_labels.addWidget(QLabel('MFC value:'))
+        layout_widgets = QFormLayout()
+        layout_widgets.addRow(self.cal_file_dir_lineedit)
+        layout_widgets.addRow(self.cal_file_name_lineedit,self.create_new_cal_file_btn)
+        layout_widgets.addRow(self.mfc_value_lineedit,self.mfc_value_set_btn)
+        layout_full = QHBoxLayout()
+        layout_full.addLayout(layout_labels)
+        layout_full.addLayout(layout_widgets)
+
+        self.cal_box.setLayout(layout_full)
+
+    
+    def create_new_cal_file_clicked(self):
+        # Clicked - create new file, start procedure
+        if self.create_new_cal_file_btn.isChecked() == True:
+            
+            # UI THINGS
+            self.create_new_cal_file_btn.setText('Done')
+            self.create_new_cal_file_btn.setToolTip('Click to end calibration and save file')
+            self.cal_file_dir_lineedit.setEnabled(False)
+            self.cal_file_name_lineedit.setEnabled(False)
+            self.db_std_widgets_box.setEnabled(False)
+            self.db_flow_control_box.setEnabled(False)
+            
+            # Get file name & directory from GUI
+            self.new_cal_file_name = self.cal_file_name_lineedit.text()
+            self.new_cal_file_dir = self.cal_file_dir_lineedit.text() + '\\' + self.new_cal_file_name + '.csv'
+
+            # Hopefully this file does not exist
+            if not os.path.exists(self.new_cal_file_dir):
+                logger.info('creating new calibration file at %s', self.new_cal_file_dir)
+                file_created_time = utils.get_current_time()
+                File = self.new_cal_file_name,file_created_time
+                row_headers = 'SCCM','int'
+                # Write file header
+                with open(self.new_cal_file_dir,'a',newline='') as f:
+                    writer = csv.writer(f,delimiter=',')
+                    writer.writerow(File)
+                    writer.writerow(row_headers)
+                
+                # enable the MFC stuff
+                self.mfc_value_lineedit.setEnabled(True)
+                self.mfc_value_set_btn.setEnabled(True)
+
+            else:
+                logger.error('this calibration file already exists!!!!!')
+                self.create_new_cal_file_btn.setChecked(False)
+  
+        # Unclicked - done with calibration
+        else:
+            # UI THINGS
+            self.create_new_cal_file_btn.setText('Create file')
+            self.create_new_cal_file_btn.setToolTip('')
+            self.cal_file_dir_lineedit.setEnabled(True)
+            self.cal_file_name_lineedit.setEnabled(True)
+            self.db_std_widgets_box.setEnabled(True)
+            self.db_flow_control_box.setEnabled(True)
+
+
+    def new_mfc_value_set(self):
+        if self.mfc_value_set_btn.isChecked() == True:
+            self.mfc_value_set_btn.setText('End early')
+
+            self.this_cal_sccm_value = self.mfc_value_lineedit.text()
+            logger.debug('starting calibration at %s sccm', self.this_cal_sccm_value)
+            
+            self.parent.olfactometer_parent_object.calibration_on = True
+            self.serial_values = []
+        else:
+            self.mfc_value_set_btn.setText('Start')
+    
+    def read_value(self,incoming_value):
+        #num_samples = 300    # 30 seconds is 300 samples (assuming we are sampling every 100ms)
+        num_samples = 400
+
+        # once we've collected enough samples
+        if len(self.serial_values) >= num_samples:
+            # check the range of values in the list
+            min_val = min(self.serial_values)
+            max_val = max(self.serial_values)
+            full_range = max_val - min_val
+            # if the range is not yet acceptable
+            if full_range > 2:
+                self.serial_values.pop(0)                       # pop the top value
+                self.serial_values.append(int(incoming_value))  # append the new value
+            # if the range is good:
+            else:
+                self.serial_converted = [float(i) for i in self.serial_values]
+                
+                # calculate mean
+                self.this_cal_int_value = np.mean(self.serial_converted)
+                
+                # send the value to the table
+                self.save_calibration_value()
+                
+        # if we have not yet collected enough data points:
+        else:
+            self.serial_values.append(int(incoming_value))
+    
+    def save_calibration_value(self):
+        # write the MFC value and the integer value to the calibration table
+        pair_to_write = self.this_cal_sccm_value,round(self.this_cal_int_value,2)
+        logger.info('writing to cal file: %s', pair_to_write)
+        with open(self.new_cal_file_dir,'a',newline='') as f:
+            writer = csv.writer(f,delimiter=',')
+            writer.writerow(pair_to_write)
+
+        # clear lists
+        self.serial_values = []
+        self.serial_converted = []
+
+        # reset
+        self.parent.olfactometer_parent_object.calibration_on = False
+        self.mfc_value_set_btn.setChecked(False)
+    
+    
     
     def closeEvent(self, event):
         self.parent.vial_details_btn.setChecked(False)

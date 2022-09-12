@@ -7,7 +7,7 @@ from PyQt5.QtCore import QTimer
 from serial.tools import list_ports
 from datetime import datetime, timedelta
 
-import utils, utils_olfa_48line, vial_popup
+import utils, utils_olfa_48line, olfa_48line_vial_popup
 
 baudrate = 9600     # for communicating w/ master
 vialsPerSlave = 8
@@ -106,7 +106,7 @@ class Vial(QGroupBox):
         self.read_flow_vals_btn.toggled.connect(lambda: self.readFlow_btn_toggled(self.read_flow_vals_btn))
         
         # VIAL DETAILS
-        self.vial_details_window = vial_popup.VialDetailsPopup(self)
+        self.vial_details_window = olfa_48line_vial_popup.VialDetailsPopup(self)
         self.vial_details_btn = QPushButton('Vial\nDetails',checkable=True,toggled=self.vial_details_btn_toggled)
 
         # VIAL TIMER
@@ -539,6 +539,7 @@ class olfactometer_window(QGroupBox):
         self.sccm2Ard_dicts = {}
         self.ard2Sccm_dicts = {}
         self.active_slaves = []
+        self.calibration_on = False
 
         self.get_calibration_tables()
         self.generate_ui()
@@ -820,9 +821,7 @@ class olfactometer_window(QGroupBox):
                 # get rid of it
                 x=2
         '''
-        
-
-        
+    
     def send_master_mode(self, newMode):
         if newMode == master_modes[0]:  mode_value = 6
         if newMode == master_modes[1]:  mode_value = 5
@@ -833,7 +832,6 @@ class olfactometer_window(QGroupBox):
         
         m_mode_string = 'MM_mode_' + str(mode_value)
         self.send_to_master(m_mode_string)
-
 
     def receive(self):
         if self.serial.canReadLine() == True:
@@ -910,14 +908,13 @@ class olfactometer_window(QGroupBox):
                         for v in s.vials:
                             if v.full_vialNum == slave_vial:
                                 flowVal_raw = int(flowVal)
-                                #this_dict_name = v.cal_table # this is only the name, u need the actual table
                                 flowVal_sccm = utils_olfa_48line.convertToSCCM(flowVal_raw,v.intToSccm_dict)
-                                
                                 dataStr = str(flowVal) + '\t' + str(flowVal_sccm) + '\t' + str(ctrlVal)
-                                
                                 v.vial_details_window.data_receive_box.append(dataStr)
 
-
+                                # if calibration is on: send it to the vial details popup
+                                if self.calibration_on == True:
+                                    v.vial_details_window.read_value(flowVal)
             
             except UnicodeDecodeError as err:
                 logger.warning("Serial read error")
