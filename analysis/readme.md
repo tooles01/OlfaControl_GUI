@@ -11,8 +11,6 @@
 - save .mat file
 
 
-
-
 #
 
 ## for plotting (over time):
@@ -25,7 +23,7 @@
 #### options:
 - flow as int or sccm
 - plot ctrl on right yaxis
-- ctrl as int or voltage
+	- ctrl as int or voltage
 
 
 
@@ -35,14 +33,14 @@
 - load .mat file
 - plot over time
 	- left yaxis: olfa flow
-	- right yaxis: olfa ctrl, pid, or output flow sensor
+	- right yaxis: select: olfa ctrl, pid, or output flow sensor
 
 
 #### options:
 - olfa:
-	- flow or ctrl values
 	- flow as int or sccm
-	- ctrl as int or voltage
+	- plot ctrl values
+		- ctrl as int or voltage
 - pid:
 	- plot or don't plot
 - output flow:
