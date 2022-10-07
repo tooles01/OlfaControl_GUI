@@ -15,17 +15,14 @@
 ##
 ### analysis_plot_olfa_and_pid
 
-<dl>
-<dt>options:</dt>
-<dd>- olfa:</dd>
-	<dd>- flow or ctrl values</dd>
-	<dd>- flow as int or sccm</dd>
-	<dd>- ctrl as int or voltage</dd>
-</dd>
-- pid:
-	- plot or don't plot
-
-</dl>
-
 - load .mat file
 - plot olfa flow (or ctrl) & pid over time
+
+
+### options:
+- olfa:
+	- flow or ctrl values
+	- flow as int or sccm
+	- ctrl as int or voltage
+- pid:
+	- plot or don't plot
