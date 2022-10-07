@@ -1,6 +1,6 @@
 
 ## get files:
-## analysis_get_and_parse_files
+### analysis_get_and_parse_files
 
 - load selected datafile
 - parse header (PID gain, calibration tables)
@@ -9,7 +9,6 @@
 - convert flow to sccm
 - convert ctrl to voltage
 - save .mat file
-#
 
 
 
@@ -17,7 +16,6 @@
 #
 
 ## for plotting (over time):
-#
 
 ### analysis_plot_olfa
 
