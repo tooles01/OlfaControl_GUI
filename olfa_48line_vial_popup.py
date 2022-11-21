@@ -91,10 +91,10 @@ class VialDetailsPopup(QWidget):
 
         # Layout
         layout_col1_widgets = QGridLayout()
-        layout_col1_widgets.addWidget(self.db_std_widgets_box,0,0,1,2)  # row 0 col 0
-        layout_col1_widgets.addWidget(self.cal_box,1,0,1,2)             # row 1 col 0
-        layout_col1_widgets.addWidget(self.db_readflow_btn,2,0,1,1)     # row 2 col 0
-        layout_col1_widgets.addWidget(self.db_advanced_btn,2,1,1,2)     # row 2 col 1
+        layout_col1_widgets.addWidget(self.db_std_widgets_box,0,0,1,2)      # row 0 col 0
+        layout_col1_widgets.addWidget(self.cal_box,1,0,1,2)                 # row 1 col 0
+        layout_col1_widgets.addWidget(self.db_readflow_btn,2,0,1,1)         # row 2 col 0
+        layout_col1_widgets.addWidget(self.db_advanced_btn,2,1,1,2)         # row 2 col 1
         layout_col1_widgets.addWidget(self.db_flow_control_box,3,0,1,1)     # row 3 col 0
         layout_col1_widgets.addWidget(self.db_manual_control_box,3,1,1,1)   # row 3 col 1
         layout_col2_data = QVBoxLayout()
@@ -293,39 +293,143 @@ class VialDetailsPopup(QWidget):
 
     def new_mfc_value_set(self):
         if self.mfc_value_set_btn.isChecked() == True:
-            self.mfc_value_set_btn.setText('End early')
-
             self.this_cal_sccm_value = self.mfc_value_lineedit.text()
             logger.debug('starting calibration at %s sccm', self.this_cal_sccm_value)
             
+            # TODO check that proportional valve is open
             self.parent.olfactometer_parent_object.calibration_on = True
             self.serial_values = []
+            self.serial_values_std = []
+            self.start_of_good_values = []
+            self.duration_of_good_values = timedelta(0,10)  # 10 sec
+            self.all_std_devs = []
+            self.values_means = []
+
+            self.mfc_value_set_btn.setText('End early')
+        
         else:
             self.mfc_value_set_btn.setText('Start')
     
     def read_value(self,incoming_value):
-        #num_samples = 300    # 30 seconds is 300 samples (assuming we are sampling every 100ms)
-        num_samples = 400
+        # wait until this many seconds have passed
+        samples_per_sec = 10
+        sec_to_wait = 40
+        num_samples = sec_to_wait * samples_per_sec  # 10 samples per second (assuming 100ms sampling rate)
 
-        # once we've collected enough samples
+        moving_mean_over = 10  # calculate moving mean over 10 points
+        
+        # once 30 seconds has passed
         if len(self.serial_values) >= num_samples:
+
+            # if we haven't done any calculations yet, get the first set of them
+            if self.values_means == []:
+                for m in range(0,num_samples):
+                    # calculate moving mean over the first 10 points and append
+                    idx_1 = m
+                    idx_2 = idx_1 + moving_mean_over
+                    this_range = copy.copy(self.serial_values[idx_1:idx_2])
+                    this_mean = np.mean(this_range)
+                    self.values_means.append(this_mean)
+            
+            # check the last 30 moving means and see if the range is greater than .2
+            min_mean = min(self.values_means)
+            max_mean = max(self.values_means)
+            range_means = max_mean-min_mean
+
+            # if data looks stable: # TODO might need to alter this for setpoints that are in between integers? figure this out
+            if range_means < .5:
+                self.serial_converted = [float(i) for i in self.serial_values]
+                self.this_cal_int_value = np.mean(self.serial_converted)    # calculate mean
+                self.save_calibration_value()                               # save value to calibration table
+            
+            # if it wasn't good:
+            else:
+                # pop serial values
+                self.serial_values.pop(0)
+                self.serial_values.append(int(incoming_value))
+                
+                # calculate means again
+                self.values_means = []
+                for m in range(0,num_samples):
+                    # calculate moving mean over the first 10 points and append
+                    idx_1 = m
+                    idx_2 = idx_1 + moving_mean_over
+                    this_range = copy.copy(self.serial_values[idx_1:idx_2])
+                    this_mean = np.mean(this_range)
+                    self.values_means.append(this_mean)
+
+                # check the last 30 moving means and see if the range is greater than .2
+                min_mean = min(self.values_means)
+                max_mean = max(self.values_means)
+                range_means = max_mean-min_mean
+
+                # if data looks stable:
+                if range_means < .5:
+                    self.serial_converted = [float(i) for i in self.serial_values]
+                    self.this_cal_int_value = np.mean(self.serial_converted)    # calculate mean
+                    self.save_calibration_value()                               # save value to calibration table
+            
+            '''
+            # moving average (over 10 points I think)
+            #this_mean=np.convolve(self.serial_values,np.ones(10),'valid')/10
+            range_to_iterate = int((num_samples/samples_per_sec)+1)
+            idx_2 = 0
+            for m in range(1,range_to_iterate):
+                idx_1 = idx_2 + 1
+                idx_2 = idx_1 + samples_per_sec
+                this_range = copy.copy(self.serial_values[idx_1:idx_2])
+                this_range_mean = np.mean(this_range)
+                values_means.append(this_range_mean)
+
             # check the range of values in the list
             min_val = min(self.serial_values)
             max_val = max(self.serial_values)
             full_range = max_val - min_val
+
+            num_std_dev_datapoints = 100
+            self.test_std_dev = copy.copy(self.serial_values[num_samples-num_std_dev_datapoints:num_samples])
+            self.all_std_devs.append(np.std(self.test_std_dev,ddof=1))
+            
+            # if the range is less than 2 ints
+            if full_range < 2:
+                # calculate std dev over the past 10sec of datapoints
+                num_std_dev_datapoints = 100
+                
+                # get the most recent 10 seconds
+                self.serial_values_std = copy.copy(self.serial_values[num_samples-num_std_dev_datapoints:num_samples])
+                this_std_dev = np.std(self.serial_values_std)   # calculate the std dev
+                print(this_std_dev)
+                # if this is less than .2, we are good
+                if this_std_dev < .2:
+                    # if it's the first value under .2
+                    if self.start_of_good_values == []:
+                        self.start_of_good_values = datetime.now()
+                        logger.debug('%s first period std dev is under .2',utils.get_current_time()[:-1])
+                    # if there other values there already
+                    else:
+                        # if it's been 10 seconds since good values started
+                        current_time = datetime.now()
+                        if (current_time-self.start_of_good_values) >= self.duration_of_good_values:
+                            logger.debug('%s: for the past 10 seconds, the std dev (over 5 seconds of data) has been under .2')
+                            self.serial_converted = [float(i) for i in self.serial_values]
+                            self.this_cal_int_value = np.mean(self.serial_converted)    # calculate mean
+                            self.save_calibration_value()                               # save value to calibration table
+
+                else:
+                    self.start_of_good_values = []  # need to reset
+                    
+            '''
+            '''
+                self.serial_converted = [float(i) for i in self.serial_values]
+                self.this_cal_int_value = np.mean(self.serial_converted)    # calculate mean
+                self.save_calibration_value()   # save value to calibration table
+            '''
+            '''
             # if the range is not yet acceptable
-            if full_range > 2:
+            else:
                 self.serial_values.pop(0)                       # pop the top value
                 self.serial_values.append(int(incoming_value))  # append the new value
-            # if the range is good:
-            else:
-                self.serial_converted = [float(i) for i in self.serial_values]
-                
-                # calculate mean
-                self.this_cal_int_value = np.mean(self.serial_converted)
-                
-                # send the value to the table
-                self.save_calibration_value()
+            '''
                 
         # if we have not yet collected enough data points:
         else:
