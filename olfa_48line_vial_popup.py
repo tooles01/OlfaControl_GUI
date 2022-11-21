@@ -204,7 +204,8 @@ class VialDetailsPopup(QWidget):
         self.db_PID_toggle_btn.setMinimumWidth(self.db_PID_toggle_btn.sizeHint().width())   # just for sizing
         self.db_PID_toggle_btn.setText('Turn flow control on')                              # just for sizing
         self.db_ctrl_toggle_btn = QPushButton(text="Open prop valve",checkable=True,toggled=self.parent.propValve_toggled)
-        self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True)#,toggled=self.vialOpen_toggled) # TODO
+        #self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True)#,toggled=self.vialOpen_toggled) # TODO
+        self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True,toggled=self.vialOpen_toggled)
         manual_debug_layout = QVBoxLayout()
         manual_debug_layout.addWidget(self.db_PID_toggle_btn)
         manual_debug_layout.addWidget(self.db_ctrl_toggle_btn)
@@ -243,6 +244,17 @@ class VialDetailsPopup(QWidget):
 
         self.cal_box.setLayout(layout_full)
 
+
+    def vialOpen_toggled(self,checked):
+        if checked:
+            self.db_vlve_toggle_btn.setText("Close Iso Valve")
+            strToSend = 'S_OI_' + self.full_vialNum
+            self.parent.parent().parent.send_to_master(strToSend)
+
+        else:
+            self.db_vlve_toggle_btn.setText("Open Iso Valve")
+            strToSend = 'S_CI_' + self.full_vialNum
+            self.parent.parent().parent.send_to_master(strToSend)
     
     def create_new_cal_file_clicked(self):
         # Clicked - create new file, start procedure
