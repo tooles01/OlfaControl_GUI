@@ -77,3 +77,24 @@
 
 - *none*
 </details>
+
+
+### analysis_spt_char
+**plots flow v. pid**
+
+1. loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
+2. smoothes PID (moving average over 50ms windows)
+3. splits into sections
+	- for each vial:
+		- for each event:
+			- gets flow and PID data; calculates mean flow & pid
+		- creates matrix of mean values [flow,pid] for all events
+4. plots flow & PID data over time
+5. plots mean flow values v. mean PID values
+
+
+<details>
+<summary>dependencies:</summary>
+
+- get_section_data
+</details>
