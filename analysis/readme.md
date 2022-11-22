@@ -11,7 +11,6 @@
 5. converts ctrl to voltage
 6. saves .mat file
 
-
 #
 #
 ## for plotting:
@@ -22,13 +21,16 @@
 1. loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
 2. plots olfactometer flow data (over time)
 
-**options:**
+
+<details>
+<summary>options:</summary>
+
 - flow:
 	- int or sccm
 - ctrl (proportional valve):
 	- plot on right yaxis
 	- int or voltage
-
+</details>
 
 
 #
@@ -41,7 +43,9 @@
 	- right yaxis: user selects one: olfa ctrl, pid, or output flow sensor
 
 
-**options:**
+<details>
+<summary>options:</summary>
+
 - olfa:
 	- flow as int or sccm
 	- plot ctrl values on right yaxis
@@ -50,3 +54,4 @@
 	- plot or don't plot
 - output flow:
 	- plot or don't plot
+</details>
