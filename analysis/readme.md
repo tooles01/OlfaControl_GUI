@@ -11,6 +11,15 @@
 5. converts ctrl to voltage
 6. saves .mat file
 
+<details>
+<summary>dependencies:</summary>
+
+get_section_data
+import_cal_table
+import_datafile
+int_to_SCCM
+</details>
+
 #
 #
 ## for plotting:
@@ -30,6 +39,12 @@
 - ctrl (proportional valve):
 	- plot on right yaxis
 	- int or voltage
+</details>
+
+<details>
+<summary>dependencies:</summary>
+
+*none*
 </details>
 
 
@@ -54,4 +69,11 @@
 	- plot or don't plot
 - output flow:
 	- plot or don't plot
+</details>
+
+
+<details>
+<summary>dependencies:</summary>
+
+*none*
 </details>
