@@ -14,10 +14,10 @@
 <details>
 <summary>dependencies:</summary>
 
-get_section_data
-import_cal_table
-import_datafile
-int_to_SCCM
+- get_section_data
+- import_cal_table
+- import_datafile
+- int_to_SCCM
 </details>
 
 #
@@ -44,7 +44,7 @@ int_to_SCCM
 <details>
 <summary>dependencies:</summary>
 
-*none*
+- *none*
 </details>
 
 
@@ -75,5 +75,5 @@ int_to_SCCM
 <details>
 <summary>dependencies:</summary>
 
-*none*
+- *none*
 </details>
