@@ -43,6 +43,9 @@ class worker_nidaq(QObject):
         channelIWant = self.devName + '/' + self.analogChan
         t = nidaqmx.Task()      # create a task
         t.ai_channels.add_ai_voltage_chan(channelIWant) # add analog input channel to this task
+        t.ai_channels[0].ai_max = analog_input_max_voltage  # set analog input max voltage
+        t.ai_channels[0].ai_min = analog_input_min_voltage  # set analog input min voltage
+        
         while self.readTheStuff == True:
             try:
                 value = t.read(1)   # read 1 sample
@@ -50,7 +53,6 @@ class worker_nidaq(QObject):
                 self.sendData_from_worker.emit(value)
                 if self.save_values_to_list == True:
                     self.data_list.append(value)
-                
                 time.sleep(self.timeToSleep)
             
             except:
