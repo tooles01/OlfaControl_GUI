@@ -20,8 +20,9 @@ analogChannel = 'ai0'   # TODO: fix this
 analog_input_max_voltage = 10.0
 analog_input_min_voltage = -10.0
 
-timeBt_Hz = 1000
-timeBt_s = 1/timeBt_Hz
+def_timeBt_Hz = 1000
+def_timeBt_s = 1/def_timeBt_Hz
+def_timeBtReadings = def_timeBt_s*1000    # in ms
 
 
 class worker_nidaq(QObject):
@@ -31,7 +32,7 @@ class worker_nidaq(QObject):
     def __init__(self, devName):
         super().__init__()
         self.readTheStuff = False
-        self.timeToSleep = timeBt_s
+        self.timeToSleep = def_timeBt_s
         self.devName = devName
         self.analogChan = analogChannel
         self.save_values_to_list = False        
@@ -168,7 +169,7 @@ class NiDaq(QGroupBox):
         self.settingsBox = QGroupBox("Settings")
 
         lbl = QLabel("Time b/t readings (ms):")
-        self.timeWid = QLineEdit()
+        self.timeWid = QLineEdit(text=def_timeBtReadings)
         self.updateBut = QPushButton(text="Update",clicked=self.updateTimeBt)
 
         layout = QFormLayout()
@@ -177,11 +178,10 @@ class NiDaq(QGroupBox):
         self.settingsBox.setLayout(layout)
 
     def updateTimeBt(self):
-        # TODO: finish this
-        #self.timeBt = self.timeWid.
-        #logger.error('not set up yet')
-        pass
-
+        new_time_bt_acquisitions = int(self.timeWid.text())
+        self.worker_obj_nidaq.timeToSleep = new_time_bt_acquisitions
+        logger.info('updated time between acquisitions to %s ms',new_time_bt_acquisitions)
+        
     # RECEIVE DATA
     def createDataReceiveBoxes(self):
         self.dataReceiveBox = QGroupBox("data received")
