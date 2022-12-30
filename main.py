@@ -147,7 +147,7 @@ class mainWindow(QMainWindow):
         # so that datafile stuff is all on one row
         self.datafile_groupbox.setFixedWidth(w)
         self.datafile_groupbox.setFixedWidth(w + 15)
-        #self.settings_box.setMinimumWidth(w+5)
+        self.settings_box.setMinimumWidth(w+5)
     
     def create_general_settings_box(self):
         self.general_settings_box = QGroupBox('General Settings')
@@ -275,8 +275,9 @@ class mainWindow(QMainWindow):
         layout.addWidget(self.add_olfa_orig_btn)
         self.add_devices_groupbox.setLayout(layout)
     
-    def create_program_widgets(self):
+    def program_select_toggled(self):
         if self.program_selection_btn.isChecked():
+            self.program_selection_btn.setText("Deselect")
             self.program_parameters_box.setEnabled(True)
             self.program_to_run = self.program_selection_combo.currentText()
             
@@ -298,6 +299,7 @@ class mainWindow(QMainWindow):
                 '''
         
         else:
+            self.program_selection_btn.setText("Select")
             logger.warning('program selection unchecked: remove program widgets')
             logger.error('THIS DOES NOT WORK')
 
@@ -367,7 +369,7 @@ class mainWindow(QMainWindow):
         self.olfa_type_label = QLabel()
         self.program_selection_combo = QComboBox()
         self.program_selection_combo.addItems(programs_48line)
-        self.program_selection_btn = QPushButton(text='Select',checkable=True,toggled=self.create_program_widgets)
+        self.program_selection_btn = QPushButton(text='Select',checkable=True,toggled=self.program_select_toggled)
         
         layout = QFormLayout()
         layout.addRow(QLabel('Olfactometer type:'),self.olfa_type_label)
@@ -378,7 +380,7 @@ class mainWindow(QMainWindow):
     def create_program_parameters_box(self):
         self.program_parameters_box = QGroupBox('Program Parameters')
 
-        self.program_start_btn = QPushButton(text='Start',checkable=True,toggled=self.program_start_clicked)
+        self.program_start_btn = QPushButton(text='Start Program',checkable=True,toggled=self.program_start_clicked)
         #self.program_start_btn.setEnabled(False)
         
         self.program_parameters_layout = QFormLayout()
@@ -483,8 +485,8 @@ class mainWindow(QMainWindow):
         else:
             logger.warning('program selected is not set up')
     
-    def program_start_clicked(self):
-        if self.program_start_btn.isChecked():
+    def program_start_clicked(self, checked):
+        if checked:
             self.program_start_btn.setText('End Program')
 
             if self.program_to_run == "the program":
@@ -493,8 +495,8 @@ class mainWindow(QMainWindow):
                 self.run_setpoint_characterization()
 
         else:
-            logger.info('program start button unclicked')
-            self.program_start_btn.setText('Start')
+            logger.debug('program start button unclicked')
+            self.program_start_btn.setText('Start Program')
             self.threadIsFinished()
     
     def run_odor_calibration(self):
@@ -695,18 +697,21 @@ class mainWindow(QMainWindow):
         self.thread_olfa.started.connect(self.obj_sptchar.exp)
 
     def threadIsFinished(self):
-        self.obj_sptchar.threadON = False
-        self.thread_olfa.exit()
+        if self.obj_sptchar.threadON == True:
+            self.obj_sptchar.threadON = False
+            self.thread_olfa.exit()
+            logger.debug('spt char program finished')
+        
         self.program_start_btn.setChecked(False)
-        self.program_start_btn.setText('Start')
+        self.program_start_btn.setText('Start Program')
         #self.progSettingsBox.setEnabled(True)
         logger.info('Finished program')
 
         # end recording
         if self.begin_record_btn.isChecked():
             self.end_record_btn.click()
-
-
+    
+    
     def active_slave_refresh(self):        
         # if olfactometer is not connected, connect to it
         if self.olfactometer.connect_btn.isChecked() == False:
@@ -721,6 +726,7 @@ class mainWindow(QMainWindow):
         else:
             self.program_start_btn.setEnabled(True)
     
+    ## FUNCTIONS USED BY WORKERS
     def sendThisSetpoint(self, vial_name:str, ard_val:int):
         strToSend = 'S_Sp_' + str(ard_val) + '_' + vial_name
         self.olfactometer.send_to_master(strToSend)
