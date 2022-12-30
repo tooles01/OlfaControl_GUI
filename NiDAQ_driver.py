@@ -169,7 +169,7 @@ class NiDaq(QGroupBox):
         self.settingsBox = QGroupBox("Settings")
 
         lbl = QLabel("Time b/t readings (ms):")
-        self.timeWid = QLineEdit(text=def_timeBtReadings)
+        self.timeWid = QLineEdit(text=str(def_timeBtReadings))
         self.updateBut = QPushButton(text="Update",clicked=self.updateTimeBt)
 
         layout = QFormLayout()
