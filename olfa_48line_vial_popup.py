@@ -75,7 +75,7 @@ class VialDetailsPopup(QWidget):
         self.setWindowTitle('Vial ' + self.full_vialNum + ' - Details')
 
     def create_ui_features(self):
-        self.vial_details_create_std_widgets_box()
+        self.vial_details_create_settings_box()
         
         self.db_readflow_btn = QPushButton(text='Read flow values',checkable=True)
         self.db_readflow_btn.toggled.connect(lambda: self.parent.readFlow_btn_toggled(self.db_readflow_btn))
@@ -113,8 +113,8 @@ class VialDetailsPopup(QWidget):
         self.db_flow_control_box.setFixedHeight(h_to_use)
         self.db_manual_control_box.setFixedHeight(h_to_use)
 
-    def vial_details_create_std_widgets_box(self):
-        self.db_std_widgets_box = QGroupBox()
+    def vial_details_create_settings_box(self):
+        self.db_std_widgets_box = QGroupBox("Settings")
 
         # Open Vial
         self.db_open_valve_wid = QLineEdit(text='5')        # pos change to spinbox so min/max can be set
@@ -127,7 +127,7 @@ class VialDetailsPopup(QWidget):
         self.db_setpoint_value_box.returnPressed.connect(lambda: self.parent.setpoint_btn_clicked(self.db_setpoint_value_box.text()))
         self.db_setpoint_send_btn.clicked.connect(lambda: self.parent.setpoint_btn_clicked(self.db_setpoint_value_box.text()))
         
-        # Flow Calibration Table
+        # Calibration Table
         self.db_cal_table_combobox = QComboBox()
         self.db_cal_table_combobox.addItems(self.parent.olfactometer_parent_object.ard2Sccm_dicts)
         self.db_cal_table_combobox.setCurrentText(self.parent.cal_table)

@@ -147,7 +147,7 @@ class Vial(QGroupBox):
         self.vial_details_window = QWidget()
         self.vial_details_window.setWindowTitle('Vial ' + self.full_vialNum + ' - Details')
         
-        self.vial_details_create_std_widgets_box()
+        self.vial_details_create_settings_box()
         self.db_advanced_btn = QPushButton(text='Enable Advanced Options',checkable=True,toggled=self.toggled_advanced_settings)    #self.db_advanced_btn.toggled.connect(self.toggled_advanced_settings)        
         self.vial_details_create_flow_ctrl_box()
         self.vial_details_create_man_control_box()
@@ -180,7 +180,7 @@ class Vial(QGroupBox):
 
         self.vial_details_window.hide()
     
-    def vial_details_create_std_widgets_box(self):
+    def vial_details_create_settings_box(self):
         self.db_std_widgets_box = QGroupBox()
 
         # Open Vial
