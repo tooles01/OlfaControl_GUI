@@ -127,6 +127,7 @@ class mainWindow(QMainWindow):
         self.create_add_devices_box()
         self.create_program_selection_groupbox()
         self.create_program_parameters_box()
+        self.create_program_start_box()
         self.program_parameters_box.setEnabled(False)
         self.create_datafile_box()
         self.settings_layout = QGridLayout()
@@ -134,9 +135,11 @@ class mainWindow(QMainWindow):
         self.settings_layout.addWidget(self.add_devices_groupbox,0,1,1,1)
         self.settings_layout.addWidget(self.program_selection_groupbox,1,0,1,2)
         self.settings_layout.addWidget(self.program_parameters_box,2,0,1,2)
-        self.settings_layout.addWidget(self.datafile_groupbox,3,0,1,2)
+        self.settings_layout.addWidget(self.program_start_box,3,0,1,2)
+        self.settings_layout.addWidget(self.datafile_groupbox,4,0,1,2)
         self.settings_box.setLayout(self.settings_layout)
-        self.settings_box.setFixedWidth(self.settings_box.sizeHint().width() - 50)
+        #self.settings_box.setFixedWidth(self.settings_box.sizeHint().width() - 50)
+        self.settings_box.setFixedWidth(self.settings_box.sizeHint().width())
 
         # DEVICES GROUPBOX
         self.device_groupbox = QGroupBox('Devices:')
@@ -167,13 +170,12 @@ class mainWindow(QMainWindow):
         self.log_file_dir = '..' + self.log_file_dir
         self.log_file_dir_label = QLineEdit(text=self.log_file_dir,readOnly=True)
         self.log_file_dir_label.setToolTip('edit in header of main.py (if you need to change this)')
-        
+        '''
         self.log_text_edit = QTextEdit(readOnly=True)   # TODO: put log messages here
         self.log_text_edit.setToolTip('not set up yet sry')
         self.log_text_edit.setMaximumHeight(65)
         self.log_clear_btn = QPushButton(text='Clear')
         self.log_clear_btn.clicked.connect(lambda: self.log_text_edit.clear())
-        '''
         log_box_layout = QGridLayout()
         log_box_layout.addWidget(QLabel('Log messages:'),0,0,1,1)
         log_box_layout.addWidget(self.log_clear_btn,0,2,1,1)
@@ -304,7 +306,13 @@ class mainWindow(QMainWindow):
             logger.error('THIS DOES NOT WORK')
 
             self.program_parameters_box.setEnabled(False)
-            # remove these widgets
+
+            # remove the program parameters groupbox ** this is the only way I've been able to delete these stupid widgets
+            sip.delete(self.program_parameters_box)
+            # add the program parameters groupbox back in
+            self.create_program_parameters_box()
+            self.settings_layout.addWidget(self.program_parameters_box,2,0,1,2)
+
             #TODO
             '''
             if self.program_to_run == "setpoint characterization":
@@ -380,12 +388,16 @@ class mainWindow(QMainWindow):
     def create_program_parameters_box(self):
         self.program_parameters_box = QGroupBox('Program Parameters')
 
-        self.program_start_btn = QPushButton(text='Start Program',checkable=True,toggled=self.program_start_clicked)
-        #self.program_start_btn.setEnabled(False)
-        
         self.program_parameters_layout = QFormLayout()
         self.program_parameters_box.setLayout(self.program_parameters_layout)
     
+    def create_program_start_box(self):
+        self.program_start_box = QGroupBox()
+        self.program_start_btn = QPushButton(text='Start Program',checkable=True,toggled=self.program_start_clicked)
+        self.program_start_box_layout = QHBoxLayout()
+        self.program_start_box_layout.addWidget(self.program_start_btn)
+        self.program_start_box.setLayout(self.program_start_box_layout)
+
     def create_48line_program_widgets(self):
         if self.program_to_run == "setpoint characterization":
             logger.debug('setpoint characterization selected')
@@ -445,13 +457,12 @@ class mainWindow(QMainWindow):
                     self.program_parameters_layout.removeItem(self.program_parameters_layout.itemAt(w))
                     sip.delete(self.program_parameters_layout.itemAt(w))
                 '''
-                
+            
             self.program_parameters_layout.addRow(self.p_vial_select_layout)
             self.program_parameters_layout.addRow(self.p_spt_layout)
             self.program_parameters_layout.addRow(self.p_dur_layout)
             self.program_parameters_layout.addRow(QLabel('PID gain:'),self.p_pid_gain)
-            self.program_parameters_layout.addRow(self.program_start_btn)
-
+            
             # change datafile name
             olfa_48line_results_dir = main_datafile_directory + '\\48-line olfa' + '\\' + current_date
             if not os.path.exists(olfa_48line_results_dir): os.mkdir(olfa_48line_results_dir); self.logger.debug('created folder at %s', olfa_48line_results_dir)
