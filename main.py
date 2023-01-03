@@ -18,6 +18,7 @@ import flow_sensor_driver
 import olfa_original_procedures
 #import programs_48lineolfa
 import utils_olfa_48line
+import program_additive_popup
 
 
 programs_48line = ['setpoint characterization','additive']
@@ -34,6 +35,7 @@ default_dur_OFF = 5
 default_numTrials = 5
 no_active_slaves_warning = 'no active slaves pls connect olfa or something'
 waitBtSpAndOV = .5
+waitBtSps = 1
 default_pid_gain = '1x'
 
 current_date = utils.currentDate
@@ -104,6 +106,63 @@ class worker_sptChar(QObject):
 
         self.finished.emit()
 
+class worker_additive(QObject):
+    finished = pyqtSignal()
+    w_sendThisSp = pyqtSignal(str,int)
+    w_send_OpenValve = pyqtSignal(str,int)
+    w_incProgBar = pyqtSignal(int)
+
+    def __init__(self):
+        super().__init__()
+        self.threadON = False
+        
+        # worker will receive these values from mainWindow during additive program setup (once "start" is clicked)
+        self.vials_to_run = []
+        self.complete_stimulus_list = []
+        self.duration_on = 5
+        self.duration_off = 5
+
+    @pyqtSlot()
+    def exp(self):
+        # wait so olfa has time to set vial to debug mode
+        '''
+        #time.sleep(waitBtSpAndOV)
+        #time.sleep(waitBtSpAndOV)
+
+        # do an off duration so we have a better baseline
+        #time.sleep(self.duration_off)
+        '''
+        
+        # iterate through stimulus list
+        for stimulus in self.complete_stimulus_list:
+            if self.threadON == True:
+                # for each vial: send setpoint
+                for v in range(len(self.vials_to_run)):
+                    vial = self.vials_to_run[v]
+                    sp = stimulus[v]
+                    logger.debug('Setting %s to %s sccm', vial, sp)
+                    self.w_sendThisSp.emit(vial,sp)
+                    time.sleep(waitBtSps)
+                # for each vial: open valve
+                for v in range(len(self.vials_to_run)):
+                    vial = self.vials_to_run[v]
+                    logger.debug('Opening %s for %s seconds',vial,self.duration_on)
+                    self.w_send_OpenValve.emit(vial,self.duration_on)
+                    time.sleep(waitBtSps)
+
+                # wait until the vials have closed
+                time.sleep(self.duration_on)    # fix this
+
+                # wait for the rest duration
+                time.sleep(self.duration_off)   # fix this
+            
+            if self.threadON == False:
+                break
+
+        self.finished.emit()
+        self.threadON = False
+
+
 class mainWindow(QMainWindow):
     
     def __init__(self):
@@ -111,6 +170,7 @@ class mainWindow(QMainWindow):
         
         self.generate_ui()
         self.set_up_threads_sptchar()
+        self.set_up_threads_additive()
         
         self.mainLayout = QHBoxLayout()
         self.mainLayout.addWidget(self.settings_box)
@@ -140,7 +200,7 @@ class mainWindow(QMainWindow):
         self.settings_box.setLayout(self.settings_layout)
         #self.settings_box.setFixedWidth(self.settings_box.sizeHint().width() - 50)
         self.settings_box.setFixedWidth(self.settings_box.sizeHint().width())
-
+        
         # DEVICES GROUPBOX
         self.device_groupbox = QGroupBox('Devices:')
         self.device_layout = QVBoxLayout()
@@ -299,77 +359,21 @@ class mainWindow(QMainWindow):
                 #logger.debug('setpoint characterization selected')
                 #programs_48lineolfa.create_sptchar_parameter_widgets(self.program_parameters_box)
                 '''
+
+            if self.program_to_run == "additive":
+                self.create_additive_widgets()
         
         else:
             self.program_selection_btn.setText("Select")
             logger.warning('program selection unchecked: remove program widgets')
-            logger.error('THIS DOES NOT WORK')
-
+            
             self.program_parameters_box.setEnabled(False)
-
+            
             # remove the program parameters groupbox ** this is the only way I've been able to delete these stupid widgets
             sip.delete(self.program_parameters_box)
             # add the program parameters groupbox back in
             self.create_program_parameters_box()
-            self.settings_layout.addWidget(self.program_parameters_box,2,0,1,2)
-
-            #TODO
-            '''
-            if self.program_to_run == "setpoint characterization":
-                # the widgets are LIKELY already there
-                # so.. delete them
-                numWids = self.program_parameters_layout.count() - 1
-                for n in range(numWids):
-                    print(self.program_parameters_layout.itemAt(n))
-                    this_item = self.program_parameters_layout.itemAt(n)
-                    try:
-                        # if this_item is a layout:
-                        if this_item.isWidgetType() == False:
-                            print('  this item: layout')
-                            # cycle through and remove each widget
-                            numWidgets_in_item = this_item.count()
-                            print('\t', numWidgets_in_item, ' widgets')
-                            
-                            for p in range(numWidgets_in_item):
-                                this_widget = this_item.itemAt(p)
-                                #print('\t\t', this_widget)
-                                
-                                # remove from layout & delete
-                                this_item.removeItem(this_item.itemAt(p))
-                                try:
-                                    sip.delete(this_item.itemAt(p))
-                                    print('\t\tdeleted')
-                                except TypeError:
-                                    pass
-                    
-                    except AttributeError:
-                        # if this_item is a widget:
-                        print('  this item: widget')
-
-                        # remove from layout & delete
-                        self.program_parameters_layout.removeItem(self.program_parameters_layout.itemAt(n))
-                        try:
-                            sip.delete(self.program_parameters_layout.itemAt(n))
-                            print('\t\tdeleted')
-                        except TypeError:
-                            pass
-                        
-
-
-                        # remove the widget
-                    # if it's a layout:
-                    # remove each widget individually
-                    # if not:
-                    # just remove this widget
-                    #self.program_parameters_layout.removeItem(self.program_parameters_layout.itemAt(n))
-                    #sip.delete(self.program_parameters_layout.itemAt(n))
-                    #try:
-                    #    self.program_parameters_layout.removeRow(self.program_parameters_layout.itemAt(n))
-                    #except TypeError as err:
-                    #    self.program_parameters_layout.removeWidget(self.program_parameters_layout.itemAt(n))
-                    
-                    x=1
-            '''                
+            self.settings_layout.addWidget(self.program_parameters_box,2,0,1,2)            
     
     def create_program_selection_groupbox(self):
         self.program_selection_groupbox = QGroupBox('Program Selection')
@@ -387,7 +391,7 @@ class mainWindow(QMainWindow):
 
     def create_program_parameters_box(self):
         self.program_parameters_box = QGroupBox('Program Parameters')
-
+        
         self.program_parameters_layout = QFormLayout()
         self.program_parameters_box.setLayout(self.program_parameters_layout)
     
@@ -496,6 +500,73 @@ class mainWindow(QMainWindow):
         else:
             logger.warning('program selected is not set up')
     
+    def create_additive_widgets(self):
+        self.additive_program_window = program_additive_popup.additiveProgramSettingsPopup(self)
+        self.additive_program_window.show()
+
+        self.additive_parameters_box = QGroupBox('selected additive parameters')
+
+
+
+        self.change_parameters_btn = QPushButton(text="Change Parameters")
+        self.change_parameters_btn.clicked.connect(self.change_parameters_btn_clicked)
+        
+        self.program_parameters_layout.addWidget(self.additive_parameters_box)
+        self.program_parameters_layout.addWidget(self.change_parameters_btn)
+        self.program_parameters_layout.addWidget(self.program_start_btn)
+
+    ## function is called from the popup window
+    def additive_parameters_display(self):
+        # DISPLAY THE SELECTED PARAMETERS
+        # this function is not totally necessary, more for debugging/user convenience
+
+        '''
+        # if additive parameters box is empty:
+            # add shit to additive parameters box
+
+        # if it's not:
+            # delete it
+            # remake it
+            # add shit to it
+            # insert it above the other widgets
+
+        '''
+        
+        if self.program_parameters_layout.count() > 2:
+            for wid in range(self.program_parameters_layout.count()-2):
+                self.program_parameters_layout.removeRow(wid)
+                #try:
+                #    sip.delete(self.program_parameters_layout.itemAt(wid))
+                #except TypeError as err:
+                #    print(err)
+                print(wid)
+
+        '''
+        if self.program_parameters_layout.count() > 2:
+            for wid in range(self.program_parameters_layout.count()-2):
+                this_item = self.program_parameters_layout.itemAt(wid)
+                self.program_parameters_layout.removeItem(self.program_parameters_layout.itemAt(wid))
+                try:
+                    sip.delete(self.program_parameters_layout.itemAt(wid))
+                except TypeError as err:
+                    print(err)
+                print(wid)
+        '''
+            # delete everything above the bottom two widgets
+
+        self.program_parameters_layout.insertRow(0,QLabel('additive parameter '))
+        self.program_parameters_layout.insertRow(1,QLabel('test test parameter '))
+        
+        # enable program start button
+        self.program_start_btn.setEnabled(True)
+        # bring main window to the front
+        self.activateWindow()
+        
+    
+    def change_parameters_btn_clicked(self):
+        self.additive_program_window.parameter_set_button.setChecked(False)
+        self.additive_program_window.activateWindow()
+    
     def program_start_clicked(self, checked):
         if checked:
             self.program_start_btn.setText('End Program')
@@ -504,6 +575,8 @@ class mainWindow(QMainWindow):
                 self.run_odor_calibration()
             if self.program_to_run == 'setpoint characterization':
                 self.run_setpoint_characterization()
+            if self.program_to_run == 'additive':
+                self.run_additive_program()
 
         else:
             logger.debug('program start button unclicked')
@@ -697,6 +770,55 @@ class mainWindow(QMainWindow):
         logger.debug('starting thread_olfa')
         self.thread_olfa.start()            # # start thread -> worker_sptChar iterates through stimuli
     
+    def run_additive_program(self):
+        logger.info('run additive experiment')
+
+        # CHECK THAT OLFACTOMETER IS CONNECTED
+        try:
+            if self.olfactometer.connect_btn.isChecked() == False:
+                logger.warning('olfactometer not connected, attempting to connect')
+                utils_olfa_48line.connect_to_48line_olfa(self.olfactometer)
+        except AttributeError as err:   logger.error(err)
+        
+        '''
+        # START RECORDING
+        if self.begin_record_btn.isChecked() == False:
+            logger.debug('clicking begin record button')
+            self.begin_record_btn.click()
+        '''
+        
+        # GET PROGRAM PARAMETERS
+        additive_vials_to_run = copy.copy(self.additive_program_window.vials_to_run)
+        dur_ON = int(self.additive_program_window.open_dur_wid.text())
+        dur_OFF = int(self.additive_program_window.rest_dur_wid.text())
+
+        # GET STIMULUS LIST
+        additive_stimulus_list = copy.copy(self.additive_program_window.vial_flows_complete_list)
+
+        # GET DICTIONARIES FOR THESE VIALS
+        vial_1 = additive_vials_to_run[0]
+        vial_2 = additive_vials_to_run[1]
+
+
+        # SEND PARAMETERS TO ADDITIVE WORKER OBJECT
+        self.obj_additive.vials_to_run = copy.copy(additive_vials_to_run)
+        self.obj_additive.complete_stimulus_list = copy.copy(additive_stimulus_list)
+        self.obj_additive.duration_on = copy.copy(dur_ON)
+        self.obj_additive.duration_off = copy.copy(dur_OFF)
+
+        # SET VIALS TO DEBUG MODE
+        for v in additive_vials_to_run:
+            strToSend = 'MS_debug_' + str(v)
+            self.olfactometer.send_to_master(strToSend)
+            logger.debug('setting vial %s to debug mode', str(v))
+        
+        # START WORKER THREAD
+        self.obj_additive.threadON = True
+        logger.debug('starting thread_additive')
+        self.thread_additive.start()
+
+
+
     def set_up_threads_sptchar(self):
         self.obj_sptchar = worker_sptChar()
         self.thread_olfa = QThread()
@@ -707,11 +829,25 @@ class mainWindow(QMainWindow):
         self.obj_sptchar.finished.connect(self.threadIsFinished)
         self.thread_olfa.started.connect(self.obj_sptchar.exp)
 
+    def set_up_threads_additive(self):
+        self.obj_additive = worker_additive()
+        self.thread_additive = QThread()
+        self.obj_additive.moveToThread(self.thread_additive)
+
+        self.obj_additive.w_sendThisSp.connect(self.sendThisSetpoint)
+        self.obj_additive.w_send_OpenValve.connect(self.send_OpenValve)
+        self.obj_additive.finished.connect(self.threadIsFinished)
+        self.thread_additive.started.connect(self.obj_additive.exp)
+    
     def threadIsFinished(self):
         if self.obj_sptchar.threadON == True:
             self.obj_sptchar.threadON = False
             self.thread_olfa.exit()
             logger.debug('spt char program finished')
+        if self.obj_additive.threadON == True:
+            self.obj_additive.threadON = False
+            self.thread_additive.exit()
+            logger.debug('additive program finished')
         
         self.program_start_btn.setChecked(False)
         self.program_start_btn.setText('Start Program')
