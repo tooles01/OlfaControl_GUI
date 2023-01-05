@@ -180,6 +180,7 @@ class mainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
         self.setWindowTitle('8-line Olfa PID Testing')
     
+    
     def generate_ui(self):
         # SETTINGS GROUPBOX
         self.settings_box = QGroupBox('Settings')
@@ -405,7 +406,10 @@ class mainWindow(QMainWindow):
     def create_48line_program_widgets(self):
         if self.program_to_run == "setpoint characterization":
             logger.debug('setpoint characterization selected')
-
+            
+            ##############################
+            ## CREATE WIDGETS            
+            
             self.p_slave_select_wid = QComboBox()
             self.p_slave_select_wid.setToolTip('Only active slaves displayed')
             if self.olfactometer.active_slaves == []:
@@ -452,20 +456,18 @@ class mainWindow(QMainWindow):
 
             self.p_pid_gain = QLineEdit(text=default_pid_gain)
             
-            
             if self.program_parameters_layout.count() > 0:  # TODO
                 # clear this shit
                 logger.warning('gotta clear these widgets out')
-                '''
-                for w in range(0,self.program_parameters_layout.count()):
-                    self.program_parameters_layout.removeItem(self.program_parameters_layout.itemAt(w))
-                    sip.delete(self.program_parameters_layout.itemAt(w))
-                '''
             
             self.program_parameters_layout.addRow(self.p_vial_select_layout)
             self.program_parameters_layout.addRow(self.p_spt_layout)
             self.program_parameters_layout.addRow(self.p_dur_layout)
             self.program_parameters_layout.addRow(QLabel('PID gain:'),self.p_pid_gain)
+            
+            
+            ##############################
+            ## UPDATE DATAFILE STUFF            
             
             # change datafile name
             olfa_48line_results_dir = main_datafile_directory + '\\48-line olfa' + '\\' + current_date
@@ -501,71 +503,105 @@ class mainWindow(QMainWindow):
             logger.warning('program selected is not set up')
     
     def create_additive_widgets(self):
+        # SHOW ADDITIVE POPUP WINDOW
         self.additive_program_window = program_additive_popup.additiveProgramSettingsPopup(self)
         self.additive_program_window.show()
-
-        self.additive_parameters_box = QGroupBox('selected additive parameters')
-
-
-
-        self.change_parameters_btn = QPushButton(text="Change Parameters")
-        self.change_parameters_btn.clicked.connect(self.change_parameters_btn_clicked)
+        
+        # ADD WIDGETS TO PROGRAM PARAMETERS LAYOUT
+        self.additive_parameters_box = QGroupBox('Selected parameters:')
+        #self.additive_parameters_layout = QFormLayout()
+        #self.additive_parameters_box.setLayout(self.additive_parameters_layout)
+        self.change_parameters_btn = QPushButton(text="Change Parameters",checkable=True,toggled=self.change_parameters_btn_toggled)
         
         self.program_parameters_layout.addWidget(self.additive_parameters_box)
         self.program_parameters_layout.addWidget(self.change_parameters_btn)
-        self.program_parameters_layout.addWidget(self.program_start_btn)
 
-    ## function is called from the popup window
-    def additive_parameters_display(self):
-        # DISPLAY THE SELECTED PARAMETERS
-        # this function is not totally necessary, more for debugging/user convenience
-
-        '''
-        # if additive parameters box is empty:
-            # add shit to additive parameters box
-
-        # if it's not:
-            # delete it
-            # remake it
-            # add shit to it
-            # insert it above the other widgets
-
-        '''
-        
-        if self.program_parameters_layout.count() > 2:
-            for wid in range(self.program_parameters_layout.count()-2):
-                self.program_parameters_layout.removeRow(wid)
-                #try:
-                #    sip.delete(self.program_parameters_layout.itemAt(wid))
-                #except TypeError as err:
-                #    print(err)
-                print(wid)
-
-        '''
-        if self.program_parameters_layout.count() > 2:
-            for wid in range(self.program_parameters_layout.count()-2):
-                this_item = self.program_parameters_layout.itemAt(wid)
-                self.program_parameters_layout.removeItem(self.program_parameters_layout.itemAt(wid))
-                try:
-                    sip.delete(self.program_parameters_layout.itemAt(wid))
-                except TypeError as err:
-                    print(err)
-                print(wid)
-        '''
-            # delete everything above the bottom two widgets
-
-        self.program_parameters_layout.insertRow(0,QLabel('additive parameter '))
-        self.program_parameters_layout.insertRow(1,QLabel('test test parameter '))
-        
-        # enable program start button
-        self.program_start_btn.setEnabled(True)
-        # bring main window to the front
-        self.activateWindow()
-        
+        # DISABLE CHANGE PARAMETERS/START PROGRAM BUTTONS
+        self.change_parameters_btn.setEnabled(False)
+        self.program_start_btn.setEnabled(False)
     
-    def change_parameters_btn_clicked(self):
-        self.additive_program_window.parameter_set_button.setChecked(False)
-        self.additive_program_window.activateWindow()
+    def additive_parameters_display(self):
+        ## function is called from the popup window
+        
+        ##############################
+        # REMOVE PREVIOUS VALUES
+        
+        # delete & recreate additive parameters box
+        sip.delete(self.additive_parameters_box)
+        self.additive_parameters_box = QGroupBox('selected additive parameters')
+        self.additive_parameters_layout = QFormLayout()
+        self.additive_parameters_box.setLayout(self.additive_parameters_layout)
+        self.program_parameters_layout.insertRow(0,self.additive_parameters_box)
+
+        # create widgets
+        self.a_vial_wid = QLineEdit()
+        self.a_flow_wid = QLineEdit()
+        self.a_min_flow_wid = QLineEdit()
+        self.a_inc_flow_wid = QLineEdit()
+        self.a_open_dur_wid = QLineEdit()
+        self.a_rest_dur_wid = QLineEdit()
+        self.a_num_trials_wid = QLineEdit()
+        self.a_vial_wid.setEnabled(False)
+        self.a_flow_wid.setEnabled(False)
+        self.a_min_flow_wid.setEnabled(False)
+        self.a_inc_flow_wid.setEnabled(False)
+        self.a_open_dur_wid.setEnabled(False)
+        self.a_rest_dur_wid.setEnabled(False)
+        self.a_num_trials_wid.setEnabled(False)
+        '''
+        self.a_vials_wid.setReadOnly(True)
+        self.a_flow_wid.setReadOnly(True)
+        self.a_min_flow_wid.setReadOnly(True)
+        self.a_inc_flow_wid.setReadOnly(True)
+        self.a_open_dur_wid.setReadOnly(True)
+        self.a_rest_dur_wid.setReadOnly(True)
+        self.a_num_trials_wid.setReadOnly(True)
+        '''
+        self.a_vial_lbl = QLabel('Vials:')
+        self.a_flow_per_trial_lbl = QLabel('Total flow per trial (sccm):')
+        self.a_min_flow_lbl = QLabel('Min flow (per vial):')
+        self.a_inc_flow_lbl = QLabel('Increment flow by:')
+        self.a_open_dur_lbl = QLabel('Vial open duration (s):')
+        self.a_rest_dur_lbl = QLabel('Rest between trials (s):')
+        self.a_num_trials_lbl = QLabel('Number of trials:')
+        
+        self.additive_parameters_layout.addRow(self.a_vial_lbl,self.a_vial_wid)
+        self.additive_parameters_layout.addRow(self.a_flow_per_trial_lbl,self.a_flow_wid)
+        self.additive_parameters_layout.addRow(self.a_min_flow_lbl,self.a_min_flow_wid)
+        self.additive_parameters_layout.addRow(self.a_inc_flow_lbl,self.a_inc_flow_wid)
+        self.additive_parameters_layout.addRow(self.a_open_dur_lbl,self.a_open_dur_wid)
+        self.additive_parameters_layout.addRow(self.a_rest_dur_lbl,self.a_rest_dur_wid)
+        self.additive_parameters_layout.addRow(self.a_num_trials_lbl,self.a_num_trials_wid)
+        
+        ##############################
+        # GET SELECTED PARAMETERS FROM POPUP WINDOW
+        #self.a_vials_wid.setText(self.additive_program_window.flow_per_trial) #TODO
+        self.a_flow_wid.setText(self.additive_program_window.flow_per_trial)
+        self.a_min_flow_wid.setText(self.additive_program_window.min_flow)
+        self.a_inc_flow_wid.setText(self.additive_program_window.inc_flow)
+        self.a_open_dur_wid.setText(self.additive_program_window.open_dur)
+        self.a_rest_dur_wid.setText(self.additive_program_window.rest_dur)
+        self.a_num_trials_wid.setText(self.additive_program_window.num_trials)
+        
+        ##############################
+        # ENABLE CHANGE PARAMETERS/START PROGRAM BUTTONS
+        self.change_parameters_btn.setChecked(False)
+        self.change_parameters_btn.setEnabled(True)
+        self.program_start_btn.setEnabled(True)
+        
+        ##############################
+        # HIDE POPUP WINDOW
+        self.additive_program_window.hide()
+    
+    def change_parameters_btn_toggled(self,checked):
+        if checked:
+            # DISABLE CHANGE PARAMETERS/START PROGRAM BUTTONS
+            self.change_parameters_btn.setEnabled(False)
+            self.program_start_btn.setEnabled(False)
+
+            # SHOW ADDITIVE POPUP WINDOW
+            self.additive_program_window.show()
+            self.additive_program_window.parameter_set_button.setChecked(False)     # necessary or whole window is grayed out
     
     def program_start_clicked(self, checked):
         if checked:
@@ -581,6 +617,9 @@ class mainWindow(QMainWindow):
         else:
             logger.debug('program start button unclicked')
             self.program_start_btn.setText('Start Program')
+            # TODO additive takes an extra second to stop
+            # stops trying to send parameters, but prints "finished program" a bit later
+            # probably bc of sleeps?
             self.threadIsFinished()
     
     def run_odor_calibration(self):
@@ -689,8 +728,8 @@ class mainWindow(QMainWindow):
         self.data_file_name_lineEdit.setText(data_file_name)
     
     
-    # PROGRAMS FOR 48-LINE OLFA
     ##############################
+    # PROGRAMS FOR 48-LINE OLFA
     def run_setpoint_characterization(self):
         logger.info('run setpoint characterization')
 
@@ -816,9 +855,7 @@ class mainWindow(QMainWindow):
         self.obj_additive.threadON = True
         logger.debug('starting thread_additive')
         self.thread_additive.start()
-
-
-
+    
     def set_up_threads_sptchar(self):
         self.obj_sptchar = worker_sptChar()
         self.thread_olfa = QThread()
@@ -828,7 +865,7 @@ class mainWindow(QMainWindow):
         self.obj_sptchar.w_send_OpenValve.connect(self.send_OpenValve)
         self.obj_sptchar.finished.connect(self.threadIsFinished)
         self.thread_olfa.started.connect(self.obj_sptchar.exp)
-
+    
     def set_up_threads_additive(self):
         self.obj_additive = worker_additive()
         self.thread_additive = QThread()
@@ -858,7 +895,6 @@ class mainWindow(QMainWindow):
         if self.begin_record_btn.isChecked():
             self.end_record_btn.click()
     
-    
     def active_slave_refresh(self):        
         # if olfactometer is not connected, connect to it
         if self.olfactometer.connect_btn.isChecked() == False:
@@ -872,7 +908,10 @@ class mainWindow(QMainWindow):
             self.program_start_btn.setEnabled(False)
         else:
             self.program_start_btn.setEnabled(True)
+    ##############################
     
+
+    ##############################
     ## FUNCTIONS USED BY WORKERS
     def sendThisSetpoint(self, vial_name:str, ard_val:int):
         strToSend = 'S_Sp_' + str(ard_val) + '_' + vial_name
@@ -887,6 +926,8 @@ class mainWindow(QMainWindow):
     ##############################
     
     
+    ##############################
+    ## ADD DEVICE/INSTRUMENT
     def add_olfa_48line_toggled(self,checked):  # TODO make sure this can't be untoggled while a program is running
         if checked:
             # Create Olfactometer Object
@@ -1011,7 +1052,9 @@ class mainWindow(QMainWindow):
             sip.delete(self.flow_sensor)
             logger.debug('removed flow sensor object')
             self.add_flow_sens_btn.setText('Add\nHoneywell 5100V')
+    ##############################
     
+
     def begin_record_btn_clicked(self):
         # Record button was checked- Begin Recording
         if self.begin_record_btn.isChecked() == True:
