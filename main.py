@@ -575,6 +575,9 @@ class mainWindow(QMainWindow):
         
         ##############################
         # GET SELECTED PARAMETERS FROM POPUP WINDOW
+        # get list of vials
+        vials_to_run_lbl = ', '.join(self.additive_program_window.vials_to_run)
+        self.a_vial_wid.setText(vials_to_run_lbl)
         #self.a_vials_wid.setText(self.additive_program_window.flow_per_trial) #TODO
         self.a_flow_wid.setText(self.additive_program_window.flow_per_trial)
         self.a_min_flow_wid.setText(self.additive_program_window.min_flow)
