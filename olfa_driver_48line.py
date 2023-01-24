@@ -67,7 +67,8 @@ class Vial(QGroupBox):
         self.setpoint_send_btn.setMaximumWidth(60)
         self.cal_table_combobox.setFixedWidth(self.read_flow_vals_btn.size().width() + self.vial_details_btn.size().width())
         max_width = self.sizeHint().width()
-        self.setMaximumWidth(max_width - 10)
+        #self.setMaximumWidth(max_width - 10)
+        self.setMaximumWidth(max_width)
     
     
     # GUI FEATURES
@@ -128,6 +129,11 @@ class Vial(QGroupBox):
         '''
         # - current flow value (?)
 
+        # CURRENT FLOW VALUE
+        self.flow_readout_lbl = QLabel(("Flow (int), Flow (SCCM), Ctrl (int)"))
+        self.flow_readout = QTextEdit(readOnly=True)
+        self.flow_readout.setFixedHeight(80)
+
         # LAYOUT
         self.layout = QFormLayout()
         self.layout.addRow(self.valveTimer_layout)
@@ -135,8 +141,11 @@ class Vial(QGroupBox):
         self.layout.addRow(self.setpoint_layout)
         self.layout.addRow(self.cal_table_layout)
         self.layout.addRow(self.read_flow_vals_btn,self.vial_details_btn)
-        self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
+        self.layout.addRow(self.flow_readout_lbl)
+        self.layout.addRow(self.flow_readout)
         self.read_flow_vals_btn.setFixedWidth(self.read_flow_vals_btn.sizeHint().width())      # TODO figure out why flow vals button keeps going away
+        self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
+        self.flow_readout.setFixedWidth(self.flow_readout_lbl.sizeHint().width())
     
     '''
     # VIAL DETAILS WINDOW
@@ -909,8 +918,14 @@ class olfactometer_window(QGroupBox):
                             if v.full_vialNum == slave_vial:
                                 flowVal_raw = int(flowVal)
                                 flowVal_sccm = utils_olfa_48line.convertToSCCM(flowVal_raw,v.intToSccm_dict)
+                                
+                                # write it to the vial details box
                                 dataStr = str(flowVal) + '\t' + str(flowVal_sccm) + '\t' + str(ctrlVal)
                                 v.vial_details_window.data_receive_box.append(dataStr)
+                                
+                                # write it to the vial display
+                                dataStr2 = str(flowVal) + '  ' + str(flowVal_sccm) + '  ' + str(ctrlVal)    # TODO spacing bt flow,flow,ctrl
+                                v.flow_readout.append(dataStr2)
 
                                 # if calibration is on: send it to the vial details popup
                                 if self.calibration_on == True:
