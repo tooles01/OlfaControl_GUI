@@ -24,12 +24,11 @@ import program_additive_popup
 programs_48line = ['setpoint characterization','additive']
 programs_orig = ['the program']
 
-
+##############################
 # PARAMETERS FOR 48-LINE OLFACTOMETER
 vials = ['1','2','3','4','5','6','7','8']
 default_setpoint = '10,20,30,40,50,60,70,80,90,100'
 #default_setpoint = '5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100'
-#default_setpoint = '10,20,30,40,50'
 default_dur_ON = 5
 default_dur_OFF = 5
 default_numTrials = 5
@@ -37,10 +36,12 @@ no_active_slaves_warning = 'no active slaves pls connect olfa or something'
 waitBtSpAndOV = .5
 waitBtSps = 1
 default_pid_gain = '1x'
+##############################
 
 current_date = utils.currentDate
 
-# LOGGING
+##############################
+# CREATE LOGGER
 main_datafile_directory = utils.find_datafile_directory()
 if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory)   # if folder doesn't exist, make it
 logger = logging.getLogger(name='main')
@@ -51,6 +52,7 @@ file_handler = utils.create_file_handler(main_datafile_directory)
 logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 logger.debug('log file located at: %s', main_datafile_directory)
+##############################
 
 
 
@@ -382,6 +384,15 @@ class mainWindow(QMainWindow):
         self.olfa_type_label = QLabel()
         self.program_selection_combo = QComboBox()
         self.program_selection_combo.addItems(programs_48line)
+        self.program_selection_combo.setToolTip('Programs available:\n\n'
+            'Setpoint characterization:\n'
+            ' - Single odor line\n'
+            ' - Multiple setpoints\n'
+            '\nAdditive:\n'
+            ' - Multiple odor lines\n'
+            ' - Setpoint = total flow from all lines (setpoints for individual lines vary from trial to trial)')
+            #'\n - Single setpoint (consisting of total flow from all line) (different setpoints for individual lines from trial to trial)\n'
+            #' - Individual line flows vary between trials')
         self.program_selection_btn = QPushButton(text='Select',checkable=True,toggled=self.program_select_toggled)
         
         layout = QFormLayout()
@@ -409,7 +420,8 @@ class mainWindow(QMainWindow):
             
             ##############################
             ## CREATE WIDGETS            
-            
+            self.p_slave_lbl = QLabel('Slave:')
+            self.p_slave_lbl.setToolTip('Slave to run program on')
             self.p_slave_select_wid = QComboBox()
             self.p_slave_select_wid.setToolTip('Only active slaves displayed')
             if self.olfactometer.active_slaves == []:
@@ -417,19 +429,23 @@ class mainWindow(QMainWindow):
             else:
                 self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
             self.p_slave_select_refresh = QPushButton(text="Check Slave")
+            self.p_slave_select_refresh.setToolTip('Request current slave addresses')
             self.p_slave_select_refresh.clicked.connect(self.active_slave_refresh)
+            self.p_vial_lbl = QLabel('vial:')
+            self.p_vial_lbl.setToolTip('Vial to run program on')
             self.p_vial_wid = QComboBox()
             self.p_vial_wid.addItems(vials)
+            self.p_vial_wid.setToolTip('Vial to run program on')
             
             self.p_vial_select_layout = QHBoxLayout()
             self.p_vial_select_layout.addWidget(self.p_slave_select_refresh)
-            self.p_vial_select_layout.addWidget(QLabel('Slave:'))
+            self.p_vial_select_layout.addWidget(self.p_slave_lbl)
             self.p_vial_select_layout.addWidget(self.p_slave_select_wid)
-            self.p_vial_select_layout.addWidget(QLabel('vial:'))
+            self.p_vial_select_layout.addWidget(self.p_vial_lbl)
             self.p_vial_select_layout.addWidget(self.p_vial_wid)
             self.active_slave_refresh()
             
-            self.p_setpoints_wid = QLineEdit()
+            self.p_setpoints_wid = QLineEdit(toolTip='Enter setpoints separated by commas')
             self.p_setpoints_wid.setPlaceholderText('Setpoints to run (sccm)')
             self.p_setpoints_wid.setText(default_setpoint)
             self.p_sp_order_wid = QComboBox()
@@ -439,26 +455,25 @@ class mainWindow(QMainWindow):
             self.p_spt_layout.addWidget(QLabel('Setpoints (sccm):'))
             self.p_spt_layout.addWidget(self.p_setpoints_wid)
             self.p_spt_layout.addWidget(self.p_sp_order_wid)
-
-            self.p_dur_on_wid = QSpinBox(value=default_dur_ON)
-            self.p_dur_off_wid = QSpinBox(value=default_dur_OFF)
-            self.p_numTrials_wid = QLineEdit()
+            
+            self.p_dur_on_lbl = QLabel('Dur. on (s):',toolTip='Duration of valve opening (in seconds)')
+            self.p_dur_off_lbl = QLabel('Dur. off (s):',toolTip="Rest duration between valve openings (in seconds)")
+            self.p_dur_on_wid = QSpinBox(value=default_dur_ON,toolTip="Duration of valve opening (in seconds)")
+            self.p_dur_off_wid = QSpinBox(value=default_dur_OFF,toolTip="Rest duration between valve openings (in seconds)")
+            self.p_numTrials_wid = QLineEdit(text=str(default_numTrials))
             self.p_numTrials_wid.setPlaceholderText('# of Trials at each setpoint')
-            self.p_numTrials_wid.setText(str(default_numTrials))
+            self.p_numTrials_wid.setToolTip('# of Trials at each setpoint')
+            # setpoints will be run in the order entered
             
             self.p_dur_layout = QHBoxLayout()
-            self.p_dur_layout.addWidget(QLabel('Dur. on (s):'))
+            self.p_dur_layout.addWidget(self.p_dur_on_lbl)
             self.p_dur_layout.addWidget(self.p_dur_on_wid)
-            self.p_dur_layout.addWidget(QLabel('Dur. off (s):'))
+            self.p_dur_layout.addWidget(self.p_dur_off_lbl)
             self.p_dur_layout.addWidget(self.p_dur_off_wid)
             self.p_dur_layout.addWidget(QLabel('# trials:'))
             self.p_dur_layout.addWidget(self.p_numTrials_wid)
-
-            self.p_pid_gain = QLineEdit(text=default_pid_gain)
             
-            if self.program_parameters_layout.count() > 0:  # TODO
-                # clear this shit
-                logger.warning('gotta clear these widgets out')
+            self.p_pid_gain = QLineEdit(text=default_pid_gain)
             
             self.program_parameters_layout.addRow(self.p_vial_select_layout)
             self.program_parameters_layout.addRow(self.p_spt_layout)
@@ -899,7 +914,7 @@ class mainWindow(QMainWindow):
             self.end_record_btn.click()
     
     def active_slave_refresh(self):        
-        # if olfactometer is not connected, connect to it
+        # CHECK THAT OLFACTOMETER IS CONNECTED
         if self.olfactometer.connect_btn.isChecked() == False:
             utils_olfa_48line.connect_to_48line_olfa(self.olfactometer)
         
@@ -1114,25 +1129,33 @@ class mainWindow(QMainWindow):
                                 writer.writerow("")
                                 write_this_row = 'Calibration Tables:',' '
                                 writer.writerow(write_this_row)
-
-                                self.vials_to_get = ['A1','A2','A3','A4','A5','A6','A7','A8']  # vials we want tables for
-                                # TODO figure out if we should just write all of them (this can probably be figured out once u write multi line programs)
                                 
-                                # Get calibration tables & write to file
-                                for full_vial_name in self.vials_to_get:
-                                    slave_name = full_vial_name[0]
-                                    for s in self.olfactometer.slave_objects:
-                                        # find the slave we want
-                                        if s.name == slave_name:
-                                            # find the vial we want
-                                            vial_num = full_vial_name[1]
-                                            vial_idx = int(vial_num) - 1
-                                            this_vial = s.vials[vial_idx]
-                                            this_vial_name = this_vial.full_vialNum
-                                            this_vial_dict_name = this_vial.cal_table
-                                            # write it to the file
-                                            write_to_file = this_vial_name,this_vial_dict_name
-                                            writer.writerow(write_to_file)
+                                if (self.olfactometer.active_slaves != []):
+                                    # write cal tables to data file (vials of all active slaves)
+                                    self.vials_to_record_cal_table = []
+                                    for s in self.olfactometer.active_slaves:
+                                        for v in range(8):
+                                            this_string = s + str(v+1)
+                                            self.vials_to_record_cal_table.append(this_string)
+                                            # TODO figure out if we should just write all of them (this can probably be figured out once u write multi line programs)
+                                    
+                                    # Get calibration tables & write to file
+                                    for full_vial_name in self.vials_to_record_cal_table:
+                                        slave_name = full_vial_name[0]
+                                        for s in self.olfactometer.slave_objects:
+                                            # find the slave we want
+                                            if s.name == slave_name:
+                                                # find the vial we want
+                                                vial_num = full_vial_name[1]
+                                                vial_idx = int(vial_num) - 1
+                                                this_vial = s.vials[vial_idx]
+                                                this_vial_name = this_vial.full_vialNum
+                                                this_vial_dict_name = this_vial.cal_table
+                                                # write it to the file
+                                                write_to_file = this_vial_name,this_vial_dict_name
+                                                writer.writerow(write_to_file)
+                                else:
+                                    logger.warning('no calibration tables recorded to datafile (olfactometer does not have any active slaves)')
                 
                 # If olfactometer does not exist: Skip all this
                 except AttributeError:
