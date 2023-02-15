@@ -406,7 +406,6 @@ class olfactometer_window(QGroupBox):
         self.generate_ui()
         
         self.master_groupbox.setEnabled(False)
-        # TODO: upon first connect: set all vials to not debug
         self.setTitle('Olfactometer')
 
         # JUST FOR TODAY (7/26/2022)
@@ -601,15 +600,13 @@ class olfactometer_window(QGroupBox):
         # TODO replace everything below with utils_48 function "connect_to_48line_olfa"
         # # TODO ooooh what if this could be a lil list of items
         
-        # find Arduino port
-        for item_idx in range(0,self.port_widget.count()):
-            this_item = self.port_widget.itemText(item_idx)
-            if 'Arduino' in this_item: 
+        # if an Arduino is connected, set the widget default value to that
+        for port_list_idx in range(0,self.port_widget.count()):
+            this_port = self.port_widget.itemText(port_list_idx)
+            if 'Arduino' in this_port:
+                #logger.debug('Arduino detected - setting olfa port default to ' + this_port)
+                self.port_widget.setCurrentIndex(port_list_idx)
                 break
-        # connect to Arduino port
-        if item_idx != 0:
-            logger.debug('setting olfa port widget to arduino port')
-            self.port_widget.setCurrentIndex(item_idx)
     
     def port_changed(self):
         if self.port_widget.count() != 0:
@@ -643,7 +640,7 @@ class olfactometer_window(QGroupBox):
     
     def set_connected(self, connected):
         if connected == True:
-            logger.debug('connected to Arduino')
+            logger.info('connected to ' + self.port_widget.currentText())
             self.get_slave_addresses()
             self.master_groupbox.setEnabled(True)
             self.connect_btn.setText('Stop communication w/ ' + self.portStr)
@@ -651,7 +648,7 @@ class olfactometer_window(QGroupBox):
             self.port_widget.setEnabled(False)
         
         else:
-            logger.debug('disconnected from Arduino')
+            logger.info('disconnected from ' + self.port_widget.currentText())
             self.master_groupbox.setEnabled(False)
             self.connect_btn.setText('Connect to ' + self.portStr)
             self.connect_btn.setChecked(False)
