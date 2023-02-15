@@ -12,16 +12,24 @@ logger.addHandler(console_handler)
 def connect_to_48line_olfa(olfa_object):
     olfa_object.get_ports()
     
-    # find Arduino port
-    for item_idx in range(0,olfa_object.port_widget.count()):
-        this_item = olfa_object.port_widget.itemText(item_idx)
-        if 'Arduino' in this_item:  break
+    #logger.debug('connecting olfactometer')
+    logger.debug('connecting to olfactometer at ' + olfa_object.port_widget.currentText())
+    olfa_object.connect_btn.toggle()
+    
+    '''
+    # if an Arduino is connected, set the widget default value to that
+    for port_list_idx in range(0,olfa_object.port_widget.count()):
+        this_port = olfa_object.port_widget.itemText(port_list_idx)
+        if 'Arduino' in this_port:
+            break
     # connect to Arduino port
-    if item_idx != 0:
+    if port_list_idx != 0:
         logger.debug('setting olfa port widget to arduino port')
-        olfa_object.port_widget.setCurrentIndex(item_idx)
+        olfa_object.port_widget.setCurrentIndex(port_list_idx)
         logger.debug('connecting olfactometer')
         olfa_object.connect_btn.toggle()
+    '''
+    
 
 # FLOW SENSOR CONVERSIONS
 def convertToInt(SCCMval, dictionary):
