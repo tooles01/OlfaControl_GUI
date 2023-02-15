@@ -416,7 +416,6 @@ class mainWindow(QMainWindow):
 
     def create_48line_program_widgets(self):
         if self.program_to_run == "setpoint characterization":
-            logger.debug('setpoint characterization selected')
             
             ##############################
             ## CREATE WIDGETS            
@@ -443,7 +442,7 @@ class mainWindow(QMainWindow):
             self.p_vial_select_layout.addWidget(self.p_slave_select_wid)
             self.p_vial_select_layout.addWidget(self.p_vial_lbl)
             self.p_vial_select_layout.addWidget(self.p_vial_wid)
-            self.active_slave_refresh()
+            #self.active_slave_refresh()        # I don't think this is necessary -ST 2/14/2023
             
             self.p_setpoints_wid = QLineEdit(toolTip='Enter setpoints separated by commas')
             self.p_setpoints_wid.setPlaceholderText('Setpoints to run (sccm)')
@@ -625,15 +624,19 @@ class mainWindow(QMainWindow):
         if checked:
             self.program_start_btn.setText('End Program')
 
-            if self.program_to_run == "the program":
-                self.run_odor_calibration()
-            if self.program_to_run == 'setpoint characterization':
-                self.run_setpoint_characterization()
-            if self.program_to_run == 'additive':
-                self.run_additive_program()
+            try:
+                if self.program_to_run == "the program":
+                    self.run_odor_calibration()
+                if self.program_to_run == 'setpoint characterization':
+                    self.run_setpoint_characterization()
+                if self.program_to_run == 'additive':
+                    self.run_additive_program()
+            except AttributeError as err:
+                logger.error('No program selected')
+                self.program_start_btn.setChecked(False)
 
         else:
-            logger.debug('program start button unclicked')
+            #logger.debug('program start button unclicked')
             self.program_start_btn.setText('Start Program')
             # TODO additive takes an extra second to stop
             # stops trying to send parameters, but prints "finished program" a bit later
@@ -749,7 +752,7 @@ class mainWindow(QMainWindow):
     ##############################
     # PROGRAMS FOR 48-LINE OLFA
     def run_setpoint_characterization(self):
-        logger.info('run setpoint characterization')
+        logger.debug('Setting up to run setpoint characterization')
 
         # CHECK THAT PID IS CONNECTED
         try:
@@ -769,63 +772,68 @@ class mainWindow(QMainWindow):
         # CHECK THAT OLFACTOMETER IS CONNECTED
         try:
             if self.olfactometer.connect_btn.isChecked() == False:
-                logger.warning('olfactometer not connected, attempting to connect')
+                logger.warning('Olfactometer not connected, attempting to connect')
                 utils_olfa_48line.connect_to_48line_olfa(self.olfactometer)
         except AttributeError as err:   logger.error(err)
         
-        # START RECORDING
-        if self.begin_record_btn.isChecked() == False:
-            logger.debug('clicking begin record button')
-            self.begin_record_btn.click()
-
-        # GET PROGRAM PARAMETERS
-        self.slave_to_run = self.p_slave_select_wid.currentText()
-        self.vial_to_run = self.p_vial_wid.currentText()
-        setpoints_to_run = self.p_setpoints_wid.text()
-        setpoint_order = self.p_sp_order_wid.currentText()
-        num_trials = int(self.p_numTrials_wid.text())
-        dur_ON = self.p_dur_on_wid.value()
-        dur_OFF = self.p_dur_off_wid.value()
-        self.full_vial_name = self.slave_to_run + self.vial_to_run
-        
-        # CREATE STIMULUS LIST
-        vial_flows_complete_list = []
-        setpoints_to_run_values = setpoints_to_run.split(",")
-        for f in setpoints_to_run_values:
-            temp = np.repmat([self.full_vial_name,f],num_trials,1)     # make number of repetitions of this
-            vial_flows_complete_list.extend(temp.tolist())  # add to complete list
-        if setpoint_order == 'Random':  random.shuffle(vial_flows_complete_list)    # randomize if needed
-        
-        # GET DICTIONARIES FOR THIS VIAL
-        vial_idx = int(self.vial_to_run) - 1
-        for s in self.olfactometer.slave_objects:
-            if s.name == self.slave_to_run: thisVial = s.vials[vial_idx]; break
-        sccm2Ard_dict_to_use = self.olfactometer.sccm2Ard_dicts.get(thisVial.cal_table)
-        ard2Sccm_dict_to_use = self.olfactometer.ard2Sccm_dicts.get(thisVial.cal_table)
-        
-        # SEND PARAMETERS TO WORKER
-        self.obj_sptchar.complete_stimulus_list = copy.copy(vial_flows_complete_list)
-        self.obj_sptchar.sccm2Ard_dict = copy.copy(sccm2Ard_dict_to_use)
-        self.obj_sptchar.ard2Sccm_dict = copy.copy(ard2Sccm_dict_to_use)
-        self.obj_sptchar.duration_on = copy.copy(dur_ON)
-        self.obj_sptchar.duration_off = copy.copy(dur_OFF)
-        
-        # SET VIAL TO DEBUG MODE
-        if thisVial.read_flow_vals_btn.isChecked() == False:
-            thisVial.read_flow_vals_btn.toggle()
-        # print a warning if any other vials are also printing
-        for s in self.olfactometer.slave_objects:
-            for v in s.vials:
-                if v.read_flow_vals_btn.isChecked() == True:
-                    if v.full_vialNum == thisVial.full_vialNum:
-                        pass
-                    else:
-                        logger.warning('%s is set to debug mode', v.full_vialNum)
-        
-        # START WORKER THREAD
-        self.obj_sptchar.threadON = True
-        logger.debug('starting thread_olfa')
-        self.thread_olfa.start()            # # start thread -> worker_sptChar iterates through stimuli
+        # CHECK THAT OLFACTOMETER HAS ACTIVE SLAVES
+        if self.olfactometer.active_slaves != []:
+            # GET PROGRAM PARAMETERS
+            self.slave_to_run = self.p_slave_select_wid.currentText()
+            self.vial_to_run = self.p_vial_wid.currentText()
+            setpoints_to_run = self.p_setpoints_wid.text()
+            setpoint_order = self.p_sp_order_wid.currentText()
+            num_trials = int(self.p_numTrials_wid.text())
+            dur_ON = self.p_dur_on_wid.value()
+            dur_OFF = self.p_dur_off_wid.value()
+            self.full_vial_name = self.slave_to_run + self.vial_to_run
+            
+            # CREATE STIMULUS LIST
+            vial_flows_complete_list = []
+            setpoints_to_run_values = setpoints_to_run.split(",")
+            for f in setpoints_to_run_values:
+                temp = np.repmat([self.full_vial_name,f],num_trials,1)     # make number of repetitions of this
+                vial_flows_complete_list.extend(temp.tolist())  # add to complete list
+            if setpoint_order == 'Random':  random.shuffle(vial_flows_complete_list)    # randomize if needed
+            
+            # GET DICTIONARIES FOR THIS VIAL
+            vial_idx = int(self.vial_to_run) - 1
+            for s in self.olfactometer.slave_objects:
+                if s.name == self.slave_to_run: thisVial = s.vials[vial_idx]; break
+            sccm2Ard_dict_to_use = self.olfactometer.sccm2Ard_dicts.get(thisVial.cal_table)
+            ard2Sccm_dict_to_use = self.olfactometer.ard2Sccm_dicts.get(thisVial.cal_table)
+            
+            # SEND PARAMETERS TO WORKER
+            self.obj_sptchar.complete_stimulus_list = copy.copy(vial_flows_complete_list)
+            self.obj_sptchar.sccm2Ard_dict = copy.copy(sccm2Ard_dict_to_use)
+            self.obj_sptchar.ard2Sccm_dict = copy.copy(ard2Sccm_dict_to_use)
+            self.obj_sptchar.duration_on = copy.copy(dur_ON)
+            self.obj_sptchar.duration_off = copy.copy(dur_OFF)
+            
+            # SET VIAL TO DEBUG MODE
+            if thisVial.read_flow_vals_btn.isChecked() == False:
+                thisVial.read_flow_vals_btn.toggle()
+            # print a warning if any other vials are also printing
+            for s in self.olfactometer.slave_objects:
+                for v in s.vials:
+                    if v.read_flow_vals_btn.isChecked() == True:
+                        if v.full_vialNum == thisVial.full_vialNum:
+                            pass
+                        else:
+                            logger.warning('%s is set to debug mode', v.full_vialNum)
+            
+            # START RECORDING # TODO don't do this until it's READY to go
+            if self.begin_record_btn.isChecked() == False:
+                logger.debug('clicking begin record button')
+                self.begin_record_btn.click()
+            
+            # START WORKER THREAD
+            self.obj_sptchar.threadON = True
+            logger.debug('starting thread_olfa')
+            self.thread_olfa.start()            # # start thread -> worker_sptChar iterates through stimuli
+        else:
+            logger.error('olfactometer has no active slaves - cannot run program')
+            self.program_start_btn.setChecked(False)
     
     def run_additive_program(self):
         logger.info('run additive experiment')
@@ -1079,7 +1087,7 @@ class mainWindow(QMainWindow):
             logger.debug('begin record button clicked')
             self.begin_record_btn.setText('Pause Recording')
             self.end_record_btn.setEnabled(True)
-
+            
             # Get file name & directory from GUI
             datafile_name = self.data_file_name_lineEdit.text()
             self.datafile_dir = self.data_file_dir_lineEdit.text() + '\\' + datafile_name + '.csv'
@@ -1168,12 +1176,10 @@ class mainWindow(QMainWindow):
                     writer.writerow("")
                     writer.writerow("")
                     writer.writerow(DataHead)
-                
-                
+            
             # If file already exists
             else:
                 logger.warning('File already exists: resuming recording to %s',self.datafile_dir)
-
         # Record button was unchecked - Pause Recording
         else:
             logger.info('Recording paused')
