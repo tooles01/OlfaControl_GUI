@@ -213,7 +213,10 @@ class NiDaq(QGroupBox):
 
         self.raw_receive_box.append(str(value))
         self.mV_receive_box.append(str(round(value_mV,3)))
-        self.window().receive_data_from_device('pid','mV',str(value_mV))
+        try:
+            self.window().receive_data_from_device('pid','mV',str(value_mV))
+        except AttributeError as err:   # if main GUI window is not open
+            pass
     
     def start_making_data_list(self):
         self.data_list = []                         # create empty data list
