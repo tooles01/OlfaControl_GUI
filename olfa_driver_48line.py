@@ -416,39 +416,49 @@ class olfactometer_window(QGroupBox):
         
         if os.path.exists(self.flow_cal_dir):
             logger.debug('loading flow sensor calibration tables (%s)', self.flow_cal_dir)
-
+            
+            # Get names of all .txt files in flow cal directory
             cal_file_names = os.listdir(self.flow_cal_dir)
             cal_file_names = [fn for fn in cal_file_names if fn.endswith(cal_table_file_tyoe)]    # only txt files # TODO: change to csv
-            if cal_file_names == []:
-                logger.warning('no cal files found')
-            else:
-                # create dictionaries
+            
+            if cal_file_names != []:
+                
+                # Create dictionaries for converting integers-->sccm (and sccm-->integers)
                 new_sccm2Ard_dicts = {}
                 new_ard2Sccm_dicts = {}
+                
+                # Parse each file
                 for cal_file in cal_file_names:
-                    x = 0       # what is this
-                    idx_ext = cal_file.find('.')
+                    idx_ext = cal_file.find('.')    # NOTE: pos fix: this won't work if the file name has a period in it.. but cmon who's gonna have a stupid file name like that
                     file_name = cal_file[:idx_ext]
+                    cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
+                    
                     sccm2Ard = {}
                     ard2Sccm = {}
-                    cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
                     with open(cal_file_full_dir, newline='') as f:
                         csv_reader = csv.reader(f)
                         firstLine = next(csv_reader)    # skip over header line
+                        
                         # get the shit
                         reader = csv.DictReader(f, delimiter=',')
                         for row in reader:
-                            if x == 0:
-                                try:
-                                    sccm2Ard[float(row['SCCM'])] = float(row['int'])
-                                    ard2Sccm[float(row['int'])] = float(row['SCCM'])
-                                except KeyError as err:
-                                    logger.warning('error: %s',err)
-                                    logger.warning('%s does not have correct headings for calibration files', cal_file)
-                                    x = 1   # don't keep trying to read this file
-                                except ValueError as err:
-                                    logger.warning('missing some values, skipping calibration file %s', cal_file)
-                                    x = 1   # don't keep trying to read this file
+                            try:
+                                sccm2Ard[float(row['SCCM'])] = float(row['int'])
+                                ard2Sccm[float(row['int'])] = float(row['SCCM'])
+                            except KeyError as err:
+                                # clear dictionaries, stop trying to read this file
+                                logger.warning('error: %s',err)
+                                logger.warning('%s does not have correct headings for calibration files', cal_file)
+                                sccm2Ard = {}
+                                ard2Sccm = {}
+                                break
+                            except ValueError as err:
+                                # clear dictionaries, stop trying to read this file
+                                logger.warning('missing some values, skipping calibration file %s', cal_file)
+                                sccm2Ard = {}
+                                ard2Sccm = {}
+                                break
+                    
                     if bool(sccm2Ard) == True:
                         new_sccm2Ard_dicts[file_name] = sccm2Ard
                         new_ard2Sccm_dicts[file_name] = ard2Sccm
@@ -460,8 +470,12 @@ class olfactometer_window(QGroupBox):
                 else:
                     logger.info('no calibration files found in this directory')
             
+            else:
+                logger.warning('no cal files found :/')
+        
+        # If flow cal directory does not exist: print warning   # TODO this is big issue if none found
         else:
-            logger.warning('Cannot find flow cal directory (searched in %s)', self.flow_cal_dir)   # TODO this is big issue if none found
+            logger.warning('Cannot find flow cal directory (searched in %s)', self.flow_cal_dir)
     
     def generate_ui(self):
         self.create_connect_box()
