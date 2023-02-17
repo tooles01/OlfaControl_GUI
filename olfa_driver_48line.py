@@ -1,4 +1,5 @@
-import sys, os, logging, time, csv, copy
+import sys, os, logging, csv, copy
+#import time
 from PyQt5 import QtCore, QtSerialPort
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import *
@@ -6,6 +7,7 @@ from serial.tools import list_ports
 from datetime import datetime, timedelta
 
 import utils, utils_olfa_48line, olfa_48line_vial_popup
+
 
 baudrate = 9600     # for communicating w/ master
 vialsPerSlave = 8
@@ -27,7 +29,9 @@ def_Kp_value = '0.0500'
 def_Ki_value = '0.0001'
 def_Kd_value = '0.0000'
 def_manual_cmd = 'S_PV_150_A2'
+##############################
 
+##############################
 # CREATE LOGGER
 logger = logging.getLogger(name='olfactometer')
 logger.setLevel(logging.DEBUG)
@@ -353,15 +357,14 @@ class slave_8vials(QGroupBox):
         super().__init__()
         self.parent = parent
         self.name = name
-
+        
         self.create_slaveInfo_box()
         self.create_vials_box()
-
+        
         self.mainLayout = QVBoxLayout()
         self.mainLayout.addLayout(self.slaveInfo_layout)
         self.mainLayout.addLayout(self.vials_layout)
         self.setLayout(self.mainLayout)
-
         self.setTitle(name)
 
     def create_slaveInfo_box(self):
@@ -411,6 +414,7 @@ class olfactometer_window(QGroupBox):
         # JUST FOR TODAY (7/26/2022)
         self.slave_objects[0].setEnabled(True)
     
+    
     def get_calibration_tables(self):
         self.flow_cal_dir = utils.find_olfaControl_directory() + '\\calibration_tables' # NOTE: this takes a super long time
         
@@ -423,7 +427,7 @@ class olfactometer_window(QGroupBox):
             
             if cal_file_names != []:
                 
-                # Create dictionaries for converting integers-->sccm (and sccm-->integers)
+                # Create dictionaries for holding the calibration tables
                 new_sccm2Ard_dicts = {}
                 new_ard2Sccm_dicts = {}
                 
@@ -433,8 +437,8 @@ class olfactometer_window(QGroupBox):
                     file_name = cal_file[:idx_ext]
                     cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
                     
-                    sccm2Ard = {}
-                    ard2Sccm = {}
+                    thisfile_sccm2Ard_dict = {}
+                    thisfile_ard2Sccm_dict = {}
                     with open(cal_file_full_dir, newline='') as f:
                         csv_reader = csv.reader(f)
                         firstLine = next(csv_reader)    # skip over header line
@@ -443,27 +447,28 @@ class olfactometer_window(QGroupBox):
                         reader = csv.DictReader(f, delimiter=',')
                         for row in reader:
                             try:
-                                sccm2Ard[float(row['SCCM'])] = float(row['int'])
-                                ard2Sccm[float(row['int'])] = float(row['SCCM'])
+                                thisfile_sccm2Ard_dict[float(row['SCCM'])] = float(row['int'])
+                                thisfile_ard2Sccm_dict[float(row['int'])] = float(row['SCCM'])
                             except KeyError as err:
                                 # clear dictionaries, stop trying to read this file
                                 logger.warning('error: %s',err)
                                 logger.warning('%s does not have correct headings for calibration files', cal_file)
-                                sccm2Ard = {}
-                                ard2Sccm = {}
+                                thisfile_sccm2Ard_dict = {}
+                                thisfile_ard2Sccm_dict = {}
                                 break
                             except ValueError as err:
                                 # clear dictionaries, stop trying to read this file
                                 logger.warning('missing some values, skipping calibration file %s', cal_file)
-                                sccm2Ard = {}
-                                ard2Sccm = {}
+                                thisfile_sccm2Ard_dict = {}
+                                thisfile_ard2Sccm_dict = {}
                                 break
                     
-                    if bool(sccm2Ard) == True:
-                        new_sccm2Ard_dicts[file_name] = sccm2Ard
-                        new_ard2Sccm_dicts[file_name] = ard2Sccm
+                    # If this file was good (aka we got values), save it to the dict of dicts
+                    if bool(thisfile_sccm2Ard_dict) == True:
+                        new_sccm2Ard_dicts[file_name] = thisfile_sccm2Ard_dict
+                        new_ard2Sccm_dicts[file_name] = thisfile_ard2Sccm_dict
                 
-                # if new dicts are not empty, replace the old ones
+                # If we got stuff from these files, replace the old dicts
                 if len(new_sccm2Ard_dicts) != 0:
                     self.sccm2Ard_dicts = new_sccm2Ard_dicts
                     self.ard2Sccm_dicts = new_ard2Sccm_dicts
@@ -482,18 +487,17 @@ class olfactometer_window(QGroupBox):
         self.create_master_groupbox()
         self.create_raw_comm_groupbox()
         self.create_slave_groupbox()
-
+        
         col1_max_width = self.master_groupbox.sizeHint().width()
         self.connect_box.setFixedWidth(col1_max_width)
         self.master_groupbox.setFixedWidth(col1_max_width)
-
+        
         self.connect_box.setMaximumHeight(self.connect_box.sizeHint().height())
         self.master_groupbox.setMaximumHeight(114)
         self.raw_comm_box.setMaximumHeight(202)
-
+        
         mainLayout = QGridLayout()
         self.setLayout(mainLayout)
-
         mainLayout.addWidget(self.connect_box,0,0,1,1)
         mainLayout.addWidget(self.master_groupbox,1,0,1,1)
         mainLayout.addWidget(self.raw_comm_box,0,1,2,1)
@@ -571,25 +575,26 @@ class olfactometer_window(QGroupBox):
         
     def create_slave_groupbox(self):
         self.slave_groupbox = QGroupBox('Slaves')
-
+        
+        # Create slave object for each item listed in slave_names
         self.slave_objects = []
         for s in slave_names:
-            create_slave = slave_8vials(parent=self,name=s)
-            self.slave_objects.append(create_slave)
-
+            new_slave_object = slave_8vials(parent=self,name=s)
+            self.slave_objects.append(new_slave_object)
+        
+        # Add slave objects to layout
         self.slave_layout = QVBoxLayout()
         for s in self.slave_objects:
             self.slave_layout.addWidget(s)
             s.setEnabled(False)
         
-        self.slave_widget = QWidget()
+        self.slave_widget = QWidget()                           # widget to put into QScrollArea
         self.slave_widget.setLayout(self.slave_layout)
-
         self.slave_scrollArea = QScrollArea()
         self.slave_scrollArea.setWidget(self.slave_widget)
-
-        self.nothing_layout = QHBoxLayout()
+        self.nothing_layout = QHBoxLayout()                     # layout for putting QScrollArea into self.slave_groupbox
         self.nothing_layout.addWidget(self.slave_scrollArea)
+        
         self.slave_groupbox.setLayout(self.nothing_layout)
         #self.slave_groupbox.setMinimumWidth(self.slave_scrollArea.sizeHint().width())
         self.slave_groupbox.setMinimumWidth(self.slave_widget.sizeHint().width() + 40)
