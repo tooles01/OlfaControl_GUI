@@ -190,15 +190,20 @@ class VialDetailsPopup(QWidget):
     
     def vial_details_create_man_control_box(self):
         self.db_manual_control_box = QGroupBox('Manual Controls')
-        self.db_PID_toggle_btn = QPushButton(text="Turn flow control off",checkable=True,toggled=self.parent.flowCtrl_toggled)
+        
+        self.db_ctrl_toggle_btn = QPushButton(text="Open prop valve",checkable=True,toggled=self.prop_valve_toggled)
+        self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True,toggled=self.iso_valve_toggled)
+        self.db_PID_toggle_btn = QPushButton(text="Turn flow control off",checkable=True,toggled=self.flow_control_toggled)
         self.db_PID_toggle_btn.setMinimumWidth(self.db_PID_toggle_btn.sizeHint().width())   # just for sizing
         self.db_PID_toggle_btn.setText('Turn flow control on')                              # just for sizing
-        self.db_ctrl_toggle_btn = QPushButton(text="Open prop valve",checkable=True,toggled=self.parent.propValve_toggled)
-        self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True,toggled=self.iso_valve_open_toggled) # TODO
+        #self.db_ctrl_toggle_btn.toggled.connect(self.prop_valve_toggled)
+        #self.db_vlve_toggle_btn.toggled.connect(self.iso_valve_toggled)
+        #self.db_PID_toggle_btn.toggled.connect(self.flow_control_toggled)
+        
         manual_debug_layout = QVBoxLayout()
-        manual_debug_layout.addWidget(self.db_PID_toggle_btn)
         manual_debug_layout.addWidget(self.db_ctrl_toggle_btn)
         manual_debug_layout.addWidget(self.db_vlve_toggle_btn)
+        manual_debug_layout.addWidget(self.db_PID_toggle_btn)
         self.db_manual_control_box.setLayout(manual_debug_layout)
         
         self.db_manual_control_box.setEnabled(False)     # disable until advanced options toggled
@@ -235,20 +240,49 @@ class VialDetailsPopup(QWidget):
     # COMMANDS
     def vialOpen_toggled(self, checked):
         if checked:
-            duration = self.db_valve_dur_wid.text()
-            self.parent.open_vial(duration)
+            self.parent.open_vial(self.db_valve_dur_wid.text())
             self.db_valve_open_btn.setText('Close vial')
         else:
             self.parent.close_vial()
     
-    def iso_valve_open_toggled(self,checked):
+    def flow_control_toggled(self, checked):
+        # Turn PID (flow control) on
         if checked:
-            logger.debug('opening iso valve')
+            logger.debug('flow control manually turned on')
+            self.db_PID_toggle_btn.setText('Turn flow control off')
+            strToSend = 'S_ON_' + self.full_vialNum
+            self.parent.parent().parent.send_to_master(strToSend)
+        # Turn PID (flow control) off
+        else:
+            logger.debug('flow control manually turned off')
+            self.db_PID_toggle_btn.setText('Turn flow control on')
+            strToSend = 'S_OF_' + self.full_vialNum
+            self.parent.parent().parent.send_to_master(strToSend)
+    
+    def prop_valve_toggled(self, checked):
+        # Open proportional valve
+        if checked:
+            logger.debug('proportional valve manually opened')
+            self.db_ctrl_toggle_btn.setText('Close prop valve')
+            strToSend = 'S_OC_' + self.full_vialNum
+            self.parent.parent().parent.send_to_master(strToSend)
+        # Close proportional valve
+        else:
+            logger.debug('proportional valve manually closed')
+            self.db_ctrl_toggle_btn.setText('Open prop valve')
+            strToSend = 'S_CC_' + self.full_vialNum
+            self.parent.parent().parent.send_to_master(strToSend)
+    
+    def iso_valve_toggled(self,checked):
+        # Open isolation valve
+        if checked:
+            logger.debug('isolation valve manually opened')
             self.db_vlve_toggle_btn.setText("Close Iso Valve")
             strToSend = 'S_OI_' + self.full_vialNum
             self.parent.parent().parent.send_to_master(strToSend)
+        # Close isolation valve
         else:
-            logger.debug('closing iso valve')
+            logger.debug('isolation valve manually closed')
             self.db_vlve_toggle_btn.setText("Open Iso Valve")
             strToSend = 'S_CI_' + self.full_vialNum
             self.parent.parent().parent.send_to_master(strToSend)

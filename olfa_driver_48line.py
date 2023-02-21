@@ -259,50 +259,13 @@ class Vial(QGroupBox):
             strToSend = 'MS_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
     
-    def flowCtrl_toggled(self, checked):
-        # Turn PID (flow control) on
-        if checked:
-            logger.debug('Flow control manually turned on')
-            self.vial_details_window.db_PID_toggle_btn.setText('Turn flow control off')
-            strToSend = 'S_ON_' + self.full_vialNum
-            self.olfactometer_parent_object.send_to_master(strToSend)
-        
-        # Turn PID (flow control) off
-        else:
-            logger.debug('Flow control manually turned off')
-            self.vial_details_window.db_PID_toggle_btn.setText('Turn flow control on')        
-            strToSend = 'S_OF_' + self.full_vialNum
-            self.olfactometer_parent_object.send_to_master(strToSend)
-    
-    def propValve_toggled(self, checked):
-        if checked:
-            logger.debug('Proportional valve manually opened')
-            self.vial_details_window.db_ctrl_toggle_btn.setText('Close prop valve')
-            strToSend = 'S_OC_' + self.full_vialNum
-            self.olfactometer_parent_object.send_to_master(strToSend)
-        else:
-            logger.debug('Proportional valve manually closed')
-            self.vial_details_window.db_ctrl_toggle_btn.setText('Open prop valve')
-            strToSend = 'S_CC_' + self.full_vialNum
-            self.olfactometer_parent_object.send_to_master(strToSend)
-    
-    def vialOpen_toggled(self, checked):    # TODO rename function
+    def vialOpen_toggled(self, checked):
         if checked:
             self.valve_open_btn.setText('Close ' + self.full_vialNum)
             self.open_vial(self.valve_dur_spinbox.value())
         else:
             self.valve_open_btn.setText('Open ' + self.full_vialNum)
             self.close_vial()
-    
-    '''
-    def debugwin_vialOpen_toggled(self, checked):
-        if checked:
-            self.vial_details_window.db_valve_open_btn.setText('Close vial')
-            self.open_vial(self.vial_details_window.db_valve_dur_wid.text())
-        else:
-            self.vial_details_window.db_valve_open_btn.setText('Open vial')
-            self.close_vial()
-    '''
     
     def calibrate_flow_sensor_btn_clicked(self):
         logger.error('calibrate flow sensor not set up yet')  # TODO
