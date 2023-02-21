@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import *
 from serial.tools import list_ports
 from datetime import datetime, timedelta
 
-import utils, utils_olfa_48line, olfa_48line_vial_popup
+import utils, utils_olfa_48line, olfa_driver_48line_vial_popup
 
 
 baudrate = 9600     # for communicating w/ master
@@ -24,6 +24,7 @@ cal_table_file_tyoe = '.txt'
 ##############################
 # # DEFAULT VALUES
 def_setpoint = '50'
+def_open_duration = '5'
 default_cal_table = 'Honeywell_3100V'
 def_Kp_value = '0.0500'
 def_Ki_value = '0.0001'
@@ -50,11 +51,13 @@ class Vial(QGroupBox):
         self.full_vialNum = self.slaveName + self.vialNum
         self.olfactometer_parent_object = parent.parent
         
+        self.setpoint = def_setpoint
+        self.open_duration = def_open_duration
         self.cal_table = default_cal_table
         self.Kp_value = def_Kp_value
         self.Ki_value = def_Ki_value
         self.Kd_value = def_Kd_value
-
+        
         self.generate_stuff()
 
         self.vial_details_window.db_open_valve_wid.returnPressed.connect(lambda: self.vial_details_window.db_open_valve_btn.setChecked(True))
@@ -72,23 +75,32 @@ class Vial(QGroupBox):
     
     # GUI FEATURES
     def generate_stuff(self):
+        
         # VALVE OPEN DURATION
-        self.valve_duration_spinbox = QSpinBox(value=5)
-        self.valve_open_btn = QPushButton(text=str("Open " + self.slaveName + self.vialNum),checkable=True,
-            toolTip="open vial")
+        self.valve_duration_spinbox = QSpinBox(value=int(def_open_duration))
+        self.valve_duration_lbl = QLabel("dur (s):")
+        self.valve_open_btn = QPushButton(text=str("Open " + self.slaveName + self.vialNum),checkable=True)
+        self.valve_open_btn.setToolTip("open " + self.full_vialNum + " for " + str(self.valve_duration_spinbox.value()) + " seconds")   # TODO 2/17/23 spinbox value changed function
         self.valve_open_btn.toggled.connect(self.mainwin_vialOpen_toggled)
+        #self.valve_open_btn = QPushButton(text=str("Open " + self.slaveName + self.vialNum),checkable=True,toolTip="open vial")
+        
         self.open_valve_layout = QHBoxLayout()
         self.open_valve_layout.addWidget(self.valve_open_btn)
-        self.open_valve_layout.addWidget(QLabel("dur(s):"))
-        self.open_valve_layout.addWidget(self.valve_duration_spinbox)
+        self.open_valve_layout.addWidget(self.valve_duration_lbl)
+        self.open_valve_layout.addWidget(self.valve_duration_spinbox)        
         
         # SETPOINT
         self.setpoint_value_box = QSpinBox(maximum=200,value=int(def_setpoint))
-        self.setpoint_send_btn = QPushButton(text="Update\nSpt")
+        self.setpoint_value_lbl = QLabel("sccm:")
+        #self.setpoint_send_btn = QPushButton(text="Update\nSpt")
+        self.setpoint_send_btn = QPushButton(text="Send Spt")
+        self.setpoint_send_btn.setToolTip('Update setpoint to ' + str(self.setpoint_value_box.value()) + " sccm")
         self.setpoint_send_btn.clicked.connect(lambda: self.setpoint_btn_clicked(self.setpoint_value_box.value()))
+        
         self.setpoint_layout = QHBoxLayout()
         self.setpoint_layout.addWidget(self.setpoint_send_btn)
-        self.setpoint_layout.addWidget(QLabel("sccm:"))
+        self.setpoint_layout.addWidget(self.setpoint_value_lbl)
+        #self.setpoint_layout.addWidget(QLabel("sccm:"))
         self.setpoint_layout.addWidget(self.setpoint_value_box)
         
         # CALIBRATION TABLE
@@ -96,27 +108,32 @@ class Vial(QGroupBox):
         self.cal_table_combobox.addItems(self.olfactometer_parent_object.sccm2Ard_dicts)
         self.cal_table_combobox.setCurrentText(self.cal_table)  # TODO: change this to cycle through and find that cal table, set the index to that
         self.cal_table_combobox.currentIndexChanged.connect(lambda: self.cal_table_updated(self.cal_table_combobox.currentText()))
+        
         self.cal_table_layout = QVBoxLayout()
         self.cal_table_layout.addWidget(QLabel(text='Calibration Table:'))
         self.cal_table_layout.addWidget(self.cal_table_combobox)
         self.cal_table_updated(self.cal_table_combobox.currentText())
         
         # READ FLOW VALUES
-        self.read_flow_vals_btn = QPushButton(text="read\nflow vals", checkable=True)
+        #self.read_flow_vals_btn = QPushButton(text="read\nflow vals", checkable=True,toolTip = 'Start reading flow values')
+        self.read_flow_vals_btn = QPushButton(text="read flow", checkable=True,toolTip = 'Start reading flow values')
         self.read_flow_vals_btn.toggled.connect(lambda: self.readFlow_btn_toggled(self.read_flow_vals_btn))
         
         # VIAL DETAILS
-        self.vial_details_window = olfa_48line_vial_popup.VialDetailsPopup(self)
-        self.vial_details_btn = QPushButton('Vial\nDetails',checkable=True,toggled=self.vial_details_btn_toggled)
+        self.vial_details_window = olfa_driver_48line_vial_popup.VialDetailsPopup(self)
+        #self.vial_details_btn = QPushButton('Vial\nDetails',checkable=True,toggled=self.vial_details_btn_toggled)
+        self.vial_details_btn = QPushButton('Details',checkable=True,toggled=self.vial_details_btn_toggled)
+        self.vial_details_btn.setToolTip('Open Vial Details popup')
 
         # VIAL TIMER
         self.valve_timer = QTimer()
         self.valve_timer.setTimerType(0)    # set to millisecond accuracy
         self.valve_timer.timeout.connect(self.show_time)
-        self.valveTimer_lbl = QLabel(self.full_vialNum + ' open:')
         self.valveTimer_duration_label = QLabel('00.000')
+        #self.valveTimer_lbl = QLabel(self.full_vialNum + ' open:')
+        
         self.valveTimer_layout = QHBoxLayout()
-        self.valveTimer_layout.addWidget(self.valveTimer_lbl)
+        self.valveTimer_layout.addWidget(QLabel(self.full_vialNum + ' open:')) #self.valveTimer_layout.addWidget(self.valveTimer_lbl)
         self.valveTimer_layout.addWidget(self.valveTimer_duration_label)
         self.valveTimer_layout.addWidget(QLabel('sec'))
         
@@ -130,10 +147,11 @@ class Vial(QGroupBox):
         '''
         # - current flow value (?)
 
-        # CURRENT FLOW VALUE
-        self.flow_readout_lbl = QLabel(("Flow (int), Flow (SCCM), Ctrl (int)"))
-        self.flow_readout = QTextEdit(readOnly=True)
-        self.flow_readout.setFixedHeight(80)
+
+        # CURRENT FLOW/CTRL VALUES
+        self.flow_ctrl_readout_lbl = QLabel(("Flow (int), Flow (SCCM), Ctrl (int)"))
+        self.flow_ctrl_readout = QTextEdit(readOnly=True)
+        self.flow_ctrl_readout.setFixedHeight(70)
 
         # LAYOUT
         self.layout = QFormLayout()
@@ -142,18 +160,19 @@ class Vial(QGroupBox):
         self.layout.addRow(self.setpoint_layout)
         self.layout.addRow(self.cal_table_layout)
         self.layout.addRow(self.read_flow_vals_btn,self.vial_details_btn)
-        self.layout.addRow(self.flow_readout_lbl)
-        self.layout.addRow(self.flow_readout)
+        self.layout.addRow(self.flow_ctrl_readout_lbl)
+        self.layout.addRow(self.flow_ctrl_readout)
         self.read_flow_vals_btn.setFixedWidth(self.read_flow_vals_btn.sizeHint().width())
         self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
-        self.flow_readout.setFixedWidth(self.flow_readout_lbl.sizeHint().width())
+        self.flow_ctrl_readout.setFixedWidth(self.flow_ctrl_readout_lbl.sizeHint().width())
     
     # ACTIONS / BUTTON FUNCTIONS
     def vial_details_btn_toggled(self, checked):
         if checked:
             # Show vial details window
             self.vial_details_window.show()
-            self.vial_details_btn.setText('Close Vial\nDetails')
+            #self.vial_details_btn.setText('Close Vial\nDetails')
+            self.vial_details_btn.setText('Close Details')
             # disable the other buttons
             self.valve_duration_spinbox.setEnabled(False)
             self.valve_open_btn.setEnabled(False)
@@ -164,7 +183,8 @@ class Vial(QGroupBox):
         else:
             # Close vial details window
             self.vial_details_window.hide()
-            self.vial_details_btn.setText('Vial\nDetails')
+            #self.vial_details_btn.setText('Vial\nDetails')
+            self.vial_details_btn.setText('Details')
             # enable the other buttons
             self.valve_duration_spinbox.setEnabled(True)
             self.valve_open_btn.setEnabled(True)
@@ -247,11 +267,15 @@ class Vial(QGroupBox):
     
     def readFlow_btn_toggled(self, btn_to_check):
         if btn_to_check.isChecked():
-            btn_to_check.setText("stop\nreading flow")
+            btn_to_check.setText("stop reading ")
+            btn_to_check.setToolTip('Stop reading flow values')
+            #btn_to_check.setText("stop\nreading flow")
             strToSend = 'MS_debug_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
         else:
-            btn_to_check.setText("read\nflow vals")
+            #btn_to_check.setText("read\nflow vals")
+            btn_to_check.setText("read flow")
+            btn_to_check.setToolTip('Start reading flow values')
             strToSend = 'MS_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
     
@@ -371,12 +395,12 @@ class slave_8vials(QGroupBox):
         self.slave_info_box = QGroupBox()
 
         self.slave_address_label = QLabel(text='Slave address:')
-        self.temp_label = QLabel("slave active or not, slave info, whatever......")
+        self.temp_label = QLabel("...,...,.slave active or not, slave info, whatever.,...")
         # add a way to apply commands to multiple vials at once # TODO
         # ex: check the ones you want to apply this setpoint to
 
         self.slaveInfo_layout = QVBoxLayout()
-        self.slaveInfo_layout.addWidget(self.slave_address_label)
+        #self.slaveInfo_layout.addWidget(self.slave_address_label)
         self.slaveInfo_layout.addWidget(self.temp_label)
         
     def create_vials_box(self):
@@ -507,11 +531,16 @@ class olfactometer_window(QGroupBox):
         self.connect_box = QGroupBox("Connect to master Arduino")
         self.port_widget = QComboBox(currentIndexChanged=self.port_changed)
         self.connect_btn = QPushButton(checkable=True,toggled=self.toggled_connect)
-        self.refresh_btn = QPushButton(text="Refresh",clicked=self.get_ports)
+        self.refresh_btn = QPushButton(text="Refresh",clicked=self.get_ports,toolTip='refresh list of available com ports')
         self.get_ports()
-        connect_box_layout = QFormLayout()
-        connect_box_layout.addRow(QLabel(text="Select Port:"),self.port_widget)
-        connect_box_layout.addRow(self.refresh_btn,self.connect_btn)
+        connect_box_layout = QHBoxLayout()
+        connect_box_layout.addWidget(QLabel(text='Select Port:',toolTip='Select COM port for master Arduino'))
+        connect_box_layout.addWidget(self.port_widget)
+        connect_box_layout.addWidget(self.connect_btn)
+        connect_box_layout.addWidget(self.refresh_btn)
+        #connect_box_layout = QFormLayout()
+        #connect_box_layout.addRow(QLabel(text="Select Port:"),self.port_widget)
+        #connect_box_layout.addRow(self.refresh_btn,self.connect_btn)
         self.connect_box.setLayout(connect_box_layout)
 
     def create_master_groupbox(self):
@@ -532,7 +561,7 @@ class olfactometer_window(QGroupBox):
             returnPressed=lambda:self.send_to_master('MM_timebt_' + self.m_timebtreqs.text()))
         self.m_timebtreqs_btn = QPushButton(text="Send", clicked=lambda:self.send_to_master('MM_timebt_' + self.m_timebtreqs.text()))
         timebt_layout = QHBoxLayout()
-        timebt_layout.addWidget(QLabel(text="Time b/t requests for slave data (ms):"))
+        timebt_layout.addWidget(QLabel(text="Time b/t requests to slave (ms):"))
         timebt_layout.addWidget(self.m_timebtreqs)
         timebt_layout.addWidget(self.m_timebtreqs_btn)
 
@@ -557,12 +586,12 @@ class olfactometer_window(QGroupBox):
 
         self.raw_write_display = QTextEdit(readOnly=True)
         raw_write_layout = QVBoxLayout()
-        raw_write_layout.addWidget(QLabel('wrote to serial port:'))
+        raw_write_layout.addWidget(QLabel('written to serial port:'))
         raw_write_layout.addWidget(self.raw_write_display)
 
         self.raw_read_display = QTextEdit(readOnly=True)
         raw_read_layout = QVBoxLayout()
-        raw_read_layout.addWidget(QLabel('read from serial port:'))
+        raw_read_layout.addWidget(QLabel('received from serial port:'))
         raw_read_layout.addWidget(self.raw_read_display)
 
         raw_comm_layout = QHBoxLayout()
@@ -636,7 +665,9 @@ class olfactometer_window(QGroupBox):
             else:
                 self.portStr = self.port[:self.port.index(':')]
                 self.connect_btn.setEnabled(True)
-                self.connect_btn.setText("Connect to  " + self.portStr)
+                #self.connect_btn.setText("Connect to " + self.portStr)
+                self.connect_btn.setText("Connect")
+                self.connect_btn.setToolTip("Connect to " + self.portStr)
     
     def toggled_connect(self, checked):
         if checked:
@@ -662,14 +693,17 @@ class olfactometer_window(QGroupBox):
             logger.info('connected to ' + self.port_widget.currentText())
             self.get_slave_addresses()
             self.master_groupbox.setEnabled(True)
-            self.connect_btn.setText('Stop communication w/ ' + self.portStr)
+            self.connect_btn.setText("Disconnect")
+            self.connect_btn.setToolTip("Disconnect from " + self.portStr)
+            #self.connect_btn.setText('Disconnect from ' + self.portStr)
             self.refresh_btn.setEnabled(False)
             self.port_widget.setEnabled(False)
         
         else:
             logger.info('disconnected from ' + self.port_widget.currentText())
             self.master_groupbox.setEnabled(False)
-            self.connect_btn.setText('Connect to ' + self.portStr)
+            self.connect_btn.setText("Connect")
+            #self.connect_btn.setText('Connect to ' + self.portStr)
             self.connect_btn.setChecked(False)
             self.refresh_btn.setEnabled(True)
             self.port_widget.setEnabled(True)
@@ -796,7 +830,7 @@ class olfactometer_window(QGroupBox):
                                 
                                 # write it to the vial display
                                 dataStr2 = str(flowVal) + '  ' + str(flowVal_sccm) + '  ' + str(ctrlVal)    # TODO spacing bt flow,flow,ctrl
-                                v.flow_readout.append(dataStr2)
+                                v.flow_ctrl_readout.append(dataStr2)
 
                                 # if calibration is on: send it to the vial details popup
                                 if self.calibration_on == True:
