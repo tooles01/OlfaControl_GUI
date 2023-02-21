@@ -107,11 +107,10 @@ class VialDetailsPopup(QWidget):
         
         # VALVE OPEN
         self.db_valve_open_lbl = QLabel('Duration to open (s):')
-        # TODO change name
-        self.db_open_valve_wid = QLineEdit(text=def_open_duration)        # pos change to spinbox so min/max can be set (& to match olfa driver)
-        # TODO change name
-        self.db_open_valve_btn = QPushButton('Open vial',checkable=True)
-        self.db_open_valve_btn.toggled.connect(self.parent.debugwin_vialOpen_toggled)
+        self.db_valve_dur_wid = QLineEdit(text=def_open_duration)        # pos change to spinbox so min/max can be set (& to match olfa driver)
+        self.db_valve_open_btn = QPushButton('Open vial',checkable=True)
+        #self.db_valve_open_btn.toggled.connect(self.parent.debugwin_vialOpen_toggled)
+        self.db_valve_open_btn.toggled.connect(self.vialOpen_toggled)
         
         # SETPOINT
         self.db_setpoint_lbl = QLabel('Setpoint (sccm):')
@@ -131,7 +130,7 @@ class VialDetailsPopup(QWidget):
         
         # set second widgets to the same width (to mimic a QFormLayout)
         width_to_use = self.db_cal_table_combobox.sizeHint().width()
-        self.db_open_valve_wid.setFixedWidth(width_to_use)
+        self.db_valve_dur_wid.setFixedWidth(width_to_use)
         self.db_setpoint_value_box.setFixedWidth(width_to_use)
         self.db_cal_table_combobox.setFixedWidth(width_to_use)
         
@@ -141,7 +140,7 @@ class VialDetailsPopup(QWidget):
         layout_labels.addWidget(self.db_setpoint_lbl)
         layout_labels.addWidget(self.db_cal_table_lbl)
         layout_widgets = QFormLayout()
-        layout_widgets.addRow(self.db_open_valve_wid,self.db_open_valve_btn)
+        layout_widgets.addRow(self.db_valve_dur_wid,self.db_valve_open_btn)
         layout_widgets.addRow(self.db_setpoint_value_box,self.db_setpoint_send_btn)
         layout_widgets.addRow(self.db_cal_table_combobox,self.db_calibrate_sensor_btn)
         
@@ -195,8 +194,7 @@ class VialDetailsPopup(QWidget):
         self.db_PID_toggle_btn.setMinimumWidth(self.db_PID_toggle_btn.sizeHint().width())   # just for sizing
         self.db_PID_toggle_btn.setText('Turn flow control on')                              # just for sizing
         self.db_ctrl_toggle_btn = QPushButton(text="Open prop valve",checkable=True,toggled=self.parent.propValve_toggled)
-        #self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True)#,toggled=self.vialOpen_toggled) # TODO
-        self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True,toggled=self.vialOpen_toggled)
+        self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True,toggled=self.iso_valve_open_toggled) # TODO
         manual_debug_layout = QVBoxLayout()
         manual_debug_layout.addWidget(self.db_PID_toggle_btn)
         manual_debug_layout.addWidget(self.db_ctrl_toggle_btn)
@@ -235,13 +233,22 @@ class VialDetailsPopup(QWidget):
     
     
     # COMMANDS
-    def vialOpen_toggled(self,checked):
+    def vialOpen_toggled(self, checked):
         if checked:
+            duration = self.db_valve_dur_wid.text()
+            self.parent.open_vial(duration)
+            self.db_valve_open_btn.setText('Close vial')
+        else:
+            self.parent.close_vial()
+    
+    def iso_valve_open_toggled(self,checked):
+        if checked:
+            logger.debug('opening iso valve')
             self.db_vlve_toggle_btn.setText("Close Iso Valve")
             strToSend = 'S_OI_' + self.full_vialNum
             self.parent.parent().parent.send_to_master(strToSend)
-
         else:
+            logger.debug('closing iso valve')
             self.db_vlve_toggle_btn.setText("Open Iso Valve")
             strToSend = 'S_CI_' + self.full_vialNum
             self.parent.parent().parent.send_to_master(strToSend)

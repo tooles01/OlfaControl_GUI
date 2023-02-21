@@ -59,12 +59,10 @@ class Vial(QGroupBox):
         self.Kd_value = def_Kd_value
         
         self.generate_stuff()
-
-        self.vial_details_window.db_open_valve_wid.returnPressed.connect(lambda: self.vial_details_window.db_open_valve_btn.setChecked(True))
-        #self.db_open_valve_wid.returnPressed.connect(lambda: self.db_open_valve_btn.setChecked(True))
+        
+        self.vial_details_window.db_valve_dur_wid.returnPressed.connect(lambda: self.vial_details_window.db_valve_open_btn.setChecked(True))        
         
         self.setLayout(self.layout)
-        
         self.valve_open_btn.setMaximumWidth(60)
         self.setpoint_send_btn.setMaximumWidth(60)
         self.cal_table_combobox.setFixedWidth(self.read_flow_vals_btn.size().width() + self.vial_details_btn.size().width())
@@ -81,7 +79,7 @@ class Vial(QGroupBox):
         self.valve_dur_spinbox.valueChanged.connect(self.valve_open_dur_changed)
         self.valve_dur_lbl = QLabel("dur (s):")
         self.valve_open_btn = QPushButton(text=str("Open " + self.slaveName + self.vialNum),checkable=True)
-        self.valve_open_btn.toggled.connect(self.mainwin_vialOpen_toggled)
+        self.valve_open_btn.toggled.connect(self.vialOpen_toggled)
         self.valve_open_dur_changed()
         
         self.open_valve_layout = QHBoxLayout()
@@ -179,7 +177,6 @@ class Vial(QGroupBox):
         else:
             # Close vial details window
             self.vial_details_window.hide()
-            #self.vial_details_btn.setText('Vial\nDetails')
             self.vial_details_btn.setText('Details')
             # enable the other buttons
             self.valve_dur_spinbox.setEnabled(True)
@@ -207,7 +204,7 @@ class Vial(QGroupBox):
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)
     
-    def vialOpen_checked(self, duration):
+    def open_vial(self, duration):
         # send to olfactometer_window (to send to Arduino)
         strToSend = 'S_OV_' + str(duration) + '_' + self.full_vialNum
         self.olfactometer_parent_object.send_to_master(strToSend)
@@ -219,25 +216,18 @@ class Vial(QGroupBox):
         # start valve timer
         self.start_valve_timer(duration)
     
-    def vialOpen_unchecked(self):
+    def close_vial(self):
         if self.valve_timer.isActive():
             logger.debug('valve was closed early')
             self.end_valve_timer()
-
+            
             # send to olfactometer_window (to send to Arduino)
             strToSend = 'S_CV_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
-
+            
             # send to main GUI window (to write to datafile)
             device = 'olfactometer ' + self.full_vialNum
             self.write_to_datafile(device,'CV','0')
-    
-    # ~ just for user experience ~
-    def valve_open_dur_changed(self):
-        self.valve_open_btn.setToolTip("open " + self.full_vialNum + " for " + str(self.valve_dur_spinbox.value()) + " seconds")
-    
-    def setpoint_changed(self):
-        self.setpoint_send_btn.setToolTip('Update setpoint to ' + str(self.setpoint_value_box.value()) + " sccm")
     
     # COMMANDS
     def K_parameter_update(self, Kx, value):
@@ -296,22 +286,23 @@ class Vial(QGroupBox):
             strToSend = 'S_CC_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
     
-    # TODO match this to the way you did the "read flow toggled", so it doesn't have to be two functions
-    def mainwin_vialOpen_toggled(self, checked):    # TODO rename function
+    def vialOpen_toggled(self, checked):    # TODO rename function
         if checked:
             self.valve_open_btn.setText('Close ' + self.full_vialNum)
-            self.vialOpen_checked(self.valve_dur_spinbox.value())
+            self.open_vial(self.valve_dur_spinbox.value())
         else:
             self.valve_open_btn.setText('Open ' + self.full_vialNum)
-            self.vialOpen_unchecked()
-
-    def debugwin_vialOpen_toggled(self, checked):   # TODO rename function
+            self.close_vial()
+    
+    '''
+    def debugwin_vialOpen_toggled(self, checked):
         if checked:
-            self.vial_details_window.db_open_valve_btn.setText('Close vial')
-            self.vialOpen_checked(self.vial_details_window.db_open_valve_wid.text())
+            self.vial_details_window.db_valve_open_btn.setText('Close vial')
+            self.open_vial(self.vial_details_window.db_valve_dur_wid.text())
         else:
-            self.vial_details_window.db_open_valve_btn.setText('Open vial')
-            self.vialOpen_unchecked()
+            self.vial_details_window.db_valve_open_btn.setText('Open vial')
+            self.close_vial()
+    '''
     
     def calibrate_flow_sensor_btn_clicked(self):
         logger.error('calibrate flow sensor not set up yet')  # TODO
@@ -358,14 +349,20 @@ class Vial(QGroupBox):
     def end_valve_timer(self):
         logger.debug('ending valve timer')
         self.valve_timer.stop()
-
+        
         # check which button to untoggle
-        if self.vial_details_window.db_open_valve_btn.isChecked():
-            logger.debug('untoggling debug window open valve button')
-            self.vial_details_window.db_open_valve_btn.toggle()
+        if self.vial_details_window.db_valve_open_btn.isChecked():
+            self.vial_details_window.db_valve_open_btn.toggle()
         if self.valve_open_btn.isChecked():
             self.valve_open_btn.toggle()
     
+    # ~ just for user experience ~
+    def valve_open_dur_changed(self):
+        self.valve_open_btn.setToolTip("open " + self.full_vialNum + " for " + str(self.valve_dur_spinbox.value()) + " seconds")
+    
+    def setpoint_changed(self):
+        self.setpoint_send_btn.setToolTip('Update setpoint to ' + str(self.setpoint_value_box.value()) + " sccm")
+
 
 class slave_8vials(QGroupBox):
 
