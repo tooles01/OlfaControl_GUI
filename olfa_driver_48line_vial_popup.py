@@ -1,48 +1,33 @@
-import sys, logging, time
-import os, csv, copy
-from turtle import width
-from PyQt5 import QtCore, QtSerialPort
+import os, logging, csv, copy, time
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
-from serial.tools import list_ports
 from datetime import datetime, timedelta
+from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 import numpy as np
-from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, QTimer
 
 import utils, utils_olfa_48line
 
-baudrate = 9600     # for communicating w/ master
-vialsPerSlave = 8
-noPort_msg = "no ports detected :/"
-master_modes = ["6: verbose",
-                "5: trace",
-                "4: notice",
-                "3: warning",
-                "2: error",
-                "1: fatal"]
-slave_names = ['A',
-                'B',
-                'C',
-                'D',
-                'E',
-                'F']
 
+##############################
 # DEFAULT VALUES
 default_setpoint = '50'
+def_open_duration = '5'
 default_cal_table = 'Honeywell_3100V'
 def_Kp_value = '0.0500'
 def_Ki_value = '0.0001'
 def_Kd_value = '0.0000'
 def_calfile_name = 'A2_test_cal_file'
 def_mfc_cal_value = '100'
+##############################
 
-
+##############################
 # CREATE LOGGER
 logger = logging.getLogger(name='vial popup')
 logger.setLevel(logging.DEBUG)
 if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
 console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
+##############################
 
 
 class calibration_worker(QObject):
@@ -66,6 +51,7 @@ class calibration_worker(QObject):
 
 
 class VialDetailsPopup(QWidget):
+    
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
@@ -74,12 +60,14 @@ class VialDetailsPopup(QWidget):
         self.create_ui_features()
         self.setWindowTitle('Vial ' + self.full_vialNum + ' - Details')
 
+    # GUI FEATURES
     def create_ui_features(self):
         self.vial_details_create_settings_box()
         
         self.db_readflow_btn = QPushButton(text='Read flow values',checkable=True)
         self.db_readflow_btn.toggled.connect(lambda: self.parent.readFlow_btn_toggled(self.db_readflow_btn))
-        self.db_advanced_btn = QPushButton(text='Enable Advanced Options',checkable=True,toggled=self.parent.toggled_advanced_settings,toolTip='ARE YOU SURE')     
+        self.db_advanced_btn = QPushButton(text='Advanced',checkable=True,toggled=self.parent.toggled_advanced_settings)
+        self.db_advanced_btn.setToolTip('Enable advanced flow control settings\n\nARE YOU SURE YOU WANT TO DO THIS')
         
         self.vial_details_create_flow_ctrl_box()
         self.vial_details_create_man_control_box()
@@ -88,15 +76,16 @@ class VialDetailsPopup(QWidget):
         # Values Received
         self.data_receive_lbl = QLabel(("Flow val (int), Flow (SCCM), Ctrl val (int)"))
         self.data_receive_box = QTextEdit(readOnly=True)
+        self.data_receive_box.setFixedWidth(220)
 
         # Layout
         layout_col1_widgets = QGridLayout()
         layout_col1_widgets.addWidget(self.db_std_widgets_box,0,0,1,2)      # row 0 col 0
-        layout_col1_widgets.addWidget(self.cal_box,1,0,1,2)                 # row 1 col 0
-        layout_col1_widgets.addWidget(self.db_readflow_btn,2,0,1,1)         # row 2 col 0
-        layout_col1_widgets.addWidget(self.db_advanced_btn,2,1,1,2)         # row 2 col 1
-        layout_col1_widgets.addWidget(self.db_flow_control_box,3,0,1,1)     # row 3 col 0
-        layout_col1_widgets.addWidget(self.db_manual_control_box,3,1,1,1)   # row 3 col 1
+        layout_col1_widgets.addWidget(self.db_readflow_btn,1,0,1,1)         # row 1 col 0
+        layout_col1_widgets.addWidget(self.db_advanced_btn,1,1,1,2)         # row 1 col 1
+        layout_col1_widgets.addWidget(self.db_flow_control_box,2,0,1,1)     # row 2 col 0
+        layout_col1_widgets.addWidget(self.db_manual_control_box,2,1,1,1)   # row 2 col 1
+        layout_col1_widgets.addWidget(self.cal_box,3,0,1,2)                 # row 3 col 0
         layout_col2_data = QVBoxLayout()
         layout_col2_data.addWidget(self.data_receive_lbl)
         layout_col2_data.addWidget(self.data_receive_box)
@@ -115,45 +104,47 @@ class VialDetailsPopup(QWidget):
 
     def vial_details_create_settings_box(self):
         self.db_std_widgets_box = QGroupBox("Settings")
-
-        # Open Vial
-        self.db_open_valve_wid = QLineEdit(text='5')        # pos change to spinbox so min/max can be set
+        
+        # VALVE OPEN
+        self.db_valve_open_lbl = QLabel('Duration to open (s):')
+        # TODO change name
+        self.db_open_valve_wid = QLineEdit(text=def_open_duration)        # pos change to spinbox so min/max can be set (& to match olfa driver)
+        # TODO change name
         self.db_open_valve_btn = QPushButton('Open vial',checkable=True)
         self.db_open_valve_btn.toggled.connect(self.parent.debugwin_vialOpen_toggled)
         
-        # Setpoint
+        # SETPOINT
+        self.db_setpoint_lbl = QLabel('Setpoint (sccm):')
         self.db_setpoint_value_box = QLineEdit(text=default_setpoint)
         self.db_setpoint_send_btn = QPushButton('Update Spt')
         self.db_setpoint_value_box.returnPressed.connect(lambda: self.parent.setpoint_btn_clicked(self.db_setpoint_value_box.text()))
         self.db_setpoint_send_btn.clicked.connect(lambda: self.parent.setpoint_btn_clicked(self.db_setpoint_value_box.text()))
         
-        # Calibration Table
+        # FLOW CALIBRATION TABLE
+        self.db_cal_table_lbl = QLabel('Calibration table:')
         self.db_cal_table_combobox = QComboBox()
         self.db_cal_table_combobox.addItems(self.parent.olfactometer_parent_object.ard2Sccm_dicts)
-        self.db_cal_table_combobox.setCurrentText(self.parent.cal_table)
+        self.db_cal_table_combobox.setCurrentText(self.parent.cal_table)    # set default to this vial's calibration table
         self.db_cal_table_combobox.currentIndexChanged.connect(lambda: self.parent.cal_table_updated(self.db_cal_table_combobox.currentText()))
         self.db_calibrate_sensor_btn = QPushButton(text='Calibrate')
         self.db_calibrate_sensor_btn.clicked.connect(self.parent.calibrate_flow_sensor_btn_clicked)
-
-        # set second widgets to the same width
+        
+        # set second widgets to the same width (to mimic a QFormLayout)
         width_to_use = self.db_cal_table_combobox.sizeHint().width()
-        self.db_open_valve_wid.setMinimumWidth(width_to_use)
-        self.db_setpoint_value_box.setMinimumWidth(width_to_use)
-        self.db_cal_table_combobox.setMinimumWidth(width_to_use)
         self.db_open_valve_wid.setFixedWidth(width_to_use)
         self.db_setpoint_value_box.setFixedWidth(width_to_use)
         self.db_cal_table_combobox.setFixedWidth(width_to_use)
         
-        # Layout
+        # LAYOUT
         layout_labels = QVBoxLayout()
-        layout_labels.addWidget(QLabel('Duration to open (s):'))
-        layout_labels.addWidget(QLabel('Setpoint (sccm):'))
-        layout_labels.addWidget(QLabel('Calibration table:'))
+        layout_labels.addWidget(self.db_valve_open_lbl)
+        layout_labels.addWidget(self.db_setpoint_lbl)
+        layout_labels.addWidget(self.db_cal_table_lbl)
         layout_widgets = QFormLayout()
         layout_widgets.addRow(self.db_open_valve_wid,self.db_open_valve_btn)
         layout_widgets.addRow(self.db_setpoint_value_box,self.db_setpoint_send_btn)
         layout_widgets.addRow(self.db_cal_table_combobox,self.db_calibrate_sensor_btn)
-
+        
         layout_full = QHBoxLayout()
         layout_full.addLayout(layout_labels)
         layout_full.addLayout(layout_widgets)
@@ -197,7 +188,7 @@ class VialDetailsPopup(QWidget):
         self.db_flow_control_box.setFixedHeight(flow_control_wids.sizeHint().height() + 24)
         
         self.db_flow_control_box.setEnabled(False)     # disable until advanced options toggled
-
+    
     def vial_details_create_man_control_box(self):
         self.db_manual_control_box = QGroupBox('Manual Controls')
         self.db_PID_toggle_btn = QPushButton(text="Turn flow control off",checkable=True,toggled=self.parent.flowCtrl_toggled)
@@ -215,14 +206,12 @@ class VialDetailsPopup(QWidget):
         self.db_manual_control_box.setEnabled(False)     # disable until advanced options toggled
     
     def vial_details_create_calibration_box(self):
-        self.cal_box = QGroupBox('Calibration')
+        self.cal_box = QGroupBox('Flow Sensor Calibration')
 
-        self.cal_file_name_lineedit = QLineEdit(text=def_calfile_name)
-        self.cal_file_dir_lineedit = QLineEdit(text=self.parent.olfactometer_parent_object.flow_cal_dir)
-
-        self.create_new_cal_file_btn = QPushButton(text='Create file',checkable=True)
-        self.create_new_cal_file_btn.toggled.connect(self.create_new_cal_file_clicked)
-
+        self.cal_file_name_wid = QLineEdit(text=def_calfile_name)
+        self.cal_file_dir_wid = QLineEdit(text=self.parent.olfactometer_parent_object.flow_cal_dir)
+        self.create_new_cal_file_btn = QPushButton(text='Create file',checkable=True,toggled=self.create_new_cal_file_toggled)
+        
         self.mfc_value_lineedit = QLineEdit(text=def_mfc_cal_value)
         self.mfc_value_set_btn = QPushButton(text='Start',checkable=True)
         #self.mfc_value_lineedit.returnPressed.connect(self.new_mfc_value_set)  # TODO
@@ -235,16 +224,17 @@ class VialDetailsPopup(QWidget):
         layout_labels.addWidget(QLabel('File Name:'))
         layout_labels.addWidget(QLabel('MFC value:'))
         layout_widgets = QFormLayout()
-        layout_widgets.addRow(self.cal_file_dir_lineedit)
-        layout_widgets.addRow(self.cal_file_name_lineedit,self.create_new_cal_file_btn)
+        layout_widgets.addRow(self.cal_file_dir_wid)
+        layout_widgets.addRow(self.cal_file_name_wid,self.create_new_cal_file_btn)
         layout_widgets.addRow(self.mfc_value_lineedit,self.mfc_value_set_btn)
         layout_full = QHBoxLayout()
         layout_full.addLayout(layout_labels)
         layout_full.addLayout(layout_widgets)
 
         self.cal_box.setLayout(layout_full)
-
-
+    
+    
+    # COMMANDS
     def vialOpen_toggled(self,checked):
         if checked:
             self.db_vlve_toggle_btn.setText("Close Iso Valve")
@@ -256,21 +246,20 @@ class VialDetailsPopup(QWidget):
             strToSend = 'S_CI_' + self.full_vialNum
             self.parent.parent().parent.send_to_master(strToSend)
     
-    def create_new_cal_file_clicked(self):
-        # Clicked - create new file, start procedure
+    def create_new_cal_file_toggled(self):
+        # Create new file, start procedure
         if self.create_new_cal_file_btn.isChecked() == True:
-            
             # UI THINGS
-            self.create_new_cal_file_btn.setText('Done')
+            self.create_new_cal_file_btn.setText('Done calibrating')
             self.create_new_cal_file_btn.setToolTip('Click to end calibration and save file')
-            self.cal_file_dir_lineedit.setEnabled(False)
-            self.cal_file_name_lineedit.setEnabled(False)
+            self.cal_file_dir_wid.setEnabled(False)
+            self.cal_file_name_wid.setEnabled(False)
             self.db_std_widgets_box.setEnabled(False)
             self.db_flow_control_box.setEnabled(False)
             
             # Get file name & directory from GUI
-            self.new_cal_file_name = self.cal_file_name_lineedit.text()
-            self.new_cal_file_dir = self.cal_file_dir_lineedit.text() + '\\' + self.new_cal_file_name + '.csv'
+            self.new_cal_file_name = self.cal_file_name_wid.text()
+            self.new_cal_file_dir = self.cal_file_dir_wid.text() + '\\' + self.new_cal_file_name + '.csv'
 
             # Hopefully this file does not exist
             if not os.path.exists(self.new_cal_file_dir):
@@ -289,20 +278,20 @@ class VialDetailsPopup(QWidget):
                 self.mfc_value_set_btn.setEnabled(True)
 
             else:
-                logger.error('this calibration file already exists!!!!!')
+                logger.error('cannot create calibration file, ' + self.new_cal_file_name + ' already exists!!!!!')
                 self.create_new_cal_file_btn.setChecked(False)
-  
-        # Unclicked - done with calibration
-        else:
+        
+        # Done with calibration
+        else:    
             # UI THINGS
             self.create_new_cal_file_btn.setText('Create file')
             self.create_new_cal_file_btn.setToolTip('')
-            self.cal_file_dir_lineedit.setEnabled(True)
-            self.cal_file_name_lineedit.setEnabled(True)
+            self.cal_file_dir_wid.setEnabled(True)
+            self.cal_file_name_wid.setEnabled(True)
             self.db_std_widgets_box.setEnabled(True)
             self.db_flow_control_box.setEnabled(True)
-
-
+    
+    
     def new_mfc_value_set(self):
         if self.mfc_value_set_btn.isChecked() == True:
             self.this_cal_sccm_value = self.mfc_value_lineedit.text()
@@ -466,4 +455,5 @@ class VialDetailsPopup(QWidget):
     
     
     def closeEvent(self, event):
+        # Untoggle button in olfa GUI
         self.parent.vial_details_btn.setChecked(False)
