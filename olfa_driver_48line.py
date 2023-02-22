@@ -81,7 +81,6 @@ class Vial(QGroupBox):
         self.valve_open_btn = QPushButton(text=str("Open " + self.slaveName + self.vialNum),checkable=True)
         self.valve_open_btn.toggled.connect(self.vialOpen_toggled)
         self.valve_open_dur_changed()
-        
         self.open_valve_layout = QHBoxLayout()
         self.open_valve_layout.addWidget(self.valve_open_btn)
         self.open_valve_layout.addWidget(self.valve_dur_lbl)
@@ -94,7 +93,6 @@ class Vial(QGroupBox):
         self.setpoint_send_btn = QPushButton(text="Send Spt")
         self.setpoint_send_btn.clicked.connect(lambda: self.setpoint_btn_clicked(self.setpoint_value_box.value()))
         self.setpoint_changed()
-        
         self.setpoint_layout = QHBoxLayout()
         self.setpoint_layout.addWidget(self.setpoint_send_btn)
         self.setpoint_layout.addWidget(self.setpoint_value_lbl)
@@ -105,7 +103,6 @@ class Vial(QGroupBox):
         self.cal_table_combobox.addItems(self.olfactometer_parent_object.sccm2Ard_dicts)
         self.cal_table_combobox.setCurrentText(self.cal_table)  # TODO: change this to cycle through and find that cal table, set the index to that
         self.cal_table_combobox.currentIndexChanged.connect(lambda: self.cal_table_updated(self.cal_table_combobox.currentText()))
-        
         self.cal_table_layout = QVBoxLayout()
         self.cal_table_layout.addWidget(QLabel(text='Calibration Table:'))
         self.cal_table_layout.addWidget(self.cal_table_combobox)
@@ -127,7 +124,6 @@ class Vial(QGroupBox):
         self.valve_timer = QTimer()
         self.valve_timer.setTimerType(0)    # set to millisecond accuracy
         self.valve_timer.timeout.connect(self.show_time)
-        
         self.valveTimer_layout = QHBoxLayout()
         self.valveTimer_layout.addWidget(self.valveTimer_lbl)
         self.valveTimer_layout.addWidget(self.valveTimer_duration_label)
@@ -456,7 +452,7 @@ class olfactometer_window(QGroupBox):
         
         # If flow cal directory does not exist: print warning   # TODO this is big issue if none found
         else:
-            logger.warning('Cannot find flow cal directory (searched in %s)', self.flow_cal_dir)
+            logger.error('Cannot find flow cal directory (searched in %s)', self.flow_cal_dir)
     
     def generate_ui(self):
         self.create_connect_box()
@@ -661,7 +657,7 @@ class olfactometer_window(QGroupBox):
             self.port_widget.setEnabled(True)
             '''
             # this seems unnecessary - ST 1/30/2023
-            # set vials of all currently active slaves to not debug TODO do this in a thread
+            # set vials of all currently active slaves to not debug --> do this in a thread
             for slave in self.active_slaves:
                 for vial in range(0,vialsPerSlave):
                     strToSend = 'MS_' + slave + str(vial+1)
@@ -673,9 +669,7 @@ class olfactometer_window(QGroupBox):
         self.prev_active_slaves = copy.copy(self.active_slaves)
         self.active_slaves = []
         logger.info('Checking slave addresses')
-        self.send_to_master('C')
-        # TODO update program
-        
+        self.send_to_master('C')        
         '''
         # once received, remove inactive slaves
         for s_name in slave_names:
@@ -741,6 +735,14 @@ class olfactometer_window(QGroupBox):
                             s.setEnabled(True)
                             address_label = 'Slave Address: {}'.format(slave_address)
                             s.slave_address_label.setText(address_label)
+                    
+                    # if program selected reads "no active slaves" --> update the combobox
+                    try:
+                        if self.window().p_slave_select_wid.currentText() == 'no active slaves pls connect olfa or something':
+                            self.window().active_slave_refresh()
+                    except AttributeError:  # if no main window
+                        pass
+
                         
                 # IF FLOW UPDATE WAS SENT: send to main GUI window (to write to datafile)
                 if len(text) == 17:
@@ -781,7 +783,7 @@ class olfactometer_window(QGroupBox):
                                 v.vial_details_window.data_receive_box.append(dataStr)
                                 
                                 # write it to the vial display
-                                dataStr2 = str(flowVal) + '  ' + str(flowVal_sccm) + '  ' + str(ctrlVal)    # TODO spacing bt flow,flow,ctrl
+                                dataStr2 = str(flowVal) + '  ' + str(flowVal_sccm) + '  ' + str(ctrlVal)
                                 v.flow_ctrl_readout.append(dataStr2)
 
                                 # if calibration is on: send it to the vial details popup
