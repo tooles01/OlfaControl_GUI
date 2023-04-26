@@ -1,24 +1,14 @@
-#!/usr/bin/env python
-from gc import isenabled
-import sys, os, logging, csv
-from numpy import full
+import sys, os, logging, csv, copy, time, random
 import numpy.matlib as np
-import random, time
-import copy
-
 from PyQt5 import sip
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, QTimer
 
 import utils
-import olfa_driver_48line
-import NiDAQ_driver
+import NiDAQ_driver, flow_sensor_driver
 import olfa_driver_original
-import flow_sensor_driver
-import olfa_original_procedures
-#import programs_48lineolfa
-import utils_olfa_48line
-import program_additive_popup
+import olfa_driver_48line
+import utils_olfa_48line, program_additive_popup
 
 
 programs_48line = ['setpoint characterization','additive']
@@ -28,14 +18,13 @@ programs_orig = ['the program']
 # PARAMETERS FOR 48-LINE OLFACTOMETER
 vials = ['1','2','3','4','5','6','7','8']
 default_setpoint = '10,20,30,40,50,60,70,80,90,100'
-#default_setpoint = '5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100'
 default_dur_ON = 5
 default_dur_OFF = 5
 default_numTrials = 5
 no_active_slaves_warning = 'no active slaves pls connect olfa or something'
 waitBtSpAndOV = .5
 waitBtSps = 1
-default_pid_gain = '1x'
+default_pid_gain = '10x'
 ##############################
 
 current_date = utils.currentDate

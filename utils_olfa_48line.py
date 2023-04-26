@@ -12,7 +12,6 @@ logger.addHandler(console_handler)
 def connect_to_48line_olfa(olfa_object):
     olfa_object.get_ports()
     
-    #logger.debug('connecting olfactometer')
     logger.debug('connecting to olfactometer at ' + olfa_object.port_widget.currentText())
     olfa_object.connect_btn.toggle()
     

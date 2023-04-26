@@ -126,6 +126,7 @@ class VialDetailsPopup(QWidget):
         self.db_cal_table_combobox.setCurrentText(self.parent.cal_table)    # set default to this vial's calibration table
         self.db_cal_table_combobox.currentIndexChanged.connect(lambda: self.parent.cal_table_updated(self.db_cal_table_combobox.currentText()))
         self.db_calibrate_sensor_btn = QPushButton(text='Calibrate')
+        self.db_calibrate_sensor_btn.setToolTip('no')   # TODO
         self.db_calibrate_sensor_btn.clicked.connect(self.parent.calibrate_flow_sensor_btn_clicked)
         
         # set second widgets to the same width (to mimic a QFormLayout)
