@@ -12,6 +12,7 @@ import utils, utils_olfa_48line
 # DEFAULT VALUES
 default_setpoint = '50'
 def_open_duration = '5'
+def_pressurize_duration = '5'
 default_cal_table = 'Honeywell_3100V'
 def_Kp_value = '0.0500'
 def_Ki_value = '0.0001'
@@ -128,22 +129,32 @@ class VialDetailsPopup(QWidget):
         self.db_calibrate_sensor_btn = QPushButton(text='Calibrate')
         self.db_calibrate_sensor_btn.setToolTip('no')   # TODO
         self.db_calibrate_sensor_btn.clicked.connect(self.parent.calibrate_flow_sensor_btn_clicked)
+
+        # PRESSURIZE VIAL
+        self.db_pressurize_lbl = QLabel('Pressurize vial:')
+        self.db_pressurize_wid = QLineEdit(text=def_pressurize_duration)
+        self.db_pressurize_btn = QPushButton('Go')
+        self.db_pressurize_wid.returnPressed.connect(self.pressurize_vial_clicked)
+        self.db_pressurize_btn.clicked.connect(self.pressurize_vial_clicked)
         
-        # set second widgets to the same width (to mimic a QFormLayout)
+        # set widgets to the same width (to mimic a QFormLayout)
         width_to_use = self.db_cal_table_combobox.sizeHint().width()
         self.db_valve_dur_wid.setFixedWidth(width_to_use)
         self.db_setpoint_value_box.setFixedWidth(width_to_use)
         self.db_cal_table_combobox.setFixedWidth(width_to_use)
+        self.db_pressurize_wid.setFixedWidth(width_to_use)
         
         # LAYOUT
         layout_labels = QVBoxLayout()
         layout_labels.addWidget(self.db_valve_open_lbl)
         layout_labels.addWidget(self.db_setpoint_lbl)
         layout_labels.addWidget(self.db_cal_table_lbl)
+        layout_labels.addWidget(self.db_pressurize_lbl)
         layout_widgets = QFormLayout()
         layout_widgets.addRow(self.db_valve_dur_wid,self.db_valve_open_btn)
         layout_widgets.addRow(self.db_setpoint_value_box,self.db_setpoint_send_btn)
         layout_widgets.addRow(self.db_cal_table_combobox,self.db_calibrate_sensor_btn)
+        layout_widgets.addRow(self.db_pressurize_wid,self.db_pressurize_btn)
         
         layout_full = QHBoxLayout()
         layout_full.addLayout(layout_labels)
@@ -333,7 +344,35 @@ class VialDetailsPopup(QWidget):
             self.db_std_widgets_box.setEnabled(True)
             self.db_flow_control_box.setEnabled(True)
     
-    
+    def pressurize_vial_clicked(self):
+        logger.debug('pressurizing vial')
+
+        # get duration
+        self.pressurize_duration = int(self.db_pressurize_wid.text())
+        self.pressurize_duration_ms = self.pressurize_duration*1000     # convert to milliseconds
+
+        # create the timer
+        self.pressurize_timer = QTimer()
+        self.pressurize_timer.setTimerType(0)   # set to millisecond accuracy
+        self.pressurize_timer.timeout.connect(self.pressurize_vial_done)    # connect timeout to done function
+
+        # open proportional valve
+        strToSend = 'S_OC_' + self.full_vialNum
+        self.parent.olfactometer_parent_object.send_to_master(strToSend)
+        
+        # start timer for duration
+        self.pressurize_timer.start(self.pressurize_duration_ms)
+
+    def pressurize_vial_done(self):
+        logger.debug('pressurize done - closing prop valve')
+
+        # stop timer
+        self.pressurize_timer.stop()
+        
+        # close proportional valve
+        strToSend = 'S_CC_' + self.full_vialNum
+        self.parent.olfactometer_parent_object.send_to_master(strToSend)
+        
     def new_mfc_value_set(self):
         if self.mfc_value_set_btn.isChecked() == True:
             self.this_cal_sccm_value = self.mfc_value_lineedit.text()
