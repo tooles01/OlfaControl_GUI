@@ -180,7 +180,10 @@ class NiDaq(QGroupBox):
     def updateTimeBt(self):
         new_time_bt_acquisitions = int(self.timeWid.text())
         self.worker_obj_nidaq.timeToSleep = new_time_bt_acquisitions
-        logger.info('updated time between acquisitions to %s ms',new_time_bt_acquisitions)
+        try:
+            logger.info('updated time between acquisitions to %s ms',new_time_bt_acquisitions)
+        except NameError as err:
+            print(err)
         
     # RECEIVE DATA
     def createDataReceiveBoxes(self):
