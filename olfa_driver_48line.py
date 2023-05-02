@@ -41,7 +41,8 @@ console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
 ##############################
 
-    
+mfc_capacity = '200'
+
 class Vial(QGroupBox):
 
     def __init__(self, parent, vialNum):
@@ -64,7 +65,6 @@ class Vial(QGroupBox):
         
         self.setLayout(self.layout)
         self.valve_open_btn.setMaximumWidth(60)
-        self.setpoint_send_btn.setMaximumWidth(60)
         self.cal_table_combobox.setFixedWidth(self.read_flow_vals_btn.size().width() + self.vial_details_btn.size().width())
         max_width = self.sizeHint().width()
         #self.setMaximumWidth(max_width - 10)
@@ -86,25 +86,41 @@ class Vial(QGroupBox):
         self.open_valve_layout.addWidget(self.valve_dur_lbl)
         self.open_valve_layout.addWidget(self.valve_dur_spinbox)
         
-        # SETPOINT
-        self.setpoint_value_box = QSpinBox(maximum=200,value=int(def_setpoint))
-        self.setpoint_value_box.valueChanged.connect(self.setpoint_changed)
-        self.setpoint_value_lbl = QLabel("sccm:")
-        self.setpoint_send_btn = QPushButton(text="Send Spt")
-        self.setpoint_send_btn.clicked.connect(lambda: self.setpoint_btn_clicked(self.setpoint_value_box.value()))
-        self.setpoint_changed()
-        self.setpoint_layout = QHBoxLayout()
-        self.setpoint_layout.addWidget(self.setpoint_send_btn)
-        self.setpoint_layout.addWidget(self.setpoint_value_lbl)
-        self.setpoint_layout.addWidget(self.setpoint_value_box)
+        # SETPOINT PIANO
+        self.setpoint_slider = QSlider()
+        self.setpoint_slider.setMaximum(int(mfc_capacity))
+        self.setpoint_slider.setToolTip('Adjusts flow set rate.')
+        self.setpoint_slider.setTickPosition(3)
+
+        self.setpoint_set_widget = QTextEdit()
+        #setpoint_set_widget.setMaximumWidth(4)
+        self.setpoint_set_widget.setAlignment(QtCore.Qt.AlignCenter)
+        self.setpoint_set_widget.setToolTip('Set value')
+        self.setpoint_set_widget.setStatusTip('Type to set flow rate')
+
+        self.setpoint_read_widget = QLCDNumber()
+        self.setpoint_read_widget.setMinimumSize(50,50)
+        self.setpoint_read_widget.setDigitCount(5)
+        self.setpoint_read_widget.setStatusTip('Current flow reading')
+        self.setpoint_read_widget.setMaximumHeight(50)
+        #setpoint_read_widget = QTextEdit(readOnly=True)
+
+        self.setpoint_slider.valueChanged.connect(lambda: self.update_text(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_widget))
+        self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider,self.full_vialNum))
+
+        # setpoint layout   # pos a groupbox ?
+        self.setpoint_slider_layout = QGridLayout()
+        self.setpoint_slider_layout.addWidget(self.setpoint_slider,0,0,2,1)
+        self.setpoint_slider_layout.addWidget(self.setpoint_set_widget,0,1,1,2)
+        self.setpoint_slider_layout.addWidget(self.setpoint_read_widget,1,1,1,2)
         
         # FLOW CALIBRATION TABLE
         self.cal_table_combobox = QComboBox()
         self.cal_table_combobox.addItems(self.olfactometer_parent_object.sccm2Ard_dicts)
         self.cal_table_combobox.setCurrentText(self.cal_table)  # TODO: change this to cycle through and find that cal table, set the index to that
         self.cal_table_combobox.currentIndexChanged.connect(lambda: self.cal_table_updated(self.cal_table_combobox.currentText()))
+        self.cal_table_combobox.setToolTip('Calibration Table')
         self.cal_table_layout = QVBoxLayout()
-        self.cal_table_layout.addWidget(QLabel(text='Calibration Table:'))
         self.cal_table_layout.addWidget(self.cal_table_combobox)
         self.cal_table_updated(self.cal_table_combobox.currentText())
         
@@ -142,20 +158,43 @@ class Vial(QGroupBox):
         # CURRENT FLOW/CTRL VALUES
         self.flow_ctrl_readout_lbl = QLabel(("Flow (int), Flow (SCCM), Ctrl (int)"))
         self.flow_ctrl_readout = QTextEdit(readOnly=True)
-        self.flow_ctrl_readout.setFixedHeight(70)
+        self.flow_ctrl_readout.setFixedHeight(65)
 
         # LAYOUT
         self.layout = QFormLayout()
         self.layout.addRow(self.valveTimer_layout)
         self.layout.addRow(self.open_valve_layout)
-        self.layout.addRow(self.setpoint_layout)
         self.layout.addRow(self.cal_table_layout)
+        self.layout.addRow(self.setpoint_slider_layout)
         self.layout.addRow(self.read_flow_vals_btn,self.vial_details_btn)
         self.layout.addRow(self.flow_ctrl_readout_lbl)
         self.layout.addRow(self.flow_ctrl_readout)
+        half_col_width = self.read_flow_vals_btn.sizeHint().width()
+        setpoint_set_read_height = 50
+        self.setpoint_set_widget.setMaximumWidth(half_col_width)
+        self.setpoint_read_widget.setMaximumWidth(half_col_width)
+        self.setpoint_set_widget.setMaximumHeight(setpoint_set_read_height)
+        self.setpoint_read_widget.setMaximumHeight(setpoint_set_read_height)
+        self.setpoint_slider.setMaximumHeight(setpoint_set_read_height*2)
         self.read_flow_vals_btn.setFixedWidth(self.read_flow_vals_btn.sizeHint().width())
         self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
-        self.flow_ctrl_readout.setFixedWidth(self.flow_ctrl_readout_lbl.sizeHint().width())
+        self.flow_ctrl_readout.setFixedWidth(self.flow_ctrl_readout_lbl.sizeHint().width())    
+    
+    
+    # SETPOINT SLIDER
+    # update setpoint read widget
+    def update_text(self,value,spt_set_wid):
+        spt_set_wid.setText(str(value))
+    
+    # send new setpoint to MFC
+    def slider_released(self, setpoint_slider):
+        val = setpoint_slider.value()   # get value of slider
+        self.set_flowrate(val)          # set the flowrate
+    
+    def set_flowrate(self, flowrate):
+        logger.info('set ' + self.full_vialNum + ' to ' + str(flowrate) + ' sccm')
+        self.setpoint_btn_clicked(flowrate)    
+    
     
     # ACTIONS / BUTTON FUNCTIONS
     def vial_details_btn_toggled(self, checked):
@@ -195,7 +234,7 @@ class Vial(QGroupBox):
     
     def cal_table_updated(self, new_cal_table):
         self.cal_table = new_cal_table
-        logger.debug('cal table for vial %s set to %s', self.full_vialNum, self.cal_table)
+        logger.debug('cal table for %s set to %s', self.full_vialNum, self.cal_table)
         
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)
@@ -342,7 +381,7 @@ class slave_8vials(QGroupBox):
         self.mainLayout.addLayout(self.vials_layout)
         self.setLayout(self.mainLayout)
         self.setTitle(name)
-
+    
     def create_slaveInfo_box(self):
         self.slave_info_box = QGroupBox()
 
@@ -350,11 +389,11 @@ class slave_8vials(QGroupBox):
         self.temp_label = QLabel("...,...,.slave active or not, slave info, whatever.,...")
         # TODO add a way to apply commands to multiple vials at once
         # ex: check the ones you want to apply this setpoint to
-
+        
         self.slaveInfo_layout = QVBoxLayout()
         #self.slaveInfo_layout.addWidget(self.slave_address_label)
         self.slaveInfo_layout.addWidget(self.temp_label)
-        
+    
     def create_vials_box(self):
         self.vials = []
         for v in range(vialsPerSlave):
@@ -786,6 +825,9 @@ class olfactometer_window(QGroupBox):
                                 # write it to the vial display
                                 dataStr2 = str(flowVal) + '  ' + str(flowVal_sccm) + '  ' + str(ctrlVal)
                                 v.flow_ctrl_readout.append(dataStr2)
+
+                                # write it to the vial display round 2
+                                v.setpoint_read_widget.display(round(flowVal_sccm))
 
                                 # if calibration is on: send it to the vial details popup
                                 if self.calibration_on == True:
