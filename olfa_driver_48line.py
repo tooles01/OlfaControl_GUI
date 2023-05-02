@@ -109,7 +109,7 @@ class Vial(QGroupBox):
         self.cal_table_updated(self.cal_table_combobox.currentText())
         
         # READ FLOW VALUES
-        self.read_flow_vals_btn = QPushButton(text="read flow",checkable=True,toolTip = 'Start reading flow values')
+        self.read_flow_vals_btn = QPushButton(text="Read flow",checkable=True,toolTip = 'Start reading flow values')
         self.read_flow_vals_btn.toggled.connect(lambda: self.readFlow_btn_toggled(self.read_flow_vals_btn))
         
         # VIAL DETAILS
@@ -195,7 +195,7 @@ class Vial(QGroupBox):
     
     def cal_table_updated(self, new_cal_table):
         self.cal_table = new_cal_table
-        #logger.debug('cal table for vial %s set to %s', self.full_vialNum, self.cal_table)
+        logger.debug('cal table for vial %s set to %s', self.full_vialNum, self.cal_table)
         
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)
@@ -258,9 +258,11 @@ class Vial(QGroupBox):
     def vialOpen_toggled(self, checked):
         if checked:
             self.valve_open_btn.setText('Close ' + self.full_vialNum)
+            self.vial_details_window.db_valve_open_btn.setText('Close vial')
             self.open_vial(self.valve_dur_spinbox.value())
         else:
             self.valve_open_btn.setText('Open ' + self.full_vialNum)
+            self.vial_details_window.db_valve_open_btn.setText('Open vial')
             self.close_vial()
     
     def calibrate_flow_sensor_btn_clicked(self):
@@ -279,6 +281,8 @@ class Vial(QGroupBox):
 
         # read flow values
         # TODO
+
+        # skip
 
         '''
     
@@ -342,9 +346,9 @@ class slave_8vials(QGroupBox):
     def create_slaveInfo_box(self):
         self.slave_info_box = QGroupBox()
 
-        self.slave_address_label = QLabel(text='Slave address:')
+        self.slave_address_label = QLabel(text='Slave address:')    # TODO slave address dictionary :/ where should it be located
         self.temp_label = QLabel("...,...,.slave active or not, slave info, whatever.,...")
-        # add a way to apply commands to multiple vials at once # TODO
+        # TODO add a way to apply commands to multiple vials at once
         # ex: check the ones you want to apply this setpoint to
 
         self.slaveInfo_layout = QVBoxLayout()
@@ -362,10 +366,10 @@ class slave_8vials(QGroupBox):
         for v in range(vialsPerSlave):
             self.vials_layout.addWidget(self.vials[v])
 
-        # FOR TODAY (8/30/2022) since mixing chamber pinout is bad
+        # FOR TODAY (2/22/2023) since mixing chamber pinout is bad
         self.vials[0].setEnabled(False) # Vial 1: not connected to anything on the mixing chamber
-        self.vials[4].setEnabled(False) # Vial 5: J4 is broken
-        self.vials[6].setEnabled(False) # Vial 7: J6 is broken
+        #self.vials[2].setEnabled(False) # Vial 3: connected to Vial 8
+        self.vials[3].setEnabled(False) # Vial 4: isolation valve not working
 
 
 class olfactometer_window(QGroupBox):
@@ -450,7 +454,7 @@ class olfactometer_window(QGroupBox):
             else:
                 logger.warning('no cal files found :/')
         
-        # If flow cal directory does not exist: print warning   # TODO this is big issue if none found
+        # If flow cal directory does not exist: print warning   # NOTE this is big issue if none found
         else:
             logger.error('Cannot find flow cal directory (searched in %s)', self.flow_cal_dir)
     
@@ -592,15 +596,12 @@ class olfactometer_window(QGroupBox):
                 self.port_widget.addItem(ser_str)
         else:
             self.port_widget.addItem(noPort_msg)
-        
-        # TODO replace everything below with utils_48 function "connect_to_48line_olfa"
         # # TODO ooooh what if this could be a lil list of items
         
         # if an Arduino is connected, set the widget default value to that
         for port_list_idx in range(0,self.port_widget.count()):
             this_port = self.port_widget.itemText(port_list_idx)
             if 'Arduino' in this_port:
-                #logger.debug('Arduino detected - setting olfa port default to ' + this_port)
                 self.port_widget.setCurrentIndex(port_list_idx)
                 break
     
