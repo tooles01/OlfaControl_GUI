@@ -12,7 +12,7 @@ import utils, utils_olfa_48line
 # DEFAULT VALUES
 default_setpoint = '50'
 def_open_duration = '5'
-def_pressurize_duration = '5'
+def_pressurize_duration = '1'
 default_cal_table = 'Honeywell_3100V'
 def_Kp_value = '0.0500'
 def_Ki_value = '0.0001'
@@ -124,7 +124,7 @@ class VialDetailsPopup(QWidget):
         self.db_cal_table_lbl = QLabel('Calibration table:')
         self.db_cal_table_combobox = QComboBox()
         self.db_cal_table_combobox.addItems(self.parent.olfactometer_parent_object.ard2Sccm_dicts)
-        self.db_cal_table_combobox.setCurrentText(self.parent.cal_table)    # set default to this vial's calibration table
+        self.db_cal_table_combobox.setCurrentText(self.parent.cal_table)    # TODO: change this to cycle through and find that cal table, set the index to that
         self.db_cal_table_combobox.currentIndexChanged.connect(lambda: self.parent.cal_table_updated(self.db_cal_table_combobox.currentText()))
         self.db_calibrate_sensor_btn = QPushButton(text='Calibrate')
         self.db_calibrate_sensor_btn.setToolTip('no')   # TODO
@@ -137,7 +137,7 @@ class VialDetailsPopup(QWidget):
         self.db_pressurize_wid.returnPressed.connect(self.pressurize_vial_clicked)
         self.db_pressurize_btn.clicked.connect(self.pressurize_vial_clicked)
         
-        # set widgets to the same width (to mimic a QFormLayout)
+        # set widgets to the same width (mimic a QFormLayout)
         width_to_use = self.db_cal_table_combobox.sizeHint().width()
         self.db_valve_dur_wid.setFixedWidth(width_to_use)
         self.db_setpoint_value_box.setFixedWidth(width_to_use)
@@ -256,6 +256,7 @@ class VialDetailsPopup(QWidget):
             self.db_valve_open_btn.setText('Close vial')
         else:
             self.parent.close_vial()
+            self.db_valve_open_btn.setText('Open vial')
     
     def flow_control_toggled(self, checked):
         # Turn PID (flow control) on
@@ -299,6 +300,37 @@ class VialDetailsPopup(QWidget):
             strToSend = 'S_CI_' + self.full_vialNum
             self.parent.parent().parent.send_to_master(strToSend)
     
+    def pressurize_vial_clicked(self):
+        logger.debug('pressurizing vial')
+
+        # get duration
+        self.pressurize_duration = float(self.db_pressurize_wid.text())
+        self.pressurize_duration_ms = self.pressurize_duration*1000     # convert to milliseconds
+
+        # create the timer
+        self.pressurize_timer = QTimer()
+        self.pressurize_timer.setTimerType(0)   # set to millisecond accuracy
+        self.pressurize_timer.timeout.connect(self.pressurize_vial_done)    # connect timeout to done function
+
+        # open proportional valve
+        strToSend = 'S_OC_' + self.full_vialNum
+        self.parent.olfactometer_parent_object.send_to_master(strToSend)
+        
+        # start timer for duration
+        self.pressurize_timer.start(self.pressurize_duration_ms)
+
+    def pressurize_vial_done(self):
+        logger.debug('pressurize done - closing prop valve')
+
+        # stop timer
+        self.pressurize_timer.stop()
+        
+        # close proportional valve
+        strToSend = 'S_CC_' + self.full_vialNum
+        self.parent.olfactometer_parent_object.send_to_master(strToSend)
+    
+    
+    # FLOW CALIBRATION
     def create_new_cal_file_toggled(self):
         # Create new file, start procedure
         if self.create_new_cal_file_btn.isChecked() == True:
@@ -343,35 +375,6 @@ class VialDetailsPopup(QWidget):
             self.cal_file_name_wid.setEnabled(True)
             self.db_std_widgets_box.setEnabled(True)
             self.db_flow_control_box.setEnabled(True)
-    
-    def pressurize_vial_clicked(self):
-        logger.debug('pressurizing vial')
-
-        # get duration
-        self.pressurize_duration = int(self.db_pressurize_wid.text())
-        self.pressurize_duration_ms = self.pressurize_duration*1000     # convert to milliseconds
-
-        # create the timer
-        self.pressurize_timer = QTimer()
-        self.pressurize_timer.setTimerType(0)   # set to millisecond accuracy
-        self.pressurize_timer.timeout.connect(self.pressurize_vial_done)    # connect timeout to done function
-
-        # open proportional valve
-        strToSend = 'S_OC_' + self.full_vialNum
-        self.parent.olfactometer_parent_object.send_to_master(strToSend)
-        
-        # start timer for duration
-        self.pressurize_timer.start(self.pressurize_duration_ms)
-
-    def pressurize_vial_done(self):
-        logger.debug('pressurize done - closing prop valve')
-
-        # stop timer
-        self.pressurize_timer.stop()
-        
-        # close proportional valve
-        strToSend = 'S_CC_' + self.full_vialNum
-        self.parent.olfactometer_parent_object.send_to_master(strToSend)
         
     def new_mfc_value_set(self):
         if self.mfc_value_set_btn.isChecked() == True:
@@ -379,6 +382,7 @@ class VialDetailsPopup(QWidget):
             logger.debug('starting calibration at %s sccm', self.this_cal_sccm_value)
             
             # TODO check that proportional valve is open
+            # TODO check that vial is set to debug (read flow values)
             self.parent.olfactometer_parent_object.calibration_on = True
             self.serial_values = []
             self.serial_values_std = []
