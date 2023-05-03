@@ -53,7 +53,6 @@ class calibration_worker(QObject):
         serial_converted = [float(i) for i in serial_values]
 
 
-
 class VialDetailsPopup(QWidget):
     
     def __init__(self, parent):
@@ -225,6 +224,9 @@ class VialDetailsPopup(QWidget):
         self.db_Kp_wid = QLineEdit(text=str(self.parent.Kp_value))
         self.db_Ki_wid = QLineEdit(text=str(self.parent.Ki_value))
         self.db_Kd_wid = QLineEdit(text=str(self.parent.Kd_value))
+        self.db_Kp_wid.returnPressed.connect(lambda: self.parent.K_parameter_update('P',self.db_Kp_wid.text()))
+        self.db_Ki_wid.returnPressed.connect(lambda: self.parent.K_parameter_update('I',self.db_Ki_wid.text()))
+        self.db_Kd_wid.returnPressed.connect(lambda: self.parent.K_parameter_update('D',self.db_Kd_wid.text()))
         self.db_Kp_send = QPushButton(text='Send')
         self.db_Ki_send = QPushButton(text='Send')
         self.db_Kd_send = QPushButton(text='Send')
