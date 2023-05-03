@@ -1,4 +1,5 @@
 import os, logging, csv, copy, time
+from PyQt5 import QtCore
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
 from datetime import datetime, timedelta
@@ -30,6 +31,8 @@ console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
 ##############################
 
+
+mfc_capacity = '200'
 
 class calibration_worker(QObject):
     def __init__(self):
@@ -107,18 +110,44 @@ class VialDetailsPopup(QWidget):
         self.db_std_widgets_box = QGroupBox("Settings")
         
         # VALVE OPEN
-        self.db_valve_open_lbl = QLabel('Duration to open (s):')
-        self.db_valve_dur_wid = QLineEdit(text=def_open_duration)        # pos change to spinbox so min/max can be set (& to match olfa driver)
+        self.db_valve_open_lbl = QLabel('Duration (s):')
+        self.db_valve_open_wid = QLineEdit(text=def_open_duration)        # pos change to spinbox so min/max can be set (& to match olfa driver)
         self.db_valve_open_btn = QPushButton('Open vial',checkable=True)
-        #self.db_valve_open_btn.toggled.connect(self.parent.debugwin_vialOpen_toggled)
         self.db_valve_open_btn.toggled.connect(self.vialOpen_toggled)
         
-        # SETPOINT
-        self.db_setpoint_lbl = QLabel('Setpoint (sccm):')
-        self.db_setpoint_value_box = QLineEdit(text=default_setpoint)
-        self.db_setpoint_send_btn = QPushButton('Update Spt')
-        self.db_setpoint_value_box.returnPressed.connect(lambda: self.parent.setpoint_btn_clicked(self.db_setpoint_value_box.text()))
-        self.db_setpoint_send_btn.clicked.connect(lambda: self.parent.setpoint_btn_clicked(self.db_setpoint_value_box.text()))
+        # SETPOINT PIANO
+        self.setpoint_slider = QSlider()
+        self.setpoint_slider.setMaximum(int(mfc_capacity))
+        self.setpoint_slider.setToolTip('Adjusts flow set rate.')
+        self.setpoint_slider.setTickPosition(3)
+
+        self.setpoint_set_widget = QLineEdit()
+        #setpoint_set_widget.setMaximumWidth(4)
+        self.setpoint_set_widget.setAlignment(QtCore.Qt.AlignCenter)
+        self.setpoint_set_widget.setToolTip('Set value')
+        self.setpoint_set_widget.setStatusTip('Type to set flow rate')  # TODO this don't work
+
+        self.setpoint_read_widget = QLCDNumber()
+        self.setpoint_read_widget.setMinimumSize(50,50)
+        self.setpoint_read_widget.setDigitCount(5)
+        self.setpoint_read_widget.setToolTip('Current flow reading')
+        self.setpoint_read_widget.setMaximumHeight(50)
+        
+        self.setpoint_slider.valueChanged.connect(lambda: self.update_text(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_widget))
+        self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider))
+        #self.setpoint_set_widget.editingFinished.connect(self.text_changed) # return pressed OR line edit loses focus
+        self.setpoint_set_widget.returnPressed.connect(self.text_changed)
+
+        layout_setpoint = QGridLayout()
+        layout_setpoint.addWidget(self.setpoint_slider,0,0,2,1)
+        layout_setpoint.addWidget(self.setpoint_set_widget,0,1,1,2)
+        layout_setpoint.addWidget(self.setpoint_read_widget,1,1,1,2)
+        # height
+        setpoint_set_read_height = 50
+        self.setpoint_set_widget.setMaximumHeight(setpoint_set_read_height)
+        self.setpoint_read_widget.setMaximumHeight(setpoint_set_read_height)
+        self.setpoint_slider.setMaximumHeight(setpoint_set_read_height*2)
+        
         
         # FLOW CALIBRATION TABLE
         self.db_cal_table_lbl = QLabel('Calibration table:')
@@ -129,29 +158,56 @@ class VialDetailsPopup(QWidget):
         self.db_calibrate_sensor_btn = QPushButton(text='Calibrate')
         self.db_calibrate_sensor_btn.setToolTip('no')   # TODO
         self.db_calibrate_sensor_btn.clicked.connect(self.parent.calibrate_flow_sensor_btn_clicked)
-
+        
         # PRESSURIZE VIAL
-        self.db_pressurize_lbl = QLabel('Pressurize vial:')
+        self.db_pressurize_lbl = QLabel('Duration (s):')
         self.db_pressurize_wid = QLineEdit(text=def_pressurize_duration)
-        self.db_pressurize_btn = QPushButton('Go')
+        self.db_pressurize_btn = QPushButton('Pressurize')
         self.db_pressurize_wid.returnPressed.connect(self.pressurize_vial_clicked)
         self.db_pressurize_btn.clicked.connect(self.pressurize_vial_clicked)
         
+        '''
         # set widgets to the same width (mimic a QFormLayout)
         width_to_use = self.db_cal_table_combobox.sizeHint().width()
-        self.db_valve_dur_wid.setFixedWidth(width_to_use)
-        self.db_setpoint_value_box.setFixedWidth(width_to_use)
+        self.db_valve_open_wid.setFixedWidth(width_to_use)
         self.db_cal_table_combobox.setFixedWidth(width_to_use)
         self.db_pressurize_wid.setFixedWidth(width_to_use)
+        '''
         
         # LAYOUT
+        layout_labels = QVBoxLayout()
+        layout_labels.addWidget(self.db_valve_open_lbl)
+        layout_labels.addWidget(self.db_pressurize_lbl)
+        
+        layout_widgets = QFormLayout()
+        layout_widgets.addRow(self.db_valve_open_wid,self.db_valve_open_btn)
+        layout_widgets.addRow(self.db_pressurize_wid,self.db_pressurize_btn)
+
+        layout_cal = QFormLayout()
+        layout_cal.addRow(self.db_cal_table_lbl,self.db_cal_table_combobox)
+        
+        layout_1 = QHBoxLayout()
+        layout_1.addLayout(layout_labels)
+        layout_1.addLayout(layout_widgets)
+
+        layout_left = QVBoxLayout()
+        layout_left.addLayout(layout_1)
+        layout_left.addLayout(layout_cal)
+        
+        layout_full = QHBoxLayout()
+        layout_full.addLayout(layout_left)
+        layout_full.addLayout(layout_setpoint)
+        self.db_std_widgets_box.setLayout(layout_full)
+        #self.db_std_widgets_box.setFixedHeight(layout_widgets.sizeHint().height() + 24)
+
+        '''
         layout_labels = QVBoxLayout()
         layout_labels.addWidget(self.db_valve_open_lbl)
         layout_labels.addWidget(self.db_setpoint_lbl)
         layout_labels.addWidget(self.db_cal_table_lbl)
         layout_labels.addWidget(self.db_pressurize_lbl)
         layout_widgets = QFormLayout()
-        layout_widgets.addRow(self.db_valve_dur_wid,self.db_valve_open_btn)
+        layout_widgets.addRow(self.db_valve_open_wid,self.db_valve_open_btn)
         layout_widgets.addRow(self.db_setpoint_value_box,self.db_setpoint_send_btn)
         layout_widgets.addRow(self.db_cal_table_combobox,self.db_calibrate_sensor_btn)
         layout_widgets.addRow(self.db_pressurize_wid,self.db_pressurize_btn)
@@ -161,6 +217,7 @@ class VialDetailsPopup(QWidget):
         layout_full.addLayout(layout_widgets)
         self.db_std_widgets_box.setLayout(layout_full)
         self.db_std_widgets_box.setFixedHeight(layout_widgets.sizeHint().height() + 24)
+        '''
     
     def vial_details_create_flow_ctrl_box(self):
         self.db_flow_control_box = QGroupBox('Flow control parameters')
@@ -248,11 +305,32 @@ class VialDetailsPopup(QWidget):
 
         self.cal_box.setLayout(layout_full)
     
+    # SETPOINT SLIDER
+    # slider changed --> update setpoint set widget
+    def update_text(self,value,spt_set_wid):
+        spt_set_wid.setText(str(value))
+        self.parent.setpoint_set_widget.setText(str(value))     # update main vial set widget
+        self.parent.setpoint_slider.setValue(value)             # update main vial slider        
     
+    # send new setpoint to MFC
+    def slider_released(self, setpoint_slider):
+        val = setpoint_slider.value()   # get value of slider
+        self.parent.set_flowrate(val)   # set the flowrate
+    
+    def text_changed(self):
+        # text of the line edit has changed -> sets the new MFC value
+        try:
+            value = float(self.setpoint_set_widget.text())
+            self.parent.set_flowrate(value)
+            self.setpoint_slider.setValue(value)
+        except ValueError as err:
+            logger.error('error in setting MFC value: ' + err)    
+    
+
     # COMMANDS
     def vialOpen_toggled(self, checked):
         if checked:
-            self.parent.open_vial(self.db_valve_dur_wid.text())
+            self.parent.open_vial(self.db_valve_open_wid.text())
             self.db_valve_open_btn.setText('Close vial')
         else:
             self.parent.close_vial()

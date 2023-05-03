@@ -63,7 +63,7 @@ class Vial(QGroupBox):
         
         self.generate_stuff()
         
-        self.vial_details_window.db_valve_dur_wid.returnPressed.connect(lambda: self.vial_details_window.db_valve_open_btn.setChecked(True))        
+        self.vial_details_window.db_valve_open_wid.returnPressed.connect(lambda: self.vial_details_window.db_valve_open_btn.setChecked(True))        
         
         self.setLayout(self.layout)
         self.valve_open_btn.setMaximumWidth(60)
@@ -107,7 +107,8 @@ class Vial(QGroupBox):
         
         self.setpoint_slider.valueChanged.connect(lambda: self.update_text(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_widget))
         self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider))
-        self.setpoint_set_widget.editingFinished.connect(self.text_changed) # return pressed OR line edit loses focus
+        #self.setpoint_set_widget.editingFinished.connect(self.text_changed) # return pressed OR line edit loses focus
+        self.setpoint_set_widget.returnPressed.connect(self.text_changed)
 
         self.setpoint_slider_layout = QGridLayout()
         self.setpoint_slider_layout.addWidget(self.setpoint_slider,0,0,2,1)
@@ -155,17 +156,16 @@ class Vial(QGroupBox):
         self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())    
     
     # SETPOINT SLIDER
-    # update setpoint read widget
+    # slider changed --> update setpoint set widget
     def update_text(self,value,spt_set_wid):
         spt_set_wid.setText(str(value))
+        self.vial_details_window.setpoint_set_widget.setText(str(value))    # update vial details set widget
+        self.vial_details_window.setpoint_slider.setValue(value)            # update vial details slider
     
     # send new setpoint to MFC
     def slider_released(self, setpoint_slider):
         val = setpoint_slider.value()   # get value of slider
         self.set_flowrate(val)          # set the flowrate
-    
-    def set_flowrate(self, flowrate):
-        self.setpoint_btn_clicked(flowrate)    
     
     def text_changed(self):
         # text of the line edit has changed -> sets the new MFC value
@@ -212,6 +212,8 @@ class Vial(QGroupBox):
         
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)
+        
+        self.set_flowrate(self.setpoint)    # update setpoint
     
     def open_vial(self, duration):
         # send to olfactometer_window (to send to Arduino)
@@ -243,7 +245,7 @@ class Vial(QGroupBox):
         strToSend = 'S_Kx_' + Kx + str(value) + '_' + self.full_vialNum
         self.olfactometer_parent_object.send_to_master(strToSend)
     
-    def setpoint_btn_clicked(self, value):
+    def set_flowrate(self, value):
         # Convert from sccm to integer
         setpoint_sccm = value
         setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
@@ -336,10 +338,6 @@ class Vial(QGroupBox):
     # ~ just for user experience ~
     def valve_open_dur_changed(self):
         self.valve_open_btn.setToolTip("open " + self.full_vialNum + " for " + str(self.valve_dur_spinbox.value()) + " seconds")
-    
-    # TODO combine this with the other function
-    def setpoint_changed(self):
-        self.setpoint_send_btn.setToolTip('Update setpoint to ' + str(self.setpoint_value_box.value()) + " sccm")
 
 
 class slave_8vials(QGroupBox):
@@ -802,6 +800,8 @@ class olfactometer_window(QGroupBox):
                                 # write it to the setpoint read widget
                                 v.setpoint_read_widget.display(round(flowVal_sccm))
                                 
+                                # write it to the setpoint read widget in the details box
+                                v.vial_details_window.setpoint_read_widget.display(round(flowVal_sccm))
                                 
                                 # if calibration is on: send it to the vial details popup
                                 if self.calibration_on == True:
