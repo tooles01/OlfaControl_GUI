@@ -106,7 +106,7 @@ class Vial(QGroupBox):
         #setpoint_read_widget = QTextEdit(readOnly=True)
 
         self.setpoint_slider.valueChanged.connect(lambda: self.update_text(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_widget))
-        self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider,self.full_vialNum))
+        self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider))#,self.full_vialNum))
 
         # setpoint layout   # pos a groupbox ?
         self.setpoint_slider_layout = QGridLayout()
