@@ -113,6 +113,9 @@ class VialDetailsPopup(QWidget):
         self.db_valve_open_wid = QLineEdit(text=def_open_duration)        # pos change to spinbox so min/max can be set (& to match olfa driver)
         self.db_valve_open_btn = QPushButton('Open vial',checkable=True)
         self.db_valve_open_btn.toggled.connect(self.vialOpen_toggled)
+
+        # VIAL TIMER
+        self.valveTimer_duration_label = QLabel('00.000')
         
         # SETPOINT PIANO
         self.setpoint_slider = QSlider()
@@ -161,9 +164,20 @@ class VialDetailsPopup(QWidget):
         # PRESSURIZE VIAL
         self.db_pressurize_lbl = QLabel('Duration (s):')
         self.db_pressurize_wid = QLineEdit(text=def_pressurize_duration)
-        self.db_pressurize_btn = QPushButton('Pressurize')
-        self.db_pressurize_wid.returnPressed.connect(self.pressurize_vial_clicked)
-        self.db_pressurize_btn.clicked.connect(self.pressurize_vial_clicked)
+        self.db_pressurize_btn = QPushButton('Pressurize',checkable=True)
+        self.db_pressurize_wid.returnPressed.connect(lambda: self.db_pressurize_btn.setChecked(True))
+        self.db_pressurize_btn.toggled.connect(self.pressurizeVial_toggled)
+
+        # PRESSURE TIMER
+        self.pressureTimer_lbl = QLabel(self.full_vialNum + ' xxxxx')
+        self.pressureTimer_duration_label = QLabel('00.000')
+        self.pressure_timer = QTimer()
+        self.pressure_timer.setTimerType(0)
+        self.pressure_timer.timeout.connect(self.show_pressure_time)
+        self.pressureTimer_layout = QHBoxLayout()
+        self.pressureTimer_layout.addWidget(self.pressureTimer_lbl)
+        self.pressureTimer_layout.addWidget(self.pressureTimer_duration_label)
+        self.pressureTimer_layout.addWidget(QLabel('sec'))
         
         '''
         # set widgets to the same width (mimic a QFormLayout)
@@ -174,13 +188,13 @@ class VialDetailsPopup(QWidget):
         '''
         
         # LAYOUT
-        layout_labels = QVBoxLayout()
-        layout_labels.addWidget(self.db_valve_open_lbl)
-        layout_labels.addWidget(self.db_pressurize_lbl)
+        layout_labels = QFormLayout()
+        layout_labels.addRow(self.db_valve_open_lbl,self.db_valve_open_wid)
+        layout_labels.addRow(self.db_pressurize_lbl,self.db_pressurize_wid)
         
         layout_widgets = QFormLayout()
-        layout_widgets.addRow(self.db_valve_open_wid,self.db_valve_open_btn)
-        layout_widgets.addRow(self.db_pressurize_wid,self.db_pressurize_btn)
+        layout_widgets.addRow(self.db_valve_open_btn,self.valveTimer_duration_label)
+        layout_widgets.addRow(self.db_pressurize_btn,self.pressureTimer_duration_label)
 
         layout_cal = QFormLayout()
         layout_cal.addRow(self.db_cal_table_lbl,self.db_cal_table_combobox)
@@ -307,6 +321,48 @@ class VialDetailsPopup(QWidget):
 
         self.cal_box.setLayout(layout_full)
     
+    def start_pressurize(self, duration):
+        logger.debug('pressurizing vial')
+
+        # send to olfactometer_window (to send to Arduino)
+        strToSend = 'S_OC_' + self.full_vialNum
+        self.parent.olfactometer_parent_object.send_to_master(strToSend)
+
+        # start pressurize timer
+        self.start_pressure_timer(float(duration))
+    
+    
+    # PRESSURIZE TIMER
+    def start_pressure_timer(self, duration):
+        logger.debug('starting pressurization timer')
+        self.pressure_open_time = datetime.now()
+        self.pressure_open_duration = timedelta(0,int(duration))
+        self.pressure_timer.start()
+    
+    def show_pressure_time(self):
+        current_time = datetime.now()
+        current_pressure_dur = current_time - self.pressure_open_time
+        if current_pressure_dur >= self.pressure_open_duration:
+            self.end_pressure_timer()
+        pressure_dur_display_value = str(current_pressure_dur)
+        pressure_dur_display_value = pressure_dur_display_value[5:]
+        pressure_dur_display_value = pressure_dur_display_value[:-3]
+        self.pressureTimer_duration_label.setText(pressure_dur_display_value)
+    
+    def end_pressure_timer(self):
+        logger.debug('pressurize done - closing prop valve')
+        
+        # stop timer
+        self.pressure_timer.stop()
+        
+        # close proportional valve
+        strToSend = 'S_CC_' + self.full_vialNum
+        self.parent.olfactometer_parent_object.send_to_master(strToSend)
+        
+        # untoggle button
+        self.db_pressurize_btn.setChecked(False)
+        self.db_pressurize_btn.setText('Pressurize')
+
     # SETPOINT SLIDER
     # slider changed --> update setpoint set widget
     def update_text(self,value,spt_set_wid):
@@ -338,6 +394,19 @@ class VialDetailsPopup(QWidget):
             self.parent.close_vial()
             self.db_valve_open_btn.setText('Open vial')
     
+    def pressurizeVial_toggled(self, checked):
+        if checked:
+            self.start_pressurize(self.db_pressurize_wid.text())
+            self.db_pressurize_btn.setText('Stop')
+        else:
+            self.db_pressurize_btn.setText('Pressurize')
+            if self.pressure_timer.isActive():  # TODO check why this double sends
+                logger.debug('pressurize ended early')
+                self.end_pressure_timer()
+
+                strToSend = 'S_CC_' + self.full_vialNum
+                self.parent.olfactometer_parent_object.send_to_master(strToSend)
+            
     def flow_control_toggled(self, checked):
         # Turn PID (flow control) on
         if checked:
@@ -378,37 +447,7 @@ class VialDetailsPopup(QWidget):
             logger.debug('isolation valve manually closed')
             self.db_vlve_toggle_btn.setText("Open Iso Valve")
             strToSend = 'S_CI_' + self.full_vialNum
-            self.parent.parent().parent.send_to_master(strToSend)
-    
-    def pressurize_vial_clicked(self):
-        logger.debug('pressurizing vial')
-
-        # get duration
-        self.pressurize_duration = float(self.db_pressurize_wid.text())
-        self.pressurize_duration_ms = self.pressurize_duration*1000     # convert to milliseconds
-
-        # create the timer
-        self.pressurize_timer = QTimer()
-        self.pressurize_timer.setTimerType(0)   # set to millisecond accuracy
-        self.pressurize_timer.timeout.connect(self.pressurize_vial_done)    # connect timeout to done function
-
-        # open proportional valve
-        strToSend = 'S_OC_' + self.full_vialNum
-        self.parent.olfactometer_parent_object.send_to_master(strToSend)
-        
-        # start timer for duration
-        self.pressurize_timer.start(self.pressurize_duration_ms)
-
-    def pressurize_vial_done(self):
-        logger.debug('pressurize done - closing prop valve')
-
-        # stop timer
-        self.pressurize_timer.stop()
-        
-        # close proportional valve
-        strToSend = 'S_CC_' + self.full_vialNum
-        self.parent.olfactometer_parent_object.send_to_master(strToSend)
-    
+            self.parent.parent().parent.send_to_master(strToSend)    
     
     # FLOW CALIBRATION
     def create_new_cal_file_toggled(self):

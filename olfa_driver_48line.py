@@ -130,12 +130,12 @@ class Vial(QGroupBox):
         self.valveTimer_duration_label = QLabel('00.000')
         self.valve_timer = QTimer()
         self.valve_timer.setTimerType(0)    # set to millisecond accuracy
-        self.valve_timer.timeout.connect(self.show_time)
+        self.valve_timer.timeout.connect(self.show_valve_time)
         self.valveTimer_layout = QHBoxLayout()
         self.valveTimer_layout.addWidget(self.valveTimer_lbl)
         self.valveTimer_layout.addWidget(self.valveTimer_duration_label)
-        self.valveTimer_layout.addWidget(QLabel('sec'))        
-        
+        self.valveTimer_layout.addWidget(QLabel('sec'))
+
         # LAYOUT
         self.layout = QFormLayout()
         self.layout.addRow(self.valveTimer_layout)
@@ -315,7 +315,7 @@ class Vial(QGroupBox):
         self.valve_open_duration = timedelta(0,int(duration))
         self.valve_timer.start()
     
-    def show_time(self):
+    def show_valve_time(self):
         current_time = datetime.now()
         current_valve_dur = current_time - self.valve_open_time
         if current_valve_dur >= self.valve_open_duration:
@@ -324,6 +324,7 @@ class Vial(QGroupBox):
         valve_dur_display_value = valve_dur_display_value[5:]   # remove hour/minute display
         valve_dur_display_value = valve_dur_display_value[:-3]  # remove extra decimal point display
         self.valveTimer_duration_label.setText(valve_dur_display_value)
+        self.vial_details_window.valveTimer_duration_label.setText(valve_dur_display_value)
     
     def end_valve_timer(self):
         logger.debug('ending valve timer')
