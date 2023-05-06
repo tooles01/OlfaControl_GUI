@@ -80,7 +80,7 @@ class Vial(QGroupBox):
         self.valve_dur_spinbox.valueChanged.connect(self.valve_open_dur_changed)
         self.valve_dur_lbl = QLabel("dur (s):")
         self.valve_open_btn = QPushButton(text=str("Open " + self.slaveName + self.vialNum),checkable=True)
-        self.valve_open_btn.toggled.connect(self.vialOpen_toggled)
+        self.valve_open_btn.toggled.connect(self.vial_open_toggled)
         self.valve_open_dur_changed()
         self.open_valve_layout = QHBoxLayout()
         self.open_valve_layout.addWidget(self.valve_open_btn)
@@ -195,17 +195,6 @@ class Vial(QGroupBox):
             self.valve_open_btn.setEnabled(True)
             self.read_flow_vals_btn.setEnabled(True)
     
-    def toggled_advanced_settings(self, checked):
-        if checked:
-            self.vial_details_window.db_flow_control_box.setEnabled(True)
-            self.vial_details_window.db_manual_control_box.setEnabled(True)
-            self.vial_details_window.db_advanced_btn.setText('Disable Advanced')
-            self.vial_details_window.db_advanced_btn.setToolTip('Disable advanced flow control')
-        else:
-            self.vial_details_window.db_flow_control_box.setEnabled(False)
-            self.vial_details_window.db_manual_control_box.setEnabled(False)
-            self.vial_details_window.db_advanced_btn.setText('Enable Advanced Options')
-    
     def cal_table_updated(self, new_cal_table):
         self.cal_table = new_cal_table
         logger.debug('cal table for %s set to %s', self.full_vialNum, self.cal_table)
@@ -228,8 +217,9 @@ class Vial(QGroupBox):
         self.start_valve_timer(duration)
     
     def close_vial(self):
+        # if the button was toggled before the timer finished: send command to Arduino
         if self.valve_timer.isActive():
-            logger.debug('valve was closed early')
+            logger.debug('vial ' + self.full_vialNum + ' was closed early')
             self.end_valve_timer()
             
             # send to olfactometer_window (to send to Arduino)
@@ -271,7 +261,7 @@ class Vial(QGroupBox):
             strToSend = 'MS_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
     
-    def vialOpen_toggled(self, checked):
+    def vial_open_toggled(self, checked):
         if checked:
             self.valve_open_btn.setText('Close ' + self.full_vialNum)
             self.vial_details_window.db_valve_open_btn.setText('Close vial')
@@ -310,7 +300,7 @@ class Vial(QGroupBox):
     
     # VALVE TIMER
     def start_valve_timer(self, duration):
-        logger.debug('starting valve timer')
+        #logger.debug('starting valve timer')
         self.valve_open_time = datetime.now()
         self.valve_open_duration = timedelta(0,int(duration))
         self.valve_timer.start()
@@ -327,7 +317,6 @@ class Vial(QGroupBox):
         self.vial_details_window.valveTimer_duration_label.setText(valve_dur_display_value)
     
     def end_valve_timer(self):
-        logger.debug('ending valve timer')
         self.valve_timer.stop()
         
         # check which button to untoggle

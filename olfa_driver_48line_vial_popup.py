@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 import numpy as np
 
-import utils, utils_olfa_48line
+import utils
 
 
 ##############################
@@ -64,17 +64,12 @@ class VialDetailsPopup(QWidget):
         self.setWindowTitle('Vial ' + self.full_vialNum + ' - Details')
 
     # GUI FEATURES
-    def create_ui_features(self):
-        self.vial_details_create_settings_box()
-        
-        self.db_readflow_btn = QPushButton(text='Read flow values',checkable=True)
-        self.db_readflow_btn.toggled.connect(lambda: self.parent.readFlow_btn_toggled(self.db_readflow_btn))
-        self.db_advanced_btn = QPushButton(text='Advanced',checkable=True,toggled=self.parent.toggled_advanced_settings)
-        self.db_advanced_btn.setToolTip('Enable advanced flow control settings\n\nARE YOU SURE YOU WANT TO DO THIS')
-        
-        self.vial_details_create_flow_ctrl_box()
-        self.vial_details_create_man_control_box()
-        self.vial_details_create_calibration_box()
+    def create_ui_features(self):        
+        self.create_std_widgets_box()
+        self.create_setpoint_box()
+        self.create_flow_ctrl_box()
+        self.create_man_control_box()
+        self.create_calibration_box()
 
         # Values Received
         self.data_receive_lbl = QLabel(("Flow val (int), Flow (SCCM), Ctrl val (int)"))
@@ -83,16 +78,15 @@ class VialDetailsPopup(QWidget):
 
         # Layout
         layout_col1_widgets = QGridLayout()
-        layout_col1_widgets.addWidget(self.db_std_widgets_box,0,0,1,2)      # row 0 col 0
-        layout_col1_widgets.addWidget(self.db_readflow_btn,1,0,1,1)         # row 1 col 0
-        layout_col1_widgets.addWidget(self.db_advanced_btn,1,1,1,2)         # row 1 col 1
-        layout_col1_widgets.addWidget(self.db_flow_control_box,2,0,1,1)     # row 2 col 0
-        layout_col1_widgets.addWidget(self.db_manual_control_box,2,1,1,1)   # row 2 col 1
-        layout_col1_widgets.addWidget(self.cal_box,3,0,1,2)                 # row 3 col 0
+        layout_col1_widgets.addWidget(self.db_std_widgets_box,0,0,1,1)      # row 0 col 0
+        layout_col1_widgets.addWidget(self.db_setpoint_groupbox,0,1,1,1)    # row 0 col 1
+        layout_col1_widgets.addWidget(self.db_flow_control_box,1,0,1,1)     # row 1 col 0
+        layout_col1_widgets.addWidget(self.db_manual_control_box,1,1,1,1)   # row 1 col 1
+        layout_col1_widgets.addWidget(self.db_cal_box,2,0,1,2)              # row 2 col 0
         layout_col2_data = QVBoxLayout()
         layout_col2_data.addWidget(self.data_receive_lbl)
         layout_col2_data.addWidget(self.data_receive_box)
-
+        
         self.vial_debug_window_layout = QHBoxLayout()
         self.vial_debug_window_layout.addLayout(layout_col1_widgets)
         self.vial_debug_window_layout.addLayout(layout_col2_data)
@@ -105,51 +99,17 @@ class VialDetailsPopup(QWidget):
         self.db_flow_control_box.setFixedHeight(h_to_use)
         self.db_manual_control_box.setFixedHeight(h_to_use)
 
-    def vial_details_create_settings_box(self):
+    def create_std_widgets_box(self):
         self.db_std_widgets_box = QGroupBox("Settings")
         
         # VALVE OPEN
         self.db_valve_open_lbl = QLabel('Duration (s):')
         self.db_valve_open_wid = QLineEdit(text=def_open_duration)        # pos change to spinbox so min/max can be set (& to match olfa driver)
         self.db_valve_open_btn = QPushButton('Open vial',checkable=True)
-        self.db_valve_open_btn.toggled.connect(self.vialOpen_toggled)
+        self.db_valve_open_btn.toggled.connect(self.vial_open_toggled)
 
-        # VIAL TIMER
+        # VALVE TIMER
         self.valveTimer_duration_label = QLabel('00.000')
-        
-        # SETPOINT PIANO
-        self.setpoint_slider = QSlider()
-        self.setpoint_slider.setMaximum(int(mfc_capacity))
-        self.setpoint_slider.setToolTip('Adjusts flow set rate.')
-        self.setpoint_slider.setTickPosition(3)
-
-        self.setpoint_set_widget = QLineEdit()
-        #setpoint_set_widget.setMaximumWidth(4)
-        self.setpoint_set_widget.setAlignment(QtCore.Qt.AlignCenter)
-        self.setpoint_set_widget.setToolTip('Set value')
-        self.setpoint_set_widget.setStatusTip('Type to set flow rate')  # TODO this don't work
-
-        self.setpoint_read_widget = QLCDNumber()
-        self.setpoint_read_widget.setMinimumSize(50,50)
-        self.setpoint_read_widget.setDigitCount(5)
-        self.setpoint_read_widget.setToolTip('Current flow reading')
-        self.setpoint_read_widget.setMaximumHeight(50)
-        
-        self.setpoint_slider.valueChanged.connect(lambda: self.update_text(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_widget))
-        self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider))
-        #self.setpoint_set_widget.editingFinished.connect(self.text_changed) # return pressed OR line edit loses focus
-        self.setpoint_set_widget.returnPressed.connect(self.text_changed)
-
-        layout_setpoint = QGridLayout()
-        layout_setpoint.addWidget(self.setpoint_slider,0,0,2,1)
-        layout_setpoint.addWidget(self.setpoint_set_widget,0,1,1,2)
-        layout_setpoint.addWidget(self.setpoint_read_widget,1,1,1,2)
-        # height
-        setpoint_set_read_height = 50
-        self.setpoint_set_widget.setMaximumHeight(setpoint_set_read_height)
-        self.setpoint_read_widget.setMaximumHeight(setpoint_set_read_height)
-        self.setpoint_slider.setMaximumHeight(setpoint_set_read_height*2)
-        
         
         # FLOW CALIBRATION TABLE
         self.db_cal_table_lbl = QLabel('Calibration table:')
@@ -157,9 +117,6 @@ class VialDetailsPopup(QWidget):
         self.db_cal_table_combobox.addItems(self.parent.olfactometer_parent_object.ard2Sccm_dicts)
         self.db_cal_table_combobox.setCurrentText(self.parent.cal_table)    # TODO: change this to cycle through and find that cal table, set the index to that
         self.db_cal_table_combobox.currentIndexChanged.connect(lambda: self.parent.cal_table_updated(self.db_cal_table_combobox.currentText()))
-        self.db_calibrate_sensor_btn = QPushButton(text='Calibrate')
-        self.db_calibrate_sensor_btn.setToolTip('no')   # TODO
-        self.db_calibrate_sensor_btn.clicked.connect(self.parent.calibrate_flow_sensor_btn_clicked)
         
         # PRESSURIZE VIAL
         self.db_pressurize_lbl = QLabel('Duration (s):')
@@ -179,60 +136,77 @@ class VialDetailsPopup(QWidget):
         self.pressureTimer_layout.addWidget(self.pressureTimer_duration_label)
         self.pressureTimer_layout.addWidget(QLabel('sec'))
         
-        '''
-        # set widgets to the same width (mimic a QFormLayout)
-        width_to_use = self.db_cal_table_combobox.sizeHint().width()
-        self.db_valve_open_wid.setFixedWidth(width_to_use)
-        self.db_cal_table_combobox.setFixedWidth(width_to_use)
-        self.db_pressurize_wid.setFixedWidth(width_to_use)
-        '''
+        # READ FLOW
+        self.db_readflow_btn = QPushButton(text='Read flow',checkable=True)
+        self.db_readflow_btn.toggled.connect(lambda: self.parent.readFlow_btn_toggled(self.db_readflow_btn))
+        
+        # ENABLE ADVANCED SETTINGS
+        self.db_advanced_btn = QPushButton(text='Enable Advanced Options',checkable=True,toggled=self.toggled_advanced_settings)
+        self.db_advanced_btn.setToolTip('Enable advanced flow control settings\n\nARE YOU SURE YOU WANT TO DO THIS')
         
         # LAYOUT
-        layout_labels = QFormLayout()
-        layout_labels.addRow(self.db_valve_open_lbl,self.db_valve_open_wid)
-        layout_labels.addRow(self.db_pressurize_lbl,self.db_pressurize_wid)
-        
-        layout_widgets = QFormLayout()
-        layout_widgets.addRow(self.db_valve_open_btn,self.valveTimer_duration_label)
-        layout_widgets.addRow(self.db_pressurize_btn,self.pressureTimer_duration_label)
+        layout_1 = QGridLayout()
+        layout_1.addWidget(self.db_valve_open_lbl,0,0)
+        layout_1.addWidget(self.db_valve_open_wid,0,1)
+        layout_1.addWidget(self.db_valve_open_btn,0,2)
+        layout_1.addWidget(self.valveTimer_duration_label,0,3)
+        layout_1.addWidget(self.db_pressurize_lbl,1,0)
+        layout_1.addWidget(self.db_pressurize_wid,1,1)
+        layout_1.addWidget(self.db_pressurize_btn,1,2)
+        layout_1.addWidget(self.pressureTimer_duration_label,1,3)
 
-        layout_cal = QFormLayout()
-        layout_cal.addRow(self.db_cal_table_lbl,self.db_cal_table_combobox)
+        layout_cal = QHBoxLayout()
+        layout_cal.addWidget(self.db_cal_table_lbl)
+        layout_cal.addWidget(self.db_cal_table_combobox)
+        self.db_cal_table_lbl.setFixedWidth(self.db_cal_table_lbl.sizeHint().width())
         
-        layout_1 = QHBoxLayout()
-        layout_1.addLayout(layout_labels)
-        layout_1.addLayout(layout_widgets)
-
-        layout_left = QVBoxLayout()
-        layout_left.addLayout(layout_1)
-        layout_left.addLayout(layout_cal)
+        layout_btns = QHBoxLayout()
+        layout_btns.addWidget(self.db_readflow_btn)
+        layout_btns.addWidget(self.db_advanced_btn)
         
-        layout_full = QHBoxLayout()
-        layout_full.addLayout(layout_left)
-        layout_full.addLayout(layout_setpoint)
+        layout_full = QVBoxLayout()
+        layout_full.addLayout(layout_1)
+        layout_full.addLayout(layout_cal)
+        layout_full.addLayout(layout_btns)
+        
         self.db_std_widgets_box.setLayout(layout_full)
         #self.db_std_widgets_box.setFixedHeight(layout_widgets.sizeHint().height() + 24)
-
-        '''
-        layout_labels = QVBoxLayout()
-        layout_labels.addWidget(self.db_valve_open_lbl)
-        layout_labels.addWidget(self.db_setpoint_lbl)
-        layout_labels.addWidget(self.db_cal_table_lbl)
-        layout_labels.addWidget(self.db_pressurize_lbl)
-        layout_widgets = QFormLayout()
-        layout_widgets.addRow(self.db_valve_open_wid,self.db_valve_open_btn)
-        layout_widgets.addRow(self.db_setpoint_value_box,self.db_setpoint_send_btn)
-        layout_widgets.addRow(self.db_cal_table_combobox,self.db_calibrate_sensor_btn)
-        layout_widgets.addRow(self.db_pressurize_wid,self.db_pressurize_btn)
-        
-        layout_full = QHBoxLayout()
-        layout_full.addLayout(layout_labels)
-        layout_full.addLayout(layout_widgets)
-        self.db_std_widgets_box.setLayout(layout_full)
-        self.db_std_widgets_box.setFixedHeight(layout_widgets.sizeHint().height() + 24)
-        '''
     
-    def vial_details_create_flow_ctrl_box(self):
+    def create_setpoint_box(self):
+        self.db_setpoint_groupbox = QGroupBox('Setpoint')
+        self.setpoint_slider = QSlider()
+        self.setpoint_slider.setMaximum(int(mfc_capacity))
+        self.setpoint_slider.setToolTip('Adjusts flow set rate.')
+        self.setpoint_slider.setTickPosition(3)
+        self.setpoint_set_widget = QLineEdit()
+        #setpoint_set_widget.setMaximumWidth(4)
+        self.setpoint_set_widget.setAlignment(QtCore.Qt.AlignCenter)
+        self.setpoint_set_widget.setToolTip('Set value')
+        self.setpoint_set_widget.setStatusTip('Type to set flow rate')  # TODO this don't work
+        self.setpoint_read_widget = QLCDNumber()
+        self.setpoint_read_widget.setMinimumSize(50,50)
+        self.setpoint_read_widget.setDigitCount(5)
+        self.setpoint_read_widget.setToolTip('Current flow reading')
+        self.setpoint_read_widget.setMaximumHeight(50)
+        
+        self.setpoint_slider.valueChanged.connect(lambda: self.update_text(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_widget))
+        self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider))
+        #self.setpoint_set_widget.editingFinished.connect(self.text_changed) # return pressed OR line edit loses focus
+        self.setpoint_set_widget.returnPressed.connect(self.text_changed)
+        
+        layout_setpoint = QGridLayout()
+        layout_setpoint.addWidget(self.setpoint_slider,0,0,2,1)
+        layout_setpoint.addWidget(self.setpoint_set_widget,0,1,1,2)
+        layout_setpoint.addWidget(self.setpoint_read_widget,1,1,1,2)
+        # height
+        setpoint_set_read_height = 50
+        self.setpoint_set_widget.setMaximumHeight(setpoint_set_read_height)
+        self.setpoint_read_widget.setMaximumHeight(setpoint_set_read_height)
+        self.setpoint_slider.setMaximumHeight(setpoint_set_read_height*2)
+        
+        self.db_setpoint_groupbox.setLayout(layout_setpoint)
+    
+    def create_flow_ctrl_box(self):
         self.db_flow_control_box = QGroupBox('Flow control parameters')
 
         self.db_Kp_wid = QLineEdit(text=str(self.parent.Kp_value))
@@ -273,7 +247,7 @@ class VialDetailsPopup(QWidget):
         
         self.db_flow_control_box.setEnabled(False)     # disable until advanced options toggled
     
-    def vial_details_create_man_control_box(self):
+    def create_man_control_box(self):
         self.db_manual_control_box = QGroupBox('Manual Controls')
         
         self.db_ctrl_toggle_btn = QPushButton(text="Open prop valve",checkable=True,toggled=self.prop_valve_toggled)
@@ -293,8 +267,8 @@ class VialDetailsPopup(QWidget):
         
         self.db_manual_control_box.setEnabled(False)     # disable until advanced options toggled
     
-    def vial_details_create_calibration_box(self):
-        self.cal_box = QGroupBox('Flow Sensor Calibration')
+    def create_calibration_box(self):
+        self.db_cal_box = QGroupBox('Flow Sensor Calibration')
 
         self.cal_file_name_wid = QLineEdit(text=def_calfile_name)
         self.cal_file_dir_wid = QLineEdit(text=self.parent.olfactometer_parent_object.flow_cal_dir)
@@ -319,10 +293,12 @@ class VialDetailsPopup(QWidget):
         layout_full.addLayout(layout_labels)
         layout_full.addLayout(layout_widgets)
 
-        self.cal_box.setLayout(layout_full)
+        self.db_cal_box.setLayout(layout_full)
     
+    
+    # PRESSURIZE TIMER
     def start_pressurize(self, duration):
-        logger.debug('pressurizing vial')
+        logger.debug('pressurizing ' + self.full_vialNum + '...')
 
         # send to olfactometer_window (to send to Arduino)
         strToSend = 'S_OC_' + self.full_vialNum
@@ -331,10 +307,8 @@ class VialDetailsPopup(QWidget):
         # start pressurize timer
         self.start_pressure_timer(float(duration))
     
-    
-    # PRESSURIZE TIMER
     def start_pressure_timer(self, duration):
-        logger.debug('starting pressurization timer')
+        #logger.debug('starting pressurization timer')
         self.pressure_open_time = datetime.now()
         self.pressure_open_duration = timedelta(0,int(duration))
         self.pressure_timer.start()
@@ -350,14 +324,10 @@ class VialDetailsPopup(QWidget):
         self.pressureTimer_duration_label.setText(pressure_dur_display_value)
     
     def end_pressure_timer(self):
-        logger.debug('pressurize done - closing prop valve')
+        logger.debug('pressurization done - closing prop valve ' + self.full_vialNum)
         
         # stop timer
         self.pressure_timer.stop()
-        
-        # close proportional valve
-        strToSend = 'S_CC_' + self.full_vialNum
-        self.parent.olfactometer_parent_object.send_to_master(strToSend)
         
         # untoggle button
         self.db_pressurize_btn.setChecked(False)
@@ -386,7 +356,7 @@ class VialDetailsPopup(QWidget):
     
 
     # COMMANDS
-    def vialOpen_toggled(self, checked):
+    def vial_open_toggled(self, checked):
         if checked:
             self.parent.open_vial(self.db_valve_open_wid.text())
             self.db_valve_open_btn.setText('Close vial')
@@ -396,17 +366,19 @@ class VialDetailsPopup(QWidget):
     
     def pressurizeVial_toggled(self, checked):
         if checked:
-            self.start_pressurize(self.db_pressurize_wid.text())
             self.db_pressurize_btn.setText('Stop')
+            self.start_pressurize(self.db_pressurize_wid.text())
         else:
             self.db_pressurize_btn.setText('Pressurize')
-            if self.pressure_timer.isActive():  # TODO check why this double sends
-                logger.debug('pressurize ended early')
-                self.end_pressure_timer()
-
-                strToSend = 'S_CC_' + self.full_vialNum
-                self.parent.olfactometer_parent_object.send_to_master(strToSend)
+            logger.debug(self.full_vialNum + ' pressurization ended early')
             
+            # stop timer
+            self.end_pressure_timer()
+            
+            # send to olfactometer window (to send to Arduino) 
+            strToSend = 'S_CC_' + self.full_vialNum
+            self.parent.olfactometer_parent_object.send_to_master(strToSend)
+        
     def flow_control_toggled(self, checked):
         # Turn PID (flow control) on
         if checked:
@@ -448,6 +420,20 @@ class VialDetailsPopup(QWidget):
             self.db_vlve_toggle_btn.setText("Open Iso Valve")
             strToSend = 'S_CI_' + self.full_vialNum
             self.parent.parent().parent.send_to_master(strToSend)    
+    
+
+    # ADVANCED SETTINGS TOGGLED
+    def toggled_advanced_settings(self,checked):
+        if checked:
+            self.db_flow_control_box.setEnabled(True)
+            self.db_manual_control_box.setEnabled(True)
+            self.db_advanced_btn.setText('Disable Advanced')
+            self.db_advanced_btn.setToolTip('Disable advanced flow control settings')
+        else:
+            self.db_flow_control_box.setEnabled(False)
+            self.db_manual_control_box.setEnabled(False)
+            self.db_advanced_btn.setText('Enable Advanced Options')
+            self.db_advanced_btn.setToolTip('Enable advanced flow control settings\n\nARE YOU SURE YOU WANT TO DO THIS')
     
     # FLOW CALIBRATION
     def create_new_cal_file_toggled(self):
