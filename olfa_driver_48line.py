@@ -91,29 +91,26 @@ class Vial(QGroupBox):
         self.setpoint_slider = QSlider()
         self.setpoint_slider.setMaximum(int(mfc_capacity))
         self.setpoint_slider.setToolTip('Adjusts flow set rate.')
-        self.setpoint_slider.setTickPosition(3)
-
+        self.setpoint_slider.setTickPosition(3)     # draw tick marks on both sides
         self.setpoint_set_widget = QLineEdit()
         #setpoint_set_widget.setMaximumWidth(4)
         self.setpoint_set_widget.setAlignment(QtCore.Qt.AlignCenter)
-        self.setpoint_set_widget.setToolTip('Set value')
-        self.setpoint_set_widget.setStatusTip('Type to set flow rate')  # TODO this don't work
-
+        self.setpoint_set_widget.setPlaceholderText('Set value')
+        self.setpoint_set_widget.setStatusTip('Type to set flow rate')
         self.setpoint_read_widget = QLCDNumber()
         self.setpoint_read_widget.setMinimumSize(50,50)
         self.setpoint_read_widget.setDigitCount(5)
         self.setpoint_read_widget.setToolTip('Current flow reading')
         self.setpoint_read_widget.setMaximumHeight(50)
         
-        self.setpoint_slider.valueChanged.connect(lambda: self.update_text(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_widget))
-        self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider))
-        #self.setpoint_set_widget.editingFinished.connect(self.text_changed) # return pressed OR line edit loses focus
-        self.setpoint_set_widget.returnPressed.connect(self.text_changed)
-
         self.setpoint_slider_layout = QGridLayout()
         self.setpoint_slider_layout.addWidget(self.setpoint_slider,0,0,2,1)
         self.setpoint_slider_layout.addWidget(self.setpoint_set_widget,0,1,1,2)
         self.setpoint_slider_layout.addWidget(self.setpoint_read_widget,1,1,1,2)
+        
+        self.setpoint_slider.valueChanged.connect(lambda: self.update_text(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_widget))
+        self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider))
+        self.setpoint_set_widget.returnPressed.connect(self.text_changed)
         
         # READ FLOW VALUES
         self.read_flow_vals_btn = QPushButton(text="Read flow",checkable=True,toolTip = 'Start reading flow values')
@@ -147,13 +144,15 @@ class Vial(QGroupBox):
         self.setpoint_set_widget.setMaximumHeight(setpoint_set_read_height)
         self.setpoint_read_widget.setMaximumHeight(setpoint_set_read_height)
         self.setpoint_slider.setMaximumHeight(setpoint_set_read_height*2)
+        self.setpoint_slider.setFixedHeight(100)
         # width
         half_col_width = self.read_flow_vals_btn.sizeHint().width()
-        self.setpoint_slider.setFixedWidth(half_col_width)
+        #self.setpoint_slider.setFixedWidth(half_col_width)
         self.setpoint_set_widget.setMaximumWidth(half_col_width)
         self.setpoint_read_widget.setMaximumWidth(half_col_width)
         self.read_flow_vals_btn.setFixedWidth(self.read_flow_vals_btn.sizeHint().width())
-        self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())    
+        self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
+        self.setpoint_slider.setFixedWidth(32)
     
     # SETPOINT SLIDER
     # slider changed --> update setpoint set widget
@@ -168,13 +167,12 @@ class Vial(QGroupBox):
         self.set_flowrate(val)          # set the flowrate
     
     def text_changed(self):
-        # text of the line edit has changed -> sets the new MFC value
         try:
-            value = float(self.setpoint_set_widget.text())
+            value = int(self.setpoint_set_widget.text())
             self.set_flowrate(value)
-            self.setpoint_slider.setValue(value)
-        except ValueError as err:
-            logger.error('error in setting MFC value: ' + err)    
+        except ValueError:
+            # if something other than an integer was entered
+            pass
     
     # ACTIONS / BUTTON FUNCTIONS
     def vial_details_btn_toggled(self, checked):
@@ -236,18 +234,26 @@ class Vial(QGroupBox):
         self.olfactometer_parent_object.send_to_master(strToSend)
     
     def set_flowrate(self, value):
-        # Convert from sccm to integer
-        setpoint_sccm = value
-        setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
-        logger.info('set ' + self.full_vialNum + ' to ' + str(setpoint_sccm) + ' sccm')
+        # check if out of range
+        if (value >= 0) and (value <= int(mfc_capacity)):
+            # Convert from sccm to integer
+            setpoint_sccm = value
+            setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
+            logger.info('set ' + self.full_vialNum + ' to ' + str(setpoint_sccm) + ' sccm')
+            
+            # Send to olfactometer_window (to send to Arduino)
+            strToSend = 'S_Sp_' + str(setpoint_integer) + '_' + self.full_vialNum
+            self.olfactometer_parent_object.send_to_master(strToSend)
+            
+            # Send to main GUI window (to write to datafile)
+            device = 'olfactometer ' + self.full_vialNum
+            self.write_to_datafile(device,'Sp',setpoint_integer)
         
-        # Send to olfactometer_window (to send to Arduino)
-        strToSend = 'S_Sp_' + str(setpoint_integer) + '_' + self.full_vialNum
-        self.olfactometer_parent_object.send_to_master(strToSend)
-        
-        # Send to main GUI window (to write to datafile)
-        device = 'olfactometer ' + self.full_vialNum
-        self.write_to_datafile(device,'Sp',setpoint_integer)
+        if (value < 0) or (value > int(mfc_capacity)):
+            if value > int(mfc_capacity):
+                logger.warning(str(value) + ' is greater than mfc capacity: try again')
+            if value < 0:
+                logger.warning('cannot enter negative flow rate: try again')        
     
     def readFlow_btn_toggled(self, btn_to_check):
         if btn_to_check.isChecked():
