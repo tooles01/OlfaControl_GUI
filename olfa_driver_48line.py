@@ -171,8 +171,7 @@ class Vial(QGroupBox):
             value = int(self.setpoint_set_widget.text())
             self.set_flowrate(value)
         except ValueError:
-            # if something other than an integer was entered
-            pass
+            pass    # if something other than an integer was entered
     
     # ACTIONS / BUTTON FUNCTIONS
     def vial_details_btn_toggled(self, checked):
@@ -220,11 +219,11 @@ class Vial(QGroupBox):
             logger.debug('vial ' + self.full_vialNum + ' was closed early')
             self.end_valve_timer()
             
-            # send to olfactometer_window (to send to Arduino)
+            # Send to olfactometer_window (to send to Arduino)
             strToSend = 'S_CV_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
             
-            # send to main GUI window (to write to datafile)
+            # Send to main GUI window (to write to datafile)
             device = 'olfactometer ' + self.full_vialNum
             self.write_to_datafile(device,'CV','0')
     
@@ -276,27 +275,6 @@ class Vial(QGroupBox):
             self.valve_open_btn.setText('Open ' + self.full_vialNum)
             self.vial_details_window.db_valve_open_btn.setText('Open vial')
             self.close_vial()
-    
-    def calibrate_flow_sensor_btn_clicked(self):
-        logger.error('calibrate flow sensor not set up yet')  # TODO
-        '''
-        value_to_calibrate = int(self.calibrate_vial_edit.text())
-        # set MFC to this value
-
-        # open proportional valve
-        open_pv_command = 'S_OC_' + self.full_vialNum
-        self.olfactometer_parent_object.send_to_master(open_pv_command)
-
-        # open isolation valve
-        open_iv_command = 'S_OV_5_' + self.full_vialNum
-        self.olfactometer_parent_object.send_to_master(open_iv_command)
-
-        # read flow values
-        # TODO
-
-        # skip
-
-        '''
     
     def write_to_datafile(self,device,unit,value):
         try:
@@ -357,8 +335,7 @@ class slave_8vials(QGroupBox):
 
         self.slave_address_label = QLabel(text='Slave address:')    # TODO slave address dictionary :/ where should it be located
         self.temp_label = QLabel("...,...,.slave active or not, slave info, whatever.,...")
-        # TODO add a way to apply commands to multiple vials at once
-        # ex: check the ones you want to apply this setpoint to
+        # TODO add a way to apply commands to multiple vials at once (ex: check the ones you want to apply this setpoint to)
         
         self.slaveInfo_layout = QVBoxLayout()
         #self.slaveInfo_layout.addWidget(self.slave_address_label)
@@ -375,10 +352,12 @@ class slave_8vials(QGroupBox):
         for v in range(vialsPerSlave):
             self.vials_layout.addWidget(self.vials[v])
 
+        '''
         # FOR TODAY (2/22/2023) since mixing chamber pinout is bad
         self.vials[0].setEnabled(False) # Vial 1: not connected to anything on the mixing chamber
         #self.vials[2].setEnabled(False) # Vial 3: connected to Vial 8
         self.vials[3].setEnabled(False) # Vial 4: isolation valve not working
+        '''
 
 
 class olfactometer_window(QGroupBox):
@@ -388,9 +367,12 @@ class olfactometer_window(QGroupBox):
         self.sccm2Ard_dicts = {}
         self.ard2Sccm_dicts = {}
         self.active_slaves = []
-        #self.calibration_on = False
-
-        self.get_calibration_tables()
+        
+        self.flow_cal_dir = utils.find_olfaControl_directory() + '\\calibration_tables' # NOTE: this takes a super long time
+        if os.path.exists(self.flow_cal_dir):
+            self.get_calibration_tables()
+        else:
+            logger.error('Cannot find flow cal directory (searched in %s)', self.flow_cal_dir)
         self.generate_ui()
         
         self.master_groupbox.setEnabled(False)
@@ -401,75 +383,74 @@ class olfactometer_window(QGroupBox):
     
     
     def get_calibration_tables(self):
-        self.flow_cal_dir = utils.find_olfaControl_directory() + '\\calibration_tables' # NOTE: this takes a super long time
         
-        if os.path.exists(self.flow_cal_dir):
-            logger.debug('loading flow sensor calibration tables (%s)', self.flow_cal_dir)
+        logger.debug('loading flow sensor calibration tables from (%s)', self.flow_cal_dir)
+        
+        # Get names of all .txt files in flow cal directory
+        cal_file_names = os.listdir(self.flow_cal_dir)
+        cal_file_names = [fn for fn in cal_file_names if fn.endswith(cal_table_file_tyoe)]    # only txt files # TODO: change to csv
+        
+        if cal_file_names != []:
             
-            # Get names of all .txt files in flow cal directory
-            cal_file_names = os.listdir(self.flow_cal_dir)
-            cal_file_names = [fn for fn in cal_file_names if fn.endswith(cal_table_file_tyoe)]    # only txt files # TODO: change to csv
+            # Create dictionaries for holding the calibration tables
+            new_sccm2Ard_dicts = {}
+            new_ard2Sccm_dicts = {}
             
-            if cal_file_names != []:
+            # Parse each file
+            for cal_file in cal_file_names:
+                idx_ext = cal_file.find('.')    # NOTE: pos fix: this won't work if the file name has a period in it.. but cmon who's gonna have a stupid file name like that
+                file_name = cal_file[:idx_ext]
+                cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
                 
-                # Create dictionaries for holding the calibration tables
-                new_sccm2Ard_dicts = {}
-                new_ard2Sccm_dicts = {}
-                
-                # Parse each file
-                for cal_file in cal_file_names:
-                    idx_ext = cal_file.find('.')    # NOTE: pos fix: this won't work if the file name has a period in it.. but cmon who's gonna have a stupid file name like that
-                    file_name = cal_file[:idx_ext]
-                    cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
+                thisfile_sccm2Ard_dict = {}
+                thisfile_ard2Sccm_dict = {}
+                with open(cal_file_full_dir, newline='') as f:
+                    csv_reader = csv.reader(f)
+                    firstLine = next(csv_reader)    # skip over header line
                     
-                    thisfile_sccm2Ard_dict = {}
-                    thisfile_ard2Sccm_dict = {}
-                    with open(cal_file_full_dir, newline='') as f:
-                        csv_reader = csv.reader(f)
-                        firstLine = next(csv_reader)    # skip over header line
-                        
-                        # get the shit
-                        reader = csv.DictReader(f, delimiter=',')
-                        for row in reader:
-                            try:
-                                thisfile_sccm2Ard_dict[float(row['SCCM'])] = float(row['int'])
-                                thisfile_ard2Sccm_dict[float(row['int'])] = float(row['SCCM'])
-                            except KeyError as err:
-                                # clear dictionaries, stop trying to read this file
-                                logger.warning('error: %s',err)
-                                logger.warning('%s does not have correct headings for calibration files', cal_file)
-                                thisfile_sccm2Ard_dict = {}
-                                thisfile_ard2Sccm_dict = {}
-                                break
-                            except ValueError as err:
-                                # clear dictionaries, stop trying to read this file
-                                logger.warning('missing some values, skipping calibration file %s', cal_file)
-                                thisfile_sccm2Ard_dict = {}
-                                thisfile_ard2Sccm_dict = {}
-                                break
-                    
-                    # If this file was good (aka we got values), save it to the dict of dicts
-                    if bool(thisfile_sccm2Ard_dict) == True:
-                        new_sccm2Ard_dicts[file_name] = thisfile_sccm2Ard_dict
-                        new_ard2Sccm_dicts[file_name] = thisfile_ard2Sccm_dict
+                    # get the shit
+                    reader = csv.DictReader(f, delimiter=',')
+                    for row in reader:
+                        try:
+                            thisfile_sccm2Ard_dict[float(row['SCCM'])] = float(row['int'])
+                            thisfile_ard2Sccm_dict[float(row['int'])] = float(row['SCCM'])
+                        except KeyError as err:
+                            # clear dictionaries, stop trying to read this file
+                            logger.warning('got a KeyError: %s',err)
+                            logger.warning('%s does not have correct headings for calibration files', cal_file)
+                            thisfile_sccm2Ard_dict = {}
+                            thisfile_ard2Sccm_dict = {}
+                            break
+                        except ValueError as err:
+                            # clear dictionaries & stop trying to read this file
+                            logger.warning('missing some values, skipping calibration file %s', cal_file)
+                            thisfile_sccm2Ard_dict = {}
+                            thisfile_ard2Sccm_dict = {}
+                            break
                 
-                # If we got stuff from these files, replace the old dicts
-                if len(new_sccm2Ard_dicts) != 0:
-                    self.sccm2Ard_dicts = new_sccm2Ard_dicts
-                    self.ard2Sccm_dicts = new_ard2Sccm_dicts
-                else:
-                    logger.info('no calibration files found in this directory')
+                # If this file was good (aka we got values), save it to the dict of dicts
+                if bool(thisfile_sccm2Ard_dict) == True:
+                    new_sccm2Ard_dicts[file_name] = thisfile_sccm2Ard_dict
+                    new_ard2Sccm_dicts[file_name] = thisfile_ard2Sccm_dict
             
+            # If we got stuff from these files, replace the old dicts
+            if len(new_sccm2Ard_dicts) != 0:
+                self.sccm2Ard_dicts = new_sccm2Ard_dicts
+                self.ard2Sccm_dicts = new_ard2Sccm_dicts
             else:
-                logger.warning('no cal files found :/')
+                logger.info('no calibration files found in this directory')
         
-        # If flow cal directory does not exist: print warning   # NOTE this is big issue if none found
         else:
-            logger.error('Cannot find flow cal directory (searched in %s)', self.flow_cal_dir)
+            # If flow cal directory does not exist: print warning   # TODO this is big issue if none found
+            logger.warning('no .txt files found in this directory :/')
+
+        # TODO some kind of error message if there are no calibration tables. or disable all the slave devices or something, bc you won't be able to send setpoints
+
     
     def generate_ui(self):
         self.create_connect_box()
         self.create_master_groupbox()
+        self.create_settings_groupbox()
         self.create_raw_comm_groupbox()
         self.create_slave_groupbox()
         
@@ -485,8 +466,9 @@ class olfactometer_window(QGroupBox):
         self.setLayout(mainLayout)
         mainLayout.addWidget(self.connect_box,0,0,1,1)
         mainLayout.addWidget(self.master_groupbox,1,0,1,1)
-        mainLayout.addWidget(self.raw_comm_box,0,1,2,1)
-        mainLayout.addWidget(self.slave_groupbox,2,0,1,2)
+        mainLayout.addWidget(self.settings_groupbox,2,0,1,1)
+        mainLayout.addWidget(self.raw_comm_box,0,1,3,1)
+        mainLayout.addWidget(self.slave_groupbox,3,0,1,2)
         
     def create_connect_box(self):
         self.connect_box = QGroupBox("Connect to master Arduino")
@@ -499,9 +481,6 @@ class olfactometer_window(QGroupBox):
         connect_box_layout.addWidget(self.port_widget)
         connect_box_layout.addWidget(self.connect_btn)
         connect_box_layout.addWidget(self.refresh_btn)
-        #connect_box_layout = QFormLayout()
-        #connect_box_layout.addRow(QLabel(text="Select Port:"),self.port_widget)
-        #connect_box_layout.addRow(self.refresh_btn,self.connect_btn)
         self.connect_box.setLayout(connect_box_layout)
 
     def create_master_groupbox(self):
@@ -542,6 +521,35 @@ class olfactometer_window(QGroupBox):
         layout.addLayout(manualcmd_layout)
         self.master_groupbox.setLayout(layout)
         
+    def create_settings_groupbox(self):
+        # other settings
+        self.settings_groupbox = QGroupBox('Other Settings')
+        
+        # select directory where flow calibration tables are stored
+        self.flow_cal_dir_btn = QPushButton('Select Directory',checkable=True)
+        self.flow_cal_dir_btn.setToolTip('Select directory for flow calibration tables')
+        self.flow_cal_dir_btn.toggled.connect(self.flow_cal_dir_btn_toggled)
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.flow_cal_dir_btn)
+        self.settings_groupbox.setLayout(layout)
+
+    def flow_cal_dir_btn_toggled(self,checked):
+        if checked:
+            dlg = QFileDialog()
+            dlg.setFileMode(QFileDialog.Directory)
+            if dlg.exec_():
+                directory_selected = dlg.selectedFiles()
+                #print('did it')
+                # now get all the files in this directory
+                self.flow_cal_dir = directory_selected[0]
+                self.get_calibration_tables()
+                self.flow_cal_dir_btn.setChecked(False)
+
+        else:
+            #print('btn unchecked')
+            pass
+    
     def create_raw_comm_groupbox(self):
         self.raw_comm_box = QGroupBox("Raw Communication Data")
 
@@ -652,7 +660,6 @@ class olfactometer_window(QGroupBox):
             self.master_groupbox.setEnabled(True)
             self.connect_btn.setText("Disconnect")
             self.connect_btn.setToolTip("Disconnect from " + self.portStr)
-            #self.connect_btn.setText('Disconnect from ' + self.portStr)
             self.refresh_btn.setEnabled(False)
             self.port_widget.setEnabled(False)
         
@@ -660,7 +667,6 @@ class olfactometer_window(QGroupBox):
             logger.info('disconnected from ' + self.port_widget.currentText())
             self.master_groupbox.setEnabled(False)
             self.connect_btn.setText("Connect")
-            #self.connect_btn.setText('Connect to ' + self.portStr)
             self.connect_btn.setChecked(False)
             self.refresh_btn.setEnabled(True)
             self.port_widget.setEnabled(True)
