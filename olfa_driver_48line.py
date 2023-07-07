@@ -307,16 +307,16 @@ class Vial(QGroupBox):
     # VALVE TIMER
     def start_valve_timer(self, duration):
         #logger.debug('starting valve timer')
-        self.valve_open_time = datetime.now()
-        self.valve_open_duration = timedelta(0,int(duration))
+        self.time_valve_opened_at = datetime.now()
+        self.timedelta_valve_open_full_dur = timedelta(0,int(duration))
         self.valve_timer.start()
     
     def show_valve_time(self):
-        current_time = datetime.now()
-        current_valve_dur = current_time - self.valve_open_time
-        if current_valve_dur >= self.valve_open_duration:
+        time_current_time = datetime.now()
+        timedelta_current_valve_dur = time_current_time - self.time_valve_opened_at
+        if timedelta_current_valve_dur >= self.timedelta_valve_open_full_dur:
             self.end_valve_timer()
-        valve_dur_display_value = str(current_valve_dur)
+        valve_dur_display_value = str(timedelta_current_valve_dur)
         valve_dur_display_value = valve_dur_display_value[5:]   # remove hour/minute display
         valve_dur_display_value = valve_dur_display_value[:-3]  # remove extra decimal point display
         self.valveTimer_duration_label.setText(valve_dur_display_value)
@@ -388,7 +388,7 @@ class olfactometer_window(QGroupBox):
         self.sccm2Ard_dicts = {}
         self.ard2Sccm_dicts = {}
         self.active_slaves = []
-        self.calibration_on = False
+        #self.calibration_on = False
 
         self.get_calibration_tables()
         self.generate_ui()
@@ -605,7 +605,6 @@ class olfactometer_window(QGroupBox):
                 self.port_widget.addItem(ser_str)
         else:
             self.port_widget.addItem(noPort_msg)
-        # # TODO ooooh what if this could be a lil list of items
         
         # if an Arduino is connected, set the widget default value to that
         for port_list_idx in range(0,self.port_widget.count()):
@@ -800,8 +799,11 @@ class olfactometer_window(QGroupBox):
                                 v.vial_details_window.setpoint_read_widget.display(round(flowVal_sccm))
                                 
                                 # if calibration is on: send it to the vial details popup
-                                if self.calibration_on == True:
-                                    v.vial_details_window.read_value(flowVal)
+                                if v.vial_details_window.calibration_on == True:
+                                    #v.vial_details_window.read_value(flowVal)
+                                    
+                                    # append it to the current list of values
+                                    v.vial_details_window.serial_values.append(int(flowVal))
             
             except UnicodeDecodeError:
                 logger.warning("Serial read error")

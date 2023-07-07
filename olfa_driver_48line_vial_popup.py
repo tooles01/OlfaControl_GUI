@@ -18,7 +18,7 @@ default_cal_table = 'Honeywell_3100V'
 def_Kp_value = '0.0500'
 def_Ki_value = '0.0001'
 def_Kd_value = '0.0000'
-def_calfile_name = 'A2_test_cal_file'
+#def_calfile_name = 'A2_test_cal_file'
 def_mfc_cal_value = '100'
 ##############################
 
@@ -32,7 +32,8 @@ logger.addHandler(console_handler)
 ##############################
 
 
-mfc_capacity = '200'
+mfc_capacity = '200'            # flow sensor max flow
+def_calibration_duration = '3'  # calibration per flow rate
 
 class calibration_worker(QObject):
     def __init__(self):
@@ -59,6 +60,7 @@ class VialDetailsPopup(QWidget):
         super().__init__()
         self.parent = parent
         self.full_vialNum = parent.full_vialNum
+        self.calibration_on = False
         
         self.create_ui_features()
         self.setWindowTitle('Vial ' + self.full_vialNum + ' - Details')
@@ -177,21 +179,19 @@ class VialDetailsPopup(QWidget):
         self.setpoint_slider = QSlider()
         self.setpoint_slider.setMaximum(int(mfc_capacity))
         self.setpoint_slider.setToolTip('Adjusts flow set rate.')
-        self.setpoint_slider.setTickPosition(3)
+        self.setpoint_slider.setTickPosition(3)     # draw tick marks on both sides
         self.setpoint_set_widget = QLineEdit()
         #setpoint_set_widget.setMaximumWidth(4)
         self.setpoint_set_widget.setAlignment(QtCore.Qt.AlignCenter)
-        self.setpoint_set_widget.setToolTip('Set value')
-        self.setpoint_set_widget.setStatusTip('Type to set flow rate')  # TODO this don't work
+        self.setpoint_set_widget.setPlaceholderText('Set value')
+        self.setpoint_set_widget.setStatusTip('Type to set flow rate')
         self.setpoint_read_widget = QLCDNumber()
         self.setpoint_read_widget.setMinimumSize(50,50)
         self.setpoint_read_widget.setDigitCount(5)
         self.setpoint_read_widget.setToolTip('Current flow reading')
         self.setpoint_read_widget.setMaximumHeight(50)
-        
         self.setpoint_slider.valueChanged.connect(lambda: self.update_text(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_widget))
         self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider))
-        #self.setpoint_set_widget.editingFinished.connect(self.text_changed) # return pressed OR line edit loses focus
         self.setpoint_set_widget.returnPressed.connect(self.text_changed)
         
         layout_setpoint = QGridLayout()
@@ -203,8 +203,8 @@ class VialDetailsPopup(QWidget):
         self.setpoint_set_widget.setMaximumHeight(setpoint_set_read_height)
         self.setpoint_read_widget.setMaximumHeight(setpoint_set_read_height)
         self.setpoint_slider.setMaximumHeight(setpoint_set_read_height*2)
-        
         self.db_setpoint_groupbox.setLayout(layout_setpoint)
+        self.db_setpoint_groupbox.setMaximumWidth(120)
     
     def create_flow_ctrl_box(self):
         self.db_flow_control_box = QGroupBox('Flow control parameters')
@@ -270,31 +270,53 @@ class VialDetailsPopup(QWidget):
     def create_calibration_box(self):
         self.db_cal_box = QGroupBox('Flow Sensor Calibration')
 
-        self.cal_file_name_wid = QLineEdit(text=def_calfile_name)
+        cal_file_name = self.full_vialNum + '_' + utils.currentDate
+        self.cal_file_name_wid = QLineEdit(text=cal_file_name)
         self.cal_file_dir_wid = QLineEdit(text=self.parent.olfactometer_parent_object.flow_cal_dir)
         self.create_new_cal_file_btn = QPushButton(text='Create file',checkable=True,toggled=self.create_new_cal_file_toggled)
         
         self.mfc_value_lineedit = QLineEdit(text=def_mfc_cal_value)
-        self.mfc_value_set_btn = QPushButton(text='Start',checkable=True)
+        self.start_calibration_btn = QPushButton(text='Start',checkable=True,toolTip='Start calibration at this value')
         #self.mfc_value_lineedit.returnPressed.connect(self.new_mfc_value_set)  # TODO
-        self.mfc_value_set_btn.toggled.connect(self.new_mfc_value_set)
+        self.start_calibration_btn.toggled.connect(self.new_mfc_value_set)
         self.mfc_value_lineedit.setEnabled(False)
-        self.mfc_value_set_btn.setEnabled(False)
+        self.start_calibration_btn.setEnabled(False)
         
-        layout_labels = QVBoxLayout()
-        layout_labels.addWidget(QLabel('Directory:'))
-        layout_labels.addWidget(QLabel('File Name:'))
-        layout_labels.addWidget(QLabel('MFC value:'))
+        # Widget for duration of calibration (& timer for visual)
+        self.calibration_duration_lineedit = QLineEdit(text=def_calibration_duration)
+        self.calibration_duration_timer = QTimer()
+        self.calibration_duration_timer.setTimerType(0) # set to millisecond accuracy
+        self.calibration_duration_timer.timeout.connect(self.show_cal_duration_time)
+        self.calibration_duration_label = QLabel('00.000')
+        
+        self.cal_file_output_display = QTextEdit(readOnly=True)
+        self.instructions_window = QTextEdit(readOnly=True)
+        
+        # Layout
+        layout_directory = QFormLayout()
+        layout_directory.addRow(QLabel('Directory:'),self.cal_file_dir_wid)
         layout_widgets = QFormLayout()
-        layout_widgets.addRow(self.cal_file_dir_wid)
-        layout_widgets.addRow(self.cal_file_name_wid,self.create_new_cal_file_btn)
-        layout_widgets.addRow(self.mfc_value_lineedit,self.mfc_value_set_btn)
-        layout_full = QHBoxLayout()
-        layout_full.addLayout(layout_labels)
-        layout_full.addLayout(layout_widgets)
-
+        layout_widgets.addRow(QLabel('File Name:'),self.cal_file_name_wid)
+        layout_widgets.addRow(QLabel('MFC value:'),self.mfc_value_lineedit)
+        layout_widgets.addRow(QLabel('Duration (s):'),self.calibration_duration_lineedit)
+        layout_widgets.addRow(self.calibration_duration_label)
+        layout_widgets.addRow(self.create_new_cal_file_btn,self.start_calibration_btn)
+        layout_full = QGridLayout()
+        layout_full.addLayout(layout_directory,0,0,1,3)
+        layout_full.addLayout(layout_widgets,1,0)
+        layout_full.addWidget(self.instructions_window,1,1)
+        layout_full.addWidget(self.cal_file_output_display,1,2)
+        
         self.db_cal_box.setLayout(layout_full)
-    
+        
+        # Sizing
+        self.instructions_window.setMaximumHeight(80)
+        self.cal_file_output_display.setMaximumHeight(80)
+        self.instructions_window.setMaximumWidth(200)
+        self.cal_file_output_display.setMaximumWidth(90)
+        self.db_cal_box.setMaximumHeight(self.db_cal_box.sizeHint().height())
+        
+        self.instructions_window.append('--> To begin calibration, create file')
     
     # PRESSURIZE TIMER
     def start_pressurize(self, duration):
@@ -435,19 +457,43 @@ class VialDetailsPopup(QWidget):
             self.db_advanced_btn.setText('Enable Advanced Options')
             self.db_advanced_btn.setToolTip('Enable advanced flow control settings\n\nARE YOU SURE YOU WANT TO DO THIS')
     
+    # FLOW CALIBRATION TIMER
+    def start_cal_duration_timer(self, duration):
+        self.calibration_start_time = datetime.now()
+        self.calibration_full_duration = timedelta(0,int(duration))
+        self.calibration_duration_timer.start(int(duration))
+    
+    def show_cal_duration_time(self):
+        current_time = datetime.now()
+        current_cal_dur = current_time - self.calibration_start_time
+        if current_cal_dur >= self.calibration_full_duration:
+            self.end_cal_duration_timer()
+        
+        cal_dur_display_value = str(current_cal_dur)
+        cal_dur_display_value = cal_dur_display_value[5:]
+        cal_dur_display_value = cal_dur_display_value[:-3]
+        self.calibration_duration_label.setText(cal_dur_display_value)
+    
+    def end_cal_duration_timer(self):
+        self.calibration_duration_timer.stop()
+        self.calibration_on == False
+        self.parent.olfactometer_parent_object.send_to_master('S_CC_' + self.full_vialNum)
+        self.analyze_cal_session()
+    
     # FLOW CALIBRATION
     def create_new_cal_file_toggled(self):
         # Create new file, start procedure
         if self.create_new_cal_file_btn.isChecked() == True:
             # UI THINGS
-            self.create_new_cal_file_btn.setText('Done calibrating')
-            self.create_new_cal_file_btn.setToolTip('Click to end calibration and save file')
+            self.create_new_cal_file_btn.setText('End && Save file')
+            self.create_new_cal_file_btn.setToolTip('End calibration and save file')
             self.cal_file_dir_wid.setEnabled(False)
             self.cal_file_name_wid.setEnabled(False)
             self.db_std_widgets_box.setEnabled(False)
+            self.db_setpoint_groupbox.setEnabled(False)
             self.db_flow_control_box.setEnabled(False)
             
-            # Get file name & directory from GUI
+            # Get calibration file name & directory
             self.new_cal_file_name = self.cal_file_name_wid.text()
             self.new_cal_file_dir = self.cal_file_dir_wid.text() + '\\' + self.new_cal_file_name + '.csv'
 
@@ -465,7 +511,17 @@ class VialDetailsPopup(QWidget):
                 
                 # enable the MFC stuff
                 self.mfc_value_lineedit.setEnabled(True)
-                self.mfc_value_set_btn.setEnabled(True)
+                self.start_calibration_btn.setEnabled(True)
+
+                # check that vial is set to debug (read flow values)
+                self.db_readflow_btn.setChecked(True)
+                
+                # tell user what to do next
+                self.instructions_window.clear()
+                self.instructions_window.append('--> Disconnect flow sensor output')
+                self.instructions_window.append('--> Shut off air to mixing chamber')
+                self.instructions_window.append('--> Manually set MFC value')
+                self.instructions_window.append('--> Press Start')
 
             else:
                 logger.error('cannot create calibration file, ' + self.new_cal_file_name + ' already exists!!!!!')
@@ -479,32 +535,72 @@ class VialDetailsPopup(QWidget):
             self.cal_file_dir_wid.setEnabled(True)
             self.cal_file_name_wid.setEnabled(True)
             self.db_std_widgets_box.setEnabled(True)
-            self.db_flow_control_box.setEnabled(True)
+            self.db_setpoint_groupbox.setEnabled(True)
+            
+            # Disable the MFC stuff
+            self.mfc_value_lineedit.setEnabled(False)
+            self.start_calibration_btn.setEnabled(False)
         
     def new_mfc_value_set(self):
-        if self.mfc_value_set_btn.isChecked() == True:
+        if self.start_calibration_btn.isChecked() == True:
+            # Get sccm value & duration
             self.this_cal_sccm_value = self.mfc_value_lineedit.text()
-            logger.debug('starting calibration at %s sccm', self.this_cal_sccm_value)
+            self.this_cal_duration = self.calibration_duration_lineedit.text()  # TODO check if we have already done this sccm value
             
-            # TODO check that proportional valve is open
-            # TODO check that vial is set to debug (read flow values)
-            self.parent.olfactometer_parent_object.calibration_on = True
+            logger.debug('starting calibration at %s sccm', self.this_cal_sccm_value)
+            logger.warning('~~this not totally finished yet~~')
+            
+            # Instructions for user
+            self.instructions_window.clear()
+            self.instructions_window.append('--> Calibrating')
+            
+            # Fix the GUI
+            self.create_new_cal_file_btn.setEnabled(False)
+            self.start_calibration_btn.setText('End early')
+            
+            # Check that olfactometer is connected
+            if self.parent.olfactometer_parent_object.connect_btn.isChecked() == False:
+                logger.warning('not connected to olfactometer')     # TODO do something about this
+            
+            # Check that vial is set to debug (read flow values)
+            if self.db_readflow_btn.isChecked() == False:
+                logger.info('setting ' + self.full_vialNum + ' to debug mode')
+                self.db_readflow_btn.setChecked(True)
+            else:
+                logger.debug(self.full_vialNum + ' is already set to debug mode')
+            
+            # Open proportional valve
+            strToSend = 'S_OC_' + self.full_vialNum
+            self.parent.olfactometer_parent_object.send_to_master(strToSend)
+            
+            # Initialize empty data arrays
             self.serial_values = []
             self.serial_values_std = []
             self.start_of_good_values = []
             self.duration_of_good_values = timedelta(0,10)  # 10 sec
             self.all_std_devs = []
             self.values_means = []
-
-            self.mfc_value_set_btn.setText('End early')
+            
+            # Set calibration object to ON (start getting calibration values from olfactometer window)
+            #self.parent.olfactometer_parent_object.calibration_on = True
+            self.calibration_on = True
+            
+            # Start calibration timer
+            self.start_cal_duration_timer(int(self.this_cal_duration))
         
         else:
-            self.mfc_value_set_btn.setText('Start')
+            self.start_calibration_btn.setText('Start')
+            self.create_new_cal_file_btn.setEnabled(True)
+            
+            # TODO stop the timer
+            if self.calibration_duration_timer.isActive() == True:
+                self.end_cal_duration_timer()
     
-    def read_value(self,incoming_value):
+    '''
+    def read_value(self, incoming_value):
         # wait until this many seconds have passed
         samples_per_sec = 10
-        sec_to_wait = 40
+        sec_to_wait = 10        # duration of calibration
         num_samples = sec_to_wait * samples_per_sec  # 10 samples per second (assuming 100ms sampling rate)
 
         moving_mean_over = 10  # calculate moving mean over 10 points
@@ -558,73 +654,24 @@ class VialDetailsPopup(QWidget):
                 if range_means < .5:
                     self.serial_converted = [float(i) for i in self.serial_values]
                     self.this_cal_int_value = np.mean(self.serial_converted)    # calculate mean
-                    self.save_calibration_value()                               # save value to calibration table
-            
-            '''
-            # moving average (over 10 points I think)
-            #this_mean=np.convolve(self.serial_values,np.ones(10),'valid')/10
-            range_to_iterate = int((num_samples/samples_per_sec)+1)
-            idx_2 = 0
-            for m in range(1,range_to_iterate):
-                idx_1 = idx_2 + 1
-                idx_2 = idx_1 + samples_per_sec
-                this_range = copy.copy(self.serial_values[idx_1:idx_2])
-                this_range_mean = np.mean(this_range)
-                values_means.append(this_range_mean)
-
-            # check the range of values in the list
-            min_val = min(self.serial_values)
-            max_val = max(self.serial_values)
-            full_range = max_val - min_val
-
-            num_std_dev_datapoints = 100
-            self.test_std_dev = copy.copy(self.serial_values[num_samples-num_std_dev_datapoints:num_samples])
-            self.all_std_devs.append(np.std(self.test_std_dev,ddof=1))
-            
-            # if the range is less than 2 ints
-            if full_range < 2:
-                # calculate std dev over the past 10sec of datapoints
-                num_std_dev_datapoints = 100
-                
-                # get the most recent 10 seconds
-                self.serial_values_std = copy.copy(self.serial_values[num_samples-num_std_dev_datapoints:num_samples])
-                this_std_dev = np.std(self.serial_values_std)   # calculate the std dev
-                print(this_std_dev)
-                # if this is less than .2, we are good
-                if this_std_dev < .2:
-                    # if it's the first value under .2
-                    if self.start_of_good_values == []:
-                        self.start_of_good_values = datetime.now()
-                        logger.debug('%s first period std dev is under .2',utils.get_current_time()[:-1])
-                    # if there other values there already
-                    else:
-                        # if it's been 10 seconds since good values started
-                        current_time = datetime.now()
-                        if (current_time-self.start_of_good_values) >= self.duration_of_good_values:
-                            logger.debug('%s: for the past 10 seconds, the std dev (over 5 seconds of data) has been under .2')
-                            self.serial_converted = [float(i) for i in self.serial_values]
-                            self.this_cal_int_value = np.mean(self.serial_converted)    # calculate mean
-                            self.save_calibration_value()                               # save value to calibration table
-
-                else:
-                    self.start_of_good_values = []  # need to reset
-                    
-            '''
-            '''
-                self.serial_converted = [float(i) for i in self.serial_values]
-                self.this_cal_int_value = np.mean(self.serial_converted)    # calculate mean
-                self.save_calibration_value()   # save value to calibration table
-            '''
-            '''
-            # if the range is not yet acceptable
-            else:
-                self.serial_values.pop(0)                       # pop the top value
-                self.serial_values.append(int(incoming_value))  # append the new value
-            '''
-                
+                    self.save_calibration_value()                               # save value to calibration table    
+        
         # if we have not yet collected enough data points:
         else:
             self.serial_values.append(int(incoming_value))
+    '''
+    
+    def analyze_cal_session(self):
+        flowVal_median = np.median(self.serial_values)
+        # TODO drop the max and min values
+        flow_min = min(self.serial_values)
+        flow_max = max(self.serial_values)
+        flow_range = flow_max - flow_min
+        logger.info('range of int values: ' + str(flow_range))
+        self.this_cal_int_value = flowVal_median
+        self.save_calibration_value()
+        # clear the array
+        self.serial_values = [] 
     
     def save_calibration_value(self):
         # write the MFC value and the integer value to the calibration table
@@ -634,13 +681,27 @@ class VialDetailsPopup(QWidget):
             writer = csv.writer(f,delimiter=',')
             writer.writerow(pair_to_write)
 
+        # display what we wrote to the table
+        str_to_display = self.this_cal_sccm_value + ', ' + str(round(self.this_cal_int_value,2))
+        self.cal_file_output_display.append(str_to_display)
+        
         # clear lists
         self.serial_values = []
         self.serial_converted = []
 
         # reset
-        self.parent.olfactometer_parent_object.calibration_on = False
-        self.mfc_value_set_btn.setChecked(False)
+        #self.parent.olfactometer_parent_object.calibration_on = False
+        self.calibration_on = False
+        self.start_calibration_btn.setChecked(False)
+        
+        # tell user what to do
+        self.instructions_window.clear()
+        str_to_display = '--> Completed calibration at ' + str(self.this_cal_sccm_value) + ' sccm'
+        self.instructions_window.append(str_to_display)
+        self.instructions_window.append('-----------------------')
+        self.instructions_window.append('--> Enter new MFC value')
+        self.instructions_window.append('--> Manually set MFC value')
+        self.instructions_window.append('--> Press Start')
     
     
     
