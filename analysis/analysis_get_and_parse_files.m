@@ -11,7 +11,7 @@
 
 %%
 clearvars
-close all
+%close all
 %#ok<*SAGROW>
 %#ok<*AGROW> 
 %% config variables
@@ -29,8 +29,8 @@ c.this_exp_cal_tables = [];
 a_this_note = '';
 
 %% enter directory for this computer
-a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-%a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+%a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
 
 a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
 
@@ -48,7 +48,63 @@ plot_opts.ctrl = 'no';
 plot_opts.ctrl_as_voltage = 'no';
 %}
 
+
+%{
+%% popup box to select file name # TODO
+default_date = '2023-03-02';
+
+default_filename = '2023-03-02_datafile_02';
+
+% get date from filename
+idx_und = strfind(a_thisfile_name,'_');
+idx_und = idx_und(1);
+a_thisfile_date = a_thisfile_name(1:idx_und-1);
+
+% full directory for this file
+dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\48-line olfa\',a_thisfile_date,'\');
+
+%default_directory = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)\Control\a_software\OlfaControl_GUI\result_files';
+default_directory = strcat(a_dir_OlfaControlGUI,'\result_files');
+uibox_title = 'Select datafile';
+uibox_deffilename ='d';
+file = uigetfile("*.csv",uibox_title);
+
+%a_default_file_name = '2023-03-02_datafile_02';
+
+%}
+
+
 %% enter data file name
+
+%a_thisfile_name = '2023-03-02_datafile_00';
+%a_thisfile_name = '2023-03-02_datafile_01';
+%a_thisfile_name = '2023-03-02_datafile_02';
+%a_thisfile_name = '2023-03-02_datafile_03';
+%a_thisfile_name = '2023-04-26_datafile_00'; a_this_note = 'A7, 200sccm';
+%a_thisfile_name = '2023-04-26_datafile_01'; a_this_note = 'A7, 100sccm';
+
+%a_thisfile_name = '2023-04-26_datafile_02'; a_this_note = 'A7 50sccm: 0sec pressurization (x2), 5sec (x2)';
+%a_thisfile_name = '2023-04-26_datafile_03'; a_this_note = 'A7 50sccm: 0sec pressurization (x2), 1sec (x2), 2sec (x2), 3sec (x2)';
+%a_thisfile_name = '2023-04-26_datafile_04'; a_this_note = 'A7 20sccm: 0sec pressurization (x2), 1sec (x2), 2sec (x2)';
+%a_thisfile_name = '2023-04-26_datafile_05'; a_this_note = 'A2, A3, A5, A6, A7, A8 50sccm';
+%a_thisfile_name = '2023-04-26_datafile_06'; a_this_note = 'A2 50sccm, 1sec pressurization (pinene - long lasting)';
+%a_thisfile_name = '2023-04-26_datafile_07'; a_this_note = 'A5, A6, A7, A8 50sccm, 1sec pressurization';
+%a_thisfile_name = '2023-04-26_datafile_08'; a_this_note = 'A5, A6, A7, A8 50sccm, 0sec pressurization';
+%a_thisfile_name = '2023-04-26_datafile_09'; a_this_note = 'A5, A6, A7, A8 50sccm, 1sec pressurization (no PID pump)';
+%a_thisfile_name = '2023-04-26_datafile_10'; a_this_note = 'A5, A6, A7, A8 50sccm, 0sec pressurization (no PID pump)';
+%a_thisfile_name = '2023-04-26_datafile_11'; a_this_note = 'contamination test: A5, A6, A7, A8 50sccm (no PID pump)';
+%a_thisfile_name = '2023-04-26_datafile_12'; a_this_note = 'contamination test: A7, A8 50sccm (no PID pump)';
+%a_thisfile_name = '2023-04-26_datafile_13'; a_this_note = 'contamination test: A5, A6, A7, A8 50sccm (no PID pump)';
+%a_thisfile_name = '2023-04-26_datafile_14';
+%a_thisfile_name = '2023-04-26_datafile_15'; a_this_note = 'A2, A5, A7, A8, 50sccm';
+%a_thisfile_name = '2023-04-26_datafile_16'; a_this_note = 'A2, A5, A7, A8, 50sccm, 1sec pressurization';
+%a_thisfile_name = '2023-04-26_datafile_17'; a_this_note = 'A2, A5, A7, A8, 50sccm, 3sec pressurization';
+
+%a_thisfile_name = '2023-04-27_datafile_00'; a_this_note = 'A3 setpoint char (empty vial)';
+%a_thisfile_name = '2023-04-27_datafile_01'; a_this_note = 'A2 setpoint char (Hexanal)';
+a_thisfile_name = '2023-04-27_datafile_02'; a_this_note = 'A3 setpoint char (empty vial)';
+
+%%
 %{
 %a_thisfile_name = '2020-12-15_exp01_21';
 %a_thisfile_name = '2020-12-16_exp01_22';
@@ -59,12 +115,14 @@ plot_opts.ctrl_as_voltage = 'no';
 %a_thisfile_name = '2022-09-07_datafile_04'; a_this_note = 'setpoint char 80, 90, 100 sccm';
 %a_thisfile_name = '2022-09-07_datafile_05';
 %}
+
 %a_thisfile_name = '2022-09-06_datafile_11';
 
 % 9/9/2022
     % setpoint characterization
 %a_thisfile_name = '2022-09-09_datafile_00'; a_this_note = 'A2 at 100sccm';
-a_thisfile_name = '2022-09-09_datafile_01'; a_this_note = 'A6 at 100sccm';
+%a_thisfile_name = '2022-09-09_datafile_01'; a_this_note = 'A6 at 100sccm';
+
     % K values
 %a_thisfile_name = '2022-09-09_datafile_02'; a_this_note = 'A6- Kp at .05, .04, .03, .01, .00, .08';
 %a_thisfile_name = '2022-09-09_datafile_03'; a_this_note = 'A6- Kp at .010, .005, .010, .010,';
@@ -133,9 +191,9 @@ if ~isempty(h.cal_tables_start_at)
 end
 
 % get PID gain from header
-h.PID_gain_line_idx = find(strcmp(raw_header,'PID gain:'));
-if ~isempty(h.PID_gain_line_idx)
-    c.pid_gain = raw_header{h.PID_gain_line_idx,2};
+h.PID_gain_row_idx = find(strcmp(raw_header,'PID gain:'));
+if ~isempty(h.PID_gain_row_idx)
+    c.pid_gain = raw_header{h.PID_gain_row_idx,2};
 end
 
 %% parse file
