@@ -33,8 +33,8 @@ f.x_lim = [];
 f.calibration_value = [];
 
 %% enter directory for this computer
-a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-%a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+%a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
 
 a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
 
@@ -84,7 +84,11 @@ plot_opts.ctrl_as_voltage = 'no';
 %a_thisfile_name = '2022-09-09_datafile_11'; a_this_note = 'A2 50cc, A6 50cc';%   f.pid_ylims = [-.1 6];
 %a_thisfile_name = '2022-09-09_datafile_12'; a_this_note = 'A2 & A6 additive'; f.pid_ylims = [-.1 7];
 %a_thisfile_name = '2022-09-09_datafile_13'; a_this_note = 'A2 setpoint char'; f.pid_ylims = [-.1 7];
-a_thisfile_name = '2022-09-09_datafile_13'; a_this_note = 'A2 setpoint char'; f.pid_ylims = [-.01 .6]; f.flow_ylims = [-1 110];
+%a_thisfile_name = '2022-09-09_datafile_13'; a_this_note = 'A2 setpoint char'; f.pid_ylims = [-.01 .6]; f.flow_ylims = [-1 110];
+
+%a_thisfile_name = '2023-03-02_datafile_00'; f.pid_ylims = [-0.03 0.02]; f.flow_ylims = [-.1 20];
+%a_thisfile_name = '2023-03-02_datafile_01'; f.pid_ylims = [-0.03 0.02]; f.flow_ylims = [-.1 20];
+%a_thisfile_name = '2023-03-02_datafile_02'; %f.pid_ylims = [-0.03 0.02]; f.flow_ylims = [-.1 20];
 % view delayed PID response
 % 40cc
 %f.x_lim = [197.758 247.4]; f.pid_ylims = [-.01 .35]; f.flow_ylims = [-1 50]; a_this_note = 'A2 at 40 sccm';
@@ -107,6 +111,29 @@ a_thisfile_name = '2022-09-09_datafile_13'; a_this_note = 'A2 setpoint char'; f.
 f.position = [549 166 1353 684];
 %}
 
+%a_thisfile_name = '2023-04-26_datafile_00';
+%a_thisfile_name = '2023-04-26_datafile_01';
+%a_thisfile_name = '2023-04-26_datafile_02';
+%a_thisfile_name = '2023-04-26_datafile_03';
+%a_thisfile_name = '2023-04-26_datafile_04';
+%a_thisfile_name = '2023-04-26_datafile_05';
+%a_thisfile_name = '2023-04-26_datafile_06';
+%a_thisfile_name = '2023-04-26_datafile_07';
+%a_thisfile_name = '2023-04-26_datafile_08';
+a_thisfile_name = '2023-04-26_datafile_09';
+%a_thisfile_name = '2023-04-26_datafile_10';
+%a_thisfile_name = '2023-04-26_datafile_11';
+%a_thisfile_name = '2023-04-26_datafile_12';
+%a_thisfile_name = '2023-04-26_datafile_13';
+%a_thisfile_name = '2023-04-26_datafile_14';
+%a_thisfile_name = '2023-04-26_datafile_15';
+%a_thisfile_name = '2023-04-26_datafile_16';
+%a_thisfile_name = '2023-04-26_datafile_17';
+%a_thisfile_name = '2023-04-27_datafile_00';
+%a_thisfile_name = '2023-04-27_datafile_01';
+%a_thisfile_name = '2023-04-27_datafile_02';
+
+%f.pid_ylims = [-0.01 0.2];
 plot_opts.plot_flow_as_sccm = 'yes';
 %f.flow_ylims = [-5 150];
 %f.pid_ylims = [-.1 7];
