@@ -9,23 +9,11 @@ import NiDAQ_driver, flow_sensor_driver
 import olfa_driver_original
 import olfa_driver_48line
 import utils_olfa_48line, program_additive_popup
+import config_main
 
 
 programs_48line = ['setpoint characterization','additive']
 programs_orig = ['the program']
-
-##############################
-# PARAMETERS FOR 48-LINE OLFACTOMETER
-vials = ['1','2','3','4','5','6','7','8']
-default_setpoint = '10,20,30,40,50,60,70,80,90,100'
-default_dur_ON = 5
-default_dur_OFF = 5
-default_numTrials = 5
-no_active_slaves_warning = 'no active slaves pls connect olfa or something'
-waitBtSpAndOV = .5
-waitBtSps = 1
-default_pid_gain = '10x'
-##############################
 
 current_date = utils.currentDate
 
@@ -65,8 +53,8 @@ class worker_sptChar(QObject):
     @pyqtSlot()
     def exp(self):
         # wait so olfa has time to set vial to debug mode
-        time.sleep(waitBtSpAndOV)
-        time.sleep(waitBtSpAndOV)
+        time.sleep(config_main.waitBtSpAndOV)
+        time.sleep(config_main.waitBtSpAndOV)
 
         # do an off duration so we have a better baseline
         time.sleep(self.duration_off)
@@ -83,7 +71,7 @@ class worker_sptChar(QObject):
                 # send the setpoint
                 logger.info('%s set to %s sccm',full_vial_name,this_setpoint_sccm)
                 self.w_sendThisSp.emit(full_vial_name,this_setpoint_int)
-                time.sleep(waitBtSpAndOV)
+                time.sleep(config_main.waitBtSpAndOV)
                 
                 # open the vial
                 logger.info('Opening %s (%s seconds)',full_vial_name,self.duration_on)
@@ -133,13 +121,13 @@ class worker_additive(QObject):
                     sp = stimulus[v]
                     logger.debug('Setting %s to %s sccm', vial, sp)
                     self.w_sendThisSp.emit(vial,sp)
-                    time.sleep(waitBtSps)
+                    time.sleep(config_main.waitBtSps)
                 # for each vial: open valve
                 for v in range(len(self.vials_to_run)):
                     vial = self.vials_to_run[v]
                     logger.debug('Opening %s for %s seconds',vial,self.duration_on)
                     self.w_send_OpenValve.emit(vial,self.duration_on)
-                    time.sleep(waitBtSps)
+                    time.sleep(config_main.waitBtSps)
 
                 # wait until the vials have closed
                 time.sleep(self.duration_on)    # fix this
@@ -292,7 +280,7 @@ class mainWindow(QMainWindow):
 
         # things for header
         self.data_file_pid_gain_lbl = QLabel('PID gain: ')
-        self.data_file_pid_gain = QLineEdit(text=default_pid_gain)
+        self.data_file_pid_gain = QLineEdit(text=config_main.default_pid_gain)
         
         # BUTTONS
         self.begin_record_btn = QPushButton(text='Create File && Begin Recording',checkable=True,clicked=self.begin_record_btn_clicked)
@@ -413,7 +401,7 @@ class mainWindow(QMainWindow):
             self.p_slave_select_wid = QComboBox()
             self.p_slave_select_wid.setToolTip('Only active slaves displayed')
             if self.olfactometer.active_slaves == []:
-                self.p_slave_select_wid.addItem(no_active_slaves_warning)
+                self.p_slave_select_wid.addItem(config_main.no_active_slaves_warning)
             else:
                 self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
             self.p_slave_select_refresh = QPushButton(text="Check Slave")
@@ -422,7 +410,7 @@ class mainWindow(QMainWindow):
             self.p_vial_lbl = QLabel('vial:')
             self.p_vial_lbl.setToolTip('Vial to run program on')
             self.p_vial_wid = QComboBox()
-            self.p_vial_wid.addItems(vials)
+            self.p_vial_wid.addItems(config_main.vial_numbers)
             self.p_vial_wid.setToolTip('Vial to run program on')
             
             self.p_vial_select_layout = QHBoxLayout()
@@ -435,7 +423,7 @@ class mainWindow(QMainWindow):
             
             self.p_setpoints_wid = QLineEdit(toolTip='Enter setpoints separated by commas')
             self.p_setpoints_wid.setPlaceholderText('Setpoints to run (sccm)')
-            self.p_setpoints_wid.setText(default_setpoint)
+            self.p_setpoints_wid.setText(config_main.default_setpoint)
             self.p_sp_order_wid = QComboBox()
             self.p_sp_order_wid.addItems(['Sequential','Random'])
             
@@ -446,9 +434,9 @@ class mainWindow(QMainWindow):
             
             self.p_dur_on_lbl = QLabel('Dur. on (s):',toolTip='Duration of valve opening (in seconds)')
             self.p_dur_off_lbl = QLabel('Dur. off (s):',toolTip="Rest duration between valve openings (in seconds)")
-            self.p_dur_on_wid = QSpinBox(value=default_dur_ON,toolTip="Duration of valve opening (in seconds)")
-            self.p_dur_off_wid = QSpinBox(value=default_dur_OFF,toolTip="Rest duration between valve openings (in seconds)")
-            self.p_numTrials_wid = QLineEdit(text=str(default_numTrials))
+            self.p_dur_on_wid = QSpinBox(value=config_main.default_dur_ON,toolTip="Duration of valve opening (in seconds)")
+            self.p_dur_off_wid = QSpinBox(value=config_main.default_dur_OFF,toolTip="Rest duration between valve openings (in seconds)")
+            self.p_numTrials_wid = QLineEdit(text=str(config_main.default_numTrials))
             self.p_numTrials_wid.setPlaceholderText('# of Trials at each setpoint')
             self.p_numTrials_wid.setToolTip('# of Trials at each setpoint')
             # setpoints will be run in the order entered
@@ -461,7 +449,7 @@ class mainWindow(QMainWindow):
             self.p_dur_layout.addWidget(QLabel('# trials:'))
             self.p_dur_layout.addWidget(self.p_numTrials_wid)
             
-            self.p_pid_gain = QLineEdit(text=default_pid_gain)
+            self.p_pid_gain = QLineEdit(text=config_main.default_pid_gain)
             
             self.program_parameters_layout.addRow(self.p_vial_select_layout)
             self.program_parameters_layout.addRow(self.p_spt_layout)
@@ -919,7 +907,7 @@ class mainWindow(QMainWindow):
         self.p_slave_select_wid.clear()
         self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
         if self.p_slave_select_wid.count() == 0:
-            self.p_slave_select_wid.addItem(no_active_slaves_warning)
+            self.p_slave_select_wid.addItem(config_main.no_active_slaves_warning)
             self.program_start_btn.setEnabled(False)
         else:
             self.program_start_btn.setEnabled(True)
