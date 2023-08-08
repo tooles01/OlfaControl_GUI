@@ -7,30 +7,8 @@ from serial.tools import list_ports
 from datetime import datetime, timedelta
 
 import utils, utils_olfa_48line, olfa_driver_48line_vial_popup
+import config_olfa_48line as config_olfa
 
-
-baudrate = 9600     # for communicating w/ master
-vialsPerSlave = 8
-noPort_msg = "no ports detected :/"
-master_modes = ["6: verbose",
-                "5: trace",
-                "4: notice",
-                "3: warning",
-                "2: error",
-                "1: fatal"]
-slave_names = ['A','B','C','D','E','F']
-cal_table_file_tyoe = '.txt'
-
-##############################
-# # DEFAULT VALUES
-def_setpoint = '50'
-def_open_duration = '5'
-default_cal_table = 'Honeywell_3100V'
-def_Kp_value = '0.0500'
-def_Ki_value = '0.0001'
-def_Kd_value = '0.0000'
-def_manual_cmd = 'S_PV_150_A2'
-##############################
 
 ##############################
 # CREATE LOGGER
@@ -41,7 +19,7 @@ console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
 ##############################
 
-mfc_capacity = '200'
+
 
 class Vial(QGroupBox):
 
@@ -52,14 +30,14 @@ class Vial(QGroupBox):
         self.full_vialNum = self.slaveName + self.vialNum
         self.olfactometer_parent_object = parent.parent
         
-        self.setpoint = def_setpoint
-        self.open_duration = def_open_duration
-        self.cal_table = default_cal_table
+        self.setpoint = config_olfa.def_setpoint
+        self.open_duration = config_olfa.def_open_duration
+        self.cal_table = config_olfa.default_cal_table
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)
-        self.Kp_value = def_Kp_value
-        self.Ki_value = def_Ki_value
-        self.Kd_value = def_Kd_value
+        self.Kp_value = config_olfa.def_Kp_value
+        self.Ki_value = config_olfa.def_Ki_value
+        self.Kd_value = config_olfa.def_Kd_value
         
         self.generate_stuff()
         
@@ -76,7 +54,7 @@ class Vial(QGroupBox):
     def generate_stuff(self):
         
         # VALVE OPEN
-        self.valve_dur_spinbox = QSpinBox(value=int(def_open_duration))
+        self.valve_dur_spinbox = QSpinBox(value=int(config_olfa.def_open_duration))
         self.valve_dur_spinbox.valueChanged.connect(self.valve_open_dur_changed)
         self.valve_dur_lbl = QLabel("dur (s):")
         self.valve_open_btn = QPushButton(text=str("Open " + self.slaveName + self.vialNum),checkable=True)
@@ -89,7 +67,7 @@ class Vial(QGroupBox):
         
         # SETPOINT PIANO
         self.setpoint_slider = QSlider()
-        self.setpoint_slider.setMaximum(int(mfc_capacity))
+        self.setpoint_slider.setMaximum(int(config_olfa.mfc_capacity))
         self.setpoint_slider.setToolTip('Adjusts flow set rate.')
         self.setpoint_slider.setTickPosition(3)     # draw tick marks on both sides
         self.setpoint_set_widget = QLineEdit()
@@ -234,7 +212,7 @@ class Vial(QGroupBox):
     
     def set_flowrate(self, value):
         # check if out of range
-        if (value >= 0) and (value <= int(mfc_capacity)):
+        if (value >= 0) and (value <= int(config_olfa.mfc_capacity)):
             # Convert from sccm to integer
             setpoint_sccm = value
             setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
@@ -248,8 +226,8 @@ class Vial(QGroupBox):
             device = 'olfactometer ' + self.full_vialNum
             self.write_to_datafile(device,'Sp',setpoint_integer)
         
-        if (value < 0) or (value > int(mfc_capacity)):
-            if value > int(mfc_capacity):
+        if (value < 0) or (value > int(config_olfa.mfc_capacity)):
+            if value > int(config_olfa.mfc_capacity):
                 logger.warning(str(value) + ' is greater than mfc capacity: try again')
             if value < 0:
                 logger.warning('cannot enter negative flow rate: try again')        
@@ -343,13 +321,13 @@ class slave_8vials(QGroupBox):
     
     def create_vials_box(self):
         self.vials = []
-        for v in range(vialsPerSlave):
+        for v in range(config_olfa.vialsPerSlave):
             v_vialNum = str(v+1)
             v_vial = Vial(parent=self, vialNum=v_vialNum)
             self.vials.append(v_vial)
 
         self.vials_layout = QHBoxLayout()
-        for v in range(vialsPerSlave):
+        for v in range(config_olfa.vialsPerSlave):
             self.vials_layout.addWidget(self.vials[v])
 
         '''
@@ -388,7 +366,7 @@ class olfactometer_window(QGroupBox):
         
         # Get names of all .txt files in flow cal directory
         cal_file_names = os.listdir(self.flow_cal_dir)
-        cal_file_names = [fn for fn in cal_file_names if fn.endswith(cal_table_file_tyoe)]    # only txt files # TODO: change to csv
+        cal_file_names = [fn for fn in cal_file_names if fn.endswith(config_olfa.cal_table_file_tyoe)]    # only txt files # TODO: change to csv
         
         if cal_file_names != []:
             
@@ -441,11 +419,10 @@ class olfactometer_window(QGroupBox):
                 logger.info('no calibration files found in this directory')
         
         else:
-            # If flow cal directory does not exist: print warning   # TODO this is big issue if none found
-            logger.warning('no .txt files found in this directory :/')
-
-        # TODO some kind of error message if there are no calibration tables. or disable all the slave devices or something, bc you won't be able to send setpoints
-
+            # If flow cal directory does not exist: print warning
+            # TODO this is big issue if none found
+            # TODO some kind of error message if there are no calibration tables. or disable all the slave devices or something, bc you won't be able to send setpoints
+            logger.warning('no .txt files found in this directory :/')    
     
     def generate_ui(self):
         self.create_connect_box()
@@ -489,7 +466,7 @@ class olfactometer_window(QGroupBox):
         self.m_check_addr_btn = QPushButton(text="Get Slave Addresses",clicked=lambda: self.get_slave_addresses())
 
         self.m_mode_dropdown = QComboBox()
-        self.m_mode_dropdown.addItems(master_modes)
+        self.m_mode_dropdown.addItems(config_olfa.master_modes)
         self.m_mode_btn = QPushButton(text="Send", clicked=lambda: self.send_master_mode(self.m_mode_dropdown.currentText()))
         m_mode_layout = QHBoxLayout()
         m_mode_layout.addWidget(self.m_check_addr_btn)
@@ -505,7 +482,7 @@ class olfactometer_window(QGroupBox):
         timebt_layout.addWidget(self.m_timebtreqs)
         timebt_layout.addWidget(self.m_timebtreqs_btn)
 
-        self.m_manualcmd = QLineEdit(text=def_manual_cmd,
+        self.m_manualcmd = QLineEdit(text=config_olfa.def_manual_cmd,
             returnPressed=lambda: self.send_to_master(self.m_manualcmd.text()))
         self.m_manualcmd_btn = QPushButton(text="Send",
             clicked=lambda: self.send_to_master(self.m_manualcmd.text()))
@@ -576,7 +553,7 @@ class olfactometer_window(QGroupBox):
         
         # Create slave object for each item listed in slave_names
         self.slave_objects = []
-        for s in slave_names:
+        for s in config_olfa.slave_names:
             new_slave_object = slave_8vials(parent=self,name=s)
             self.slave_objects.append(new_slave_object)
         
@@ -612,7 +589,7 @@ class olfactometer_window(QGroupBox):
                 ser_str = ('{}: {}').format(port_device,port_description)
                 self.port_widget.addItem(ser_str)
         else:
-            self.port_widget.addItem(noPort_msg)
+            self.port_widget.addItem(config_olfa.noPort_msg)
         
         # if an Arduino is connected, set the widget default value to that
         for port_list_idx in range(0,self.port_widget.count()):
@@ -624,9 +601,9 @@ class olfactometer_window(QGroupBox):
     def port_changed(self):
         if self.port_widget.count() != 0:
             self.port = self.port_widget.currentText()
-            if self.port == noPort_msg:
+            if self.port == config_olfa.noPort_msg:
                 self.connect_btn.setEnabled(False)
-                self.connect_btn.setText(noPort_msg)
+                self.connect_btn.setText(config_olfa.noPort_msg)
             else:
                 self.portStr = self.port[:self.port.index(':')]
                 self.connect_btn.setEnabled(True)
@@ -638,7 +615,7 @@ class olfactometer_window(QGroupBox):
         if checked:
             i = self.port.index(':')
             self.comPort = self.port[:i]
-            self.serial = QtSerialPort.QSerialPort(self.comPort,baudRate=baudrate,readyRead=self.receive)
+            self.serial = QtSerialPort.QSerialPort(self.comPort,baudRate=config_olfa.baudrate,readyRead=self.receive)
             if not self.serial.isOpen():
                 if self.serial.open(QtCore.QIODevice.ReadWrite):
                     self.set_connected(True)
@@ -670,40 +647,20 @@ class olfactometer_window(QGroupBox):
             self.connect_btn.setChecked(False)
             self.refresh_btn.setEnabled(True)
             self.port_widget.setEnabled(True)
-            '''
-            # this seems unnecessary - ST 1/30/2023
-            # set vials of all currently active slaves to not debug --> do this in a thread
-            for slave in self.active_slaves:
-                for vial in range(0,vialsPerSlave):
-                    strToSend = 'MS_' + slave + str(vial+1)
-                    self.send_to_master(strToSend)
-                    time.sleep(.3)
-            '''  
     
     def get_slave_addresses(self):
         self.prev_active_slaves = copy.copy(self.active_slaves)
         self.active_slaves = []
         logger.info('Checking slave addresses')
-        self.send_to_master('C')        
-        '''
-        # once received, remove inactive slaves
-        for s_name in slave_names:
-            # if name is not in active slaves list: remove its groupbox
-            if s_name in self.active_slaves:
-                # you can keep it
-                x=2
-            else:
-                # get rid of it
-                x=2
-        '''
+        self.send_to_master('C')
     
     def send_master_mode(self, newMode):
-        if newMode == master_modes[0]:  mode_value = 6
-        if newMode == master_modes[1]:  mode_value = 5
-        if newMode == master_modes[2]:  mode_value = 4
-        if newMode == master_modes[3]:  mode_value = 3
-        if newMode == master_modes[4]:  mode_value = 2
-        if newMode == master_modes[5]:  mode_value = 1
+        if newMode == config_olfa.master_modes[0]:  mode_value = 6
+        if newMode == config_olfa.master_modes[1]:  mode_value = 5
+        if newMode == config_olfa.master_modes[2]:  mode_value = 4
+        if newMode == config_olfa.master_modes[3]:  mode_value = 3
+        if newMode == config_olfa.master_modes[4]:  mode_value = 2
+        if newMode == config_olfa.master_modes[5]:  mode_value = 1
         
         m_mode_string = 'MM_mode_' + str(mode_value)
         self.send_to_master(m_mode_string)
