@@ -258,6 +258,9 @@ class mainWindow(QMainWindow):
             self.program_selection_groupbox.setEnabled(True)
             self.program_selection_combo.clear()
             self.program_selection_combo.addItems(programs_orig)
+            print( self.olfactometer.mfc1.mfc_capacity_set)
+            self.olfactometer.mfc1.mfc_capacity_set.setValue(100)
+       
 
         else:
             self.mainLayout.removeWidget(self.olfactometer)
@@ -380,7 +383,8 @@ class mainWindow(QMainWindow):
             # close vial
             self.olfactometer.olfa_device._set_valveset(vial_number,valvestate=0,suppress_errors=False)
             print("Closing vial")
-            time.sleep(2)
+           
+            time.sleep(iti_time)
             # get list of values from pid
             list_of_pid_values = []
             # tell pid to stop adding values to the list
@@ -396,8 +400,7 @@ class mainWindow(QMainWindow):
             with open(self.datafile_dir,'a',newline='') as f:
                 writer = csv.writer(f,delimiter=',')
                 writer.writerow(write_to_file)
-                
-            time.sleep(iti_time)
+            
             
             
             #string_to_write_to_file = vial_number + ',' + 
@@ -512,6 +515,7 @@ if __name__ == "__main__":
 
     logger = logging.getLogger(name='main')
     logger.setLevel(logging.DEBUG)
+    if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
     console_handler = utils.create_console_handler()
     file_handler = utils.create_file_handler(main_datafile_directory)
     logger.addHandler(console_handler)

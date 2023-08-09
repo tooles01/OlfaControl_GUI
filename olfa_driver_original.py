@@ -22,8 +22,7 @@ console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
         
 
-class Vial(QGroupBox):
-
+class Vial(QHBoxLayout):
     def __init__(self, parent, vialNum):
         super().__init__()
         self.parent = parent
@@ -31,8 +30,6 @@ class Vial(QGroupBox):
         self.teensy = self.parent.olfa_device
 
         self.generate_stuff()
-
-        self.setLayout(self.layout)
         self.vial_button.setMaximumWidth(60)
         
     
@@ -63,11 +60,11 @@ class Vial(QGroupBox):
         self.vial_flow_list.setText(vial_default_flow_values)
         
         self.layout = QHBoxLayout()
-        self.layout.addWidget(self.vial_checkbox)
-        self.layout.addWidget(self.vial_button)
-        self.layout.addWidget(self.vial_odor)
-        self.layout.addWidget(self.vial_concentration)
-        self.layout.addWidget(self.vial_flow_list)
+        self.addWidget(self.vial_checkbox)
+        self.addWidget(self.vial_button)
+        self.addWidget(self.vial_odor)
+        self.addWidget(self.vial_concentration)
+        self.addWidget(self.vial_flow_list)
 
     # ACTIONS
     def vial_button_toggled(self, checked):
@@ -361,14 +358,7 @@ class olfactometer_window(QGroupBox):
         self.olfa_device = TeensyOlfa()
         self.generate_ui()
         #self.MFC_settings, self.COM_settings_mfc, flow_units='SCCM', setflow=-1
-    
-    #def make_logger(self):
-    
-    #    logger = logging.getLogger(name='main')
-    #    logger.setLevel(logging.DEBUG)
-    #    console_handler = utils.create_console_handler()
-    #    logger.addHandler(console_handler)
-    
+        
     def setDefaultParams(self):
         self.COM_settings_mfc = dict()
         self.COM_settings_mfc['baudrate'] = 115200
@@ -400,11 +390,7 @@ class olfactometer_window(QGroupBox):
         self.setLayout(mainLayout)
         mainLayout.addWidget(self.connect_box,0,0,1,1)
         mainLayout.addLayout(self.mfcs_layout,0,1,1,1)
-        #mainLayout.addWidget(self.mfcs_groupbox,0,1,1,1)
         mainLayout.addWidget(self.vials_groupbox,1,0,1,2)
-        #mainLayout.addWidget(self.connect_box)
-        #mainLayout.addWidget(self.mfcs_groupbox)
-        #mainLayout.addWidget(self.vials_groupbox)
         
     def create_connect_box(self):
         self.connect_box = QGroupBox("Connect to Teensy")
@@ -427,7 +413,6 @@ class olfactometer_window(QGroupBox):
         self.mfcs_layout = QVBoxLayout()
         self.mfcs_layout.addWidget(self.mfc1)
         self.mfcs_layout.addWidget(self.mfc2)
-        #self.mfcs_groupbox.setLayout(self.mfcs_layout)
 
 #        drlg.olgsz-frb
 
@@ -443,7 +428,8 @@ class olfactometer_window(QGroupBox):
         self.vials_layout = QVBoxLayout()
         for v in range(number_of_vials):
             #print(self.vials[v])
-            self.vials_layout.addWidget(self.vials[v])
+            self.vials_layout.addLayout(self.vials[v])
+
 
         self.vials_groupbox.setLayout(self.vials_layout)
 

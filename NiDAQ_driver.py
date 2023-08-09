@@ -40,7 +40,9 @@ class worker(QObject):
     def read_from_ni_device(self):
         channelIWant = self.devName + '/' + self.analogChan
         t = nidaqmx.Task()      # create a task
-        t.ai_channels.add_ai_voltage_chan(channelIWant) # add analog input channel to this task
+        t.ai_channels.add_ai_voltage_chan(channelIWant, min_val=- 10.0, max_val=10.0) # add analog input channel to this task
+        #print(t.ai_channels.ai_max)
+        #t.ai_channels.ai_max = 10
         while self.readTheStuff == True:
             value = t.read(1)
             value = value[0]
