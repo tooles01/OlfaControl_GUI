@@ -23,6 +23,9 @@ cal_table_file_tyoe = '.txt'
 
 ##############################
 # # DEFAULT VALUES
+# TODO: find a way to ensure this matches what the Arduino has
+# (or have the slave send back what it has stored, then update the GUI)
+def_timebt = '100'
 def_setpoint = '50'
 def_open_duration = '5'
 default_cal_table = 'Honeywell_3100V'

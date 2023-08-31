@@ -1,5 +1,4 @@
 import sys, os, logging, csv, copy
-#import time
 from PyQt5 import QtCore, QtSerialPort
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import *
@@ -345,6 +344,7 @@ class olfactometer_window(QGroupBox):
         self.sccm2Ard_dicts = {}
         self.ard2Sccm_dicts = {}
         self.active_slaves = []
+        self.def_timebt = config_olfa.def_timebt
         
         self.flow_cal_dir = utils.find_olfaControl_directory() + '\\calibration_tables' # NOTE: this takes a super long time
         if os.path.exists(self.flow_cal_dir):
@@ -451,7 +451,7 @@ class olfactometer_window(QGroupBox):
         self.connect_box = QGroupBox("Connect to master Arduino")
         self.port_widget = QComboBox(currentIndexChanged=self.port_changed)
         self.connect_btn = QPushButton(checkable=True,toggled=self.toggled_connect)
-        self.refresh_btn = QPushButton(text="Refresh",clicked=self.get_ports,toolTip='refresh list of available com ports')
+        self.refresh_btn = QPushButton(text="Refresh",clicked=self.get_ports,toolTip='Refresh list of available COM ports')
         self.get_ports()
         connect_box_layout = QHBoxLayout()
         connect_box_layout.addWidget(QLabel(text='Select Port:',toolTip='Select COM port for master Arduino'))
@@ -463,32 +463,44 @@ class olfactometer_window(QGroupBox):
     def create_master_groupbox(self):
         self.master_groupbox = QGroupBox('Master Settings')
 
-        self.m_check_addr_btn = QPushButton(text="Get Slave Addresses",clicked=lambda: self.get_slave_addresses())
+        self.m_check_addr_btn = QPushButton(text="Get Slave Addresses")
+        self.m_check_addr_btn.clicked.connect(self.get_slave_addresses)
 
-        self.m_mode_dropdown = QComboBox()
-        self.m_mode_dropdown.addItems(config_olfa.master_modes)
-        self.m_mode_btn = QPushButton(text="Send", clicked=lambda: self.send_master_mode(self.m_mode_dropdown.currentText()))
+        self.m_mode_lbl = QLabel("Logging:")
+        self.m_mode_wid = QComboBox()
+        self.m_mode_wid.addItems(config_olfa.master_modes)
+        self.m_mode_btn = QPushButton(text="Send")
+        self.m_mode_lbl.setToolTip("Change master logging level")
+        self.m_mode_wid.setToolTip("Change master logging level")
+        self.m_mode_btn.clicked.connect(lambda: self.send_master_mode(self.m_mode_wid.currentText()))
         m_mode_layout = QHBoxLayout()
         m_mode_layout.addWidget(self.m_check_addr_btn)
-        m_mode_layout.addWidget(QLabel(text='Change master logging mode:'))
-        m_mode_layout.addWidget(self.m_mode_dropdown)
+        m_mode_layout.addWidget(self.m_mode_lbl)
+        m_mode_layout.addWidget(self.m_mode_wid)
         m_mode_layout.addWidget(self.m_mode_btn)
 
-        self.m_timebtreqs = QLineEdit(text='100',#self.defTimebt,
-            returnPressed=lambda:self.send_to_master('MM_timebt_' + self.m_timebtreqs.text()))
-        self.m_timebtreqs_btn = QPushButton(text="Send", clicked=lambda:self.send_to_master('MM_timebt_' + self.m_timebtreqs.text()))
+        self.m_timebtreqs_lbl = QLabel("Time b/t reqs (ms):")
+        self.m_timebtreqs_wid = QLineEdit(text=self.def_timebt)
+        self.m_timebtreqs_btn = QPushButton(text="Send")
+        self.m_timebtreqs_lbl.setToolTip("Duration between requests to slave Arduinos \n(i.e. how frequently to ask for flow values)")
+        self.m_timebtreqs_wid.setToolTip("Duration between requests to slave Arduinos \n(i.e. how frequently to ask for flow values)")
+        self.m_timebtreqs_wid.returnPressed.connect(lambda: self.send_to_master('MM_timebt_' + self.m_timebtreqs_wid.text()))
+        self.m_timebtreqs_btn.clicked.connect(lambda: self.send_to_master('MM_timebt_' + self.m_timebtreqs_wid.text()))
         timebt_layout = QHBoxLayout()
-        timebt_layout.addWidget(QLabel(text="Time b/t requests to slave (ms):"))
-        timebt_layout.addWidget(self.m_timebtreqs)
+        timebt_layout.addWidget(self.m_timebtreqs_lbl)
+        timebt_layout.addWidget(self.m_timebtreqs_wid)
         timebt_layout.addWidget(self.m_timebtreqs_btn)
 
-        self.m_manualcmd = QLineEdit(text=config_olfa.def_manual_cmd,
-            returnPressed=lambda: self.send_to_master(self.m_manualcmd.text()))
-        self.m_manualcmd_btn = QPushButton(text="Send",
-            clicked=lambda: self.send_to_master(self.m_manualcmd.text()))
+        self.m_manualcmd_lbl = QLabel("Manual:")
+        self.m_manualcmd_wid = QLineEdit(text=config_olfa.def_manual_cmd)
+        self.m_manualcmd_btn = QPushButton(text="Send")
+        self.m_manualcmd_lbl.setToolTip("Manually send command to master Arduino")
+        self.m_manualcmd_wid.setToolTip("Manually send command to master Arduino")
+        self.m_manualcmd_wid.returnPressed.connect(lambda: self.send_to_master(self.m_manualcmd_wid.text()))
+        self.m_manualcmd_btn.clicked.connect(lambda: self.send_to_master(self.m_manualcmd_wid.text()))
         manualcmd_layout = QHBoxLayout()
-        manualcmd_layout.addWidget(QLabel(text="Send manual command:"))
-        manualcmd_layout.addWidget(self.m_manualcmd)
+        manualcmd_layout.addWidget(self.m_manualcmd_lbl)
+        manualcmd_layout.addWidget(self.m_manualcmd_wid)
         manualcmd_layout.addWidget(self.m_manualcmd_btn)
         
 
@@ -497,9 +509,9 @@ class olfactometer_window(QGroupBox):
         layout.addLayout(timebt_layout)
         layout.addLayout(manualcmd_layout)
         self.master_groupbox.setLayout(layout)
+        #self.master_groupbox.setMinimumWidth(400)
         
     def create_settings_groupbox(self):
-        # other settings
         self.settings_groupbox = QGroupBox('Other Settings')
         
         # select directory where flow calibration tables are stored
