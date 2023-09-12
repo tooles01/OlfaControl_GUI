@@ -603,6 +603,11 @@ class olfactometer_window(QGroupBox):
         else:
             self.port_widget.addItem(config_olfa.noPort_msg)
         
+        # set toolTip for each item
+        for port_list_idx in range(0,self.port_widget.count()):
+            this_port = self.port_widget.itemText(port_list_idx)
+            self.port_widget.setItemData(port_list_idx,this_port,QtCore.Qt.ToolTipRole)
+        
         # if an Arduino is connected, set the widget default value to that
         for port_list_idx in range(0,self.port_widget.count()):
             this_port = self.port_widget.itemText(port_list_idx)
@@ -770,15 +775,22 @@ class olfactometer_window(QGroupBox):
                                 # write it to the setpoint read widget
                                 v.setpoint_read_widget.display(round(flowVal_sccm))
                                 
-                                # write it to the setpoint read widget in the details box
+                                # write it to the setpoint read widget (in the vial details box)
                                 v.vial_details_window.setpoint_read_widget.display(round(flowVal_sccm))
                                 
-                                # if calibration is on: send it to the vial details popup
+                                # if calibration is on: write it to the vial details popup
                                 if v.vial_details_window.calibration_on == True:
-                                    #v.vial_details_window.read_value(flowVal)
-                                    
                                     # append it to the current list of values
                                     v.vial_details_window.serial_values.append(int(flowVal))
+                                    v.vial_details_window.collected_values_window.append(str(flowVal))
+                                    '''
+                                    # debugging 'ValueError' in vial popup
+                                    current_length = len(v.vial_details_window.serial_values)
+                                    if current_length == 0:
+                                        logger.debug('serial values is empty')
+                                    else:
+                                        logger.debug(v.vial_details_window.serial_values[current_length-1])
+                                    '''
             
             except UnicodeDecodeError:
                 logger.warning("Serial read error")
