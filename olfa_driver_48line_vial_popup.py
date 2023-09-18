@@ -33,7 +33,7 @@ logger.addHandler(console_handler)
 
 
 mfc_capacity = '200'            # flow sensor max flow
-def_calibration_duration = '3'  # calibration per flow rate
+def_calibration_duration = '15' # calibration per flow rate
 
 class calibration_worker(QObject):
     def __init__(self):
@@ -250,22 +250,53 @@ class VialDetailsPopup(QWidget):
     def create_man_control_box(self):
         self.db_manual_control_box = QGroupBox('Manual Controls')
         
-        self.db_ctrl_toggle_btn = QPushButton(text="Open prop valve",checkable=True)
+        self.db_ctrl_toggle_btn = QPushButton(text="Set prop valve",checkable=True)
+        self.db_ctrl_set_wid = QLineEdit(text='255',maximumWidth=40)        # Prop valve value set
         self.db_vlve_toggle_btn = QPushButton(text="Open Iso Valve",checkable=True)
         self.db_PID_toggle_btn = QPushButton(text="Turn flow control off",checkable=True)
         self.db_PID_toggle_btn.setMinimumWidth(self.db_PID_toggle_btn.sizeHint().width())   # just for sizing
-        self.db_PID_toggle_btn.setText('Turn flow control on')                              # just for sizing
+        # Iso valve timer
+        self.db_vlve_timer = QTimer()
+        self.db_vlve_timer.setTimerType(0)  # set to millisecond accuracy
+        self.db_vlve_timer.timeout.connect(self.show_vlve_duration_time)
+        self.db_vlve_timer_lbl = QLabel('00.00')
+        
         self.db_ctrl_toggle_btn.toggled.connect(self.prop_valve_toggled)
+        self.db_ctrl_set_wid.returnPressed.connect(self.prop_valve_clicked)
         self.db_vlve_toggle_btn.toggled.connect(self.iso_valve_toggled)
         self.db_PID_toggle_btn.toggled.connect(self.flow_control_toggled)
         
-        manual_debug_layout = QVBoxLayout()
-        manual_debug_layout.addWidget(self.db_ctrl_toggle_btn)
-        manual_debug_layout.addWidget(self.db_vlve_toggle_btn)
-        manual_debug_layout.addWidget(self.db_PID_toggle_btn)
+        manual_debug_layout = QGridLayout()
+        manual_debug_layout.addWidget(self.db_ctrl_toggle_btn,0,0,1,1)
+        manual_debug_layout.addWidget(self.db_ctrl_set_wid,0,1,1,1)
+        manual_debug_layout.addWidget(self.db_vlve_toggle_btn,1,0,1,1)
+        manual_debug_layout.addWidget(self.db_vlve_timer_lbl,1,1,1,1)
+        manual_debug_layout.addWidget(self.db_PID_toggle_btn,2,0,1,1)
         self.db_manual_control_box.setLayout(manual_debug_layout)
         
         self.db_manual_control_box.setEnabled(False)     # disable until manual control options toggled
+    
+    # ISO VALVE TIMER
+    def start_vlve_duration_timer(self):
+        duration = 15   # max time iso valve can be open
+        self.vlve_open_start_time = datetime.now()
+        self.vlve_open_full_duration = timedelta(0,int(duration))
+        self.db_vlve_timer.start(int(duration))
+
+    def show_vlve_duration_time(self):
+        current_time = datetime.now()
+        current_vlve_dur = current_time - self.vlve_open_start_time
+        if current_vlve_dur >= self.vlve_open_full_duration:
+            self.end_vlve_duration_timer()
+
+        vlve_dur_display_value = str(current_vlve_dur)
+        vlve_dur_display_value = vlve_dur_display_value[5:]
+        vlve_dur_display_value = vlve_dur_display_value[:-4]    # leave 2 sigits after the decimal point
+        self.db_vlve_timer_lbl.setText(vlve_dur_display_value)
+
+    def end_vlve_duration_timer(self):
+        self.db_vlve_timer.stop()
+        self.db_vlve_toggle_btn.setChecked(False)
     
     def create_calibration_box(self):
         self.db_cal_box = QGroupBox('Flow Sensor Calibration')
@@ -287,11 +318,12 @@ class VialDetailsPopup(QWidget):
         
         # Widget for duration of calibration (& timer for visual)
         self.calibration_duration_lbl = QLabel('Duration (s):')
+        self.calibration_duration_lbl.setToolTip('Max 99 seconds')
         self.calibration_duration_lineedit = QLineEdit(text=def_calibration_duration)
         self.calibration_duration_timer = QTimer()
         self.calibration_duration_timer.setTimerType(0)     # set to millisecond accuracy
         self.calibration_duration_timer.timeout.connect(self.show_cal_duration_time)
-        self.calibration_duration_label = QLabel('00.000')
+        self.calibration_duration_label = QLabel('000.00')
         layout_cal_duration = QHBoxLayout()
         layout_cal_duration.addWidget(self.calibration_duration_lbl)
         layout_cal_duration.addWidget(self.calibration_duration_lineedit)
@@ -464,12 +496,22 @@ class VialDetailsPopup(QWidget):
             strToSend = 'S_OF_' + self.full_vialNum
             self.parent.parent().parent.send_to_master(strToSend)
     
+    def prop_valve_clicked(self):
+        if self.db_ctrl_toggle_btn.isChecked() == False:
+            self.db_ctrl_toggle_btn.setChecked(True)
+        else:
+            ctrl_value = self.db_ctrl_set_wid.text()
+            strToSend = 'S_PV_' + str(ctrl_value) + '_' + self.full_vialNum
+            self.parent.parent().parent.send_to_master(strToSend)
+            logger.debug('proportional valve manually set to ' + ctrl_value)
+    
     def prop_valve_toggled(self, checked):
         # Open proportional valve
         if checked:
-            logger.debug('proportional valve manually opened')
+            ctrl_value = self.db_ctrl_set_wid.text()
+            logger.debug('proportional valve manually set to ' + ctrl_value)
             self.db_ctrl_toggle_btn.setText('Close prop valve')
-            strToSend = 'S_OC_' + self.full_vialNum
+            strToSend = 'S_PV_' + str(ctrl_value) + '_' + self.full_vialNum
             self.parent.parent().parent.send_to_master(strToSend)
         # Close proportional valve
         else:
@@ -485,6 +527,7 @@ class VialDetailsPopup(QWidget):
             self.db_vlve_toggle_btn.setText("Close Iso Valve")
             strToSend = 'S_OI_' + self.full_vialNum
             self.parent.parent().parent.send_to_master(strToSend)
+            self.start_vlve_duration_timer()
         # Close isolation valve
         else:
             logger.debug('isolation valve manually closed')
@@ -492,7 +535,7 @@ class VialDetailsPopup(QWidget):
             strToSend = 'S_CI_' + self.full_vialNum
             self.parent.parent().parent.send_to_master(strToSend)    
     
-
+    
     # MANUAL CONTROL SETTINGS TOGGLED
     def toggled_manual_settings(self,checked):
         if checked:
@@ -519,14 +562,17 @@ class VialDetailsPopup(QWidget):
             self.end_cal_duration_timer()
         
         cal_dur_display_value = str(current_cal_dur)
-        cal_dur_display_value = cal_dur_display_value[5:]
-        cal_dur_display_value = cal_dur_display_value[:-3]
+        cal_dur_display_value = cal_dur_display_value[5:]   # remove beginning digits, 2 values before decimal point
+        cal_dur_display_value = cal_dur_display_value[:-3]  # leave 3 digits after the decimal point
         self.calibration_duration_label.setText(cal_dur_display_value)
     
     def end_cal_duration_timer(self):
         self.calibration_duration_timer.stop()
         self.calibration_on = False
-        self.parent.olfactometer_parent_object.send_to_master('S_CC_' + self.full_vialNum)
+
+        # Close proportional valve
+        #self.parent.olfactometer_parent_object.send_to_master('S_CC_' + self.full_vialNum)
+        
         self.start_calibration_btn.setChecked(False)
         self.analyze_cal_session()
     
@@ -541,7 +587,7 @@ class VialDetailsPopup(QWidget):
             self.cal_file_name_wid.setEnabled(False)
             self.db_std_widgets_box.setEnabled(False)
             self.db_setpoint_groupbox.setEnabled(False)
-            self.db_flow_control_box.setEnabled(False)
+            #self.db_flow_control_box.setEnabled(False)
             
             # Get calibration file name & directory
             self.new_cal_file_name = self.cal_file_name_wid.text()
@@ -674,8 +720,7 @@ class VialDetailsPopup(QWidget):
             self.cal_results_min_wid.setText(str(flow_min))
             self.cal_results_max_wid.setText(str(flow_max))
             self.cal_results_med_wid.setText(str(flowVal_median))
-            self.cal_results_mean_wid.setText(str(np.mean(self.serial_values)))
-            logger.info(str(len(self.serial_values)) + ' values collected over ' + self.this_cal_duration + ' seconds')
+            self.cal_results_mean_wid.setText(str(round(np.mean(self.serial_values),1)))
             logger.info('range of int values: ' + str(flow_range))
             
             # Put median value in the widget so the user can decide whether to keep it or not
@@ -715,8 +760,11 @@ class VialDetailsPopup(QWidget):
         
         # tell user what to do
         self.instructions_window.clear()
-        str_to_display = '--> Completed calibration at ' + str(self.this_cal_sccm_value) + ' sccm'
-        self.instructions_window.append(str_to_display)
+        try:
+            str_to_display = '--> Completed calibration at ' + str(self.this_cal_sccm_value) + ' sccm'
+            self.instructions_window.append(str_to_display)
+        except AttributeError:
+            pass
         self.instructions_window.append('-----------------------')
         self.instructions_window.append('--> Enter new MFC value')
         self.instructions_window.append('--> Manually set MFC value')
