@@ -29,7 +29,7 @@ class Vial(QGroupBox):
         self.full_vialNum = self.slaveName + self.vialNum
         self.olfactometer_parent_object = parent.parent
         
-        self.setpoint = config_olfa.def_setpoint
+        self.setpoint = int(config_olfa.def_setpoint)
         self.open_duration = config_olfa.def_open_duration
         self.cal_table = config_olfa.default_cal_table
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
@@ -237,11 +237,19 @@ class Vial(QGroupBox):
             btn_to_check.setToolTip('Stop reading flow values')
             strToSend = 'MS_debug_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
+            if self.read_flow_vals_btn.isChecked() == False:
+                self.read_flow_vals_btn.setChecked(True)
+            if self.vial_details_window.db_readflow_btn.isChecked() == False:
+                self.vial_details_window.db_readflow_btn.setChecked(True)
         else:
             btn_to_check.setText("Read flow")
             btn_to_check.setToolTip('Start reading flow values')
             strToSend = 'MS_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
+            if self.read_flow_vals_btn.isChecked() == True:
+                self.read_flow_vals_btn.setChecked(False)
+            if self.vial_details_window.db_readflow_btn.isChecked() == True:
+                self.vial_details_window.db_readflow_btn.setChecked(False)
     
     def vial_open_toggled(self, checked):
         if checked:
@@ -392,6 +400,8 @@ class olfactometer_window(QGroupBox):
                         try:
                             thisfile_sccm2Ard_dict[float(row['SCCM'])] = float(row['int'])
                             thisfile_ard2Sccm_dict[float(row['int'])] = float(row['SCCM'])
+                        except TypeError:
+                            pass
                         except KeyError as err:
                             # clear dictionaries, stop trying to read this file
                             logger.warning('got a KeyError: %s',err)
@@ -769,7 +779,11 @@ class olfactometer_window(QGroupBox):
                                 flowVal_sccm = utils_olfa_48line.convertToSCCM(flowVal_raw,v.intToSccm_dict)
                                 
                                 # write it to the vial details box
-                                dataStr = str(flowVal) + '\t' + str(flowVal_sccm) + '\t' + str(ctrlVal)
+                                flowVal_sccm_str = str(flowVal_sccm)
+                                if len(str(flowVal_sccm)) < 5:
+                                    if len(str(flowVal_sccm)) == 4: flowVal_sccm_str = '0' + str(flowVal_sccm)
+                                    if len(str(flowVal_sccm)) == 3: flowVal_sccm_str = '00' + str(flowVal_sccm)
+                                dataStr = str(flowVal) + '\t' + flowVal_sccm_str + '\t' + str(ctrlVal)
                                 v.vial_details_window.data_receive_box.append(dataStr)
                                 
                                 # write it to the setpoint read widget
