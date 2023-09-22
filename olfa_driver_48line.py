@@ -237,20 +237,25 @@ class Vial(QGroupBox):
             btn_to_check.setToolTip('Stop reading flow values')
             strToSend = 'MS_debug_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
+            '''
             if self.read_flow_vals_btn.isChecked() == False:
                 self.read_flow_vals_btn.setChecked(True)
             if self.vial_details_window.db_readflow_btn.isChecked() == False:
                 self.vial_details_window.db_readflow_btn.setChecked(True)
+            '''
+            
         else:
             btn_to_check.setText("Read flow")
             btn_to_check.setToolTip('Start reading flow values')
             strToSend = 'MS_' + self.full_vialNum
             self.olfactometer_parent_object.send_to_master(strToSend)
+            '''
             if self.read_flow_vals_btn.isChecked() == True:
                 self.read_flow_vals_btn.setChecked(False)
             if self.vial_details_window.db_readflow_btn.isChecked() == True:
                 self.vial_details_window.db_readflow_btn.setChecked(False)
-    
+            '''
+            
     def vial_open_toggled(self, checked):
         if checked:
             self.valve_open_btn.setText('Close ' + self.full_vialNum)
