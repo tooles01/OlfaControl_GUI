@@ -533,7 +533,8 @@ class VialDetailsPopup(QWidget):
             logger.debug('isolation valve manually closed')
             self.db_vlve_toggle_btn.setText("Open Iso Valve")
             strToSend = 'S_CI_' + self.full_vialNum
-            self.parent.parent().parent.send_to_master(strToSend)    
+            self.parent.parent().parent.send_to_master(strToSend)
+            self.db_vlve_timer.stop()
     
     
     # MANUAL CONTROL SETTINGS TOGGLED
@@ -667,6 +668,7 @@ class VialDetailsPopup(QWidget):
             # Fix the GUI
             self.create_new_cal_file_btn.setEnabled(False)
             self.start_calibration_btn.setText('End early')
+            self.start_calibration_btn.setToolTip('Stop collecting flow values')
             
             # Check that olfactometer is connected
             if self.parent.olfactometer_parent_object.connect_btn.isChecked() == False:
@@ -700,6 +702,7 @@ class VialDetailsPopup(QWidget):
         
         else:
             self.start_calibration_btn.setText('Start')
+            self.start_calibration_btn.setToolTip('Collect flow values for x seconds')
             self.create_new_cal_file_btn.setEnabled(True)
             
             # Stop the timer
