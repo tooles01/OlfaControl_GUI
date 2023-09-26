@@ -32,23 +32,40 @@ f.pid_width = 1;
 f.x_lim = [];
 f.calibration_value = [];
 
+%% vial colors
+f.colors{1} = '#0072BD';
+f.colors{2} = '#7E2F8E';
+
+f.colors{3} = '#A2142F';
+f.colors{4} = '#D95319';
+f.colors{5} = '#0072BD';
+f.colors{6} = '#A2142F';
+f.colors{7} = '#D95319';
+f.colors{8} = '#7E2F8E';
+f.colors{9} = '#7E2F8E';
+
+% blue for E1
+E1_flow = [0 0.4470 0.7410];
+% orange for E1 ctrl
+E1_ctrl = [0.8500 0.3250 0.0980];
+
+this_color = [];
+
 %% enter directory for this computer
-a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-%a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+%a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
 
 a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
 
-% make sure OlfaControlGUI is on matlab path
-addpath(genpath(a_dir_OlfaControlGUI));
+addpath(genpath(a_dir_OlfaControlGUI));     % make sure OlfaControlGUI is on matlab path
 %% select shit to plot
 plot_opts = struct();
 
 % plot olfa as sccm or int
-plot_opts.plot_sccm = 'no';
-% **if datafile does not have calibration tables listed in header, plot will be in ints regardless
+plot_opts.plot_sccm = 'yes';    % **if datafile does not have calibration tables listed in header, plot will be in ints regardless
 
 % ctrl options:
-plot_opts.ctrl = 'no';
+plot_opts.ctrl = 'yes';
 plot_opts.ctrl_as_voltage = 'no';
 
 %% enter data file name
@@ -63,7 +80,6 @@ plot_opts.ctrl_as_voltage = 'no';
 %a_thisfile_name = '2022-09-07_datafile_05';
 %}
 %a_thisfile_name = '2022-09-06_datafile_11'; plot_opts.ctrl = 'yes';   f.position = [549 166 1353 684];
-
 %a_thisfile_name = '2022-09-09_datafile_00'; a_this_note = 'A2 at 100sccm'; f.pid_ylims = [-.1 2.5];
 %a_thisfile_name = '2022-09-09_datafile_01'; a_this_note = 'A6 at 100sccm'; f.pid_ylims = [-.5 10];
 %_thisfile_name = '2022-09-09_datafile_02'; a_this_note = 'A6- Kp at .05, .04, .03, .01, .00, .08';
@@ -73,20 +89,18 @@ plot_opts.ctrl_as_voltage = 'no';
 %a_thisfile_name = '2022-09-09_datafile_06'; a_this_note = 'A6- with A2 vial, Kp at .10, .15, .05';
 %a_thisfile_name = '2022-09-09_datafile_07'; a_this_note = 'A6- with A2 vial, Kp at .05, .04, .03, .02, .01';
 %a_thisfile_name = '2022-09-09_datafile_08'; a_this_note = 'A6- Kp at .05, Ki at .0001, .0005, .0010';
-
 % additive/spt char
 %a_thisfile_name = '2022-09-09_datafile_09'; a_this_note = 'A2 90cc, A6 10cc';
 %a_thisfile_name = '2022-09-09_datafile_10'; a_this_note = 'A2 50cc, A6 50cc';
 %a_thisfile_name = '2022-09-09_datafile_11'; a_this_note = 'A2 50cc, A6 50cc';%   f.pid_ylims = [-.1 6];
 %a_thisfile_name = '2022-09-09_datafile_12'; a_this_note = 'A2 & A6 additive'; f.pid_ylims = [-.1 7];
 %a_thisfile_name = '2022-09-09_datafile_13'; a_this_note = 'A2 setpoint char'; f.pid_ylims = [-.1 7];
-a_thisfile_name = '2022-09-09_datafile_13'; a_this_note = 'A2 setpoint char'; f.pid_ylims = [-.01 .6]; f.flow_ylims = [-1 110];
+%a_thisfile_name = '2022-09-09_datafile_13'; a_this_note = 'A2 setpoint char'; f.pid_ylims = [-.01 .6]; f.flow_ylims = [-1 110];
 % view delayed PID response
 % 40cc
 %f.x_lim = [197.758 247.4]; f.pid_ylims = [-.01 .35]; f.flow_ylims = [-1 50]; a_this_note = 'A2 at 40 sccm';
 % 50cc
 %f.x_lim = [250 320];
-
 %a_thisfile_name = '2022-09-09_datafile_14'; a_this_note = 'A6 setpoint char'; f.pid_ylims = [-.1 7];
 %a_thisfile_name = '2022-09-09_datafile_15'; a_this_note = 'A6 setpoint char'; %f.pid_ylims = [-.1 7]; plot_opts.plot_sccm = 'yes';
 % flow calibration
@@ -102,11 +116,43 @@ a_thisfile_name = '2022-09-09_datafile_13'; a_this_note = 'A2 setpoint char'; f.
 %a_this_note = '90 sccm'; f.flow_ylims = [502 513]; f.x_lim = ([280 815]); f.calibration_value = 507.83;
 f.position = [549 166 1353 684];
 %}
+%{
+%a_thisfile_name = '2023-09-15_datafile_00';
+%a_thisfile_name = '2023-09-15_datafile_01';
+%a_thisfile_name = '2023-09-15_datafile_02';
+%a_thisfile_name = '2023-09-15_datafile_03'; f.flow_ylims = [-5 100];
+%a_thisfile_name = '2023-09-15_datafile_04';% f.flow_ylims = [-5 100];
+%a_thisfile_name = '2023-09-15_datafile_05';
+%a_thisfile_name = '2023-09-15_datafile_06';
+%a_thisfile_name = '2023-09-15_datafile_07';
+%a_thisfile_name = '2023-09-15_datafile_08';
+%a_thisfile_name = '2023-09-15_datafile_09';
+%a_thisfile_name = '2023-09-15_datafile_10';
+%a_thisfile_name = '2023-09-15_datafile_11';
+%a_thisfile_name = '2023-09-15_datafile_12';
+%a_thisfile_name = '2023-09-15_datafile_13';
+%a_thisfile_name = '2023-09-15_datafile_14';
+%a_thisfile_name = '2023-09-15_datafile_15';
+%a_thisfile_name = '2023-09-15_datafile_16';
+%}
 
-plot_opts.plot_sccm = 'yes';
+%a_thisfile_name = '2023-09-18_datafile_07';
+%a_thisfile_name = '2023-09-18_datafile_08';
+%a_thisfile_name = '2023-09-19_datafile_07';
+%a_thisfile_name = '2023-09-21_datafile_00';
+%a_thisfile_name = '2023-09-21_datafile_03'; plot_opts.ctrl = 'no';
+%a_thisfile_name = '2023-09-21_datafile_04'; plot_opts.ctrl = 'no';
+%a_thisfile_name = '2023-09-21_datafile_05'; plot_opts.ctrl = 'no';
+%a_thisfile_name = '2023-09-21_datafile_07';
+%a_thisfile_name = '2023-09-21_datafile_08';
+%a_thisfile_name = '2023-09-21_datafile_09';
+%a_thisfile_name = '2023-09-21_datafile_10';
+%a_thisfile_name = '2023-09-21_datafile_11';
+%a_thisfile_name = '2023-09-21_datafile_01';% f.x_lim = [0 32];
+a_thisfile_name = '2023-09-26_datafile_00'; f.flow_ylims = [190 218]; plot_opts.plot_sccm = 'no';
+
 %f.flow_ylims = [-5 150];
 %f.pid_ylims = [-.1 7];
-%f.position = [549 166 1353 684];
 %f.position = [166 600 775 275];     % for OneNote
 f.position = [166 210 1300 600];    % for PowerPoint
 f.pid_width = 1.5;
@@ -189,6 +235,31 @@ try
     
     f1 = figure; f1.NumberTitle = 'off'; f1.Position = f.position; hold on;
     f1.Name = a_thisfile_name; title(figTitle)
+
+    % sccm lines for 2023-09-21_datafile_05
+    %{
+    yline1 = line([1.5 7.5],[50 50]);
+    yline2 = line([11 17.2],[70 70]);
+    yline3 = line([21.5 27.5],[100 100]);
+    yline4 = line([31 37],[20 20]);
+    yline1.LineStyle = '-.';
+    yline2.LineStyle = '-.';
+    yline3.LineStyle = '-.';
+    yline4.LineStyle = '-.';
+    yline1.LineWidth = 2;
+    yline2.LineWidth = 2;
+    yline3.LineWidth = 2;
+    yline4.LineWidth = 2;
+    yline1.Color = 'black';
+    yline2.Color = 'black';
+    yline3.Color = 'black';
+    yline4.Color = 'black';
+    set(get(get(yline1,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+    set(get(get(yline2,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+    set(get(get(yline3,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+    set(get(get(yline4,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+    %}
+    
     legend('Location','northwest');
     f1_ax = gca;
     
@@ -204,6 +275,11 @@ try
     %% plot: olfa flow
     % for each vial
     for i=1:length(d_olfa_flow)
+        if contains(d_olfa_flow(i).vial_num,'E1')
+            this_color = E1_flow;
+        else
+            this_color = f.colors{i};
+        end
         if strcmp(plot_opts.plot_sccm,'yes')
             if ~isempty(d_olfa_flow(i).cal_table_name)
                 % plot as sccm
@@ -212,11 +288,10 @@ try
                     p = plot(d_olfa_flow(i).flow.flow_sccm(:,1),d_olfa_flow(i).flow.flow_sccm(:,2));
                     p.LineWidth = f.flow_width;
                     p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
-                    if ~isempty(f.flow_ylims)
-                        ylim(f.flow_ylims)
-                    else
-                        ylim([-5 150])
-                    end
+                    if ~isempty(this_color); p.Color = this_color; end
+                    %p.Color = f.colors{i};
+                    if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
+                    else; ylim([-5 150]); end
                 end
             else
                 % plot as integer
@@ -225,25 +300,24 @@ try
                     p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
                     p.LineWidth = f.flow_width;
                     p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
-                    if ~isempty(f.flow_ylims)
-                        ylim(f.flow_ylims)
-                    else
-                        ylim([0 1024])
-                    end
+                    if ~isempty(this_color); p.Color = this_color; end
+                    %p.Color = f.colors{i};
+                    if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
+                    else; ylim([0 1024]); end
                 end
             end
         else
             % plot as integer
             if ~isempty(d_olfa_flow(i).flow.flow_int)
                 ylabel('Olfa flow (integer values)')
+                %p = scatter(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2),'filled');
                 p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
                 p.LineWidth = f.flow_width;
                 p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
-                if ~isempty(f.flow_ylims)
-                    ylim(f.flow_ylims)
-                else
-                    ylim([0 1024])
-                end
+                if ~isempty(this_color); p.Color = this_color; end
+                %p.Color = f.colors{i};
+                if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
+                else; ylim([0 1024]); end
             end
         end
     end
@@ -252,13 +326,17 @@ try
     if strcmp(plot_opts.ctrl,'yes')
         % for each vial
         for i=1:length(d_olfa_flow)
+            if contains(d_olfa_flow(i).vial_num,'E1'); this_color = E1_ctrl;
+            else; this_color = f.colors{i}; end
             if strcmp(plot_opts.ctrl_as_voltage,'yes')        
                 % plot as voltage
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_volt)
                     yyaxis right;
                     ylabel('Prop valve value (V)');
+                    ax = gca; ax.YColor = E1_ctrl;
                     p2 = plot(d_olfa_flow.ctrl.ctrl_volt(:,1),d_olfa_flow.ctrl.ctrl_volt(:,2));
                     p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
+                    if ~isempty(this_color); p2.Color = this_color; end
                     ylim([-0.1 5.1])
                 end
             else
@@ -266,8 +344,13 @@ try
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_int)
                     yyaxis right;
                     ylabel('Prop valve value (int)')
-                    p2 = plot(d_olfa_flow.ctrl.ctrl_int(:,1),d_olfa_flow.ctrl.ctrl_int(:,2));
+                    ax = gca; ax.YColor = E1_ctrl;
+                    %p2 = plot(d_olfa_flow.ctrl.ctrl_int(:,1),d_olfa_flow.ctrl.ctrl_int(:,2));
+                    xvals = d_olfa_flow(i).ctrl.ctrl_int(:,1);
+                    yvals = d_olfa_flow(i).ctrl.ctrl_int(:,2);
+                    p2 = plot(xvals,yvals);
                     p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
+                    if ~isempty(this_color); p2.Color = this_color; end
                     ylim([-5 260])
                 end
             end
