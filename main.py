@@ -2,13 +2,10 @@ import sys, os, logging, csv, copy, time, random
 import numpy.matlib as np
 from PyQt5 import sip
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot, QTimer
+from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 
-import utils
-import NiDAQ_driver, flow_sensor_driver
-import olfa_driver_original
-import olfa_driver_48line
-import utils_olfa_48line, program_additive_popup
+import NiDAQ_driver, flow_sensor_driver, olfa_driver_original, olfa_driver_48line
+import utils, utils_olfa_48line, program_additive_popup
 import config_main
 
 
@@ -16,6 +13,7 @@ programs_48line = ['setpoint characterization','additive']
 programs_orig = ['the program']
 
 current_date = utils.currentDate
+
 
 ##############################
 # CREATE LOGGER
@@ -410,7 +408,10 @@ class mainWindow(QMainWindow):
             self.p_vial_lbl = QLabel('vial:')
             self.p_vial_lbl.setToolTip('Vial to run program on')
             self.p_vial_wid = QComboBox()
-            self.p_vial_wid.addItems(config_main.vial_numbers)
+            vial_nums_int = list(range(1,config_main.vialsPerSlave+1))   # list of vial numbers
+            vial_nums_str = []
+            for item in vial_nums_int: vial_nums_str.append(str(item))
+            self.p_vial_wid.addItems(vial_nums_str)
             self.p_vial_wid.setToolTip('Vial to run program on')
             
             self.p_vial_select_layout = QHBoxLayout()
@@ -418,8 +419,7 @@ class mainWindow(QMainWindow):
             self.p_vial_select_layout.addWidget(self.p_slave_lbl)
             self.p_vial_select_layout.addWidget(self.p_slave_select_wid)
             self.p_vial_select_layout.addWidget(self.p_vial_lbl)
-            self.p_vial_select_layout.addWidget(self.p_vial_wid)
-            #self.active_slave_refresh()        # I don't think this is necessary -ST 2/14/2023
+            self.p_vial_select_layout.addWidget(self.p_vial_wid)            
             
             self.p_setpoints_wid = QLineEdit(toolTip='Enter setpoints separated by commas')
             self.p_setpoints_wid.setPlaceholderText('Setpoints to run (sccm)')
@@ -1116,11 +1116,11 @@ class mainWindow(QMainWindow):
                                 writer.writerow(write_this_row)
                                 
                                 if (self.olfactometer.active_slaves != []):
-                                    # write cal tables to data file (vials of all active slaves)
+                                    # list of all vials in active slaves
                                     self.vials_to_record_cal_table = []
                                     for s in self.olfactometer.active_slaves:
-                                        for v in range(8):
-                                            this_string = s + str(v+1)
+                                        for v in range(1,config_main.vialsPerSlave+1):
+                                            this_string = s + str(v)
                                             self.vials_to_record_cal_table.append(this_string)
                                             # TODO figure out if we should just write all of them (this can probably be figured out once u write multi line programs)
                                     
