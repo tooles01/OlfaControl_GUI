@@ -451,7 +451,7 @@ class VialDetailsPopup(QWidget):
     def text_changed(self):
         # text of the line edit has changed -> sets the new MFC value
         try:
-            value = float(self.setpoint_set_widget.text())
+            value = int(self.setpoint_set_widget.text())
             self.parent.set_flowrate(value)
             self.setpoint_slider.setValue(value)
         except ValueError as err:
