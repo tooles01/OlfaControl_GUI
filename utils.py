@@ -43,7 +43,7 @@ def create_console_handler():   # TODO: user sends log level to this function
     '''
     
     console_handler_level = logging.DEBUG
-    console_handler_formatter = logging.Formatter('%(name)-14s: %(levelname)-8s: %(message)s')
+    console_handler_formatter = logging.Formatter('%(asctime)s : %(name)-14s :%(levelname)-8s: %(message)s',datefmt='%H:%M:%S')
 
     console_handler = logging.StreamHandler()
     console_handler.setLevel(console_handler_level)
@@ -66,12 +66,6 @@ def find_olfaControl_directory():
     if not path_list:
         c_drive_git_path = os.path.expanduser('~\\Dropbox')
         path_list = glob.glob(c_drive_git_path + '/**/*' + str_to_find,recursive=True)
-        '''
-        #if not path_list:
-        #    # search in Dropbox again
-        #    c_drive_git_path = os.path.expanduser('~\\Dropbox (NYU Langone Health)')
-        #    path_list = glob.glob(c_drive_git_path + str_to_find,recursive=True)
-        '''
     
     # If not found: search Dropbox (NYU Langone Health)
     if not path_list:
@@ -118,7 +112,6 @@ def find_datafile_directory():
         os.mkdir(save_files_to)
     '''
     
-    #logger.info('saving result files to %s',save_files_to)
     return save_files_to
 
 
