@@ -408,7 +408,7 @@ class mainWindow(QMainWindow):
             self.p_vial_lbl = QLabel('vial:')
             self.p_vial_lbl.setToolTip('Vial to run program on')
             self.p_vial_wid = QComboBox()
-            vial_nums_int = list(range(1,config_main.vialsPerSlave+1))   # list of vial numbers
+            vial_nums_int = list(range(1,self.olfactometer.vialsPerSlave+1))   # list of vial numbers
             vial_nums_str = []
             for item in vial_nums_int: vial_nums_str.append(str(item))
             self.p_vial_wid.addItems(vial_nums_str)
@@ -1119,7 +1119,7 @@ class mainWindow(QMainWindow):
                                     # list of all vials in active slaves
                                     self.vials_to_record_cal_table = []
                                     for s in self.olfactometer.active_slaves:
-                                        for v in range(1,config_main.vialsPerSlave+1):
+                                        for v in range(1,self.olfactometer.vialsPerSlave+1):
                                             this_string = s + str(v)
                                             self.vials_to_record_cal_table.append(this_string)
                                             # TODO figure out if we should just write all of them (this can probably be figured out once u write multi line programs)

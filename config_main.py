@@ -4,11 +4,10 @@
 
 ##############################
 # PARAMETERS FOR 48-LINE OLFACTOMETER
-#vial_numbers = ['1','2','3','4','5','6','7','8']
 vialsPerSlave = 9
 no_active_slaves_warning = 'no active slaves pls connect olfa or something'
 
-default_pid_gain = '10x'        # write to datafile
+default_pid_gain = '1x'        # write to datafile
 
 # PROGRAMS
 default_dur_ON = 5
