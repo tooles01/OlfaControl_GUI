@@ -16,6 +16,12 @@ logger.setLevel(logging.DEBUG)
 if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
 console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
+
+# add file handler
+main_datafile_directory = utils.find_datafile_directory()
+if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory)   # if folder doesn't exist, make it
+file_handler = utils.create_file_handler(main_datafile_directory)
+logger.addHandler(file_handler)
 ##############################
 
 
@@ -228,6 +234,7 @@ class Vial(QGroupBox):
         if (value < 0) or (value > int(config_olfa.mfc_capacity)):
             if value > int(config_olfa.mfc_capacity):
                 logger.warning(str(value) + ' is greater than mfc capacity: try again')
+                # TODO set flowrate to mfc capacity (because slider is going to go to that anyways)
             if value < 0:
                 logger.warning('cannot enter negative flow rate: try again')        
     
@@ -261,6 +268,7 @@ class Vial(QGroupBox):
             self.valve_open_btn.setText('Close ' + self.full_vialNum)
             self.vial_details_window.db_valve_open_btn.setText('Close vial')
             self.open_vial(self.valve_dur_spinbox.value())
+            logger.info('Opening %s', self.full_vialNum)
         else:
             self.valve_open_btn.setText('Open ' + self.full_vialNum)
             self.vial_details_window.db_valve_open_btn.setText('Open vial')
@@ -358,6 +366,7 @@ class olfactometer_window(QGroupBox):
         self.ard2Sccm_dicts = {}
         self.active_slaves = []
         self.def_timebt = config_olfa.def_timebt
+        self.vialsPerSlave = config_olfa.vialsPerSlave
         
         self.flow_cal_dir = utils.find_olfaControl_directory() + '\\calibration_tables' # NOTE: this takes a super long time
         if os.path.exists(self.flow_cal_dir):
@@ -367,10 +376,7 @@ class olfactometer_window(QGroupBox):
         self.generate_ui()
         
         self.master_groupbox.setEnabled(False)
-        self.setTitle('Olfactometer')
-
-        # JUST FOR TODAY (7/26/2022)
-        self.slave_objects[0].setEnabled(True)
+        self.setTitle('Olfactometer')    
     
     
     def get_calibration_tables(self):
@@ -409,14 +415,14 @@ class olfactometer_window(QGroupBox):
                             pass
                         except KeyError as err:
                             # clear dictionaries, stop trying to read this file
-                            logger.warning('got a KeyError: %s',err)
-                            logger.warning('%s does not have correct headings for calibration files', cal_file)
+                            logger.error('got a KeyError: %s',err)
+                            logger.error('%s does not have correct headings for calibration files', cal_file)
                             thisfile_sccm2Ard_dict = {}
                             thisfile_ard2Sccm_dict = {}
                             break
                         except ValueError as err:
                             # clear dictionaries & stop trying to read this file
-                            logger.warning('missing some values, skipping calibration file %s', cal_file)
+                            logger.debug('missing some values, skipping calibration file %s', cal_file)
                             thisfile_sccm2Ard_dict = {}
                             thisfile_ard2Sccm_dict = {}
                             break
@@ -431,7 +437,7 @@ class olfactometer_window(QGroupBox):
                 self.sccm2Ard_dicts = new_sccm2Ard_dicts
                 self.ard2Sccm_dicts = new_ard2Sccm_dicts
             else:
-                logger.info('no calibration files found in this directory')
+                logger.warning('no calibration files found in this directory')
         
         else:
             # If flow cal directory does not exist: print warning
@@ -683,7 +689,7 @@ class olfactometer_window(QGroupBox):
     def get_slave_addresses(self):
         self.prev_active_slaves = copy.copy(self.active_slaves)
         self.active_slaves = []
-        logger.info('Checking slave addresses')
+        logger.debug('Checking slave addresses')
         self.send_to_master('C')
     
     def send_master_mode(self, newMode):
