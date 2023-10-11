@@ -1,4 +1,4 @@
-import os, logging, csv, copy, time
+import os, logging, csv, time
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
@@ -11,14 +11,11 @@ import utils
 
 ##############################
 # DEFAULT VALUES
-default_setpoint = '50'
 def_open_duration = '5'
 def_pressurize_duration = '1'
-default_cal_table = 'Honeywell_3100V'
 def_Kp_value = '0.0500'
 def_Ki_value = '0.0001'
 def_Kd_value = '0.0000'
-#def_calfile_name = 'A2_test_cal_file'
 def_mfc_cal_value = '100'
 ##############################
 
@@ -29,11 +26,17 @@ logger.setLevel(logging.DEBUG)
 if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
 console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
+
+# add file handler
+main_datafile_directory = utils.find_datafile_directory()
+if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory)   # if folder doesn't exist, make it
+file_handler = utils.create_file_handler(main_datafile_directory)
+logger.addHandler(file_handler)
 ##############################
 
 
 mfc_capacity = '200'            # flow sensor max flow
-def_calibration_duration = '15' # calibration per flow rate
+def_calibration_duration = '60' # calibration per flow rate
 
 class calibration_worker(QObject):
     def __init__(self):
@@ -308,6 +311,7 @@ class VialDetailsPopup(QWidget):
         self.cal_file_dir_wid = QLineEdit(text=self.parent.olfactometer_parent_object.flow_cal_dir)
         self.create_new_cal_file_btn = QPushButton(text='Create file',checkable=True)
         self.create_new_cal_file_btn.toggled.connect(self.create_new_cal_file_toggled)
+        self.cal_file_name_wid.returnPressed.connect(lambda: self.create_new_cal_file_btn.setChecked(True))
         
         # MFC value (SCCM value)
         self.mfc_value_lbl = QLabel('MFC value (sccm):')
@@ -346,6 +350,7 @@ class VialDetailsPopup(QWidget):
         self.cal_results_max_wid = QLineEdit(readOnly=True,maximumWidth=40)
         self.cal_results_med_wid = QLineEdit(readOnly=True,maximumWidth=40)
         self.cal_results_mean_wid = QLineEdit(readOnly=True,maximumWidth=40)
+        self.cal_results_mean_wid.setText('0')
         self.write_to_file_wid = QLineEdit(maximumWidth=65)
         self.write_to_file_btn = QPushButton(text='Write',maximumWidth=80)
         self.write_to_file_wid.returnPressed.connect(self.save_calibration_value)
@@ -401,7 +406,7 @@ class VialDetailsPopup(QWidget):
     
     # PRESSURIZE TIMER
     def start_pressurize(self, duration):
-        logger.debug('pressurizing ' + self.full_vialNum + '...')
+        logger.debug('Pressurizing ' + self.full_vialNum + ' for ' + str(duration) + ' seconds')
 
         # send to olfactometer_window (to send to Arduino)
         strToSend = 'S_OC_' + self.full_vialNum
@@ -473,10 +478,11 @@ class VialDetailsPopup(QWidget):
             self.start_pressurize(self.db_pressurize_wid.text())
         else:
             self.db_pressurize_btn.setText('Pressurize')
-            logger.debug(self.full_vialNum + ' pressurization ended early')
+            #logger.debug(self.full_vialNum + ' pressurization ended early')
             
             # stop timer
-            self.end_pressure_timer()
+            if self.pressure_timer.isActive():
+                self.end_pressure_timer()
             
             # send to olfactometer window (to send to Arduino) 
             strToSend = 'S_CC_' + self.full_vialNum
@@ -583,7 +589,7 @@ class VialDetailsPopup(QWidget):
         if self.create_new_cal_file_btn.isChecked() == True:
             # UI THINGS
             self.create_new_cal_file_btn.setText('End && Save file')
-            self.create_new_cal_file_btn.setToolTip('End calibration and save file')
+            self.create_new_cal_file_btn.setToolTip('End calibration\n(the file is already saved though)\n(bc it writes the values in real time)')
             self.cal_file_dir_wid.setEnabled(False)
             self.cal_file_name_wid.setEnabled(False)
             self.db_std_widgets_box.setEnabled(False)
@@ -605,15 +611,17 @@ class VialDetailsPopup(QWidget):
                 msg_box.setDefaultButton(QMessageBox.No)
                 ret = msg_box.exec()
                 if ret == QMessageBox.Yes:
-                    logger.info('deleting and overwriting file')
+                    logger.info('Deleting %s (%s)', self.new_cal_file_name, self.new_cal_file_dir)
                     os.remove(self.new_cal_file_dir)
                     self.create_file()
                 if ret == QMessageBox.No:
-                    logger.info('Enter new file name to create a calibration file')
+                    logger.debug('Enter new file name to create a calibration file')
                     self.create_new_cal_file_btn.setChecked(False)
         
         # Done with calibration - reset user interface
-        else:    
+        else:
+            logger.info('Ended recording to calibration file %s', self.new_cal_file_name)
+            
             # UI THINGS
             self.create_new_cal_file_btn.setText('Create new file')
             self.create_new_cal_file_btn.setToolTip('')
@@ -628,7 +636,7 @@ class VialDetailsPopup(QWidget):
             self.start_calibration_btn.setEnabled(False)
     
     def create_file(self):
-        logger.info('creating new calibration file at %s', self.new_cal_file_dir)
+        logger.info('Creating calibration file: %s (%s)', self.new_cal_file_name, self.new_cal_file_dir)
         file_created_time = utils.get_current_time()
         File = self.new_cal_file_name,file_created_time
         row_headers = 'SCCM','int'
@@ -655,6 +663,8 @@ class VialDetailsPopup(QWidget):
 
     def start_calibration(self):
         if self.start_calibration_btn.isChecked() == True:
+            self.collected_values_window.clear()
+
             # Get sccm value & duration
             self.this_cal_sccm_value = self.mfc_value_lineedit.text()
             self.this_cal_duration = self.calibration_duration_lineedit.text()  # TODO check if we have already done this sccm value
@@ -674,17 +684,10 @@ class VialDetailsPopup(QWidget):
             if self.parent.olfactometer_parent_object.connect_btn.isChecked() == False:
                 logger.warning('not connected to olfactometer')     # TODO do something about this
             
-            # Check that vial is set to debug (read flow values)
-            # (Should already be set to debug from when calibration file was created)
+            # Check that vial is set to debug (read flow values) (Should already be set to debug from when calibration file was created)
             if self.db_readflow_btn.isChecked() == False:
-                logger.info('setting ' + self.full_vialNum + ' to debug mode')
+                logger.debug('setting ' + self.full_vialNum + ' to debug mode')
                 self.db_readflow_btn.setChecked(True)
-            else:
-                logger.debug(self.full_vialNum + ' is already set to debug mode')
-            
-            # Open proportional valve
-            strToSend = 'S_OC_' + self.full_vialNum
-            self.parent.olfactometer_parent_object.send_to_master(strToSend)
             
             # Initialize empty data arrays
             self.serial_values = []
@@ -711,6 +714,7 @@ class VialDetailsPopup(QWidget):
     
     def analyze_cal_session(self):
         flowVal_median = np.median(self.serial_values)
+        flowVal_mean = round(np.mean(self.serial_values),1)
         
         # TODO drop the max and min values
         try:
@@ -723,20 +727,20 @@ class VialDetailsPopup(QWidget):
             self.cal_results_min_wid.setText(str(flow_min))
             self.cal_results_max_wid.setText(str(flow_max))
             self.cal_results_med_wid.setText(str(flowVal_median))
-            self.cal_results_mean_wid.setText(str(round(np.mean(self.serial_values),1)))
-            logger.info('range of int values: ' + str(flow_range))
+            self.cal_results_mean_wid.setText(str(flowVal_mean))
+            logger.debug('range of int values: ' + str(flow_range) + '\t mean: ' + str(flowVal_mean))
             
-            # Put median value in the widget so the user can decide whether to keep it or not
-            self.this_cal_int_value = flowVal_median
-            if type(flowVal_median) is np.float64:
+            # Put mean value in the widget so the user can decide whether to keep it or not
+            self.this_cal_int_value = flowVal_mean
+            if type(self.this_cal_int_value) is np.float64:
                 pair = str(self.this_cal_sccm_value) + ', ' + str(round(self.this_cal_int_value,2))
                 self.write_to_file_wid.setText(pair)
             else:
-                logger.warning('median was not an int - cannot save this value')
-                logger.warning('make sure other vials are not in calibration mode (maybe ?)')
+                logger.warning('calculated value was not an int - cannot save this value')
+                #logger.debug('make sure other vials are not in calibration mode (maybe ?)')
         
         except ValueError as err:
-            logger.info('ValueError:' + str(err))
+            logger.warning('ValueError:' + str(err))
         
         # clear the array
         self.serial_values = [] 
@@ -744,7 +748,7 @@ class VialDetailsPopup(QWidget):
     def save_calibration_value(self):
         # write the data from the widget to the file
         pair_to_write = eval(self.write_to_file_wid.text()) # convert from string to tuple
-        logger.info('writing to cal file: %s', pair_to_write)
+        logger.debug('Writing to cal file: %s', pair_to_write)
         with open(self.new_cal_file_dir,'a',newline='') as f:
             writer = csv.writer(f,delimiter=',')
             writer.writerow(pair_to_write)
