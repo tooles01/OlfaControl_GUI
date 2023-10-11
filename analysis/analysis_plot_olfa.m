@@ -27,22 +27,23 @@ f = struct();   % struct containing all figure variables
 f.position = [30 200 1700 700];
 f.pid_ylims = [];
 f.flow_ylims = [];
+f.ctrl_ylims = [];
 f.flow_width = 1;
 f.pid_width = 1;
 f.x_lim = [];
 f.calibration_value = [];
 
 %% vial colors
-f.colors{1} = '#0072BD';
-f.colors{2} = '#7E2F8E';
+f.colors{1} = '#0072BD';    % blue
+f.colors{2} = '#7E2F8E';    % purple
 
-f.colors{3} = '#A2142F';
-f.colors{4} = '#D95319';
-f.colors{5} = '#0072BD';
-f.colors{6} = '#A2142F';
-f.colors{7} = '#D95319';
-f.colors{8} = '#7E2F8E';
-f.colors{9} = '#7E2F8E';
+f.colors{3} = '#A2142F';    % dark red
+f.colors{4} = '#D95319';    % orange
+f.colors{5} = '#0072BD';    % blue
+f.colors{6} = '#A2142F';    % dark red
+f.colors{7} = '#D95319';    % orange
+f.colors{8} = '#7E2F8E';    % purple
+f.colors{9} = '#7E2F8E';    % purple
 
 % blue for E1
 E1_flow = [0 0.4470 0.7410];
@@ -116,7 +117,7 @@ plot_opts.ctrl_as_voltage = 'no';
 %a_this_note = '90 sccm'; f.flow_ylims = [502 513]; f.x_lim = ([280 815]); f.calibration_value = 507.83;
 f.position = [549 166 1353 684];
 %}
-%{
+
 %a_thisfile_name = '2023-09-15_datafile_00';
 %a_thisfile_name = '2023-09-15_datafile_01';
 %a_thisfile_name = '2023-09-15_datafile_02';
@@ -134,12 +135,13 @@ f.position = [549 166 1353 684];
 %a_thisfile_name = '2023-09-15_datafile_14';
 %a_thisfile_name = '2023-09-15_datafile_15';
 %a_thisfile_name = '2023-09-15_datafile_16';
-%}
 
 %a_thisfile_name = '2023-09-18_datafile_07';
 %a_thisfile_name = '2023-09-18_datafile_08';
 %a_thisfile_name = '2023-09-19_datafile_07';
-%a_thisfile_name = '2023-09-21_datafile_00';
+%a_thisfile_name = '2023-09-19_datafile_08'; %plot_opts.plot_sccm = 'no'; f.x_lim = [3 35];
+
+%a_thisfile_name = '2023-09-21_datafile_02';
 %a_thisfile_name = '2023-09-21_datafile_03'; plot_opts.ctrl = 'no';
 %a_thisfile_name = '2023-09-21_datafile_04'; plot_opts.ctrl = 'no';
 %a_thisfile_name = '2023-09-21_datafile_05'; plot_opts.ctrl = 'no';
@@ -149,7 +151,34 @@ f.position = [549 166 1353 684];
 %a_thisfile_name = '2023-09-21_datafile_10';
 %a_thisfile_name = '2023-09-21_datafile_11';
 %a_thisfile_name = '2023-09-21_datafile_01';% f.x_lim = [0 32];
-a_thisfile_name = '2023-09-26_datafile_00'; f.flow_ylims = [190 218]; plot_opts.plot_sccm = 'no';
+%a_thisfile_name = '2023-09-26_datafile_00'; plot_opts.plot_sccm = 'no'; f.flow_ylims = [190 218]; f.ctrl_ylims = [119 141];
+%a_thisfile_name = '2023-09-26_datafile_01'; plot_opts.plot_sccm = 'no'; f.flow_ylims = [190 218]; f.ctrl_ylims = [100 130];
+%a_thisfile_name = '2023-09-26_datafile_02'; plot_opts.plot_sccm = 'no'; f.flow_ylims = [190 218]; f.ctrl_ylims = [119 141];
+%a_thisfile_name = '2023-09-26_datafile_03'; plot_opts.plot_sccm = 'no'; f.flow_ylims = [190 218]; f.ctrl_ylims = [119 141];
+%a_thisfile_name = '2023-09-26_datafile_04'; plot_opts.plot_sccm = 'no'; f.ctrl_ylims = [139 181];
+
+%a_thisfile_name = '2023-09-26_datafile_05'; plot_opts.plot_sccm = 'no'; f.x_lim = [3 40];
+%a_thisfile_name = '2023-09-19_datafile_08'; plot_opts.plot_sccm = 'no'; f.x_lim = [3 35];
+
+% 09-28-2023
+
+% ctrl values
+%a_thisfile_name = '2023-09-28_datafile_00'; plot_opts.plot_sccm = 'no'; f.ctrl_ylims = [0 260];
+%a_thisfile_name = '2023-09-28_datafile_01'; plot_opts.plot_sccm = 'no'; f.ctrl_ylims = [0 260];
+%a_thisfile_name = '2023-09-28_datafile_02'; %plot_opts.plot_sccm = 'no'; f.ctrl_ylims = [0 260];
+
+% flow control on
+%a_thisfile_name = '2023-09-28_datafile_03';
+%a_thisfile_name = '2023-09-28_datafile_04';
+%a_thisfile_name = '2023-09-28_datafile_05';
+%a_thisfile_name = '2023-09-28_datafile_06';
+%a_thisfile_name = '2023-09-28_datafile_07';
+%a_thisfile_name = '2023-09-28_datafile_08';
+%a_thisfile_name = '2023-09-28_datafile_11';
+
+%a_thisfile_name = '2023-10-02_datafile_00'; plot_opts.ctrl = 'no';
+a_thisfile_name = '2023-10-03_datafile_00'; plot_opts.ctrl = 'yes'; plot_opts.plot_sccm = 'no'; f.flow_ylims = [856 879];
+
 
 %f.flow_ylims = [-5 150];
 %f.pid_ylims = [-.1 7];
@@ -287,8 +316,10 @@ try
                     ylabel('Olfa flow (sccm)')
                     p = plot(d_olfa_flow(i).flow.flow_sccm(:,1),d_olfa_flow(i).flow.flow_sccm(:,2));
                     p.LineWidth = f.flow_width;
+                    %p = scatter(d_olfa_flow(i).flow.flow_sccm(:,1),d_olfa_flow(i).flow.flow_sccm(:,2),'filled');
                     p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
                     if ~isempty(this_color); p.Color = this_color; end
+                    %if ~isempty(this_color); p.MarkerFaceColor = this_color; end
                     %p.Color = f.colors{i};
                     if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
                     else; ylim([-5 150]); end
@@ -326,8 +357,9 @@ try
     if strcmp(plot_opts.ctrl,'yes')
         % for each vial
         for i=1:length(d_olfa_flow)
-            if contains(d_olfa_flow(i).vial_num,'E1'); this_color = E1_ctrl;
-            else; this_color = f.colors{i}; end
+            this_color = E1_ctrl;
+            %if contains(d_olfa_flow(i).vial_num,'E1'); this_color = E1_ctrl;
+            %else; this_color = f.colors{i}; end
             if strcmp(plot_opts.ctrl_as_voltage,'yes')        
                 % plot as voltage
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_volt)
@@ -337,7 +369,9 @@ try
                     p2 = plot(d_olfa_flow.ctrl.ctrl_volt(:,1),d_olfa_flow.ctrl.ctrl_volt(:,2));
                     p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
                     if ~isempty(this_color); p2.Color = this_color; end
-                    ylim([-0.1 5.1])
+                    %if ~isempty(f.ctrl_ylims); ylim(f.ctrl_ylims)
+                    %else; ylim([-0.1 5.1]); end
+                    ylim([-0.1 5.1]);
                 end
             else
                 % plot as integer
@@ -351,7 +385,8 @@ try
                     p2 = plot(xvals,yvals);
                     p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
                     if ~isempty(this_color); p2.Color = this_color; end
-                    ylim([-5 260])
+                    if ~isempty(f.ctrl_ylims); ylim(f.ctrl_ylims)
+                    else; ylim([-5 260]); end
                 end
             end
         end
