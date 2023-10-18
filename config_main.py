@@ -1,6 +1,7 @@
 # Config variables for main.py
 
-
+# Location for log file directory
+strToFind = 'OlfactometerEngineeringGroup'
 
 ##############################
 # PARAMETERS FOR 48-LINE OLFACTOMETER

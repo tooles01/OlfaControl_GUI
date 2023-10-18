@@ -200,8 +200,7 @@ class mainWindow(QMainWindow):
             if this_handler_type == 'FileHandler': self.log_file_dir = r.baseFilename
         if self.log_file_dir == '': logger.warning('not logging to any file')
         # shorten directory for readability
-        strToFind = 'OlfactometerEngineeringGroup'          # TODO: move this to utils
-        beginning_idx = self.log_file_dir.find(strToFind)
+        beginning_idx = self.log_file_dir.find(config_main.strToFind)
         self.log_file_dir = self.log_file_dir[beginning_idx:]
         slash_idx = self.log_file_dir.find('\\')
         self.log_file_dir = self.log_file_dir[slash_idx:]
