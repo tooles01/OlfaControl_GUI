@@ -34,7 +34,7 @@ logger.debug('log file located at: %s', main_datafile_directory)
 class worker_sptChar(QObject):
     finished = pyqtSignal()
     w_sendThisSp = pyqtSignal(str,int)
-    w_send_OpenValve = pyqtSignal(str,int)
+    w_send_OpenValve = pyqtSignal(str,float)
     w_incProgBar = pyqtSignal(int)
 
     def __init__(self):
@@ -62,7 +62,7 @@ class worker_sptChar(QObject):
             if self.threadON == True:
                 full_vial_name = stimulus[0]
                 this_setpoint_sccm = stimulus[1]
-
+                
                 # convert it to arduino integer
                 this_setpoint_int = utils_olfa_48line.convertToInt(this_setpoint_sccm,self.sccm2Ard_dict)
                 
@@ -86,7 +86,7 @@ class worker_sptChar(QObject):
 class worker_additive(QObject):
     finished = pyqtSignal()
     w_sendThisSp = pyqtSignal(str,int)
-    w_send_OpenValve = pyqtSignal(str,int)
+    w_send_OpenValve = pyqtSignal(str,float)
     w_incProgBar = pyqtSignal(int)
 
     def __init__(self):
@@ -117,7 +117,7 @@ class worker_additive(QObject):
                 for v in range(len(self.vials_to_run)):
                     vial = self.vials_to_run[v]
                     sp = stimulus[v]
-                    logger.debug('Setting %s to %s sccm', vial, sp)
+                    logger.info('Setting %s to %s sccm', vial, sp)
                     self.w_sendThisSp.emit(vial,sp)
                     time.sleep(config_main.waitBtSps)
                 # for each vial: open valve
@@ -208,25 +208,10 @@ class mainWindow(QMainWindow):
         self.log_file_dir = '..' + self.log_file_dir
         self.log_file_dir_label = QLineEdit(text=self.log_file_dir,readOnly=True)
         self.log_file_dir_label.setToolTip('edit in header of main.py (if you need to change this)')
-        '''
-        self.log_text_edit = QTextEdit(readOnly=True)   # TODO: put log messages here
-        self.log_text_edit.setToolTip('not set up yet sry')
-        self.log_text_edit.setMaximumHeight(65)
-        self.log_clear_btn = QPushButton(text='Clear')
-        self.log_clear_btn.clicked.connect(lambda: self.log_text_edit.clear())
-        log_box_layout = QGridLayout()
-        log_box_layout.addWidget(QLabel('Log messages:'),0,0,1,1)
-        log_box_layout.addWidget(self.log_clear_btn,0,2,1,1)
-        log_box_layout.addWidget(self.log_text_edit,1,0,1,3)
-        '''
         
         layout = QVBoxLayout()
         layout.addWidget(QLabel('Log file location:'))
         layout.addWidget(self.log_file_dir_label)
-        '''
-        layout.addWidget(QLabel('\n'))
-        layout.addLayout(log_box_layout)
-        '''
         self.general_settings_box.setLayout(layout)
         max_height = self.general_settings_box.sizeHint().height()
         self.general_settings_box.setMaximumHeight(max_height)
@@ -854,6 +839,11 @@ class mainWindow(QMainWindow):
             self.olfactometer.send_to_master(strToSend)
             logger.debug('setting vial %s to debug mode', str(v))
         
+        # START RECORDING
+        if self.begin_record_btn.isChecked() == False:
+                logger.debug('clicking begin record button')
+                self.begin_record_btn.click()
+        
         # START WORKER THREAD
         self.obj_additive.threadON = True
         logger.debug('starting thread_additive')
@@ -920,7 +910,7 @@ class mainWindow(QMainWindow):
         strToSend = 'S_Sp_' + str(ard_val) + '_' + vial_name
         self.olfactometer.send_to_master(strToSend)
         
-    def send_OpenValve(self, vial_name:str, dur:int):
+    def send_OpenValve(self, vial_name:str, dur:float):
         strToSend = 'S_OV_' + str(dur) + '_' + vial_name
         self.olfactometer.send_to_master(strToSend)
 
