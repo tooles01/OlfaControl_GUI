@@ -17,6 +17,7 @@ f.pid_width = 1;
 f.x_lim = [];
 f.calibration_value = [];
 f.PID_color = '#77AC30';
+f.scale_time = 'no';
 
 a_this_note = '';
 
@@ -34,7 +35,7 @@ plot_opts = struct();
 % olfa options:
 
 % plot olfa as sccm or int
-plot_opts.plot_flow_as_sccm = 'no';
+plot_opts.plot_flow_as_sccm = 'yes';
 % **if datafile does not have calibration tables listed in header, plot will be in ints regardless
 
 % pick one of these
@@ -243,6 +244,15 @@ try
             end
         end
         
+        if strcmp(f.scale_time,'yes')
+            if ~isempty(f.x_lim)
+                % scale time to zero
+                d_olfa_flow_x = d_olfa_flow_x - f.x_lim(1);
+                % readjust x limits
+                t_end = f.x_lim(2) - f.x_lim(1);
+                xlim([0 t_end]);
+            end
+        end
         p = plot(d_olfa_flow_x,d_olfa_flow_y);
         p.LineWidth = f.flow_width;
         p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
@@ -255,19 +265,19 @@ try
             if strcmp(plot_opts.ctrl_as_voltage,'yes')        
                 % plot as voltage
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_volt)
-                    yyaxis right;
-                    ylabel('Prop valve value (V)');
                     d_ctrl_x = d_olfa_flow.ctrl.ctrl_volt(:,1);
                     d_ctrl_y = d_olfa_flow.ctrl.ctrl_volt(:,2);
+                    yyaxis right;
+                    ylabel('Prop valve value (V)');
                     ylim([-0.1 5.1])
                 end
             else
                 % plot as integer
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_int)
-                    yyaxis right;
-                    ylabel('Prop valve value (int)')
                     d_ctrl_x = d_olfa_flow.ctrl.ctrl_int(:,1);
                     d_ctrl_y = d_olfa_flow.ctrl.ctrl_int(:,2);
+                    yyaxis right;
+                    ylabel('Prop valve value (int)')
                     ylim([-5 260])
                 end
             end
@@ -279,21 +289,18 @@ try
     %% plot: pid
     if strcmp(plot_opts.pid,'yes')
         if ~isempty(data_pid)
-            yyaxis right;
-            f1_ax.YColor = f.PID_color;
-            if ~isempty(f.pid_ylims)
-                f1_ax.YLim = f.pid_ylims;
-            end
-            ylabel('PID output (V)');
-            
             d_pid_x = data_pid(:,1);
             d_pid_y = data_pid(:,2);
+            yyaxis right;
+            f1_ax.YColor = f.PID_color;
+            ylabel('PID output (V)');
+            if ~isempty(f.pid_ylims); f1_ax.YLim = f.pid_ylims; end
             
             if strcmp(f.scale_time,'yes')
                 if ~isempty(f.x_lim)
                     d_pid_x = data_pid(:,1) - f.x_lim(1);
                 end
-            end            
+            end
             
             p2 = plot(d_pid_x,d_pid_y,'DisplayName','PID');
             p2.LineWidth = f.pid_width;
