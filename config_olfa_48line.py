@@ -8,7 +8,7 @@ baudrate = 9600     # for communicating w/ master
 
 ##############################
 # DONT CHANGE THIS STUFF
-vialsPerSlave = 8
+vialsPerSlave = 9
 master_modes = ["6: verbose",
                 "5: trace",
                 "4: notice",
