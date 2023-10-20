@@ -35,21 +35,6 @@ a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\Olfact
 a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
 
 %{
-%% select shit to plot
-plot_opts = struct();
-% plot olfa as sccm or int
-plot_opts.plot_sccm = 'no';
-% **if datafile does not have calibration tables listed in header, plot will be in ints regardless
-
-% pick one of these
-plot_opts.pid = 'yes';
-plot_opts.output_flow = 'no';
-plot_opts.ctrl = 'no';
-plot_opts.ctrl_as_voltage = 'no';
-%}
-
-
-%{
 %% popup box to select file name # TODO
 default_date = '2023-03-02';
 
@@ -76,84 +61,39 @@ file = uigetfile("*.csv",uibox_title);
 
 %% enter data file name
 
-%a_thisfile_name = '2023-03-02_datafile_00';
-%a_thisfile_name = '2023-03-02_datafile_01';
-%a_thisfile_name = '2023-03-02_datafile_02';
-%a_thisfile_name = '2023-03-02_datafile_03';
-%a_thisfile_name = '2023-04-26_datafile_00'; a_this_note = 'A7, 200sccm';
-%a_thisfile_name = '2023-04-26_datafile_01'; a_this_note = 'A7, 100sccm';
+%a_thisfile_name = '2023-10-11_datafile_19'; a_this_note = '10 sccm - 15s on, 5s off';
+%a_thisfile_name = '2023-10-11_datafile_20'; a_this_note = '10 sccm - 15s on, 5s off';
+%a_thisfile_name = '2023-10-11_datafile_21'; a_this_note = '20 sccm - 15s on, 20s off';
+%a_thisfile_name = '2023-10-11_datafile_22'; a_this_note = '20 sccm - 15s on, 20s off (teflon output)';
+%a_thisfile_name = '2023-10-11_datafile_23'; a_this_note = '100 sccm - 15s on, 20s off (teflon output)';
+%a_thisfile_name = '2023-10-11_datafile_24'; a_this_note = '100 sccm - 15s on, 20s off (teflon output) (slightly adjusted tubing)';
+%a_thisfile_name = '2023-10-11_datafile_25'; a_this_note = '100 sccm - 15s on, 20s off (teflon output) (adjusted tubing again)';
 
-%a_thisfile_name = '2023-04-26_datafile_02'; a_this_note = 'A7 50sccm: 0sec pressurization (x2), 5sec (x2)';
-%a_thisfile_name = '2023-04-26_datafile_03'; a_this_note = 'A7 50sccm: 0sec pressurization (x2), 1sec (x2), 2sec (x2), 3sec (x2)';
-%a_thisfile_name = '2023-04-26_datafile_04'; a_this_note = 'A7 20sccm: 0sec pressurization (x2), 1sec (x2), 2sec (x2)';
-%a_thisfile_name = '2023-04-26_datafile_05'; a_this_note = 'A2, A3, A5, A6, A7, A8 50sccm';
-%a_thisfile_name = '2023-04-26_datafile_06'; a_this_note = 'A2 50sccm, 1sec pressurization (pinene - long lasting)';
-%a_thisfile_name = '2023-04-26_datafile_07'; a_this_note = 'A5, A6, A7, A8 50sccm, 1sec pressurization';
-%a_thisfile_name = '2023-04-26_datafile_08'; a_this_note = 'A5, A6, A7, A8 50sccm, 0sec pressurization';
-%a_thisfile_name = '2023-04-26_datafile_09'; a_this_note = 'A5, A6, A7, A8 50sccm, 1sec pressurization (no PID pump)';
-%a_thisfile_name = '2023-04-26_datafile_10'; a_this_note = 'A5, A6, A7, A8 50sccm, 0sec pressurization (no PID pump)';
-%a_thisfile_name = '2023-04-26_datafile_11'; a_this_note = 'contamination test: A5, A6, A7, A8 50sccm (no PID pump)';
-%a_thisfile_name = '2023-04-26_datafile_12'; a_this_note = 'contamination test: A7, A8 50sccm (no PID pump)';
-%a_thisfile_name = '2023-04-26_datafile_13'; a_this_note = 'contamination test: A5, A6, A7, A8 50sccm (no PID pump)';
-%a_thisfile_name = '2023-04-26_datafile_14';
-%a_thisfile_name = '2023-04-26_datafile_15'; a_this_note = 'A2, A5, A7, A8, 50sccm';
-%a_thisfile_name = '2023-04-26_datafile_16'; a_this_note = 'A2, A5, A7, A8, 50sccm, 1sec pressurization';
-%a_thisfile_name = '2023-04-26_datafile_17'; a_this_note = 'A2, A5, A7, A8, 50sccm, 3sec pressurization';
+%a_thisfile_name = '2023-10-12_datafile_00'; a_this_note = 'Ethyl Tiglate - 15s on, 20s off (with fake open)'; % capillary output
+%a_thisfile_name = '2023-10-12_datafile_01'; a_this_note = 'Ethyl Tiglate - 15s on, 20s off (no fake open)'; % capillary output
+%a_thisfile_name = '2023-10-12_datafile_02'; a_this_note = 'Ethyl Tiglate - 15s on, 20s off (no fake open)'; % capillary output
+%a_thisfile_name = '2023-10-12_datafile_03'; a_this_note = 'Ethyl Tiglate - 15s on, 30s off (no fake open)'; % capillary output
+%a_thisfile_name = '2023-10-12_datafile_04'; a_this_note = 'Ethyl Tiglate - 15s on, 30s off (no fake open)'; % capillary output
+%a_thisfile_name = '2023-10-12_datafile_05'; a_this_note = 'Ethyl Tiglate - 15s on, 30s off (with fake open)'; % capillary output
+%a_thisfile_name = '2023-10-12_datafile_06'; a_this_note = 'Ethyl Tiglate - 15s on, 30s off (with fake open)'; % capillary output
+%a_thisfile_name = '2023-10-12_datafile_07'; a_this_note = 'Ethyl Tiglate - 15s on, 30s off (with fake open)'; % capillary output
 
-%a_thisfile_name = '2023-04-27_datafile_00'; a_this_note = 'A3 setpoint char (empty vial)';
-%a_thisfile_name = '2023-04-27_datafile_01'; a_this_note = 'A2 setpoint char (Hexanal)';
-a_thisfile_name = '2023-04-27_datafile_02'; a_this_note = 'A3 setpoint char (empty vial)';
+%a_thisfile_name = '2023-10-17_datafile_00'; a_this_note = 'empty vial';
+%a_thisfile_name = '2023-10-18_datafile_00'; a_this_note = 'empty vial, Kp=.05, Ki=.0001';
+%a_thisfile_name = '2023-10-18_datafile_01'; a_this_note = 'empty vial, Kp=.03, Ki=.0005 (sequential)';
+%a_thisfile_name = '2023-10-18_datafile_02'; a_this_note = 'empty vial, Kp=.03, Ki=.0005 (random order)';
+%a_thisfile_name = '2023-10-19_datafile_00'; a_this_note = 'Ethyl Tiglate - 15s on 30s off (with fake open) Kp=.03, Ki=.0005 (sequential)';
+%a_thisfile_name = '2023-10-19_datafile_01'; a_this_note = 'Ethyl Tiglate - 15s on 30s off (with fake open) Kp=.03, Ki=.0005 (random)';
+%a_thisfile_name = '2023-10-19_datafile_02'; a_this_note = 'Ethyl Tiglate - 15s on 45s off (with fake open) Kp=.03, Ki=.0005 (sequential)';
+%a_thisfile_name = '2023-10-19_datafile_03'; a_this_note = 'Ethyl Tiglate - 15s on 45s off (with fake open) Kp=.03, Ki=.0005 (random)';
+%a_thisfile_name = '2023-10-19_datafile_04'; a_this_note = 'Ethyl Tiglate - 15s on 45s off (with fake open) Kp=.03, Ki=.0005 (random)';
+%a_thisfile_name = '2023-10-19_datafile_05'; a_this_note = 'Acetophenone - 15s on 45s off (no fake open) Kp=.03, Ki=.0005 (random)';
+a_thisfile_name = '2023-10-20_datafile_00'; a_this_note = 'Acetophenone - 8s on 20s off (no fake open) Kp=.03, Ki=.0005 (random)';
 
-%%
-%{
-%a_thisfile_name = '2020-12-15_exp01_21';
-%a_thisfile_name = '2020-12-16_exp01_22';
-%a_thisfile_name = '2022-09-08_datafile_00';
-%a_thisfile_name = '2022-09-07_datafile_01'; a_this_note = 'sensor calibration';
-%a_thisfile_name = '2022-09-07_datafile_02'; a_this_note = 'sensor calibration';
-%a_thisfile_name = '2022-09-07_datafile_03'; a_this_note = 'setpoint char 0-100 sccm';
-%a_thisfile_name = '2022-09-07_datafile_04'; a_this_note = 'setpoint char 80, 90, 100 sccm';
-%a_thisfile_name = '2022-09-07_datafile_05';
-%}
-
-%a_thisfile_name = '2022-09-06_datafile_11';
-
-% 9/9/2022
-    % setpoint characterization
-%a_thisfile_name = '2022-09-09_datafile_00'; a_this_note = 'A2 at 100sccm';
-%a_thisfile_name = '2022-09-09_datafile_01'; a_this_note = 'A6 at 100sccm';
-
-    % K values
-%a_thisfile_name = '2022-09-09_datafile_02'; a_this_note = 'A6- Kp at .05, .04, .03, .01, .00, .08';
-%a_thisfile_name = '2022-09-09_datafile_03'; a_this_note = 'A6- Kp at .010, .005, .010, .010,';
-%a_thisfile_name = '2022-09-09_datafile_04'; a_this_note = 'A6- with A2 vial, Kp back at .05';
-%a_thisfile_name = '2022-09-09_datafile_05'; a_this_note = 'A6- with A2 vial, Kp back at .05, with correct cal table';
-%a_thisfile_name = '2022-09-09_datafile_06'; a_this_note = 'A6- with A2 vial, Kp at .10, .15, .05';
-%a_thisfile_name = '2022-09-09_datafile_07'; a_this_note = 'A6- with A2 vial, Kp at .05, .04, .03, .02, .01';
-%a_thisfile_name = '2022-09-09_datafile_08'; a_this_note = 'A6- Kp at .05, Ki at .0001, .0005, .0010';
-    % additive
-%a_thisfile_name = '2022-09-09_datafile_09'; a_this_note = 'A2 90cc, A6 10cc';
-%a_thisfile_name = '2022-09-09_datafile_10'; a_this_note = 'A2 50cc, A6 50cc';
-%a_thisfile_name = '2022-09-09_datafile_11'; a_this_note = 'A2 50cc, A6 50cc';
-%a_thisfile_name = '2022-09-09_datafile_12'; a_this_note = 'A2 & A6 additive';
-    % setpoint characterization
-%a_thisfile_name = '2022-09-09_datafile_13'; a_this_note = 'A2 setpoint char';
-%a_thisfile_name = '2022-09-09_datafile_14'; a_this_note = 'A6 setpoint char';
-%a_thisfile_name = '2022-09-09_datafile_15'; a_this_note = 'A6 setpoint char';
-    % flow calibration
-%{
-%a_thisfile_name = '2022-09-12_datafile_00'; a_this_note = 'A2 flow calibration (automated)';
-%a_thisfile_name = '2022-09-13_datafile_00';
-%a_this_note = '110 sccm auto calibration';
-%a_this_note = '100 sccm auto calibration'; % def still decreasing
-%a_this_note = '90 sccm auto calibration';  % a little bit decreasing
-%a_this_note = '80 sccm auto calibration';  % still decreasing but so close
-%a_this_note = '100 sccm';
-%a_this_note = '90 sccm';
-%}
 
 %% set up directories
 dir_data_files = [a_dir_OlfaControlGUI '\result_files\48-line olfa\'];
+%dir_data_files = [a_dir_OlfaControlGUI '\result_files\cheap olfa\'];
 
 % make sure datafiles are on matlab path
 addpath(genpath(dir_data_files));
@@ -174,6 +114,8 @@ a_thisfile_date = a_thisfile_name(1:idx_und-1);
 
 % full directory for this file
 dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\48-line olfa\',a_thisfile_date,'\');
+%dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\cheap olfa\',a_thisfile_date,'\');
+
 
 % get the .mat file
 raw_wholeFile = import_datafile(a_thisfile_name,dir_this_data_file);
@@ -255,9 +197,6 @@ for i=1:num_data
         idx_olfa_start = strfind(i_inst,c.instName_olfa);
         i_vial_num = i_inst(idx_olfa_start+length(c.instName_olfa)+1:end);
         %clearvars idx_*
-        %
-        % len_olfa_name = length(c.instName_olfa);
-        %i_vial_num = i_inst(idx_olfa_start+len_olfa_name+1:end);
         
         % if we don't have data for this vial yet, add a row for it to the structures
         matches = strfind(d_olfa_vials_recorded,i_vial_num);     % check if this vial is in vials recorded
@@ -432,6 +371,116 @@ for i=1:length(d_olfa_flow)
 end
 
 clearvars i*
+
+%% smooth PID
+% get moving average (50ms windows)
+
+if ~isempty(data_pid)    
+    p_og_pid_data = data_pid;
+    p_mov_avg_window = .050;        % 50 ms window
+    %p_new_pid_data = data_pid;
+    p_new_pid_data = removeDuplicates_(data_pid);
+    p_sample_points = p_new_pid_data(:,1);
+    p_input_array = p_new_pid_data(:,2);
+
+    p_new_pid_data(:,1) = p_new_pid_data(:,1);
+    p_new_pid_data(:,2) = movmean(p_input_array,p_mov_avg_window,'SamplePoints',p_sample_points);
+    data_pid = p_new_pid_data;
+    p_index = find(data_pid~=p_new_pid_data);
+    
+    clearvars p_*
+end
+
+
+%% split into sections
+% get flow/pid for each event section
+
+% for each vial
+for i=1:length(d_olfa_flow)
+    these_events = d_olfa_flow(i).events.OV;
+    this_flow_data_int = d_olfa_flow(i).flow.flow_int;
+    this_flow_data_sccm = d_olfa_flow(i).flow.flow_sccm;
+
+    this_vial_means_int = [];
+    this_vial_means_sccm = [];
+    e_new_event_struct = [];
+
+    % for each event
+    for e=1:length(these_events)
+        e_t_start = these_events(e).time;
+        e_duration = these_events(e).value;
+        e_t_end = e_t_start + e_duration;
+        
+        % ignore the event if the duration is less than 4 seconds
+        if (e_duration >= 5.3)
+
+            % cut first 50ms
+            e_t_start = e_t_start + 0.050;
+            %e_t_start = e_t_start + f.time_to_cut;
+
+            e_new_event_struct(e).t_event = these_events(e).time;   % actual time of OV
+            e_new_event_struct(e).t_duration = these_events(e).value;
+            e_new_event_struct(e).t_start = e_t_start;              % time to calculate shit from
+            e_new_event_struct(e).t_end = e_t_end;
+
+            % get this vial flow data for this period
+            this_section_data_int = get_section_data(this_flow_data_int,e_t_start,e_t_end);
+            e_new_event_struct(e).data.flow_int = this_section_data_int;
+            if ~isempty(this_flow_data_sccm)
+                this_section_data_sccm = get_section_data(this_flow_data_sccm,e_t_start,e_t_end);
+                e_new_event_struct(e).data.flow_sccm = this_section_data_sccm;
+            end
+
+            % get PID data for this period
+            this_section_pid_data = get_section_data(data_pid,e_t_start,e_t_end);
+            e_new_event_struct(e).data.pid = this_section_pid_data;
+
+            % calculate mean flow & pid
+            e_new_event_struct(e).flow_mean_int = mean(this_section_data_int(:,2));
+            e_new_event_struct(e).flow_mean_sccm = mean(this_section_data_sccm(:,2));
+            e_new_event_struct(e).pid_mean = mean(this_section_pid_data(:,2));
+            e_new_event_struct(e).pid_std = std(this_section_pid_data(:,2));
+            e_new_event_struct(e).flow_std_int = std(this_section_data_int(:,2));
+            e_new_event_struct(e).flow_std_sccm = std(this_section_data_sccm(:,2));
+
+            % add to matrix of (int_mean, pid_mean) for all events
+            int_pair = [e_new_event_struct(e).flow_mean_int e_new_event_struct(e).pid_mean];
+            sccm_pair = [e_new_event_struct(e).flow_mean_sccm e_new_event_struct(e).pid_mean];
+            this_vial_means_int = [this_vial_means_int;int_pair];
+            this_vial_means_sccm = [this_vial_means_sccm;sccm_pair];
+            
+        end
+        
+        d_olfa_flow(i).events.OV = e_new_event_struct;
+        d_olfa_flow(i).int_means = this_vial_means_int;
+        d_olfa_flow(i).sccm_means = this_vial_means_sccm;
+    end
+    d_olfa_flow(i).events.OV_keep = [];
+end
+clearvars e* this_section* this_flow*
+
+% remove empty rows
+for i=1:length(d_olfa_flow)
+    these_events = d_olfa_flow(i).events.OV;
+    for e=1:length(these_events)
+        this_event = d_olfa_flow(i).events.OV(e);
+        if ~isempty(d_olfa_flow(i).events.OV(e).t_event)
+            next_idx = length(d_olfa_flow(i).events.OV_keep) + 1;
+            d_olfa_flow(i).events.OV_keep(next_idx).t_event = this_event.t_event;
+            d_olfa_flow(i).events.OV_keep(next_idx).t_duration = this_event.t_duration;
+            d_olfa_flow(i).events.OV_keep(next_idx).t_start = this_event.t_start;
+            d_olfa_flow(i).events.OV_keep(next_idx).t_end = this_event.t_end;
+            d_olfa_flow(i).events.OV_keep(next_idx).data = this_event.data;
+            d_olfa_flow(i).events.OV_keep(next_idx).flow_mean_int = this_event.flow_mean_int;
+            d_olfa_flow(i).events.OV_keep(next_idx).flow_mean_sccm = this_event.flow_mean_sccm;
+            d_olfa_flow(i).events.OV_keep(next_idx).pid_mean = this_event.pid_mean;
+            d_olfa_flow(i).events.OV_keep(next_idx).pid_std = this_event.pid_std;
+            d_olfa_flow(i).events.OV_keep(next_idx).flow_std_int = this_event.flow_std_int;
+            d_olfa_flow(i).events.OV_keep(next_idx).flow_std_sccm = this_event.flow_std_sccm;
+        end
+    end
+end
+
 
 %% save data
 clearvars a_dir*
