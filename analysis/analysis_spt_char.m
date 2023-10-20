@@ -19,7 +19,7 @@ plot_opts.plot_flow_as_sccm = 'yes'; % plot olfa as sccm or int
 
 plot_opts.all_points = 'yes';   % TODO this does nothing right now
 plot_opts.plot_all = 'yes'; % plot each individually
-plot_opts.plot_x_lines = 'no';   % x lines of where the mean was calculated from
+plot_opts.plot_x_lines = 'yes';   % x lines of where the mean was calculated from
 
 %% display variables
 f.x_lim = [];
@@ -37,22 +37,8 @@ f.colors{2} = '#A2142F';
 f.colors{3} = '#D95319';
 f.colors{4} = '#7E2F8E';
 
-%f.position = [180 75 780 686];  % not that small
-
 
 %% enter data file name
-
-%a_thisfile_name = '2023-10-02_datafile_14';
-%a_thisfile_name = '2023-10-02_datafile_15';
-%a_thisfile_name = '2023-10-10_datafile_00'; f.olfa_lims_sccm = [0 100]; f.pid_lims = [0 3];
-%a_thisfile_name = '2023-10-10_datafile_07'; f.olfa_lims_sccm = [0 110]; f.pid_lims = [0 3];
-%a_thisfile_name = '2023-10-10_datafile_08'; f.olfa_lims_sccm = [0 110]; f.pid_lims = [0 3];
-%a_thisfile_name = '2023-10-10_datafile_09'; f.olfa_lims_sccm = [0 110]; f.pid_lims = [0 3];
-plot_opts.plot_all = 'no';
-
-%a_thisfile_name = '2023-10-11_datafile_02'; f.olfa_lims_sccm = [0 100]; f.pid_lims = [-0.1 3];
-%a_thisfile_name = '2023-10-11_datafile_03'; f.olfa_lims_sccm = [0 100]; f.pid_lims = [-0.1 3];
-%a_thisfile_name = '2023-10-11_datafile_04'; f.olfa_lims_sccm = [0 100]; f.pid_lims = [-0.1 3];
 
 %a_thisfile_name = '2023-10-12_datafile_00'; f.pid_lims = [-.1 3]; f.olfa_lims_sccm = [0 110];
 %a_thisfile_name = '2023-10-12_datafile_01'; f.pid_lims = [-.1 3]; f.olfa_lims_sccm = [0 110];
@@ -62,21 +48,28 @@ plot_opts.plot_all = 'no';
 %a_thisfile_name = '2023-10-12_datafile_05'; f.pid_lims = [-.1 3]; f.olfa_lims_sccm = [0 110];
 %a_thisfile_name = '2023-10-12_datafile_06'; f.pid_lims = [-.1 3]; f.olfa_lims_sccm = [0 110];
 %a_thisfile_name = '2023-10-12_datafile_07'; f.pid_lims = [-.1 3]; f.olfa_lims_sccm = [0 110];
-f.pid_lims = [0 3];
-f.olfa_lims_sccm = [0 100];
+%f.pid_lims = [0 3];
+%f.olfa_lims_sccm = [0 100];
 %f.show_pid_mean = 'no';
 %f.show_flow_mean = 'no';
 
 %a_thisfile_name = '2023-10-17_datafile_00'; f.pid_lims = [0 .15];
 %a_thisfile_name = '2023-10-18_datafile_00'; f.pid_lims = [0 .15];   % something weird happened with PID baseline here
-a_thisfile_name = '2023-10-18_datafile_01'; f.pid_lims = [0 .15];
+%a_thisfile_name = '2023-10-18_datafile_01'; f.pid_lims = [0 .15];
 %a_thisfile_name = '2023-10-18_datafile_02'; f.pid_lims = [0 .15];
+%a_thisfile_name = '2023-10-19_datafile_00'; f.pid_lims = [0 3];
+%a_thisfile_name = '2023-10-19_datafile_01'; f.pid_lims = [0 3];
+%a_thisfile_name = '2023-10-19_datafile_02'; f.pid_lims = [0 3];
+%a_thisfile_name = '2023-10-19_datafile_03'; f.pid_lims = [0 3];
+%a_thisfile_name = '2023-10-19_datafile_04'; f.pid_lims = [0 3];
+a_thisfile_name = '2023-10-19_datafile_05'; f.pid_lims = [0 1.2];
+%a_thisfile_name = '2023-10-20_datafile_00';
+f.pid_lims = [0 3];
 plot_opts.plot_all = 'no';
 
 
 f.olfa_lims_int = [143 575];
-f.position = [140 200 1355 686];
-%f.position = [80 70 1540 900];
+%f.position = [140 200 1355 686];
 %f.position = [960 210 780 686];  % not that small
 f.position = [260 230 812 709];
 %f.position = [166 210 650 600];    % for PowerPoint (1/2 size)
@@ -87,112 +80,7 @@ dir_this_mat_file = strcat(a_dir_OlfaControlGUI,'\analysis\data (.mat files)\',a
 
 try
     load(dir_this_mat_file);
-
-    %% smooth PID
-    % get moving average (50ms windows)
-    p_og_pid_data = data_pid;
-    p_mov_avg_window = .050;          % 50 ms window
-    %p_new_pid_data = data_pid;
-    p_new_pid_data = removeDuplicates_(data_pid);
-    p_sample_points = p_new_pid_data(:,1);
-    p_input_array = p_new_pid_data(:,2);
-
-    p_new_pid_data(:,1) = p_new_pid_data(:,1);
-    p_new_pid_data(:,2) = movmean(p_input_array,p_mov_avg_window,'SamplePoints',p_sample_points);
-    data_pid = p_new_pid_data;
-    p_index = find(data_pid~=p_new_pid_data);
     
-    clearvars p_*
-
-
-    %% split into sections
-    % get flow/pid for each event section
-    
-    % for each vial
-    for i=1:length(d_olfa_flow)        
-        these_events = d_olfa_flow(i).events.OV;
-        this_flow_data_int = d_olfa_flow(i).flow.flow_int;
-        this_flow_data_sccm = d_olfa_flow(i).flow.flow_sccm;
-    
-        this_vial_means_int = [];
-        this_vial_means_sccm = [];
-        e_new_event_struct = [];
-        % for each event
-        for e=1:length(these_events)
-            e_t_start = these_events(e).time;
-            e_duration = these_events(e).value;
-            e_t_end = e_t_start + e_duration;
-
-            % ignore the event if the duration is less than 4 seconds
-            if (e_duration >= 4)
-
-                % cut first 50ms
-                %e_t_start = e_t_start + 0.050;
-                e_t_start = e_t_start + f.time_to_cut;
-        
-                e_new_event_struct(e).t_event = these_events(e).time;   % actual time of OV
-                e_new_event_struct(e).t_duration = these_events(e).value;
-                e_new_event_struct(e).t_start = e_t_start;              % time to calculate shit from
-                e_new_event_struct(e).t_end = e_t_end;
-        
-                % get this vial flow data for this period
-                this_section_data_int = get_section_data(this_flow_data_int,e_t_start,e_t_end);
-                e_new_event_struct(e).data.flow_int = this_section_data_int;
-                if ~isempty(this_flow_data_sccm)
-                    this_section_data_sccm = get_section_data(this_flow_data_sccm,e_t_start,e_t_end);
-                    e_new_event_struct(e).data.flow_sccm = this_section_data_sccm;
-                end
-        
-                % get PID data for this period
-                this_section_pid_data = get_section_data(data_pid,e_t_start,e_t_end);
-                e_new_event_struct(e).data.pid = this_section_pid_data;
-    
-                % calculate mean flow & pid
-                e_new_event_struct(e).flow_mean_int = mean(this_section_data_int(:,2));
-                e_new_event_struct(e).flow_mean_sccm = mean(this_section_data_sccm(:,2));
-                e_new_event_struct(e).pid_mean = mean(this_section_pid_data(:,2));
-                e_new_event_struct(e).pid_std = std(this_section_pid_data(:,2));
-                e_new_event_struct(e).flow_std_int = std(this_section_data_int(:,2));
-                e_new_event_struct(e).flow_std_sccm = std(this_section_data_sccm(:,2));
-    
-                % add to matrix of (int_mean, pid_mean) for all events
-                int_pair = [e_new_event_struct(e).flow_mean_int e_new_event_struct(e).pid_mean];
-                sccm_pair = [e_new_event_struct(e).flow_mean_sccm e_new_event_struct(e).pid_mean];
-                this_vial_means_int = [this_vial_means_int;int_pair];
-                this_vial_means_sccm = [this_vial_means_sccm;sccm_pair];
-                
-            end
-            
-            d_olfa_flow(i).events.OV = e_new_event_struct;
-            d_olfa_flow(i).int_means = this_vial_means_int;
-            d_olfa_flow(i).sccm_means = this_vial_means_sccm;
-        end
-        d_olfa_flow(i).events.OV_keep = [];
-    end
-    clearvars e* this_section* this_flow*
-
-    % remove empty rows
-    for i=1:length(d_olfa_flow)
-        these_events = d_olfa_flow(i).events.OV;
-        for e=1:length(these_events)
-            this_event = d_olfa_flow(i).events.OV(e);
-            if ~isempty(d_olfa_flow(i).events.OV(e).t_event)
-                next_idx = length(d_olfa_flow(i).events.OV_keep) + 1;
-                d_olfa_flow(i).events.OV_keep(next_idx).t_event = this_event.t_event;
-                d_olfa_flow(i).events.OV_keep(next_idx).t_duration = this_event.t_duration;
-                d_olfa_flow(i).events.OV_keep(next_idx).t_start = this_event.t_start;
-                d_olfa_flow(i).events.OV_keep(next_idx).t_end = this_event.t_end;
-                d_olfa_flow(i).events.OV_keep(next_idx).data = this_event.data;
-                d_olfa_flow(i).events.OV_keep(next_idx).flow_mean_int = this_event.flow_mean_int;
-                d_olfa_flow(i).events.OV_keep(next_idx).flow_mean_sccm = this_event.flow_mean_sccm;
-                d_olfa_flow(i).events.OV_keep(next_idx).pid_mean = this_event.pid_mean;
-                d_olfa_flow(i).events.OV_keep(next_idx).pid_std = this_event.pid_std;
-                d_olfa_flow(i).events.OV_keep(next_idx).flow_std_int = this_event.flow_std_int;
-                d_olfa_flow(i).events.OV_keep(next_idx).flow_std_sccm = this_event.flow_std_sccm;
-            end
-        end
-    end
-
     %{
     %% get mean flow/pid for each event section - if they were to be cut shorter
     % for each vial
@@ -262,11 +150,11 @@ try
     %}
 
     %% plot the whole thing over time
-    figTitle = a_thisfile_name;
-    if ~strcmp(a_this_note, ''); figTitle = append(figTitle, ': ',  a_this_note); end
+    figTitle_main = a_thisfile_name;
+    if ~strcmp(a_this_note, ''); figTitle_main = append(figTitle_main, ': ',  a_this_note); end
     
     f1 = figure; f1.NumberTitle = 'off'; f1.Position = f.position; hold on;
-    f1.Name = a_thisfile_name; title(figTitle)
+    f1.Name = a_thisfile_name; title(figTitle_main)
     legend('Location','northwest');
     f1_ax = gca;
     
@@ -334,11 +222,7 @@ try
         ylabel('PID output (V)');
         p2 = plot(data_pid(:,1),data_pid(:,2),'DisplayName','PID');
         p2.LineWidth = f.pid_width;
-        if ~isempty(f.pid_lims)
-            ylim(f.pid_lims);
-        end
     end
-    
     
     
     %% plot each section & the mean value
@@ -455,15 +339,12 @@ try
         
     end
     
-    %% plot: set up figure
-    figTitle = a_thisfile_name;
-    if ~strcmp(a_this_note, '')
-        figTitle = append(figTitle, ': ',  a_this_note);
-    end
+    %% plot: set up figure    
     
     f1 = figure; f1.NumberTitle = 'off'; f1.Position = f.position; hold on;
     f1.Name = ['FLOW v. PID: ',a_thisfile_name];
-    title(['FLOW v. PID:     ', figTitle]);
+    title(['FLOW v. PID:     ', a_thisfile_name]);
+    subtitle(a_this_note);
     legend('Location','northwest');
     f1_ax = gca;
     ylabel('PID (V)')
