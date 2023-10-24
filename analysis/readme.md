@@ -3,13 +3,18 @@
 ### analysis_get_and_parse_files
 **gets raw .csv datafile, saves as .mat file**
 
-1. loads selected datafile (from OlfaControlGUI\result_files)
-2. parses header (PID gain, calibration tables)
-	- imports calibration tables if necessary
-3. adjusts PID (sets baseline to zero, divide by gain)
+1. loads selected datafile (from OlfaControlGUI\result_files\48-line olfa)
+2. parses header (PID gain & calibration tables)
+	- imports calibration tables if necessary (from OlfaControlGUI\calibration_tables)
+3. adjusts PID (divides by gain & sets baseline to zero)
 4. converts flow to sccm
 5. converts ctrl to voltage
-6. saves .mat file
+6. smooths PID (moving average over 50ms window)
+7. splits into sections (for each OV event)
+	- for each section (longer than 5 seconds):
+		- cuts first 50 ms
+		- gets all flow & PID data (& calculates mean)
+8. saves .mat file
 
 <details>
 <summary>dependencies:</summary>
@@ -79,18 +84,23 @@
 </details>
 
 
+#
 ### analysis_spt_char
 **plots flow v. pid**
 
 1. loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
-2. smoothes PID (moving average over 50ms windows)
-3. splits into sections
-	- for each vial:
-		- for each event:
-			- gets flow and PID data; calculates mean flow & pid
-		- creates matrix of mean values [flow,pid] for all events
-4. plots flow & PID data over time
-5. plots mean flow values v. mean PID values
+2. plots flow & PID data over time
+3. if selected, plots each event section individually
+4. plots mean flow values v. mean PID values
+
+
+<details>
+<summary>options:</summary>
+
+- plot each individual event
+	- show mean flow/PID on that figure
+- flow as int or sccm 
+</details>
 
 
 <details>
