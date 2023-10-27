@@ -7,6 +7,8 @@
 %   - adjust PID (set baseline to zero, divide by gain)
 %   - convert flow to sccm
 %   - convert ctrl to voltage
+%   - smooth PID (moving average)
+%   - split into sections & calculate mean
 %   - save .mat file
 
 %%
@@ -27,6 +29,7 @@ c.pid_gain = [];
 c.this_exp_cal_tables = [];
 
 a_this_note = '';
+flow_inc = [];
 
 %% enter directory for this computer
 %a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
@@ -78,17 +81,21 @@ file = uigetfile("*.csv",uibox_title);
 %a_thisfile_name = '2023-10-12_datafile_06'; a_this_note = 'Ethyl Tiglate - 15s on, 30s off (with fake open)'; % capillary output
 %a_thisfile_name = '2023-10-12_datafile_07'; a_this_note = 'Ethyl Tiglate - 15s on, 30s off (with fake open)'; % capillary output
 
-%a_thisfile_name = '2023-10-17_datafile_00'; a_this_note = 'empty vial';
-%a_thisfile_name = '2023-10-18_datafile_00'; a_this_note = 'empty vial, Kp=.05, Ki=.0001';
-%a_thisfile_name = '2023-10-18_datafile_01'; a_this_note = 'empty vial, Kp=.03, Ki=.0005 (sequential)';
-%a_thisfile_name = '2023-10-18_datafile_02'; a_this_note = 'empty vial, Kp=.03, Ki=.0005 (random order)';
-%a_thisfile_name = '2023-10-19_datafile_00'; a_this_note = 'Ethyl Tiglate - 15s on 30s off (with fake open) Kp=.03, Ki=.0005 (sequential)';
-%a_thisfile_name = '2023-10-19_datafile_01'; a_this_note = 'Ethyl Tiglate - 15s on 30s off (with fake open) Kp=.03, Ki=.0005 (random)';
-%a_thisfile_name = '2023-10-19_datafile_02'; a_this_note = 'Ethyl Tiglate - 15s on 45s off (with fake open) Kp=.03, Ki=.0005 (sequential)';
-%a_thisfile_name = '2023-10-19_datafile_03'; a_this_note = 'Ethyl Tiglate - 15s on 45s off (with fake open) Kp=.03, Ki=.0005 (random)';
-%a_thisfile_name = '2023-10-19_datafile_04'; a_this_note = 'Ethyl Tiglate - 15s on 45s off (with fake open) Kp=.03, Ki=.0005 (random)';
-%a_thisfile_name = '2023-10-19_datafile_05'; a_this_note = 'Acetophenone - 15s on 45s off (no fake open) Kp=.03, Ki=.0005 (random)';
-a_thisfile_name = '2023-10-20_datafile_00'; a_this_note = 'Acetophenone - 8s on 20s off (no fake open) Kp=.03, Ki=.0005 (random)';
+%a_thisfile_name = '2023-10-17_datafile_00'; a_this_note = 'empty vial'; flow_inc = 10;
+%a_thisfile_name = '2023-10-18_datafile_00'; a_this_note = 'empty vial, Kp=.05, Ki=.0001'; flow_inc = 10;
+%a_thisfile_name = '2023-10-18_datafile_01'; a_this_note = 'empty vial, Kp=.03, Ki=.0005 (sequential)'; flow_inc = 10;
+%a_thisfile_name = '2023-10-18_datafile_02'; a_this_note = 'empty vial, Kp=.03, Ki=.0005 (random order)'; flow_inc = 10;
+
+%a_thisfile_name = '2023-10-19_datafile_00'; a_this_note = 'Ethyl Tiglate - 15s on 30s off (with fake open) Kp=.03, Ki=.0005 (sequential)'; flow_inc = 5;
+%a_thisfile_name = '2023-10-19_datafile_01'; a_this_note = 'Ethyl Tiglate - 15s on 30s off (with fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 5;
+%a_thisfile_name = '2023-10-19_datafile_02'; a_this_note = 'Ethyl Tiglate - 15s on 45s off (with fake open) Kp=.03, Ki=.0005 (sequential)'; flow_inc = 5;
+%a_thisfile_name = '2023-10-19_datafile_03'; a_this_note = 'Ethyl Tiglate - 15s on 45s off (with fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 5;
+%a_thisfile_name = '2023-10-19_datafile_04'; a_this_note = 'Ethyl Tiglate - 15s on 45s off (with fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 5;
+%a_thisfile_name = '2023-10-19_datafile_05'; a_this_note = 'Acetophenone - 15s on 45s off (no fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 10;
+
+%a_thisfile_name = '2023-10-20_datafile_00'; a_this_note = 'Acetophenone - 8s on 20s off (no fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 10;
+%a_thisfile_name = '2023-10-20_datafile_01'; a_this_note = 'Acetophenone - 8s on 20s off (no fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 10;
+a_thisfile_name = '2023-10-27_datafile_01'; a_this_note = 'E3: 2-Heptanol - 10s on 30s off'; flow_inc = 10;
 
 
 %% set up directories
@@ -119,7 +126,7 @@ dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\48-line olfa\',a
 
 % get the .mat file
 raw_wholeFile = import_datafile(a_thisfile_name,dir_this_data_file);
-clearvars dir_*
+clearvars dir_* a_thisfile_date
 
 %% parse header
 h = struct();
@@ -138,6 +145,7 @@ if ~isempty(h.PID_gain_row_idx)
     c.pid_gain = raw_header{h.PID_gain_row_idx,2};
 end
 
+clearvars raw_header
 %% parse file
 raw_data = raw_wholeFile(h.header_goes_til:end,:);
 clearvars h
@@ -195,8 +203,7 @@ for i=1:num_data
         
         % get the vial number
         idx_olfa_start = strfind(i_inst,c.instName_olfa);
-        i_vial_num = i_inst(idx_olfa_start+length(c.instName_olfa)+1:end);
-        %clearvars idx_*
+        i_vial_num = i_inst(idx_olfa_start+length(c.instName_olfa)+1:end);        
         
         % if we don't have data for this vial yet, add a row for it to the structures
         matches = strfind(d_olfa_vials_recorded,i_vial_num);     % check if this vial is in vials recorded
@@ -223,11 +230,11 @@ for i=1:num_data
         
         % add to d_olfa_flow(i_vial_idx).flow.flow_int
         if strcmp(i_para,'FL')
-            d_olfa_flow(i_vial_idx).flow.flow_int = [d_olfa_flow(i_vial_idx).flow.flow_int;i_this_pair];
+            d_olfa_flow(i_vial_idx).flow.flow_int = [d_olfa_flow(i_vial_idx).flow.flow_int;i_this_pair];    % TODO speed this up
         
         % add to d_olfa_flow(v).ctrl.ctrl_int
         elseif strcmp(i_para,'Ctrl')
-            d_olfa_flow(i_vial_idx).ctrl.ctrl_int = [d_olfa_flow(i_vial_idx).ctrl.ctrl_int;i_this_pair];
+            d_olfa_flow(i_vial_idx).ctrl.ctrl_int = [d_olfa_flow(i_vial_idx).ctrl.ctrl_int;i_this_pair];    % TODO speed this up
         
         % add to events
         else
@@ -284,7 +291,7 @@ for i=1:num_data
     
     end
 end
-clearvars i* n* matches idx_*
+clearvars i* n* matches idx_* vial_list d_olfa_vials_recorded
 %% get calibration tables
 dir_cal_tables = strcat(a_dir_OlfaControlGUI,'\calibration_tables\');
 
@@ -411,13 +418,12 @@ for i=1:length(d_olfa_flow)
         e_duration = these_events(e).value;
         e_t_end = e_t_start + e_duration;
         
-        % ignore the event if the duration is less than 4 seconds
+        % ignore the event if the duration is less than 5.3 seconds
         if (e_duration >= 5.3)
 
             % cut first 50ms
             e_t_start = e_t_start + 0.050;
-            %e_t_start = e_t_start + f.time_to_cut;
-
+            
             e_new_event_struct(e).t_event = these_events(e).time;   % actual time of OV
             e_new_event_struct(e).t_duration = these_events(e).value;
             e_new_event_struct(e).t_start = e_t_start;              % time to calculate shit from
@@ -457,7 +463,6 @@ for i=1:length(d_olfa_flow)
     end
     d_olfa_flow(i).events.OV_keep = [];
 end
-clearvars e* this_section* this_flow*
 
 % remove empty rows
 for i=1:length(d_olfa_flow)
@@ -480,6 +485,81 @@ for i=1:length(d_olfa_flow)
         end
     end
 end
+
+clearvars i e* these* this* next* *_pair
+
+%% create a lil extra struct
+sourceStructArray = d_olfa_flow.events.OV_keep;
+fieldsToCopy = {'flow_mean_sccm', 'pid_mean','data'};       % Specify the field(s) you want to copy
+
+% Initialize the target struct array with the same structure as sourceStructArray
+numElements = numel(sourceStructArray);
+targetStructArray = repmat(struct('flow_mean_sccm', [], 'pid_mean', [],'data', []), 1, numElements);
+
+% Loop through each struct in the source struct array
+for i = 1:numElements
+    sourceStruct = sourceStructArray(i);
+    targetStruct = struct();            % Initialize the target struct for this iteration
+    % Copy the specified fields and their values
+    for j = 1:numel(fieldsToCopy)
+        field = fieldsToCopy{j};
+        if isfield(sourceStruct, field)
+            targetStruct.(field) = sourceStruct.(field);
+        end
+    end
+    targetStructArray(i) = targetStruct;            % Assign the target struct to the target struct array
+end
+
+
+%% sort by flow mean
+fieldName = 'flow_mean_sccm';
+fieldValues = {targetStructArray.(fieldName)};
+fieldValues = cell2mat(fieldValues);
+[~,sortedIndices] = sort(fieldValues,'ascend');
+d_olfa_data_sorted = targetStructArray(sortedIndices);
+
+clearvars field* source* target* i j sortedIndices
+
+%% initialize the combined data structure
+d_olfa_data_combined = [];
+d_olfa_data_combined(1).flow_value = [];
+d_olfa_data_combined(1).pid_mean1 = [];
+d_olfa_data_combined(1).pid_mean2 = [];
+d_olfa_data_combined(1).data1 = [];
+d_olfa_data_combined(1).data2 = [];
+
+if isempty(flow_inc); disp('WARNING no flow_inc entered: using 5'); flow_inc = 5; end
+flow_value = flow_inc;
+num_iterations = 100/flow_inc;
+for i=1:num_iterations
+    d_olfa_data_combined(i).flow_value = flow_value;
+    flow_value = flow_value + flow_inc;
+end
+
+%% add shit to the combined data structure
+
+% start from this starting index
+starting_idx = 1;
+% check the lengths of the structures: if there are zero values, then the lengths of these two structs will be different
+r = 0;
+r = rem(length(d_olfa_data_sorted),length(d_olfa_data_combined));
+% if there is a remainder, then start at idx 3
+if r ~= 0; starting_idx = r+1; end
+
+for i=starting_idx:length(d_olfa_data_sorted)
+    this_flow_value = d_olfa_data_sorted(i).flow_mean_sccm;
+    idx_to_use = round(this_flow_value / flow_inc);
+
+    if isempty(d_olfa_data_combined(idx_to_use).pid_mean1)
+        d_olfa_data_combined(idx_to_use).pid_mean1 = d_olfa_data_sorted(i).pid_mean;
+        d_olfa_data_combined(idx_to_use).data1 = d_olfa_data_sorted(i).data;
+    else
+        d_olfa_data_combined(idx_to_use).pid_mean2 = d_olfa_data_sorted(i).pid_mean;
+        d_olfa_data_combined(idx_to_use).data2 = d_olfa_data_sorted(i).data;
+    end
+end
+
+clearvars i* numElements *flow_value flow_inc r num_iterations starting_idx
 
 
 %% save data
