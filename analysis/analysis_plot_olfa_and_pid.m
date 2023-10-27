@@ -45,25 +45,7 @@ plot_opts.ctrl = 'no';
 plot_opts.ctrl_as_voltage = 'no';
 
 %% enter data file name
-
-%a_thisfile_name = '2023-10-03_datafile_00'; plot_opts.ctrl = 'yes';
-%a_thisfile_name = '2023-10-04_datafile_00_cheap_olfa'; f.pid_ylims = [-.5 9];
-%a_thisfile_name = '2023-10-04_datafile_01_cheap_olfa'; f.pid_ylims = [-.1 3];
-%a_thisfile_name = '2023-10-05_datafile_00_cheap_olfa'; %f.pid_ylims = [-.1 3];
-%a_thisfile_name = '2023-10-06_datafile_00_cheap_olfa';
-%a_thisfile_name = '2023-10-10_datafile_00'; f.pid_ylims = [-0.1 3];
-%a_thisfile_name = '2023-10-10_datafile_01'; f.pid_ylims = [-0.1 3];
-%a_thisfile_name = '2023-10-10_datafile_02'; f.pid_ylims = [-0.1 3];
-%a_thisfile_name = '2023-10-10_datafile_03'; f.pid_ylims = [-0.1 3];
-%a_thisfile_name = '2023-10-10_datafile_04'; f.pid_ylims = [-0.1 3];
-%a_thisfile_name = '2023-10-10_datafile_05'; f.pid_ylims = [-0.1 3];
-%a_thisfile_name = '2023-10-10_datafile_07'; f.pid_ylims = [-0.1 3];
-%a_thisfile_name = '2023-10-10_datafile_08'; f.pid_ylims = [-0.1 3];
-%a_thisfile_name = '2023-10-10_datafile_09'; f.pid_ylims = [-0.1 3];
-%a_thisfile_name = '2023-10-11_datafile_02';
-%a_thisfile_name = '2023-10-11_datafile_03';
-%a_thisfile_name = '2023-10-11_datafile_04';
-
+%{
 % 10 SCCM
 %a_thisfile_name = '2023-10-11_datafile_19';
 %a_thisfile_name = '2023-10-11_datafile_20'; f.x_lim = [15.028 92.17];
@@ -88,22 +70,76 @@ plot_opts.ctrl_as_voltage = 'no';
 %a_thisfile_name = '2023-10-11_datafile_24';
 %a_thisfile_name = '2023-10-11_datafile_25';
 %f.pid_ylims = [0 3];
+%}
 
 %a_thisfile_name = '2023-10-12_datafile_00'; f.pid_ylims = [-.1 3];
 %a_thisfile_name = '2023-10-12_datafile_01'; f.pid_ylims = [-.1 3];
-a_thisfile_name = '2023-10-18_datafile_00';
 
-%f.pid_ylims = [-.1 .5];
+%{
+%a_thisfile_name = '2023-10-18_datafile_00';
 
+%a_thisfile_name = '2023-10-18_datafile_02';
+% 10 SCCM
+%f.x_lim = [536.472 1000];
+%f.x_lim = [809.812 1000];
+% 100 SCCM
+%f.x_lim = [260.979 1000];
+%f.x_lim = [306.567 1000];
+%f.pid_ylims = [0 .15];
+%f.pid_ylims = [0 .5];
+%f.flow_ylims = [0 100];
+%f.scale_time = 'yes';
 
-%f.pid_ylims = [-0.01 0.2];
-plot_opts.plot_flow_as_sccm = 'yes';
-%f.flow_ylims = [-5 150];
-%f.pid_ylims = [-.1 7];
+%a_thisfile_name = '2023-10-19_datafile_03';
+% 10 SCCM
+%{
+%f.x_lim = [348.782 368.394];
+%f.x_lim = [833.06 852.741];
+%}
+%f.x_lim = [352.394 368.394];
+%f.x_lim = [836.741 900];
+%f.pid_ylims = [0 .5];
+%plot_opts.ctrl = 'yes';
+%f.flow_ylims = [0 100];
+
+%a_thisfile_name = '2023-10-19_datafile_04';
+% 10 SCCM
+%{
+%f.x_lim = [651.172 670.78]; f.pid_ylims = [0 .5];
+%f.x_lim = [1558.8 1578.4]; f.pid_ylims = [0 .5];
+%}
+%f.x_lim = [654.78 670.78]; f.pid_ylims = [0 .5];
+%f.x_lim = [1562.401 1578.4]; f.pid_ylims = [0 .5];
+%f.scale_time = 'yes';
+
+%a_thisfile_name = '2023-10-19_datafile_05';
+% 10 SCCM
+%{
+%f.x_lim = [283.863 303.471];
+%f.x_lim = [830.152 849.76];
+%}
+%f.x_lim = [287.471 303.471];
+%f.x_lim = [833.76 849.76];
+%f.flow_ylims = [0 100];
+%f.pid_ylims = [0 .5];
+%f.scale_time = 'yes';
+
+%}
+%a_thisfile_name = '2023-10-20_datafile_00';
+
+a_thisfile_name = '2023-10-27_datafile_01'; f.pid_ylims = [0 6];
+% 10 SCCM
+f.x_lim = [31.541 900];
+f.x_lim = [72.064 900];
+% 100 SCCM
+f.x_lim = [760.671 900];
+f.x_lim = [801.182 900];
+f.scale_time = 'yes';
+
 %f.position = [549 166 1353 684];
 %f.position = [166 600 775 275];     % for OneNote
 f.position = [166 210 1300 600];    % for PowerPoint
-f.position = [166 210 650 600];    % for PowerPoint (1/2 size)
+%f.position = [166 210 650 600];    % for PowerPoint (1/2 size)
 f.pid_width = 1.5;
 
 %% load .mat file
@@ -192,12 +228,12 @@ try
     %}
     %% make figure
     figTitle = a_thisfile_name;
-    if ~strcmp(a_this_note, '')
-        figTitle = append(figTitle, ': ',  a_this_note);
-    end
+    if ~strcmp(a_this_note, ''); figTitle = append(figTitle, ': ',  a_this_note); end
     
     f1 = figure; f1.NumberTitle = 'off'; f1.Position = f.position; hold on;
-    f1.Name = a_thisfile_name; title(figTitle)
+    f1.Name = a_thisfile_name;
+    title(a_thisfile_name)
+    subtitle(a_this_note)
     legend('Location','northwest');
     f1_ax = gca;
     
@@ -249,13 +285,13 @@ try
                 % scale time to zero
                 d_olfa_flow_x = d_olfa_flow_x - f.x_lim(1);
                 % readjust x limits
-                t_end = f.x_lim(2) - f.x_lim(1);
-                xlim([0 t_end]);
+                xlim([-.5 16]);                
             end
         end
         p = plot(d_olfa_flow_x,d_olfa_flow_y);
         p.LineWidth = f.flow_width;
         p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
+        %pa = scatter(d_olfa_flow_x,d_olfa_flow_y,'filled','HandleVisibility','off');
     end
     
     %% plot: olfa ctrl
@@ -281,8 +317,12 @@ try
                     ylim([-5 260])
                 end
             end
+            if strcmp(f.scale_time,'yes')
+                d_ctrl_x = d_ctrl_x - f.x_lim(1);
+            end
             p2 = plot(d_ctrl_x,d_ctrl_y);
             p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
+            %p2a = scatter(d_ctrl_x,d_ctrl_y,'filled','HandleVisibility','off');
         end
     end
     
