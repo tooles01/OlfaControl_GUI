@@ -90,7 +90,7 @@
 
 1. loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
 2. cuts additional time from each event section (user specifies how many seconds)
-	- recalculates means & adds them back into the structs
+	- recalculates means & standard deviations, adds them back into the structs
 2. plots flow & PID data over time
 3. if selected, plots each event section individually
 4. plots mean flow values v. mean PID values

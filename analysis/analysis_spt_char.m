@@ -9,8 +9,8 @@ clearvars
 set(0,'DefaultTextInterpreter','none')
 
 %% enter directory for this computer
-a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-%a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+%a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
 a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
 
 %% select shit to plot
@@ -20,11 +20,11 @@ plot_opts.plot_flow_as_sccm = 'yes'; % plot olfa as sccm or int
 plot_opts.all_points = 'yes';   % TODO this does nothing right now
 plot_opts.plot_over_time = 'no';    % plot the entire trial over time
 plot_opts.plot_all = 'yes'; % plot each individually
-plot_opts.plot_x_lines = 'yes';   % x lines of where the mean was calculated from
+plot_opts.plot_x_lines = 'no';   % x lines of where the mean was calculated from
 plot_opts.show_pid_mean = 'yes';
 plot_opts.show_flow_mean = 'yes';
-%plot_opts.flow_error_bars = 'no';
-%plot_opts.pid_error_bars = 'no';
+plot_opts.flow_error_bars = 'no';
+plot_opts.pid_error_bars = 'no';
 
 %% display variables
 f.x_lim = [];
@@ -58,7 +58,7 @@ f.colors{4} = '#7E2F8E';
 %a_thisfile_name = '2023-10-17_datafile_00'; f.pid_lims = [0 .15];
 %a_thisfile_name = '2023-10-18_datafile_00'; f.pid_lims = [0 .15];   % something weird happened with PID baseline here
 %a_thisfile_name = '2023-10-18_datafile_01'; f.pid_lims = [0 .15];
-a_thisfile_name = '2023-10-18_datafile_02'; f.pid_lims = [0 .15];
+%a_thisfile_name = '2023-10-18_datafile_02'; f.pid_lims = [0 .15];
 %a_thisfile_name = '2023-10-19_datafile_00'; f.pid_lims = [0 3];
 %a_thisfile_name = '2023-10-19_datafile_01'; f.pid_lims = [0 3];
 %a_thisfile_name = '2023-10-19_datafile_02'; f.pid_lims = [0 3];
@@ -67,10 +67,25 @@ a_thisfile_name = '2023-10-18_datafile_02'; f.pid_lims = [0 .15];
 %a_thisfile_name = '2023-10-19_datafile_05'; f.pid_lims = [0 1.2];
 %a_thisfile_name = '2023-10-20_datafile_00'; f.pid_lims = [0 1.2];
 %a_thisfile_name = '2023-10-20_datafile_01'; f.pid_lims = [0 1.2];
-plot_opts.plot_all = 'yes';
-%plot_opts.show_pid_mean = 'no';
-%plot_opts.show_flow_mean = 'no';
-%f.pid_lims = [0 3];
+
+%a_thisfile_name = '2023-10-27_datafile_01'; f.pid_lims = [0 6];
+%a_thisfile_name = '2023-10-27_datafile_02'; f.pid_lims = [0 6];
+%a_thisfile_name = '2023-10-27_datafile_03'; f.pid_lims = [0 6];
+%a_thisfile_name = '2023-10-30_datafile_00'; f.pid_lims = [0 6];
+%a_thisfile_name = '2023-10-30_datafile_01'; f.pid_lims = [0 5.5];
+%a_thisfile_name = '2023-10-30_datafile_02'; f.pid_lims = [0 5.5];
+%a_thisfile_name = '2023-10-30_datafile_03'; f.pid_lims = [0 5.5];
+%a_thisfile_name = '2023-10-30_datafile_04'; f.pid_lims = [0 6];
+%a_thisfile_name = '2023-10-30_datafile_05'; f.pid_lims = [0 6]; 
+%a_thisfile_name = '2023-10-30_datafile_06';
+%a_thisfile_name = '2023-10-30_datafile_08';
+%a_thisfile_name = '2023-10-30_datafile_09';
+%a_thisfile_name = '2023-10-30_datafile_10';
+a_thisfile_name = '2023-10-31_datafile_00';
+f.olfa_lims_sccm = [0 105];
+f.pid_lims= [0 5.5];
+
+plot_opts.plot_all = 'no';
 
 f.time_to_cut = 2;
 f.olfa_lims_int = [143 575];
@@ -85,7 +100,6 @@ dir_this_mat_file = strcat(a_dir_OlfaControlGUI,'\analysis\data (.mat files)\',a
 
 try
     load(dir_this_mat_file);
-    
     %{
     %% get mean flow/pid for each event section - if they were to be cut shorter
     % for each vial
@@ -154,7 +168,7 @@ try
     clearvars *_mean
     %}
 
-    %% cut additional time off
+    %% cut additional time off (& recalculate stats)
     % for each vial
     for i=1:length(d_olfa_flow)
         % for each OV event
@@ -173,11 +187,17 @@ try
             this_flow_int_mean = mean(this_flow_int_data(:,2));
             this_flow_sccm_mean = mean(this_flow_sccm_data(:,2));
             this_pid_mean = mean(this_pid_data(:,2));
+            this_flow_int_std = std(this_flow_int_data(:,2));
+            this_flow_sccm_std = std(this_flow_sccm_data(:,2));
+            this_pid_std = std(this_pid_data(:,2));
 
             % add these means back into the structure
             d_olfa_flow(i).events.OV_keep(e).flow_mean_int = this_flow_int_mean;
             d_olfa_flow(i).events.OV_keep(e).flow_mean_sccm = this_flow_sccm_mean;
             d_olfa_flow(i).events.OV_keep(e).pid_mean = this_pid_mean;
+            d_olfa_flow(i).events.OV_keep(e).flow_std_int = this_flow_int_std;
+            d_olfa_flow(i).events.OV_keep(e).flow_std_sccm = this_flow_sccm_std;
+            d_olfa_flow(i).events.OV_keep(e).pid_std = this_pid_std;
 
             % add them to the int/sccm structs
             d_olfa_flow(i).int_means(e,1) = this_flow_int_mean;
@@ -186,6 +206,7 @@ try
             d_olfa_flow(i).sccm_means(e,2) = this_pid_mean;
         end
     end
+    clearvars this_*
 
     %% plot the whole thing over time
     if strcmp(plot_opts.plot_over_time,'yes')
@@ -333,7 +354,7 @@ try
                 if ~isempty(data_pid)
                     yyaxis right; colororder('#77AC30');  f1_ax.YColor = '#77AC30';
                     ylabel('PID output (V)');
-                    ylim([f.pid_lims]);
+                    if ~isempty(f.pid_lims);  ylim([f.pid_lims]); end
                     this_pid_data = get_section_data(data_pid,t_beg_plot,t_end_plot);
                     this_pid_data_shifted = [];
                     this_pid_data_shifted(:,1) = this_pid_data(:,1) - t_beg_event;
@@ -342,8 +363,8 @@ try
                     p2.LineWidth = f.pid_width;
                     
                     this_pid_val = d_olfa_flow(i).sccm_means(e,2);
+                    % plot line at the mean
                     if strcmp(plot_opts.show_pid_mean,'yes')
-                        % plot line at the mean
                         p_pid_mean = plot(this_x_coord,[this_pid_val;this_pid_val],'LineWidth',4);
                         p_pid_mean.LineStyle = '-';
                         p_pid_mean.DisplayName = ['PID mean: ' num2str(round(this_pid_val,2)) ' V'];
@@ -358,8 +379,8 @@ try
                 if strcmp(plot_opts.plot_x_lines,'yes')
                     p_start_time = f.time_to_cut;
                     p_end_time = d_olfa_flow(i).events.OV_keep(e).t_duration;
-                    p_t_start = xline(p_start_time,'DisplayName','start time');
-                    p_t_end = xline(p_end_time,'DisplayName','end time');
+                    p_t_start = xline(p_start_time,'HandleVisibility','off');
+                    p_t_end = xline(p_end_time,'HandleVisibility','off');
                 end
                 
                 figTitle = [num2str(round(this_flow_val_sccm,1)) ' sccm (calculated mean from ' num2str(f.time_to_cut) 's into event)'];
@@ -400,12 +421,12 @@ try
         end
     end
 
+
 %% error catch in case file has not been parsed yet
 catch ME
     switch ME.identifier
         case 'MATLAB:load:couldNotReadFile'
             disp(['---> ' a_thisfile_name,' has not been parsed yet: run analysis_get_and_parse_files.m first'])
-            rethrow(ME)
         otherwise
             rethrow(ME)
     end
