@@ -1,15 +1,16 @@
 %% plot file from olfa calibration
 
 clear variables
-close all
+%close all
 set(0,'DefaultTextInterpreter','none')
 %#ok<*AGROW>
 %#ok<*NASGU>
+%#ok<*SAGROW>
 
 %% set up directories
 % enter directory for this computer
-%a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+%a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
 
 a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
 dir_data_files = [a_dir_OlfaControlGUI '\result_files\standard olfa\'];
@@ -24,17 +25,19 @@ a_this_note = '';
 PID_color = [.4667 .6745 .1882];
 f = struct();
 f.pid_lims = [];
-f.fig1_position = [960 210 780 686];
+f.f_main_position = [960 210 780 686];
+%f.f_main_position = [166 210 1300 600];    % for PowerPoint
 f.dot_size = 60;
 
 
-plot_individual_trials = 'no';     % plot each trial by itself
-plot_all_points = 'no';            % plot all the points on a single graph
-plot_x_lines = 'no';        % x lines of where the mean was calculated from
+plot_individual_trials = 'no';  % plot each trial by itself
+plot_all_points = 'no';         % plot all the points on a single graph
+plot_x_lines = 'yes';           % x lines of where the mean was calculated from
 plot_cheap_olfa = 'no';
 
-%f_position = [166 210 1300 600];    % for PowerPoint
-f_position = [166 210 650 600];    % for PowerPoint (1/2 size)
+%f_position = [166 210 1300 600];   % for PowerPoint
+f_position = [166 210 650 600];     % for PowerPoint (1/2 size)
+%f_position = [-1895 575 650 600];   % left side display
 
 c = struct();   % struct containing all config variables
 c.nidaq_freq = 0.01;  % collection frequency etc etc
@@ -57,33 +60,37 @@ c.start_time = 2.00;  % don't look at any data before this time
 %a_thisfile_name = '2023-10-10_datafile_02.csv'; a_this_note ='Ethyl Tiglate Pure - 8s on, 20s off'; f.pid_lims = [0 3];
 %a_thisfile_name = '2023-10-10_datafile_03.csv'; a_this_note ='Ethyl Tiglate Pure - 15s on, 20s off'; f.pid_lims = [0 3];
 %a_thisfile_name = '2023-10-11_datafile_00.csv'; a_this_note ='Ethyl Tiglate Pure - 15s on, 20s off'; f.pid_lims = [0 3];
-%c.start_time = 5;
-a_thisfile_name= '2023-10-17_olf21_datafile01.csv'; a_this_note = 'olf_21 vial 10: Ethyl Tiglate Pure - 8s on, 20s off';
+%a_thisfile_name= '2023-10-17_olf21_datafile01.csv'; a_this_note = 'olf_21 vial 10: Ethyl Tiglate Pure - 8s on, 20s off';
 %a_thisfile_name= '2023-10-17_olf62_datafile01.csv'; a_this_note = 'olfa_62 vial 5: Ethyl Tiglate Pure - 8s on, 20s off';
 %a_thisfile_name= '2023-10-17_olf62_datafile02.csv'; a_this_note = 'olfa_62 vial 8: Ethyl Tiglate Pure - 8s on, 20s off';
+%f.pid_lims = [0 3.3];
+
+a_thisfile_name= '2023-10-20_datafile00_acetophenone.csv'; a_this_note = 'Acetophenone vial 11 - 8s on, 20s off';
+f.pid_lims = [0 1.2];
+f.pid_lims = [0 3];
 c.start_time = 5;
-f.pid_lims = [0 3.3];
 
 plot_all_points = 'no';
 plot_individual_trials = 'no';
-plot_x_lines = 'yes';
 
 
 %% get file
-thisfile = readcell(a_thisfile_name);
+a_thisfile = readcell(a_thisfile_name);
+a_thisfile_name = erase(a_thisfile_name,'.csv');
 
 %% cut out header stuff
 % skip down to the third row
 header_goes_til = 3;
-raw_file = thisfile(header_goes_til:end,:);
+a_raw_file = a_thisfile(header_goes_til:end,:);
 
 % cut out the first column
-raw_file = raw_file(:,2:end);
-
+a_raw_file = a_raw_file(:,2:end);
 
 %% create main figure
+if strcmp(plot_individual_trials,'yes'); close all; end
 if strcmp(plot_all_points,'yes')
-    figure(1); hold on;
+    f_main = figure(); hold on;
+    f_main_ax = gca;
     figTitle = a_thisfile_name;
     if ~strcmp(a_this_note, ''); figTitle = append(figTitle, ': ',  a_this_note); end
     title(figTitle)
@@ -91,17 +98,22 @@ if strcmp(plot_all_points,'yes')
     ylabel('PID (V)')
     xlim([0 100])
     if ~isempty(f.pid_lims); ylim(f.pid_lims); end
-    fig1 = gcf;
-    fig1.Position = f.fig1_position;
-    %fig1.Position = [166 210 1300 600];    % for PowerPoint
+    f_main = gcf;
+    f_main.Position = f.f_main_position;
 end
 
+%% initialize data structures
+
 standard_olfa_data = [];
+d_olfa_data = [];
+d_olfa_data(1).flow_value = [];
+d_olfa_data(1).pid_mean = [];
+d_olfa_data(1).data = [];
 
 %% plot each sccm value by itself
-for i=1:height(raw_file)
-    sccm_value = raw_file(i,1);
-    pid_values = raw_file(i,2:end);
+for i=1:height(a_raw_file)
+    sccm_value = a_raw_file(i,1);
+    pid_values = a_raw_file(i,2:end);
 
     this_sccm_value = sccm_value{1};
     
@@ -119,7 +131,7 @@ for i=1:height(raw_file)
     last_time_value = last_time_value - c.nidaq_freq;
     time_data = 0:c.nidaq_freq:last_time_value;
     
-    % shift the pid values up to 0
+    % shift the pid values up to 0  % TODO calculate one adjustment value for the entire dataset (not trial by trial)
     pid_values = cell2mat(pid_values);
     pid_adjustment_value = min(pid_values);
     pid_values = pid_values - pid_adjustment_value;
@@ -128,7 +140,6 @@ for i=1:height(raw_file)
     %% calculate mean PID value
 
     % start at 2 seconds into the trial
-    %start_time = 2.00;  % don't look at any data before this
     idx_of_start_time = (c.start_time/c.nidaq_freq) + 1;
     new_time_data = time_data(idx_of_start_time:end);
     new_pid_data = pid_values(idx_of_start_time:end);
@@ -149,7 +160,7 @@ for i=1:height(raw_file)
     % get all the data for this period
     this_time_data = new_time_data(1:end_idx);
     this_pid_data = new_pid_data(1:end_idx);
-
+    
     % calculate the mean value
     mean_pid = mean(this_pid_data);
     
@@ -157,7 +168,7 @@ for i=1:height(raw_file)
     if strcmp(plot_individual_trials,'yes')
         f1 = figure(i+1); hold on;
         f1.Position = f_position;
-        f1_title = [num2str(sccm_value{1}) ' sccm'];
+        f1_title = [num2str(this_sccm_value) ' sccm'];
         subtitle(f1_title);
         title(a_thisfile_name)
         xlabel('Time (s)');
@@ -177,20 +188,28 @@ for i=1:height(raw_file)
     
     %% add to figure 1
     if strcmp(plot_all_points,'yes')
-        figure(1);
         x = this_sccm_value * (ones(1,length(this_pid_data)));
-        s = scatter(x,this_pid_data,'filled');
+        s = scatter(f_main_ax,x,this_pid_data,'filled');
         s.SizeData = 4;
     end    
 
     % save just the mean value
     this_pair = [this_sccm_value mean_pid];
-    standard_olfa_data = [standard_olfa_data; this_pair]; 
+    standard_olfa_data = [standard_olfa_data; this_pair];
+
+    %% add it to the data structure
+    % reshape data
+    d_time_data = reshape(time_data,length(time_data),1);
+    d_pid_data = reshape(pid_values,length(pid_values),1);
+    d_olfa_data(i).flow_value = this_sccm_value;
+    d_olfa_data(i).pid_mean = mean_pid;
+    d_olfa_data(i).data = [d_time_data d_pid_data];
     
 end
+clearvars end_idx idx_* this_* new_* last_ i header_goes_til
 
 
-%% manually plot cheap olfa data on top
+%% figure
 f2 = figure; hold on; legend('Location','northwest');
 f2.Position = [260 230 812 709];
 f2.NumberTitle = 'off';
@@ -201,6 +220,8 @@ xlabel('Flow (SCCM)')
 ylabel("PID (V)");
 if ~isempty(f.pid_lims); ylim(f.pid_lims); end
 xlim([0 100]);
+%{
+%% manually plot cheap olfa data on top
 
 % 2023-10-05_datafile_00_cheap_olfa
 %{
@@ -231,6 +252,7 @@ cheap_olfa_data = [100 -1.0075
 
 cheap_olfa_adjusted(:,1) = cheap_olfa_data(:,1);
 cheap_olfa_adjusted(:,2) = cheap_olfa_data(:,2) - pid_adjustment_value;
+%}
 
 blue_color = [0 .4470 .7410];
 green_color = PID_color;
@@ -240,10 +262,9 @@ if strcmp(plot_cheap_olfa,'yes')
     c.MarkerFaceColor = green_color;
     c.DisplayName = 'cheap olfa';
 end
-
 s = scatter(standard_olfa_data(:,1),standard_olfa_data(:,2),f.dot_size,'filled');
 s.MarkerFaceColor = blue_color;
 s.DisplayName = 'standard olfa';
 
-
+clearvars *_color last_* disp* number_of_data plot_* i *flow_value*
 
