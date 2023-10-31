@@ -7,16 +7,16 @@ from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 import numpy as np
 
 import utils
+import config_olfa_48line as config_olfa
 
+# TODO close this window if the olfactometer window is closed or the Arduino is disconnected
 
 ##############################
 # DEFAULT VALUES
-def_open_duration = '5'
 def_pressurize_duration = '1'
-def_Kp_value = '0.0500'
-def_Ki_value = '0.0001'
-def_Kd_value = '0.0000'
 def_mfc_cal_value = '100'
+mfc_capacity = '200'            # flow sensor max flow
+def_calibration_duration = '60' # calibration per flow rate
 ##############################
 
 ##############################
@@ -34,9 +34,6 @@ file_handler = utils.create_file_handler(main_datafile_directory)
 logger.addHandler(file_handler)
 ##############################
 
-
-mfc_capacity = '200'            # flow sensor max flow
-def_calibration_duration = '60' # calibration per flow rate
 
 class calibration_worker(QObject):
     def __init__(self):
@@ -109,7 +106,7 @@ class VialDetailsPopup(QWidget):
         
         # VALVE OPEN
         self.db_valve_open_lbl = QLabel('Duration (s):')
-        self.db_valve_open_wid = QLineEdit(text=def_open_duration)        # pos change to spinbox so min/max can be set (& to match olfa driver)
+        self.db_valve_open_wid = QLineEdit(text=config_olfa.def_open_duration)        # pos change to spinbox so min/max can be set (& to match olfa driver)
         self.db_valve_open_btn = QPushButton('Open vial',checkable=True)
         self.db_valve_open_btn.toggled.connect(self.vial_open_toggled)
 
@@ -186,7 +183,7 @@ class VialDetailsPopup(QWidget):
         self.setpoint_set_widget = QLineEdit()
         #setpoint_set_widget.setMaximumWidth(4)
         self.setpoint_set_widget.setAlignment(QtCore.Qt.AlignCenter)
-        self.setpoint_set_widget.setPlaceholderText('Set value')
+        self.setpoint_set_widget.setPlaceholderText('Set flow rate')
         self.setpoint_set_widget.setStatusTip('Type to set flow rate')
         self.setpoint_read_widget = QLCDNumber()
         self.setpoint_read_widget.setMinimumSize(50,50)
@@ -318,12 +315,22 @@ class VialDetailsPopup(QWidget):
         self.mfc_value_lineedit = QLineEdit(text=def_mfc_cal_value)
         self.start_calibration_btn = QPushButton(text='Start',checkable=True)
         self.start_calibration_btn.setToolTip('Collect flow values for x seconds')
+        #self.mfc_value_lineedit.returnPressed.connect(self.start_calibration)   # TODO fix
+        '''
+        self.start_multi_calibration_btn = QPushButton(text='Start x3',checkable=True)
+        self.start_multi_calibration_btn.toggled.connect(self.start_multi_calibration)
+        layout_btns = QHBoxLayout()
+        layout_btns.addWidget(self.create_new_cal_file_btn)
+        layout_btns.addWidget(self.start_calibration_btn)
+        layout_btns.addWidget(self.start_multi_calibration_btn)
+        '''
         self.start_calibration_btn.toggled.connect(self.start_calibration)
         
         # Widget for duration of calibration (& timer for visual)
         self.calibration_duration_lbl = QLabel('Duration (s):')
         self.calibration_duration_lbl.setToolTip('Max 99 seconds')
         self.calibration_duration_lineedit = QLineEdit(text=def_calibration_duration)
+        self.calibration_duration_lineedit.setToolTip('Max 99 seconds')
         self.calibration_duration_timer = QTimer()
         self.calibration_duration_timer.setTimerType(0)     # set to millisecond accuracy
         self.calibration_duration_timer.timeout.connect(self.show_cal_duration_time)
@@ -382,6 +389,7 @@ class VialDetailsPopup(QWidget):
         layout_widgets.addRow(self.cal_file_name_lbl,self.cal_file_name_wid)
         layout_widgets.addRow(self.mfc_value_lbl,self.mfc_value_lineedit)
         layout_widgets.addRow(layout_cal_duration)
+        #layout_widgets.addRow(layout_btns)
         layout_widgets.addRow(self.create_new_cal_file_btn,self.start_calibration_btn)
         layout_full = QGridLayout()
         layout_full.addLayout(layout_directory,0,0,1,4)
@@ -667,7 +675,7 @@ class VialDetailsPopup(QWidget):
 
             # Get sccm value & duration
             self.this_cal_sccm_value = self.mfc_value_lineedit.text()
-            self.this_cal_duration = self.calibration_duration_lineedit.text()  # TODO check if we have already done this sccm value
+            self.this_cal_duration = self.calibration_duration_lineedit.text()
             
             logger.debug('starting calibration at %s sccm', self.this_cal_sccm_value)
             
@@ -711,6 +719,28 @@ class VialDetailsPopup(QWidget):
             # Stop the timer
             if self.calibration_duration_timer.isActive() == True:
                 self.end_cal_duration_timer()
+    '''
+    def start_multi_calibration(self):
+        if self.start_multi_calibration_btn.isChecked() == True:
+            sccm_val = self.mfc_value_lineedit.text()
+
+            first_value = float(self.cal_results_mean_wid.text())
+            next_value = 9999
+            diff = abs(first_value-next_value)
+
+            while (diff > 0.3):
+                next_value = float(self.cal_results_mean_wid.text())
+                self.start_calibration_btn.setChecked(True)
+
+
+            #for i in range(1,3):
+            #    self.start_calibration_btn.setChecked()
+            #    next_value = float(self.cal_results_mean_wid.text())
+            #    diff = abs(first_value-next_value)
+            #    if diff > 0.3:
+                    # run it again
+           #         pass
+    '''
     
     def analyze_cal_session(self):
         flowVal_median = np.median(self.serial_values)
@@ -728,7 +758,7 @@ class VialDetailsPopup(QWidget):
             self.cal_results_max_wid.setText(str(flow_max))
             self.cal_results_med_wid.setText(str(flowVal_median))
             self.cal_results_mean_wid.setText(str(flowVal_mean))
-            logger.debug('range of int values: ' + str(flow_range) + '\t mean: ' + str(flowVal_mean))
+            logger.debug('range of int vals: ' + str(flow_range) + '\t mean: ' + str(flowVal_mean))
             
             # Put mean value in the widget so the user can decide whether to keep it or not
             self.this_cal_int_value = flowVal_mean
