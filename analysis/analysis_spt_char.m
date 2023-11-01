@@ -21,10 +21,9 @@ plot_opts.all_points = 'yes';   % TODO this does nothing right now
 plot_opts.plot_over_time = 'no';    % plot the entire trial over time
 plot_opts.plot_all = 'yes'; % plot each individually
 plot_opts.plot_x_lines = 'no';   % x lines of where the mean was calculated from
-plot_opts.show_pid_mean = 'yes';
-plot_opts.show_flow_mean = 'yes';
-plot_opts.flow_error_bars = 'no';
-plot_opts.pid_error_bars = 'no';
+plot_opts.show_pid_mean = 'no';
+plot_opts.show_flow_mean = 'no';
+plot_opts.show_error_bars = 'yes';
 
 %% display variables
 f.x_lim = [];
@@ -81,13 +80,21 @@ f.colors{4} = '#7E2F8E';
 %a_thisfile_name = '2023-10-30_datafile_08';
 %a_thisfile_name = '2023-10-30_datafile_09';
 %a_thisfile_name = '2023-10-30_datafile_10';
-a_thisfile_name = '2023-10-31_datafile_00';
-f.olfa_lims_sccm = [0 105];
-f.pid_lims= [0 5.5];
 
+%a_thisfile_name = '2023-10-31_datafile_00';
+%a_thisfile_name = '2023-10-31_datafile_01';
+%a_thisfile_name = '2023-10-31_datafile_02';
+%a_thisfile_name = '2023-10-31_datafile_03';
+%f.olfa_lims_sccm = [0 101];
+%f.pid_lims = [0 4.5];
+%a_thisfile_name = '2023-10-31_datafile_07'; f.pid_lims = [0 1];
+
+a_thisfile_name = '2023-11-01_datafile_00';
+f.pid_lims = [0 3.5];
+f.olfa_lims_sccm = [0 105];
 plot_opts.plot_all = 'no';
 
-f.time_to_cut = 2;
+f.time_to_cut = 8;
 f.olfa_lims_int = [143 575];
 %f.position = [140 200 1355 686];
 %f.position = [960 210 780 686];  % not that small
@@ -398,7 +405,7 @@ try
     f1.Name = ['FLOW v. PID: ',a_thisfile_name];
     title(['FLOW v. PID:     ', a_thisfile_name]);
     subtitle(a_this_note);
-    legend('Location','northwest');
+    %legend('Location','northwest');
     f1_ax = gca;
     ylabel('PID (V)')
     if ~isempty(f.pid_lims); ylim(f.pid_lims); end
@@ -421,7 +428,88 @@ try
         end
     end
 
+    %% plot the error bars
+    
+    for i=1:length(d_olfa_flow)
+        if ~isempty(d_olfa_flow(i).int_means)
+            x = d_olfa_flow(i).sccm_means(:,1);
+            y = d_olfa_flow(i).sccm_means(:,2);
 
+            if strcmp(plot_opts.show_error_bars,'yes')
+
+                for e=1:length(d_olfa_flow(i).sccm_means)
+                    flow_std = d_olfa_flow(i).events.OV_keep(e).flow_std_sccm;
+                    pid_std = d_olfa_flow(i).events.OV_keep(e).pid_std;
+
+                    xneg(e,1) = flow_std/2;
+                    xpos(e,1) = flow_std/2;
+                    yneg(e,1) = pid_std/2;
+                    ypos(e,1) = pid_std/2;
+
+                end
+
+                e = errorbar(x,y,yneg,ypos,xneg,xpos,'o');
+                e.HandleVisibility = 'off';
+                e.Color = p.MarkerFaceColor;
+
+            end
+
+            %{
+            % for each event
+            for e=1:length(d_olfa_flow(i).events.OV_keep)
+
+                % flow error bars
+                if strcmp(plot_opts.show_error_bars,'yes')
+                    if strcmp(plot_opts.plot_flow_as_sccm,'no')
+                        flow_mean = d_olfa_flow(i).events.OV_keep(e).flow_mean_int;
+                        flow_std_dev = d_olfa_flow(i).events.OV_keep(e).flow_std_int;
+                        flow_sample_size = length(d_olfa_flow(i).events.OV_keep(e).data.flow_int);
+                        flow_sem = flow_std_dev / sqrt(flow_sample_size);
+                        pid_mean = d_olfa_flow(i).events.OV_keep(e).pid_mean;
+                        e_flow = errorbar(flow_mean,pid_mean,flow_sem,'horizontal');
+                    else
+                        flow_mean = d_olfa_flow(i).events.OV_keep(e).flow_mean_sccm;
+                        flow_std_dev = d_olfa_flow(i).events.OV_keep(e).flow_std_sccm;
+                        flow_sample_size = length(d_olfa_flow(i).events.OV_keep(e).data.flow_sccm);
+                        flow_sem = flow_std_dev / sqrt(flow_sample_size);
+                        pid_mean = d_olfa_flow(i).events.OV_keep(e).pid_mean;
+                        e_flow = errorbar(flow_mean,pid_mean,flow_sem,'horizontal','DisplayName','off');
+                        %e_flow.DisplayName = '';
+                    end
+                    e_flow.Color = [0 .4471 .7412];
+                end
+
+                % pid error bars
+                if strcmp(plot_opts.pid_error_bars,'yes')                        
+                    % TODO fix the sample size here
+                    % or change the calculated value to the median maybe
+                    pid_std_dev = d_olfa_flow(i).events.OV_keep(e).pid_std;
+                    pid_sample_size = length(d_olfa_flow(i).events.OV_keep(e).data.pid);
+                    pid_sem = pid_std_dev / sqrt(pid_std_dev);
+                    e_pid = errorbar(flow_mean,pid_mean,pid_sem,'vertical');%,'DisplayName','off');
+                    e_pid.Color = [0 .4471 .7412];
+                    %e_pid.DisplayName = '';
+                end
+            end
+            %}
+            
+        end
+    end
+
+
+    %% save this shit i want 10/30/2023
+    %{
+    save_file_name = a_thisfile_name + "_" + d_olfa_flow.vial_num;
+    if ~isfile(save_file_name)
+        save(save_file_name,'d_olfa_flow','data_pid','d_olfa_data_combined');
+        disp("saved " + save_file_name)
+    else
+        delete(save_file_name)
+        save(save_file_name,'d_olfa_flow','data_pid','d_olfa_data_combined');
+        disp("rewrote " + save_file_name)
+    end
+    %}
+    
 %% error catch in case file has not been parsed yet
 catch ME
     switch ME.identifier
