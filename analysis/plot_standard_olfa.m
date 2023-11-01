@@ -208,6 +208,55 @@ for i=1:height(a_raw_file)
 end
 clearvars end_idx idx_* this_* new_* last_ i header_goes_til
 
+%% sort the data structure
+fieldName = 'flow_value';
+fieldValues = {d_olfa_data.(fieldName)};
+fieldValues = cell2mat(fieldValues);
+[~,sortedIndices] = sort(fieldValues,'ascend');
+d_olfa_data_sorted = d_olfa_data(sortedIndices);
+
+%% initialize the combined data structure
+d_olfa_data_combined = [];
+d_olfa_data_combined(1).flow_value = [];
+d_olfa_data_combined(1).pid_mean1 = [];
+d_olfa_data_combined(1).pid_mean2 = [];
+d_olfa_data_combined(1).data1 = [];
+d_olfa_data_combined(1).data2 = [];
+
+flow_value = 10;
+for i=1:10
+    d_olfa_data_combined(i).flow_value = flow_value;
+    flow_value = flow_value + 10;
+end
+
+%% add shit to the combined data structure
+for i=1:length(d_olfa_data_sorted)
+    this_flow_value = d_olfa_data_sorted(i).flow_value;
+    idx_to_use = this_flow_value / 10;
+    % check if the first slot has been used yet
+    if isempty(d_olfa_data_combined(idx_to_use).pid_mean1)
+        d_olfa_data_combined(idx_to_use).pid_mean1 = d_olfa_data_sorted(i).pid_mean;
+        d_olfa_data_combined(idx_to_use).data1 = d_olfa_data_sorted(i).data;
+    else
+        d_olfa_data_combined(idx_to_use).pid_mean2 = d_olfa_data_sorted(i).pid_mean;
+        d_olfa_data_combined(idx_to_use).data2 = d_olfa_data_sorted(i).data;
+    end
+end
+clearvars idx_* last_ field*
+
+
+%% save the data structure
+mat_file_dir = strcat(pwd,'\','data (.mat files)\',a_thisfile_name,'.mat');
+disp_file_dir = strcat('C:\..\data (.mat files)\',a_thisfile_name,'.mat');
+
+if ~isfile(mat_file_dir)
+    save(mat_file_dir,"d_olfa_data_sorted","d_olfa_data_combined");
+    disp(['Saved file: ', disp_file_dir])
+else
+    delete(mat_file_dir);
+    save(mat_file_dir,"d_olfa_data_sorted","d_olfa_data_combined");
+    disp(['File already existed, rewrote: ', disp_file_dir])
+end
 
 %% figure
 f2 = figure; hold on; legend('Location','northwest');
