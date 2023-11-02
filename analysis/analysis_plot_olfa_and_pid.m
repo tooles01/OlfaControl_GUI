@@ -39,9 +39,10 @@ plot_opts.plot_flow_as_sccm = 'yes';
 % **if datafile does not have calibration tables listed in header, plot will be in ints regardless
 
 % pick one of these
+plot_opts.olfa = 'yes';
 plot_opts.pid = 'yes';
 plot_opts.output_flow = 'no';
-plot_opts.ctrl = 'no';
+plot_opts.ctrl = 'yes';
 plot_opts.ctrl_as_voltage = 'no';
 
 %% enter data file name
@@ -74,7 +75,7 @@ plot_opts.ctrl_as_voltage = 'no';
 
 %a_thisfile_name = '2023-10-12_datafile_00'; f.pid_ylims = [-.1 3];
 %a_thisfile_name = '2023-10-12_datafile_01'; f.pid_ylims = [-.1 3];
-
+%a_thisfile_name = '2023-10-17_datafile_00';
 %{
 %a_thisfile_name = '2023-10-18_datafile_00';
 
@@ -127,14 +128,43 @@ plot_opts.ctrl_as_voltage = 'no';
 %}
 %a_thisfile_name = '2023-10-20_datafile_00';
 
-a_thisfile_name = '2023-10-27_datafile_01'; f.pid_ylims = [0 6];
+%a_thisfile_name = '2023-10-27_datafile_01'; f.pid_ylims = [0 6];
 % 10 SCCM
-f.x_lim = [31.541 900];
-f.x_lim = [72.064 900];
+%f.x_lim = [31.541 900];
+%f.x_lim = [72.064 900];
 % 100 SCCM
-f.x_lim = [760.671 900];
-f.x_lim = [801.182 900];
-f.scale_time = 'yes';
+%f.x_lim = [760.671 900];
+%f.x_lim = [801.182 900];
+
+%a_thisfile_name = '2023-10-27_datafile_02'; f.pid_ylims = [0 6];
+% 10 SCCM
+%f.x_lim = [72.023 900];
+%f.x_lim = [153.08 900];
+% 100 SCCM
+%f.x_lim = [436.755 900];
+%f.x_lim = [720.489 900];
+%f.scale_time = 'yes';
+
+%a_thisfile_name = '2023-10-27_datafile_03'; f.pid_ylims = [0 6];
+%a_thisfile_name = '2023-10-27_datafile_04'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100];
+%a_thisfile_name = '2023-10-27_datafile_05'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100];
+%a_thisfile_name = '2023-10-27_datafile_06'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100];
+%a_thisfile_name = '2023-10-27_datafile_08'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100]; f.x_lim = [21.508 91.508];
+%a_thisfile_name = '2023-10-27_datafile_11'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100]; f.x_lim = [21.508 91.508];    % make sure you change it to i=2:length
+%a_thisfile_name = '2023-10-27_datafile_14'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100]; f.x_lim = [21.509 91.509];
+%a_thisfile_name = '2023-10-27_datafile_15'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100]; f.x_lim = [21.518 91.518];
+%f.pid_ylims = [0 8];
+%a_thisfile_name = '2023-10-30_datafile_05'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100];
+%a_thisfile_name = '2023-10-31_datafile_00';
+%a_thisfile_name = '2023-10-31_datafile_08';
+%a_thisfile_name = '2023-10-31_datafile_11';
+
+a_thisfile_name = '2023-11-02_datafile_00';
+%a_thisfile_name = '2023-11-02_datafile_01';
+%a_thisfile_name = '2023-11-02_datafile_02';
+%a_thisfile_name = '2023-11-02_datafile_04';
+f.flow_ylims = [0 120];
+f.pid_ylims = [0 3.5];
 
 %f.position = [549 166 1353 684];
 %f.position = [166 600 775 275];     % for OneNote
@@ -247,17 +277,28 @@ try
     end
     
     %% plot: olfa flow
-    % for each vial
-    for i=1:length(d_olfa_flow)
-        if strcmp(plot_opts.plot_flow_as_sccm,'yes')
-            if ~isempty(d_olfa_flow(i).cal_table_name)
-                % plot as sccm
-                if ~isempty(d_olfa_flow(i).flow.flow_sccm)
-                    d_olfa_flow_x = d_olfa_flow(i).flow.flow_sccm(:,1);
-                    d_olfa_flow_y = d_olfa_flow(i).flow.flow_sccm(:,2);
-                    ylabel('Olfa flow (sccm)')
-                    if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
-                    else; ylim([-5 150]); end
+    if strcmp(plot_opts.olfa,'yes')
+        % for each vial
+        for i=1:length(d_olfa_flow)
+            if strcmp(plot_opts.plot_flow_as_sccm,'yes')
+                if ~isempty(d_olfa_flow(i).cal_table_name)
+                    % plot as sccm
+                    if ~isempty(d_olfa_flow(i).flow.flow_sccm)
+                        d_olfa_flow_x = d_olfa_flow(i).flow.flow_sccm(:,1);
+                        d_olfa_flow_y = d_olfa_flow(i).flow.flow_sccm(:,2);
+                        ylabel('Olfa flow (sccm)')
+                        if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
+                        else; ylim([-5 150]); end
+                    end
+                else
+                    % plot as integer
+                    if ~isempty(d_olfa_flow(i).flow.flow_int)
+                        d_olfa_flow_x = d_olfa_flow(i).flow.flow_int(:,1);
+                        d_olfa_flow_y = d_olfa_flow(i).flow.flow_int(:,2);
+                        ylabel('Olfa flow (integer values)')
+                        if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
+                        else; ylim([0 1024]); end
+                    end
                 end
             else
                 % plot as integer
@@ -269,29 +310,20 @@ try
                     else; ylim([0 1024]); end
                 end
             end
-        else
-            % plot as integer
-            if ~isempty(d_olfa_flow(i).flow.flow_int)
-                d_olfa_flow_x = d_olfa_flow(i).flow.flow_int(:,1);
-                d_olfa_flow_y = d_olfa_flow(i).flow.flow_int(:,2);
-                ylabel('Olfa flow (integer values)')
-                if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
-                else; ylim([0 1024]); end
+            
+            if strcmp(f.scale_time,'yes')
+                if ~isempty(f.x_lim)
+                    % scale time to zero
+                    d_olfa_flow_x = d_olfa_flow_x - f.x_lim(1);
+                    % readjust x limits
+                    xlim([-.5 16]);                
+                end
             end
+            p = plot(d_olfa_flow_x,d_olfa_flow_y);
+            p.LineWidth = f.flow_width;
+            p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
+            %pa = scatter(d_olfa_flow_x,d_olfa_flow_y,'filled','HandleVisibility','off');
         end
-        
-        if strcmp(f.scale_time,'yes')
-            if ~isempty(f.x_lim)
-                % scale time to zero
-                d_olfa_flow_x = d_olfa_flow_x - f.x_lim(1);
-                % readjust x limits
-                xlim([-.5 16]);                
-            end
-        end
-        p = plot(d_olfa_flow_x,d_olfa_flow_y);
-        p.LineWidth = f.flow_width;
-        p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
-        %pa = scatter(d_olfa_flow_x,d_olfa_flow_y,'filled','HandleVisibility','off');
     end
     
     %% plot: olfa ctrl
@@ -301,8 +333,8 @@ try
             if strcmp(plot_opts.ctrl_as_voltage,'yes')        
                 % plot as voltage
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_volt)
-                    d_ctrl_x = d_olfa_flow.ctrl.ctrl_volt(:,1);
-                    d_ctrl_y = d_olfa_flow.ctrl.ctrl_volt(:,2);
+                    d_ctrl_x = d_olfa_flow(i).ctrl.ctrl_volt(:,1);
+                    d_ctrl_y = d_olfa_flow(i).ctrl.ctrl_volt(:,2);
                     yyaxis right;
                     ylabel('Prop valve value (V)');
                     ylim([-0.1 5.1])
@@ -310,8 +342,8 @@ try
             else
                 % plot as integer
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_int)
-                    d_ctrl_x = d_olfa_flow.ctrl.ctrl_int(:,1);
-                    d_ctrl_y = d_olfa_flow.ctrl.ctrl_int(:,2);
+                    d_ctrl_x = d_olfa_flow(i).ctrl.ctrl_int(:,1);
+                    d_ctrl_y = d_olfa_flow(i).ctrl.ctrl_int(:,2);
                     yyaxis right;
                     ylabel('Prop valve value (int)')
                     ylim([-5 260])
