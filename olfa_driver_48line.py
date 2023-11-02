@@ -25,6 +25,49 @@ logger.addHandler(file_handler)
 ##############################
 
 
+'''
+import math, time
+import config_main
+from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
+
+class fake_open_worker(QObject):
+    finished = pyqtSignal()
+    worker_send_command_to_master = pyqtSignal(str)
+
+    def __init__(self):
+        super().__init__()
+        self.threadON = False
+
+        self.fake_open_dur = 0
+        self.real_open_dur = 0
+        self.full_vialNum = 'E1'
+    
+    @pyqtSlot()
+    def open_this_vial(self):
+        if self.threadON == True:
+
+            # create string for fake open command
+            worker_strToSend = 'S_OV_' + str(self.fake_open_dur) + '_' + self.full_vialNum
+            # send fake open command
+            self.worker_send_command_to_master.emit(worker_strToSend)
+
+            # wait that duration
+            time.sleep(self.fake_open_dur)
+
+            # wait a little bit longer
+            time.sleep(config_main.waitBtSpAndOV)
+
+            # TODO add a check to make sure there's enough time between commands sent to master Arduino (ChatGPT says it takes 2.08ms)
+            
+            ## REAL OPEN
+            # send real command
+            logger.info('Opening %s (%s seconds)',self.full_vialNum,self.real_open_dur)
+            # TODO start the valve timer here
+            worker_strToSend = 'S_OV_' + str(self.real_open_dur) + '_' + self.full_vialNum
+            self.worker_send_command_to_master.emit(worker_strToSend)
+
+            self.finished.emit()
+'''
 
 class Vial(QGroupBox):
 
@@ -53,7 +96,22 @@ class Vial(QGroupBox):
         max_width = self.sizeHint().width()
         #self.setMaximumWidth(max_width - 10)
         self.setMaximumWidth(max_width)
-    
+        '''
+        # SET UP WORKER THREAD WHATEVER
+        self.obj_fake_open_worker = fake_open_worker()
+        self.thread_fake_open = QThread()
+        self.obj_fake_open_worker.moveToThread(self.thread_fake_open)
+        
+        self.obj_fake_open_worker.worker_send_command_to_master.connect(self.olfactometer_parent_object.send_to_master)
+        self.obj_fake_open_worker.finished.connect(self.threadIsFinished)
+        self.thread_fake_open.started.connect(self.obj_fake_open_worker.open_this_vial)
+        '''
+    '''
+    def threadIsFinished(self):
+        logger.debug('thread is finished')
+        self.obj_fake_open_worker.threadON = False
+        self.thread_fake_open.exit()
+    '''
     
     # GUI FEATURES
     def generate_stuff(self):
@@ -75,11 +133,11 @@ class Vial(QGroupBox):
         self.setpoint_slider.setMaximum(int(config_olfa.mfc_capacity))
         self.setpoint_slider.setToolTip('Adjusts flow set rate.')
         self.setpoint_slider.setTickPosition(3)     # draw tick marks on both sides
-        self.setpoint_set_widget = QLineEdit()
-        #setpoint_set_widget.setMaximumWidth(4)
-        self.setpoint_set_widget.setAlignment(QtCore.Qt.AlignCenter)
-        self.setpoint_set_widget.setPlaceholderText('Set value')
-        self.setpoint_set_widget.setStatusTip('Type to set flow rate')
+        self.setpoint_set_lineedit = QLineEdit()
+        #self.setpoint_set_lineedit.setMaximumWidth(4)
+        self.setpoint_set_lineedit.setAlignment(QtCore.Qt.AlignCenter)
+        self.setpoint_set_lineedit.setPlaceholderText('Set value')
+        self.setpoint_set_lineedit.setStatusTip('Type to set flow rate')
         self.setpoint_read_widget = QLCDNumber()
         self.setpoint_read_widget.setMinimumSize(50,50)
         self.setpoint_read_widget.setDigitCount(5)
@@ -88,12 +146,12 @@ class Vial(QGroupBox):
         
         self.setpoint_slider_layout = QGridLayout()
         self.setpoint_slider_layout.addWidget(self.setpoint_slider,0,0,2,1)
-        self.setpoint_slider_layout.addWidget(self.setpoint_set_widget,0,1,1,2)
+        self.setpoint_slider_layout.addWidget(self.setpoint_set_lineedit,0,1,1,2)
         self.setpoint_slider_layout.addWidget(self.setpoint_read_widget,1,1,1,2)
         
-        self.setpoint_slider.valueChanged.connect(lambda: self.update_text(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_widget))
+        self.setpoint_slider.valueChanged.connect(lambda: self.slider_changed(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_lineedit))
         self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider))
-        self.setpoint_set_widget.returnPressed.connect(self.text_changed)
+        self.setpoint_set_lineedit.returnPressed.connect(self.text_changed)
         
         # READ FLOW VALUES
         self.read_flow_vals_btn = QPushButton(text="Read flow",checkable=True,toolTip = 'Start reading flow values')
@@ -124,34 +182,34 @@ class Vial(QGroupBox):
         self.layout.addRow(self.read_flow_vals_btn,self.vial_details_btn)
         # height
         setpoint_set_read_height = 50
-        self.setpoint_set_widget.setMaximumHeight(setpoint_set_read_height)
+        self.setpoint_set_lineedit.setMaximumHeight(setpoint_set_read_height)
         self.setpoint_read_widget.setMaximumHeight(setpoint_set_read_height)
         self.setpoint_slider.setMaximumHeight(setpoint_set_read_height*2)
         self.setpoint_slider.setFixedHeight(100)
         # width
         half_col_width = self.read_flow_vals_btn.sizeHint().width()
         #self.setpoint_slider.setFixedWidth(half_col_width)
-        self.setpoint_set_widget.setMaximumWidth(half_col_width)
+        self.setpoint_set_lineedit.setMaximumWidth(half_col_width)
         self.setpoint_read_widget.setMaximumWidth(half_col_width)
         self.read_flow_vals_btn.setFixedWidth(self.read_flow_vals_btn.sizeHint().width())
         self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
         self.setpoint_slider.setFixedWidth(32)
     
     # SETPOINT SLIDER
-    # slider changed --> update setpoint set widget
-    def update_text(self,value,spt_set_wid):
+    # Slider changed --> Update setpoint set widget
+    def slider_changed(self,value,spt_set_wid):
         spt_set_wid.setText(str(value))
-        self.vial_details_window.setpoint_set_widget.setText(str(value))    # update vial details set widget
+        self.vial_details_window.setpoint_set_lineedit.setText(str(value))  # update vial details set widget
         self.vial_details_window.setpoint_slider.setValue(value)            # update vial details slider
     
-    # send new setpoint to MFC
+    # Send new setpoint to MFC
     def slider_released(self, setpoint_slider):
         val = setpoint_slider.value()   # get value of slider
         self.set_flowrate(val)          # set the flowrate
     
     def text_changed(self):
         try:
-            value = int(self.setpoint_set_widget.text())
+            value = int(self.setpoint_set_lineedit.text())
             self.set_flowrate(value)
         except ValueError:
             pass    # if something other than an integer was entered
@@ -185,19 +243,46 @@ class Vial(QGroupBox):
         self.set_flowrate(self.setpoint)    # update setpoint
     
     def open_vial(self, duration):
-        # send to olfactometer_window (to send to Arduino)
+        '''
+        # calculate how long we need to do the little fake vial open
+        # parameters:
+        # - tube radius
+        # - tube length
+        # - flow rate
+
+        tube_radius_inch = 0.03125  # for 1/16" ID tubing
+        tube_radius_cm = .079375
+        tube_length_cm = 22
+        this_setpoint_sccm = self.setpoint
+        
+        flow_rate_per_second = float(this_setpoint_sccm/60)
+        fake_open_duration = (math.pi * (tube_radius_cm*tube_radius_cm) * tube_length_cm) / flow_rate_per_second
+        fake_open_duration = round(fake_open_duration,1)
+        logger.info('doing fake open for %s seconds', str(fake_open_duration))
+        
+        # SEND PARAMETERS TO WORKER
+        self.obj_fake_open_worker.fake_open_dur = fake_open_duration
+        self.obj_fake_open_worker.real_open_dur = duration
+        self.obj_fake_open_worker.full_vialNum = self.full_vialNum
+        
+        # START WORKER THREAD
+        self.obj_fake_open_worker.threadON = True
+        logger.debug('starting fake worker thread')
+        self.thread_fake_open.start()        '''
+        
+        # Send to olfactometer_window (to send to Arduino)
         strToSend = 'S_OV_' + str(duration) + '_' + self.full_vialNum
         self.olfactometer_parent_object.send_to_master(strToSend)
         
-        # send to main GUI window (to write to datafile)
+        # Send to main GUI window (to write to datafile)
         device = 'olfactometer ' + self.full_vialNum
         self.write_to_datafile(device,'OV',str(duration))
 
-        # start valve timer
+        # Start valve timer
         self.start_valve_timer(duration)
     
     def close_vial(self):
-        # if the button was toggled before the timer finished: send command to Arduino
+        # If the button was toggled before the timer finished: send command to Arduino
         if self.valve_timer.isActive():
             logger.debug('vial ' + self.full_vialNum + ' was closed early')
             self.end_valve_timer()
@@ -213,15 +298,16 @@ class Vial(QGroupBox):
     # COMMANDS
     def K_parameter_update(self, Kx, value):
         strToSend = 'S_Kx_' + Kx + str(value) + '_' + self.full_vialNum
-        self.olfactometer_parent_object.send_to_master(strToSend)
+        self.olfactometer_parent_object.send_to_master(strToSend) # TODO add to log file when K parameters are updated
     
     def set_flowrate(self, value):
-        # check if out of range
+        # Check if out of range
         if (value >= 0) and (value <= int(config_olfa.mfc_capacity)):
             # Convert from sccm to integer
             setpoint_sccm = value
             setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
             logger.info('set ' + self.full_vialNum + ' to ' + str(setpoint_sccm) + ' sccm')
+            self.setpoint = setpoint_sccm
             
             # Send to olfactometer_window (to send to Arduino)
             strToSend = 'S_Sp_' + str(setpoint_integer) + '_' + self.full_vialNum
@@ -293,15 +379,15 @@ class Vial(QGroupBox):
         if timedelta_current_valve_dur >= self.timedelta_valve_open_full_dur:
             self.end_valve_timer()
         valve_dur_display_value = str(timedelta_current_valve_dur)
-        valve_dur_display_value = valve_dur_display_value[5:]   # remove hour/minute display
-        valve_dur_display_value = valve_dur_display_value[:-3]  # remove extra decimal point display
+        valve_dur_display_value = valve_dur_display_value[5:]   # Remove hour/minute display
+        valve_dur_display_value = valve_dur_display_value[:-3]  # Remove extra decimal point display
         self.valveTimer_duration_label.setText(valve_dur_display_value)
         self.vial_details_window.valveTimer_duration_label.setText(valve_dur_display_value)
     
     def end_valve_timer(self):
         self.valve_timer.stop()
         
-        # check which button to untoggle
+        # Check which button to untoggle
         if self.vial_details_window.db_valve_open_btn.isChecked():
             self.vial_details_window.db_valve_open_btn.toggle()
         if self.valve_open_btn.isChecked():
@@ -350,13 +436,6 @@ class slave_8vials(QGroupBox):
         for v in range(config_olfa.vialsPerSlave):
             self.vials_layout.addWidget(self.vials[v])
 
-        '''
-        # FOR TODAY (2/22/2023) since mixing chamber pinout is bad
-        self.vials[0].setEnabled(False) # Vial 1: not connected to anything on the mixing chamber
-        #self.vials[2].setEnabled(False) # Vial 3: connected to Vial 8
-        self.vials[3].setEnabled(False) # Vial 4: isolation valve not working
-        '''
-
 
 class olfactometer_window(QGroupBox):
     
@@ -376,8 +455,7 @@ class olfactometer_window(QGroupBox):
         self.generate_ui()
         
         self.master_groupbox.setEnabled(False)
-        self.setTitle('Olfactometer')    
-    
+        self.setTitle('Olfactometer')
     
     def get_calibration_tables(self):
         
@@ -414,14 +492,14 @@ class olfactometer_window(QGroupBox):
                         except TypeError:
                             pass
                         except KeyError as err:
-                            # clear dictionaries, stop trying to read this file
+                            # Clear dictionaries, stop trying to read this file
                             logger.error('got a KeyError: %s',err)
                             logger.error('%s does not have correct headings for calibration files', cal_file)
                             thisfile_sccm2Ard_dict = {}
                             thisfile_ard2Sccm_dict = {}
                             break
                         except ValueError as err:
-                            # clear dictionaries & stop trying to read this file
+                            # Clear dictionaries & stop trying to read this file
                             logger.debug('missing some values, skipping calibration file %s', cal_file)
                             thisfile_sccm2Ard_dict = {}
                             thisfile_ard2Sccm_dict = {}
@@ -535,7 +613,7 @@ class olfactometer_window(QGroupBox):
     def create_settings_groupbox(self):
         self.settings_groupbox = QGroupBox('Other Settings')
         
-        # select directory where flow calibration tables are stored
+        # Select directory where flow calibration tables are stored
         self.flow_cal_dir_btn = QPushButton('Select Directory',checkable=True)
         self.flow_cal_dir_btn.setToolTip('Select directory for flow calibration tables')
         self.flow_cal_dir_btn.toggled.connect(self.flow_cal_dir_btn_toggled)
@@ -544,7 +622,7 @@ class olfactometer_window(QGroupBox):
         layout.addWidget(self.flow_cal_dir_btn)
         self.settings_groupbox.setLayout(layout)
 
-    def flow_cal_dir_btn_toggled(self,checked):
+    def flow_cal_dir_btn_toggled(self,checked): # TODO finish debugging/cleaning this up
         if checked:
             dlg = QFileDialog()
             dlg.setFileMode(QFileDialog.Directory)
@@ -596,11 +674,11 @@ class olfactometer_window(QGroupBox):
             self.slave_layout.addWidget(s)
             s.setEnabled(False)
         
-        self.slave_widget = QWidget()                           # widget to put into QScrollArea
+        self.slave_widget = QWidget()                           # Widget to put into QScrollArea
         self.slave_widget.setLayout(self.slave_layout)
         self.slave_scrollArea = QScrollArea()
         self.slave_scrollArea.setWidget(self.slave_widget)
-        self.nothing_layout = QHBoxLayout()                     # layout for putting QScrollArea into self.slave_groupbox
+        self.nothing_layout = QHBoxLayout()                     # Layout for putting QScrollArea into self.slave_groupbox
         self.nothing_layout.addWidget(self.slave_scrollArea)
         
         self.slave_groupbox.setLayout(self.nothing_layout)
@@ -624,12 +702,12 @@ class olfactometer_window(QGroupBox):
         else:
             self.port_widget.addItem(config_olfa.noPort_msg)
         
-        # set toolTip for each item
+        # Set toolTip for each item
         for port_list_idx in range(0,self.port_widget.count()):
             this_port = self.port_widget.itemText(port_list_idx)
             self.port_widget.setItemData(port_list_idx,this_port,QtCore.Qt.ToolTipRole)
         
-        # if an Arduino is connected, set the widget default value to that
+        # If an Arduino is connected, set the widget default value to that
         for port_list_idx in range(0,self.port_widget.count()):
             this_port = self.port_widget.itemText(port_list_idx)
             if 'Arduino' in this_port:
@@ -645,7 +723,6 @@ class olfactometer_window(QGroupBox):
             else:
                 self.portStr = self.port[:self.port.index(':')]
                 self.connect_btn.setEnabled(True)
-                #self.connect_btn.setText("Connect to " + self.portStr)
                 self.connect_btn.setText("Connect")
                 self.connect_btn.setToolTip("Connect to " + self.portStr)
     
@@ -739,14 +816,14 @@ class olfactometer_window(QGroupBox):
                             self.nothing_layout.addWidget(self.slave_scrollArea)
                             self.slave_groupbox.setLayout(self.nothing_layout)
                     '''
-                    # enable groupbox for this slave & add the address
+                    # Enable groupbox for this slave & add the address
                     for s in self.slave_objects:
                         if s.name == slave_name_received:
                             s.setEnabled(True)
                             address_label = 'Slave Address: {}'.format(slave_address)
                             s.slave_address_label.setText(address_label)
                     
-                    # if program selected reads "no active slaves" --> update the combobox
+                    # If program selected reads "no active slaves" --> update the combobox
                     try:
                         if self.window().p_slave_select_wid.currentText() == 'no active slaves pls connect olfa or something':
                             self.window().active_slave_refresh()
@@ -754,16 +831,16 @@ class olfactometer_window(QGroupBox):
                         pass
 
                         
-                # IF FLOW UPDATE WAS SENT: send to main GUI window (to write to datafile)
+                # IF FLOW UPDATE WAS SENT: Send to main GUI window (to write to datafile)
                 if len(text) == 17:
-                    text = text[3:]     # remove arduino logging info
+                    text = text[3:]     # Remove arduino logging info
                     
-                    # split up for writing to datafile
+                    # Split up for writing to datafile
                     slave_vial = text[0:2]  # 'A1'
                     flowVal = text[2:6]     # '0148'
                     ctrlVal = text[6:10]    # '0255'
 
-                    # send flow value to main GUI
+                    # Send flow value to main GUI
                     device = 'olfactometer ' + slave_vial
                     unit = 'FL'
                     value = flowVal
@@ -772,7 +849,7 @@ class olfactometer_window(QGroupBox):
                     except AttributeError as err:   # if main window is not open
                         pass
 
-                    # send ctrl value to main GUI
+                    # Send ctrl value to main GUI
                     unit = 'Ctrl'
                     value = ctrlVal
                     try:
@@ -781,15 +858,15 @@ class olfactometer_window(QGroupBox):
                         pass
 
                     
-                    # write it to the vial details box
+                    # Write it to the vial details box
                     for s in self.slave_objects:    # find out which vial this is
                         for v in s.vials:
                             if v.full_vialNum == slave_vial:
-                                # convert to sccm
+                                # Convert to sccm
                                 flowVal_raw = int(flowVal)
                                 flowVal_sccm = utils_olfa_48line.convertToSCCM(flowVal_raw,v.intToSccm_dict)
                                 
-                                # write it to the vial details box
+                                # Write it to the vial details box
                                 flowVal_sccm_str = str(flowVal_sccm)
                                 if len(str(flowVal_sccm)) < 5:
                                     if len(str(flowVal_sccm)) == 4: flowVal_sccm_str = '0' + str(flowVal_sccm)
@@ -797,15 +874,15 @@ class olfactometer_window(QGroupBox):
                                 dataStr = str(flowVal) + '\t' + flowVal_sccm_str + '\t' + str(ctrlVal)
                                 v.vial_details_window.data_receive_box.append(dataStr)
                                 
-                                # write it to the setpoint read widget
+                                # Write it to the setpoint read widget
                                 v.setpoint_read_widget.display(round(flowVal_sccm))
                                 
-                                # write it to the setpoint read widget (in the vial details box)
+                                # Write it to the setpoint read widget (in the vial details box)
                                 v.vial_details_window.setpoint_read_widget.display(round(flowVal_sccm))
                                 
-                                # if calibration is on: write it to the vial details popup
+                                # If calibration is on: write it to the vial details popup
                                 if v.vial_details_window.calibration_on == True:
-                                    # append it to the current list of values
+                                    # Append it to the current list of values
                                     v.vial_details_window.serial_values.append(int(flowVal))
                                     v.vial_details_window.collected_values_window.append(str(flowVal))
                                     '''
@@ -824,8 +901,8 @@ class olfactometer_window(QGroupBox):
         bArr_send = strToSend.encode()
         try:
             if self.serial.isOpen():
-                self.serial.write(bArr_send)                # send to Arduino
-                self.raw_write_display.append(strToSend)    # display string that was sent
+                self.serial.write(bArr_send)                # Send to Arduino
+                self.raw_write_display.append(strToSend)    # Display string that was sent
             else:
                 logger.warning('Serial port not open, cannot send parameter: %s', strToSend)
         except AttributeError as err:

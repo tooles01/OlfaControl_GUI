@@ -94,7 +94,7 @@ class VialDetailsPopup(QWidget):
         self.vial_debug_window_layout.addLayout(layout_col2_data)
         self.setLayout(self.vial_debug_window_layout)
         
-        # set boxes to the same height
+        # Set boxes to the same height
         h1 = self.db_flow_control_box.sizeHint().height()
         h2 = self.db_manual_control_box.sizeHint().height()
         h_to_use = max(h1,h2)
@@ -180,27 +180,27 @@ class VialDetailsPopup(QWidget):
         self.setpoint_slider.setMaximum(int(mfc_capacity))
         self.setpoint_slider.setToolTip('Adjusts flow set rate.')
         self.setpoint_slider.setTickPosition(3)     # draw tick marks on both sides
-        self.setpoint_set_widget = QLineEdit()
-        #setpoint_set_widget.setMaximumWidth(4)
-        self.setpoint_set_widget.setAlignment(QtCore.Qt.AlignCenter)
-        self.setpoint_set_widget.setPlaceholderText('Set flow rate')
-        self.setpoint_set_widget.setStatusTip('Type to set flow rate')
+        self.setpoint_set_lineedit = QLineEdit()
+        #self.setpoint_set_lineedit.setMaximumWidth(4)
+        self.setpoint_set_lineedit.setAlignment(QtCore.Qt.AlignCenter)
+        self.setpoint_set_lineedit.setPlaceholderText('Set flow rate')
+        self.setpoint_set_lineedit.setStatusTip('Type to set flow rate')
         self.setpoint_read_widget = QLCDNumber()
         self.setpoint_read_widget.setMinimumSize(50,50)
         self.setpoint_read_widget.setDigitCount(5)
         self.setpoint_read_widget.setToolTip('Current flow reading')
         self.setpoint_read_widget.setMaximumHeight(50)
-        self.setpoint_slider.valueChanged.connect(lambda: self.update_text(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_widget))
+        self.setpoint_slider.valueChanged.connect(lambda: self.slider_changed(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_lineedit))
         self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider))
-        self.setpoint_set_widget.returnPressed.connect(self.text_changed)
+        self.setpoint_set_lineedit.returnPressed.connect(self.text_changed)
         
         layout_setpoint = QGridLayout()
         layout_setpoint.addWidget(self.setpoint_slider,0,0,2,1)
-        layout_setpoint.addWidget(self.setpoint_set_widget,0,1,1,2)
+        layout_setpoint.addWidget(self.setpoint_set_lineedit,0,1,1,2)
         layout_setpoint.addWidget(self.setpoint_read_widget,1,1,1,2)
         # height
         setpoint_set_read_height = 50
-        self.setpoint_set_widget.setMaximumHeight(setpoint_set_read_height)
+        self.setpoint_set_lineedit.setMaximumHeight(setpoint_set_read_height)
         self.setpoint_read_widget.setMaximumHeight(setpoint_set_read_height)
         self.setpoint_slider.setMaximumHeight(setpoint_set_read_height*2)
         self.db_setpoint_groupbox.setLayout(layout_setpoint)
@@ -291,7 +291,7 @@ class VialDetailsPopup(QWidget):
 
         vlve_dur_display_value = str(current_vlve_dur)
         vlve_dur_display_value = vlve_dur_display_value[5:]
-        vlve_dur_display_value = vlve_dur_display_value[:-4]    # leave 2 sigits after the decimal point
+        vlve_dur_display_value = vlve_dur_display_value[:-4]    # leave 2 digits after the decimal point
         self.db_vlve_timer_lbl.setText(vlve_dur_display_value)
 
     def end_vlve_duration_timer(self):
@@ -350,7 +350,7 @@ class VialDetailsPopup(QWidget):
         layout_cal_file_output.addWidget(self.cal_file_output_display)
         self.instructions_window = QTextEdit(readOnly=True)
 
-        # results of single calibration
+        # Results of single calibration
         self.cal_results_num_wid = QLineEdit(readOnly=True,maximumWidth=40)
         self.cal_results_dur_wid = QLineEdit(readOnly=True,maximumWidth=40)
         self.cal_results_min_wid = QLineEdit(readOnly=True,maximumWidth=40)
@@ -416,11 +416,11 @@ class VialDetailsPopup(QWidget):
     def start_pressurize(self, duration):
         logger.debug('Pressurizing ' + self.full_vialNum + ' for ' + str(duration) + ' seconds')
 
-        # send to olfactometer_window (to send to Arduino)
+        # Send to olfactometer_window (to send to Arduino)
         strToSend = 'S_OC_' + self.full_vialNum
         self.parent.olfactometer_parent_object.send_to_master(strToSend)
 
-        # start pressurize timer
+        # Start pressurize timer
         self.start_pressure_timer(float(duration))
     
     def start_pressure_timer(self, duration):
@@ -442,29 +442,29 @@ class VialDetailsPopup(QWidget):
     def end_pressure_timer(self):
         logger.debug('pressurization done - closing prop valve ' + self.full_vialNum)
         
-        # stop timer
+        # Stop timer
         self.pressure_timer.stop()
         
-        # untoggle button
+        # Untoggle button
         self.db_pressurize_btn.setChecked(False)
         self.db_pressurize_btn.setText('Pressurize')
 
     # SETPOINT SLIDER
-    # slider changed --> update setpoint set widget
-    def update_text(self,value,spt_set_wid):
+    # Update setpoint set lineedit
+    def slider_changed(self,value,spt_set_wid):
         spt_set_wid.setText(str(value))
-        self.parent.setpoint_set_widget.setText(str(value))     # update main vial set widget
+        self.parent.setpoint_set_lineedit.setText(str(value))   # update main vial set widget
         self.parent.setpoint_slider.setValue(value)             # update main vial slider        
     
-    # send new setpoint to MFC
+    # Send new setpoint to MFC
     def slider_released(self, setpoint_slider):
         val = setpoint_slider.value()   # get value of slider
         self.parent.set_flowrate(val)   # set the flowrate
     
     def text_changed(self):
-        # text of the line edit has changed -> sets the new MFC value
+        # Text of the lineedit has changed -> sets the new MFC value
         try:
-            value = int(self.setpoint_set_widget.text())
+            value = int(self.setpoint_set_lineedit.text())
             self.parent.set_flowrate(value)
             self.setpoint_slider.setValue(value)
         except ValueError as err:
@@ -488,11 +488,11 @@ class VialDetailsPopup(QWidget):
             self.db_pressurize_btn.setText('Pressurize')
             #logger.debug(self.full_vialNum + ' pressurization ended early')
             
-            # stop timer
+            # Stop timer
             if self.pressure_timer.isActive():
                 self.end_pressure_timer()
             
-            # send to olfactometer window (to send to Arduino) 
+            # Send to olfactometer window (to send to Arduino) 
             strToSend = 'S_CC_' + self.full_vialNum
             self.parent.olfactometer_parent_object.send_to_master(strToSend)
         
@@ -654,12 +654,12 @@ class VialDetailsPopup(QWidget):
             writer.writerow(File)
             writer.writerow(row_headers)
         
-        # enable the MFC stuff
+        # Enable the MFC stuff
         self.mfc_value_lineedit.setEnabled(True)
         self.calibration_duration_lineedit.setEnabled(True)
         self.start_calibration_btn.setEnabled(True)
         
-        # check that vial is set to debug (read flow values)
+        # Check that vial is set to debug (read flow values)
         self.db_readflow_btn.setChecked(True)
         
         # tell user what to do next
@@ -772,26 +772,26 @@ class VialDetailsPopup(QWidget):
         except ValueError as err:
             logger.warning('ValueError:' + str(err))
         
-        # clear the array
+        # Clear the array
         self.serial_values = [] 
     
     def save_calibration_value(self):
-        # write the data from the widget to the file
-        pair_to_write = eval(self.write_to_file_wid.text()) # convert from string to tuple
+        # Write the data from the widget to the file
+        pair_to_write = eval(self.write_to_file_wid.text())     # Convert from string to tuple
         logger.debug('Writing to cal file: %s', pair_to_write)
         with open(self.new_cal_file_dir,'a',newline='') as f:
             writer = csv.writer(f,delimiter=',')
             writer.writerow(pair_to_write)
 
-        # display what we wrote to the table
+        # Display what we wrote to the table
         str_to_display = self.write_to_file_wid.text()
         self.cal_file_output_display.append(str_to_display)
         
-        # clear lists
+        # Clear lists
         self.serial_values = []
         self.serial_converted = []
 
-        # reset
+        # Reset
         self.calibration_on = False
         self.start_calibration_btn.setChecked(False)
         
