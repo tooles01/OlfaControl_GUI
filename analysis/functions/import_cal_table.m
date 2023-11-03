@@ -30,8 +30,7 @@ function this_cal_file_data = import_cal_table(file_name, file_directory)
             this_cal_file_data = readmatrix(dir_this_cal_table);
         end
 
-        this_cal_file_data(any(isnan(this_cal_file_data),2),:) = [];    % remove rows with nan vals
-        this_cal_file_data = round(this_cal_file_data); %% fix this!!!!!!
+        this_cal_file_data(any(isnan(this_cal_file_data),2),:) = [];    % remove rows with nan vals        
         
         save(dir_this_cal_table_matlab,"this_cal_file_data")     % save as .mat file
     else
