@@ -95,7 +95,71 @@ file = uigetfile("*.csv",uibox_title);
 
 %a_thisfile_name = '2023-10-20_datafile_00'; a_this_note = 'Acetophenone - 8s on 20s off (no fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 10;
 %a_thisfile_name = '2023-10-20_datafile_01'; a_this_note = 'Acetophenone - 8s on 20s off (no fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 10;
-a_thisfile_name = '2023-10-27_datafile_01'; a_this_note = 'E3: 2-Heptanol - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-10-27_datafile_01'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-10-27_datafile_02'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-10-27_datafile_03'; a_this_note = 'E4: 2-Heptanone - 8s on 20s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-27_datafile_04'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-27_datafile_05'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;   % BAD (not all iso valves connected)
+%a_thisfile_name = '2023-10-27_datafile_06'; a_this_note = 'E2: 2-Heptanone - 10s on 30s off'; flow_inc = 20;   % BAD (not all iso valves connected)
+%a_thisfile_name = '2023-10-27_datafile_08'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-27_datafile_11'; a_this_note = 'E2: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-27_datafile_14'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-27_datafile_15'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+
+%a_thisfile_name = '2023-10-30_datafile_00'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-30_datafile_01'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-30_datafile_02'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-30_datafile_03'; a_this_note = 'E2: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-30_datafile_04'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-30_datafile_05'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-30_datafile_06'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-30_datafile_08'; a_this_note = 'E2: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-30_datafile_09'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-30_datafile_10'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+
+%a_thisfile_name = '2023-10-31_datafile_00'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_01'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_02'; a_this_note = 'E2: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_03'; a_this_note = 'E2: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_04'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_05'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_06'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_07'; a_this_note = 'E1: Acetophenone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_08'; a_this_note = 'E2: Acetophenone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_09'; a_this_note = 'E3: Acetophenone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_10'; a_this_note = 'E4: Acetophenone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_11'; a_this_note = 'E4: Acetophenone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_12'; a_this_note = 'E3: Acetophenone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_13'; a_this_note = 'E2: Acetophenone - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-10-31_datafile_14'; a_this_note = 'E1: Acetophenone - 10s on 30s off'; flow_inc = 20;
+
+%a_thisfile_name = '2023-11-01_datafile_00'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (E1 MC)'; flow_inc = 20;
+%a_thisfile_name = '2023-11-01_datafile_01'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (E1 MC)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-01_datafile_02'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off (E1 MC)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-01_datafile_03'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off (E2 MC)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-01_datafile_04'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (E2 MC)'; flow_inc = 10;
+
+%a_thisfile_name = '2023-11-02_datafile_00'; a_this_note = 'Ethyl Tiglate - pre-trial setup'; flow_inc = 100;
+%a_thisfile_name = '2023-11-02_datafile_01'; a_this_note = 'Ethyl Tiglate - pre-trial setup'; flow_inc = 100;
+%a_thisfile_name = '2023-11-02_datafile_02'; a_this_note = 'Ethyl Tiglate - pre-trial setup'; flow_inc = 100;
+
+%a_thisfile_name = '2023-11-02_datafile_03'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-02_datafile_04'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-02_datafile_05'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-02_datafile_06'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-02_datafile_07'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-02_datafile_08'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-02_datafile_09'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off'; flow_inc = 20;
+
+%a_thisfile_name = '2023-11-03_datafile_00'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-03_datafile_01'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-03_datafile_02'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-03_datafile_03'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-03_datafile_04'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-03_datafile_05'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-03_datafile_06'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-03_datafile_07'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+a_thisfile_name = '2023-11-03_datafile_08'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
 
 
 %% set up directories
@@ -489,76 +553,80 @@ end
 clearvars i e* these* this* next* *_pair
 
 %% create a lil extra struct
-sourceStructArray = d_olfa_flow.events.OV_keep;
-fieldsToCopy = {'flow_mean_sccm', 'pid_mean','data'};       % Specify the field(s) you want to copy
+% for each vial in d_olfa_flow
+for v=1:length(d_olfa_flow)
+    sourceStructArray = d_olfa_flow(v).events.OV_keep;  % TODO fix this, needs to specify which row of d_olfa_flow
+    fieldsToCopy = {'flow_mean_sccm', 'pid_mean','data'};       % Specify the field(s) you want to copy
+    
+    % Initialize the target struct array with the same structure as sourceStructArray
+    numElements = numel(sourceStructArray);
+    targetStructArray = repmat(struct('flow_mean_sccm', [], 'pid_mean', [],'data', []), 1, numElements);
+    
+    % Loop through each struct in the source struct array
+    for i = 1:numElements
+        sourceStruct = sourceStructArray(i);
+        targetStruct = struct();            % Initialize the target struct for this iteration
+        % Copy the specified fields and their values
+        for j = 1:numel(fieldsToCopy)
+            field = fieldsToCopy{j};
+            if isfield(sourceStruct, field)
+                targetStruct.(field) = sourceStruct.(field);
+            end
+        end
+        targetStructArray(i) = targetStruct;            % Assign the target struct to the target struct array
+    end
 
-% Initialize the target struct array with the same structure as sourceStructArray
-numElements = numel(sourceStructArray);
-targetStructArray = repmat(struct('flow_mean_sccm', [], 'pid_mean', [],'data', []), 1, numElements);
+    %% sort by flow mean
+    fieldName = 'flow_mean_sccm';
+    fieldValues = {targetStructArray.(fieldName)};
+    fieldValues = cell2mat(fieldValues);
+    [~,sortedIndices] = sort(fieldValues,'ascend');
+    d_olfa_data_sorted = targetStructArray(sortedIndices);
+    
+    clearvars field* source* target* i j sortedIndices
+    
+    %% initialize the combined data structure
+    d_olfa_data_combined = [];
+    d_olfa_data_combined(1).flow_value = [];
+    d_olfa_data_combined(1).pid_mean1 = [];
+    d_olfa_data_combined(1).pid_mean2 = [];
+    d_olfa_data_combined(1).data1 = [];
+    d_olfa_data_combined(1).data2 = [];
+    
+    if isempty(flow_inc); disp('WARNING no flow_inc entered: using 5'); flow_inc = 5; end
+    flow_value = flow_inc;
+    num_iterations = 100/flow_inc;
+    for i=1:num_iterations
+        d_olfa_data_combined(i).flow_value = flow_value;
+        flow_value = flow_value + flow_inc;
+    end
 
-% Loop through each struct in the source struct array
-for i = 1:numElements
-    sourceStruct = sourceStructArray(i);
-    targetStruct = struct();            % Initialize the target struct for this iteration
-    % Copy the specified fields and their values
-    for j = 1:numel(fieldsToCopy)
-        field = fieldsToCopy{j};
-        if isfield(sourceStruct, field)
-            targetStruct.(field) = sourceStruct.(field);
+    %% add shit to the combined data structure
+    
+    % start from this starting index
+    starting_idx = 1;
+    % check the lengths of the structures: if there are zero values, then the lengths of these two structs will be different
+    r = 0;
+    r = rem(length(d_olfa_data_sorted),length(d_olfa_data_combined));
+    % if there is a remainder, then start at idx 3
+    if r ~= 0; starting_idx = r+1; end
+    
+    for i=starting_idx:length(d_olfa_data_sorted)
+        this_flow_value = d_olfa_data_sorted(i).flow_mean_sccm;
+        idx_to_use = round(this_flow_value / flow_inc);
+    
+        if idx_to_use ~= 0
+            if isempty(d_olfa_data_combined(idx_to_use).pid_mean1)
+                d_olfa_data_combined(idx_to_use).pid_mean1 = d_olfa_data_sorted(i).pid_mean;
+                d_olfa_data_combined(idx_to_use).data1 = d_olfa_data_sorted(i).data;
+            else
+                d_olfa_data_combined(idx_to_use).pid_mean2 = d_olfa_data_sorted(i).pid_mean;
+                d_olfa_data_combined(idx_to_use).data2 = d_olfa_data_sorted(i).data;
+            end
         end
     end
-    targetStructArray(i) = targetStruct;            % Assign the target struct to the target struct array
+    d_olfa_flow(v).d_olfa_data_combined = d_olfa_data_combined;
 end
-
-
-%% sort by flow mean
-fieldName = 'flow_mean_sccm';
-fieldValues = {targetStructArray.(fieldName)};
-fieldValues = cell2mat(fieldValues);
-[~,sortedIndices] = sort(fieldValues,'ascend');
-d_olfa_data_sorted = targetStructArray(sortedIndices);
-
-clearvars field* source* target* i j sortedIndices
-
-%% initialize the combined data structure
-d_olfa_data_combined = [];
-d_olfa_data_combined(1).flow_value = [];
-d_olfa_data_combined(1).pid_mean1 = [];
-d_olfa_data_combined(1).pid_mean2 = [];
-d_olfa_data_combined(1).data1 = [];
-d_olfa_data_combined(1).data2 = [];
-
-if isempty(flow_inc); disp('WARNING no flow_inc entered: using 5'); flow_inc = 5; end
-flow_value = flow_inc;
-num_iterations = 100/flow_inc;
-for i=1:num_iterations
-    d_olfa_data_combined(i).flow_value = flow_value;
-    flow_value = flow_value + flow_inc;
-end
-
-%% add shit to the combined data structure
-
-% start from this starting index
-starting_idx = 1;
-% check the lengths of the structures: if there are zero values, then the lengths of these two structs will be different
-r = 0;
-r = rem(length(d_olfa_data_sorted),length(d_olfa_data_combined));
-% if there is a remainder, then start at idx 3
-if r ~= 0; starting_idx = r+1; end
-
-for i=starting_idx:length(d_olfa_data_sorted)
-    this_flow_value = d_olfa_data_sorted(i).flow_mean_sccm;
-    idx_to_use = round(this_flow_value / flow_inc);
-
-    if isempty(d_olfa_data_combined(idx_to_use).pid_mean1)
-        d_olfa_data_combined(idx_to_use).pid_mean1 = d_olfa_data_sorted(i).pid_mean;
-        d_olfa_data_combined(idx_to_use).data1 = d_olfa_data_sorted(i).data;
-    else
-        d_olfa_data_combined(idx_to_use).pid_mean2 = d_olfa_data_sorted(i).pid_mean;
-        d_olfa_data_combined(idx_to_use).data2 = d_olfa_data_sorted(i).data;
-    end
-end
-
 clearvars i* numElements *flow_value flow_inc r num_iterations starting_idx
 
 
