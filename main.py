@@ -103,7 +103,13 @@ class worker_sptChar(QObject):
                 time_elapsed = (current_time - self.trial_start_time).total_seconds()
                 ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
                 self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
-                
+        
+        # update progress bar
+        current_time = datetime.now()
+        time_elapsed = (current_time - self.trial_start_time).total_seconds()
+        ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
+        self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
+        
         self.finished.emit()
 
 class worker_additive(QObject):
@@ -461,12 +467,25 @@ class mainWindow(QMainWindow):
             self.p_dur_layout.addWidget(QLabel('# trials:'))
             self.p_dur_layout.addWidget(self.p_numTrials_wid)
             
+            self.p_pid_gain_lbl = QLabel('PID gain:')
             self.p_pid_gain = QLineEdit(text=config_main.default_pid_gain)
+            '''
+            self.p_fake_open_lbl = QLabel('Fake open:')
+            self.p_fake_open_wid = QComboBox()
+            self.p_fake_open_wid.addItems(['On','Off'])
+            
+            p_btm_row_layout = QHBoxLayout()
+            p_btm_row_layout.addWidget(self.p_pid_gain_lbl)
+            p_btm_row_layout.addWidget(self.p_pid_gain)
+            p_btm_row_layout.addWidget(self.p_fake_open_lbl)
+            p_btm_row_layout.addWidget(self.p_fake_open_wid)
+            '''
             
             self.program_parameters_layout.addRow(self.p_vial_select_layout)
             self.program_parameters_layout.addRow(self.p_spt_layout)
             self.program_parameters_layout.addRow(self.p_dur_layout)
-            self.program_parameters_layout.addRow(QLabel('PID gain:'),self.p_pid_gain)
+            self.program_parameters_layout.addRow(self.p_pid_gain_lbl,self.p_pid_gain)
+            #self.program_parameters_layout.addRow(p_btm_row_layout)
             
             
             ##############################
@@ -630,7 +649,7 @@ class mainWindow(QMainWindow):
             # TODO additive takes an extra second to stop
             # stops trying to send parameters, but prints "finished program" a bit later
             # probably bc of sleeps?
-            self.threadIsFinished()
+            self.threadIsFinished() # TODO this double-prints when program finishes naturally
     
     def run_odor_calibration(self):
         logger.info('running odor calibration procedure')
@@ -750,11 +769,6 @@ class mainWindow(QMainWindow):
                 self.pid_nidaq.connectButton.toggle()
         except AttributeError as err:
             logger.warning('PID is not added as a device')
-            '''
-            self.add_pid_btn.toggle()
-            logger.debug('connecting to pid')
-            self.pid_nidaq.connectButton.toggle()
-            '''
         except RuntimeError as err:
             logger.debug('no pid')
         
@@ -813,7 +827,6 @@ class mainWindow(QMainWindow):
             
             # START RECORDING # TODO don't do this until it's READY to go
             if self.begin_record_btn.isChecked() == False:
-                logger.debug('clicking begin record button')
                 self.begin_record_btn.click()
             
             # START WORKER THREAD
@@ -833,13 +846,6 @@ class mainWindow(QMainWindow):
                 logger.warning('olfactometer not connected, attempting to connect')
                 utils_olfa_48line.connect_to_48line_olfa(self.olfactometer)
         except AttributeError as err:   logger.error(err)
-        
-        '''
-        # START RECORDING
-        if self.begin_record_btn.isChecked() == False:
-            logger.debug('clicking begin record button')
-            self.begin_record_btn.click()
-        '''
         
         # GET PROGRAM PARAMETERS
         additive_vials_to_run = copy.copy(self.additive_program_window.vials_to_run)
@@ -868,8 +874,7 @@ class mainWindow(QMainWindow):
         
         # START RECORDING
         if self.begin_record_btn.isChecked() == False:
-                logger.debug('clicking begin record button')
-                self.begin_record_btn.click()
+            self.begin_record_btn.click()
         
         # START WORKER THREAD
         self.obj_additive.threadON = True
@@ -910,7 +915,7 @@ class mainWindow(QMainWindow):
         
         self.program_start_btn.setChecked(False)
         self.program_start_btn.setText('Start Program')
-        #self.progSettingsBox.setEnabled(True)
+        self.program_progress_bar.setValue(0)
         logger.info('Finished program')
 
         # end recording
@@ -1005,14 +1010,6 @@ class mainWindow(QMainWindow):
             self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2) # zero pad
             data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
             self.data_file_name_lineEdit.setText(data_file_name)
-        
-            '''
-            # debugging: just for today (7/25/2022)
-            for s in self.olfactometer.slave_objects:
-                s.vials[0].setEnabled(False)    # vial 1 is not connected to anything on the mixing chamber
-                s.vials[2].setEnabled(False)
-                s.vials[7].setEnabled(False)
-            '''
             
         else:
             self.mainLayout.removeWidget(self.olfactometer)
