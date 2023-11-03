@@ -42,7 +42,7 @@ plot_opts.plot_flow_as_sccm = 'yes';
 plot_opts.olfa = 'yes';
 plot_opts.pid = 'yes';
 plot_opts.output_flow = 'no';
-plot_opts.ctrl = 'yes';
+plot_opts.ctrl = 'no';
 plot_opts.ctrl_as_voltage = 'no';
 
 %% enter data file name
@@ -330,12 +330,16 @@ try
     if strcmp(plot_opts.ctrl,'yes')
         % for each vial
         for i=1:length(d_olfa_flow)
-            if strcmp(plot_opts.ctrl_as_voltage,'yes')        
+            if strcmp(plot_opts.ctrl_as_voltage,'yes')
                 % plot as voltage
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_volt)
                     d_ctrl_x = d_olfa_flow(i).ctrl.ctrl_volt(:,1);
                     d_ctrl_y = d_olfa_flow(i).ctrl.ctrl_volt(:,2);
-                    yyaxis right;
+                    if strcmp(plot_opts.olfa,'no')
+                        yyaxis left;
+                    else
+                        yyaxis right;
+                    end
                     ylabel('Prop valve value (V)');
                     ylim([-0.1 5.1])
                 end
@@ -344,7 +348,11 @@ try
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_int)
                     d_ctrl_x = d_olfa_flow(i).ctrl.ctrl_int(:,1);
                     d_ctrl_y = d_olfa_flow(i).ctrl.ctrl_int(:,2);
-                    yyaxis right;
+                    if strcmp(plot_opts.olfa,'no')
+                        yyaxis left;
+                    else
+                        yyaxis right;
+                    end
                     ylabel('Prop valve value (int)')
                     ylim([-5 260])
                 end
@@ -354,6 +362,7 @@ try
             end
             p2 = plot(d_ctrl_x,d_ctrl_y);
             p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
+            p2.LineStyle = '-';
             %p2a = scatter(d_ctrl_x,d_ctrl_y,'filled','HandleVisibility','off');
         end
     end
