@@ -21,7 +21,7 @@ addpath(genpath(dir_data_files));
 %% select shit to plot
 
 plot_individual_trials = 'no';  % plot each trial by itself
-plot_all_points = 'no';         % plot all the points on a single graph
+plot_all_points = 'yes';         % plot all the points on a single graph
 plot_x_lines = 'yes';           % x lines of where the mean was calculated from
 plot_cheap_olfa = 'no';
 
@@ -45,7 +45,7 @@ f.f2_position = [260 230 812 709];
 
 c = struct();   % struct containing all config variables
 c.nidaq_freq = 0.01;  % collection frequency etc etc
-c.start_time = 2.00;  % don't look at any data before this time
+c.time_to_cut = 2.00;  % don't look at any data before this time
 
 
 %% enter data file name
@@ -75,10 +75,10 @@ a_thisfile_name= '2023-11-06_datafile_00_ethyltiglate.csv'; a_this_note = 'Ethyl
 a_thisfile_name= '2023-11-06_datafile_01_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
 a_thisfile_name = '2023-11-06_datafile_02_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
 f.pid_lims = [0 3];
-c.start_time = 5;
+c.time_to_cut = 5;
 
 %plot_all_points = 'no';
-plot_individual_trials = 'no';
+plot_individual_trials = 'yes';
 
 
 %% load file
@@ -98,7 +98,23 @@ a_raw_file = a_raw_file(:,2:end);
 
 clearvars header_goes_til
 
-%% adjust PID   % TODO maybe
+%% adjust PID
+
+% set baseline to zero
+pid_values = a_raw_file(1,2:end);
+
+% remove missing cells
+last_index = length(pid_values);
+while ismissing(pid_values{last_index})
+    last_index = last_index - 1;
+end
+pid_values = pid_values(1:last_index);
+
+% get pid adjustment value
+pid_values = cell2mat(pid_values);
+pid_adjustment_value = min(pid_values);
+
+clearvars last*
 %% smooth PID   % TODO maybe
 %% cut additional time off & recalculate stats
 
@@ -147,28 +163,23 @@ for i=1:height(a_raw_file)
     last_time_value = last_time_value - c.nidaq_freq;
     time_data = 0:c.nidaq_freq:last_time_value;
     
-    % shift the pid values up to 0  % TODO calculate one adjustment value for the entire dataset (not trial by trial)
+    % shift the pid values up to 0
     pid_values = cell2mat(pid_values);
-    pid_adjustment_value = min(pid_values);
     pid_values = pid_values - pid_adjustment_value;
-
     
     %% calculate mean PID value
 
-    % start at 2 seconds into the trial
-    idx_of_start_time = (c.start_time/c.nidaq_freq) + 1;
+    % start at c.time_to_cut seconds into the trial
+    idx_of_start_time = (c.time_to_cut/c.nidaq_freq) + 1;
     new_time_data = time_data(idx_of_start_time:end);
     new_pid_data = pid_values(idx_of_start_time:end);
-
-    % find where PID drops below 0.1
-    idx_below_threshold = find(new_pid_data < 0.1,1);
-
-    % as long as we're not starting out at a PID of 0.1 (aka this was a 0 sccm trial)
+    
+    idx_below_threshold = find(new_pid_data < 0.1,1);   % find where PID drops below 0.1
     if ~(idx_below_threshold == 1)
-        % go back 0.25 seconds from that point
+        % end time is 0.25s before PID drops below 0.1
         end_idx = idx_below_threshold - (round(0.25/c.nidaq_freq));
     else
-        % end index is 3 seconds later
+        % if PID started below 0.1 (aka this was a 0 sccm trial), just make it a 3 second trial
         idx_of_3_sec_later = (3.0/c.nidaq_freq) + 1;
         end_idx = idx_of_3_sec_later;
     end
