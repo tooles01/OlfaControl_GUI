@@ -94,6 +94,7 @@
 2. plots flow & PID data over time
 3. if selected, plots each event section individually
 4. plots mean flow values v. mean PID values
+	- if selected, plot error bars
 
 
 <details>
