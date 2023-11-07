@@ -4,9 +4,9 @@
 %%
 clearvars
 %close all
+set(0,'DefaultTextInterpreter','none')
 %#ok<*SAGROW>
 %#ok<*AGROW>
-set(0,'DefaultTextInterpreter','none')
 
 %% enter directory for this computer
 %a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
@@ -18,9 +18,10 @@ plot_opts = struct();
 plot_opts.plot_flow_as_sccm = 'yes'; % plot olfa as sccm or int
 
 plot_opts.all_points = 'yes';   % TODO this does nothing right now
+
 plot_opts.plot_over_time = 'no';    % plot the entire trial over time
-plot_opts.plot_all = 'yes'; % plot each individually
-plot_opts.plot_x_lines = 'no';   % x lines of where the mean was calculated from
+plot_opts.plot_all = 'yes';         % plot each individually
+plot_opts.plot_x_lines = 'no';      % x lines of where the mean was calculated from
 plot_opts.show_pid_mean = 'no';
 plot_opts.show_flow_mean = 'no';
 plot_opts.show_error_bars = 'yes';
@@ -89,12 +90,30 @@ f.colors{4} = '#7E2F8E';
 %f.pid_lims = [0 4.5];
 %a_thisfile_name = '2023-10-31_datafile_07'; f.pid_lims = [0 1];
 
-a_thisfile_name = '2023-11-01_datafile_00';
-f.pid_lims = [0 3.5];
-f.olfa_lims_sccm = [0 105];
-plot_opts.plot_all = 'no';
+%a_thisfile_name = '2023-11-01_datafile_00';
+%a_thisfile_name = '2023-11-01_datafile_01';
+%a_thisfile_name = '2023-11-01_datafile_02';
+%a_thisfile_name = '2023-11-01_datafile_03';
+%a_thisfile_name = '2023-11-01_datafile_04';
 
-f.time_to_cut = 8;
+%a_thisfile_name = '2023-11-02_datafile_03';
+%a_thisfile_name = '2023-11-02_datafile_04';
+%a_thisfile_name = '2023-11-02_datafile_05';
+%a_thisfile_name = '2023-11-02_datafile_06';
+
+%a_thisfile_name = '2023-11-03_datafile_06';
+%a_thisfile_name = '2023-11-03_datafile_10';
+a_thisfile_name = '2023-11-06_datafile_07';
+
+%f.pid_lims = [0 3.5];
+%f.olfa_lims_sccm = [0 105];
+plot_opts.plot_all = 'yes';
+
+%a_thisfile_name = '2023-10-20_datafile_00';
+f.pid_lims = [0 3];
+f.olfa_lims_sccm = [0 100];
+plot_opts.show_error_bars = 'no';
+f.time_to_cut = 2;
 f.olfa_lims_int = [143 575];
 %f.position = [140 200 1355 686];
 %f.position = [960 210 780 686];  % not that small
@@ -184,8 +203,8 @@ try
             this_flow_int_data = d_olfa_flow(i).events.OV_keep(e).data.flow_int;
             this_flow_sccm_data = d_olfa_flow(i).events.OV_keep(e).data.flow_sccm;
             this_pid_data = d_olfa_flow(i).events.OV_keep(e).data.pid;
-            start_time = this_flow_int_data(1,1) + f.time_to_cut;
-            end_time = this_flow_int_data(end,1);
+            start_time = d_olfa_flow(i).events.OV_keep(e).t_event + f.time_to_cut;
+            end_time = this_pid_data(end,1);
             this_flow_int_data = get_section_data(this_flow_int_data,start_time,end_time);
             this_flow_sccm_data = get_section_data(this_flow_sccm_data,start_time,end_time);
             this_pid_data = get_section_data(this_pid_data,start_time,end_time);
