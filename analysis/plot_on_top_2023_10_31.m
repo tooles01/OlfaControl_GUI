@@ -7,9 +7,10 @@ set(0,'DefaultTextInterpreter','none')
 a_title = '';
 a_subtitle = '';
 
-f_position = [166 210 1300 600];    % for PowerPoint
+%87f_position = [166 210 1300 600];    % for PowerPoint
+f_position = [28 210 1300 600];
 f2_position = [260 230 812 709];
-f3_position = [774 224 812 709];
+f3_position = [1001 224 812 709];
 
 c = struct();
 %{
@@ -33,13 +34,14 @@ c.yellow = [.929 .694 .125];
 
 %% plot options
 c.pid_lims = [0 5];
-
 c.flow_lims = [0 105];
+c.ctrl_lims = [];
+
 c.time_to_cut = 6;
 c.plot_by_flow = 'yes';     % plot each flow rate individually
 c.plot_error_bars = 'yes';
-c.plot_by_vial = 'yes';      % colors based on vial #
-c.plot_ctrl = 'no';
+c.plot_by_vial = 'no';      % colors based on vial #
+c.plot_ctrl = 'yes';
 
 %% datafile names
 %% 10-30-2023 2-Heptanone
@@ -163,23 +165,47 @@ file_names = {'2023-11-02_datafile_03.mat'
 %}
 
 %% 11-03-2023 Ethyl Tiglate
-a_title = 'Ethyl Tiglate';
-a_subtitle = '11-02-2023';
+
+%{
+a_title = 'Ethyl Tiglate 11-02-2023';
 c.time_to_cut = 6;
 c.pid_lims = [0 3.5];
+c.ctrl_lims = [120 210];
 
-
-% after adding odor
+% random order
+a_subtitle = 'trials in random order';
+file_names = {'2023-11-03_datafile_10'
+    '2023-11-03_datafile_11'
+    '2023-11-03_datafile_12'};
+% new prop valve
+a_subtitle = 'swapped E3 proportional valve';
 file_names = {'2023-11-03_datafile_06.mat'
-    '2023-11-03_datafile_07.mat'};
-%{
+    '2023-11-03_datafile_08.mat'
+    '2023-11-03_datafile_09.mat'};
 % before adding odor
+a_subtitle = 'before adding odor to vials';
 file_names = {'2023-11-03_datafile_00.mat'
     '2023-11-03_datafile_01.mat'
     '2023-11-03_datafile_02.mat'
     '2023-11-03_datafile_03.mat'
     '2023-11-03_datafile_04.mat'
+    '2023-11-03_datafile_05.mat'};
+% after adding odor
+a_subtitle = 'after adding 1mL to vials';
+file_names = {'2023-11-03_datafile_06.mat'
+    '2023-11-03_datafile_07.mat'
+    '2023-11-03_datafile_08.mat'};
+% only E3
+file_names = {'2023-11-03_datafile_01.mat'
+    '2023-11-03_datafile_03.mat'
     '2023-11-03_datafile_05.mat'
+    '2023-11-03_datafile_07.mat'
+    '2023-11-03_datafile_09.mat'};
+
+% only E1
+file_names = {'2023-11-03_datafile_00.mat'
+    '2023-11-03_datafile_02.mat'
+    '2023-11-03_datafile_04.mat'
     '2023-11-03_datafile_06.mat'};
 
 % all
@@ -190,8 +216,60 @@ file_names = {'2023-11-03_datafile_00.mat'
     '2023-11-03_datafile_04.mat'
     '2023-11-03_datafile_05.mat'
     '2023-11-03_datafile_06.mat'
-    '2023-11-03_datafile_07.mat'};
+    '2023-11-03_datafile_07.mat'
+    '2023-11-03_datafile_08.mat'
+    '2023-11-03_datafile_09.mat'};
 %}
+
+%% 11-06-2023 Ethyl Tiglate
+%{
+a_title = 'Ethyl Tiglate 11-06-2023';
+c.time_to_cut = 5;
+c.pid_lims = [0 3.5];
+c.ctrl_lims = [120 210];
+
+% after decreasing pressure
+a_subtitle = 'MFC pressure: 39.54 psi';
+file_names = {'2023-11-06_datafile_06.mat'
+    '2023-11-06_datafile_07.mat'
+    '2023-11-06_datafile_08.mat'
+    '2023-11-06_datafile_10.mat'};
+% before decreasing pressure
+a_subtitle = 'MFC pressure: 54.48 psi';
+file_names = {'2023-11-06_datafile_03.mat'
+    '2023-11-06_datafile_04.mat'
+    '2023-11-06_datafile_05.mat'};
+% E1
+a_subtitle = 'E1';
+file_names = {'2023-11-06_datafile_03.mat'
+    '2023-11-06_datafile_06.mat'};
+% E3
+a_subtitle = 'E3';
+file_names = {'2023-11-06_datafile_04.mat'
+    '2023-11-06_datafile_07.mat'};
+% E4
+a_subtitle = 'E4';
+file_names = {'2023-11-06_datafile_05.mat'
+    '2023-11-06_datafile_08.mat'};
+
+
+% all
+file_names = {'2023-11-06_datafile_03.mat'
+    '2023-11-06_datafile_04.mat'
+    '2023-11-06_datafile_05.mat'};
+%}
+
+%% 11-07-2023
+a_title = 'Ethyl Tiglate';
+c.time_to_cut = 5;
+c.pid_lims = [0 3.5];
+c.ctrl_lims = [120 210];
+a_subtitle = 'MFC pressure: 39.29 psi';
+
+% E1: yesterday vs. today
+file_names = {'2023-11-06_datafile_06.mat'
+    '2023-11-07_datafile_00.mat'
+    '2023-11-07_datafile_01.mat'};
 
 %% preallocate array
 d = struct('file_name','', ...
@@ -316,7 +394,11 @@ if strcmp(c.plot_by_flow,'yes')
                             yyaxis right;
                             p_pid2 = plot(this_pid_data2(:,1),this_pid_data2(:,2));
                             p_pid2.HandleVisibility = 'off';
-                            if strcmp(c.plot_by_vial,'yes');  p_pid2.Color = c.colors{vial_num}; end
+                            if strcmp(c.plot_by_vial,'yes')
+                                p_pid2.Color = c.colors{vial_num};
+                            else
+                                p_pid2.Color = p_pid.Color;
+                            end
                             p_pid2.LineWidth = c.pid_width;
                             p_pid2.LineStyle = '-';
                             p_pid2.Marker = 'none';
@@ -354,7 +436,7 @@ if strcmp(c.plot_ctrl,'yes')
     xlabel('Flow (SCCM)')
     xlim(c.flow_lims)
     ylabel('Ctrl (int)')
-    %ylim(c.pid_lims)
+    if ~isempty(c.ctrl_lims); ylim(c.ctrl_lims); end
     title(a_title);
     if ~isempty(a_subtitle); subtitle(a_subtitle); end
 end
@@ -402,7 +484,8 @@ for r=1:length(data)
             this_event_ctrl_std = std(this_event_cut_ctrl_data(:,2));
     
             %% add to new structure
-            if this_event_flow_mean ~= 0    % JUST FOR THIS ONE TIME 11/1/2023 SINCE GUI BEING DUMB % IF YOU'RE DOING ZERO FLOW TRIALS THEN GET RID OF THIS
+            if this_event_flow_mean > .1
+            %if this_event_flow_mean ~= 0    % JUST FOR THIS ONE TIME 11/1/2023 SINCE GUI BEING DUMB % IF YOU'RE DOING ZERO FLOW TRIALS THEN GET RID OF THIS
                 this_event_mean_pair = [this_event_flow_mean this_event_pid_mean];
                 this_event_std_pair = [this_event_flow_std this_event_pid_std];
                 this_file_new_means = [this_file_new_means;this_event_mean_pair];
@@ -479,8 +562,4 @@ for r=1:length(data)
         end    
     end
 end
-
-%% plot flow v. ctrl for each file
-%for r=1:length(data)
-
 
