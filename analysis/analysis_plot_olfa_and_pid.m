@@ -1,25 +1,12 @@
 %% analysis_plot_olfa_and_pid
 % plot olfa flow & pid values over time
+
 %%
 clearvars
-set(0,'DefaultTextInterpreter','none')
 %close all
+set(0,'DefaultTextInterpreter','none')
 %#ok<*SAGROW>
 %#ok<*AGROW> 
-
-%% display variables
-f = struct();   % struct containing all figure variables
-f.position = [30 200 1700 700];
-f.pid_ylims = [];
-f.flow_ylims = [];
-f.flow_width = 1;
-f.pid_width = 1;
-f.x_lim = [];
-f.calibration_value = [];
-f.PID_color = '#77AC30';
-f.scale_time = 'no';
-
-a_this_note = '';
 
 %% enter directory for this computer
 %a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
@@ -39,43 +26,28 @@ plot_opts.plot_flow_as_sccm = 'yes';
 % **if datafile does not have calibration tables listed in header, plot will be in ints regardless
 
 % pick one of these
-plot_opts.olfa = 'yes';
+plot_opts.olfa = 'no';
 plot_opts.pid = 'yes';
 plot_opts.output_flow = 'no';
-plot_opts.ctrl = 'no';
+plot_opts.ctrl = 'yes';
 plot_opts.ctrl_as_voltage = 'no';
 
+%% display variables
+f = struct();   % struct containing all figure variables
+f.position = [30 200 1700 700];
+f.pid_ylims = [];
+f.flow_ylims = [];
+f.flow_width = 1;
+f.pid_width = 1;
+f.x_lim = [];
+f.calibration_value = [];
+f.PID_color = '#77AC30';
+f.scale_time = 'no';
+
+a_this_note = '';
+
 %% enter data file name
-%{
-% 10 SCCM
-%a_thisfile_name = '2023-10-11_datafile_19';
-%a_thisfile_name = '2023-10-11_datafile_20'; f.x_lim = [15.028 92.17];
-% 0.5 sec before fake open, 1 sec after end of real open
-%a_thisfile_name = '2023-10-11_datafile_19'; f.x_lim = [6.044 26.475];
-%a_thisfile_name = '2023-10-11_datafile_19'; f.x_lim = [26.6 47.03];
-%a_thisfile_name = '2023-10-11_datafile_20'; f.x_lim = [21.177 41.126];  % fake open didn't work for some reason
-%a_thisfile_name = '2023-10-11_datafile_20'; f.x_lim = [56.626 77.052];
-%f.pid_ylims = [-0.01 .25];
-%f.scale_time = 'yes';
 
-% 20 SCCM
-%a_thisfile_name = '2023-10-11_datafile_21';
-% 1 sec before fake open, 2 sec after real open ends
-%a_thisfile_name = '2023-10-11_datafile_21'; f.x_lim = [20.549 41.2710];
-%a_thisfile_name = '2023-10-11_datafile_21'; f.x_lim = [56.133 76.813];
-%f.pid_ylims = [-0.01 .5];
-%f.scale_time = 'yes';
-
-%a_thisfile_name = '2023-10-11_datafile_22';
-%a_thisfile_name = '2023-10-11_datafile_23';
-%a_thisfile_name = '2023-10-11_datafile_24';
-%a_thisfile_name = '2023-10-11_datafile_25';
-%f.pid_ylims = [0 3];
-%}
-
-%a_thisfile_name = '2023-10-12_datafile_00'; f.pid_ylims = [-.1 3];
-%a_thisfile_name = '2023-10-12_datafile_01'; f.pid_ylims = [-.1 3];
-%a_thisfile_name = '2023-10-17_datafile_00';
 %{
 %a_thisfile_name = '2023-10-18_datafile_00';
 
@@ -159,12 +131,21 @@ plot_opts.ctrl_as_voltage = 'no';
 %a_thisfile_name = '2023-10-31_datafile_08';
 %a_thisfile_name = '2023-10-31_datafile_11';
 
-a_thisfile_name = '2023-11-02_datafile_00';
+%a_thisfile_name = '2023-11-02_datafile_00';
 %a_thisfile_name = '2023-11-02_datafile_01';
 %a_thisfile_name = '2023-11-02_datafile_02';
 %a_thisfile_name = '2023-11-02_datafile_04';
 f.flow_ylims = [0 120];
 f.pid_ylims = [0 3.5];
+%a_thisfile_name = '2023-11-06_datafile_01';
+%a_thisfile_name = '2023-11-06_datafile_02';
+%a_thisfile_name = '2023-11-06_datafile_06';
+%a_thisfile_name = '2023-11-06_datafile_09';
+
+a_thisfile_name = '2023-11-06_datafile_10';
+f.x_lim = [679.823 900];
+%f.x_lim = [801.37 900];
+f.scale_time = 'yes';
 
 %f.position = [549 166 1353 684];
 %f.position = [166 600 775 275];     % for OneNote
@@ -358,7 +339,10 @@ try
                 end
             end
             if strcmp(f.scale_time,'yes')
+                % scale time to zero
                 d_ctrl_x = d_ctrl_x - f.x_lim(1);
+                % readjust x limits
+                xlim([-.5 16]);
             end
             p2 = plot(d_ctrl_x,d_ctrl_y);
             p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
