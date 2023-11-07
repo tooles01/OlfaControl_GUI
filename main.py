@@ -292,6 +292,8 @@ class mainWindow(QMainWindow):
         # things for header
         self.data_file_pid_gain_lbl = QLabel('PID gain: ')
         self.data_file_pid_gain = QLineEdit(text=config_main.default_pid_gain)
+        self.data_file_notes_lbl = QLabel('Notes:')
+        self.data_file_notes_wid = QLineEdit()
         
         # BUTTONS
         self.begin_record_btn = QPushButton(text='Create File && Begin Recording',checkable=True,clicked=self.begin_record_btn_clicked)
@@ -308,6 +310,7 @@ class mainWindow(QMainWindow):
         layout.addRow(QLabel('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'))
         layout.addRow(QLabel('Things for file header:'))
         layout.addRow(self.data_file_pid_gain_lbl,self.data_file_pid_gain)
+        layout.addRow(self.data_file_notes_lbl,self.data_file_notes_wid)
         layout.addRow(QLabel('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'))
         layout.addRow(record_layout)
         layout.addRow(self.data_file_textedit)
@@ -406,7 +409,7 @@ class mainWindow(QMainWindow):
     
     def increment_progress_bar(self, val):
         self.program_progress_bar.setValue(val)
-
+    
     def create_48line_program_widgets(self):
         if self.program_to_run == "setpoint characterization":
             
@@ -468,7 +471,7 @@ class mainWindow(QMainWindow):
             self.p_dur_layout.addWidget(self.p_numTrials_wid)
             
             self.p_pid_gain_lbl = QLabel('PID gain:')
-            self.p_pid_gain = QLineEdit(text=config_main.default_pid_gain)
+            self.p_pid_gain = QLineEdit(text=config_main.default_pid_gain)  # TODO this is a duplicate, remove it
             '''
             self.p_fake_open_lbl = QLabel('Fake open:')
             self.p_fake_open_wid = QComboBox()
@@ -760,12 +763,11 @@ class mainWindow(QMainWindow):
     ##############################
     # PROGRAMS FOR 48-LINE OLFA
     def run_setpoint_characterization(self):
-        logger.debug('Setting up to run setpoint characterization')
-
+        
         # CHECK THAT PID IS CONNECTED
         try:
             if self.pid_nidaq.connectButton.isChecked() == False:
-                logger.debug('connecting to pid')
+                logger.debug('connecting to PID')
                 self.pid_nidaq.connectButton.toggle()
         except AttributeError as err:
             logger.warning('PID is not added as a device')
@@ -831,7 +833,6 @@ class mainWindow(QMainWindow):
             
             # START WORKER THREAD
             self.obj_sptchar.threadON = True
-            logger.debug('starting thread_olfa')
             self.thread_olfa.start()            # # start thread -> worker_sptChar iterates through stimuli
         else:
             logger.error('olfactometer has no active slaves - cannot run program')
@@ -1117,6 +1118,14 @@ class mainWindow(QMainWindow):
                             writer = csv.writer(f,delimiter=',')
                             writer.writerow(pid_line_header)
                         self.data_file_textedit.append('PID Gain: ' + self.pid_gain)
+
+                # Write notes to file
+                self.this_file_notes = self.data_file_notes_wid.text()
+                notes_line_header = 'Notes: ', self.this_file_notes
+                with open(self.datafile_dir,'a',newline='') as f:
+                    writer = csv.writer(f,delimiter=',')
+                    writer.writerow(notes_line_header)
+                self.data_file_textedit.append('Notes: ' + self.this_file_notes)
                 
                 # If olfactometer exists: Write calibration tables to file
                 try:
