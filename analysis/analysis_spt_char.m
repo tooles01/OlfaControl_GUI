@@ -20,7 +20,7 @@ plot_opts.plot_flow_as_sccm = 'yes'; % plot olfa as sccm or int
 plot_opts.all_points = 'yes';   % TODO this does nothing right now
 
 plot_opts.plot_over_time = 'no';    % plot the entire trial over time
-plot_opts.plot_all = 'yes';         % plot each individually
+plot_opts.plot_all = 'no';         % plot each individually
 plot_opts.plot_x_lines = 'no';      % x lines of where the mean was calculated from
 plot_opts.show_pid_mean = 'no';
 plot_opts.show_flow_mean = 'no';
@@ -32,39 +32,21 @@ f.olfa_lims_int = [];
 f.olfa_lims_sccm = [0 100];
 f.pid_lims = [];
 f.flow_width = 1;
-f.pid_width = 1;
+f.pid_width = 1.5;
 f.time_to_cut = 0;  % time to cut off beginning of each section
 f.dot_size = 60;
 f.colors{1} = '#0072BD';
 f.colors{2} = '#A2142F';
 f.colors{3} = '#D95319';
 f.colors{4} = '#7E2F8E';
-
+%f.position = [140 230 1355 686];   % wide - for over time
+%f.position = [166 230 650 600];    % for PowerPoint (1/2 size)
+%f.position = [960 230 780 686];    % not that small
+f.position = [175 230 812 709];
+f.f2_position = [1050 230 812 709];
 
 %% enter data file name
 
-%a_thisfile_name = '2023-10-12_datafile_00'; f.pid_lims = [-.1 3];
-%a_thisfile_name = '2023-10-12_datafile_01'; f.pid_lims = [-.1 3];
-%a_thisfile_name = '2023-10-12_datafile_02'; f.pid_lims = [-.1 3];
-%a_thisfile_name = '2023-10-12_datafile_03'; f.pid_lims = [-.1 3];
-%a_thisfile_name = '2023-10-12_datafile_04'; f.pid_lims = [-.1 3];
-%a_thisfile_name = '2023-10-12_datafile_05'; f.pid_lims = [-.1 3];
-%a_thisfile_name = '2023-10-12_datafile_06'; f.pid_lims = [-.1 3];
-%a_thisfile_name = '2023-10-12_datafile_07'; f.pid_lims = [-.1 3];
-%f.pid_lims = [0 3];
-%plot_opts.show_pid_mean = 'no';
-%plot_opts.show_flow_mean = 'no';
-
-%a_thisfile_name = '2023-10-17_datafile_00'; f.pid_lims = [0 .15];
-%a_thisfile_name = '2023-10-18_datafile_00'; f.pid_lims = [0 .15];   % something weird happened with PID baseline here
-%a_thisfile_name = '2023-10-18_datafile_01'; f.pid_lims = [0 .15];
-%a_thisfile_name = '2023-10-18_datafile_02'; f.pid_lims = [0 .15];
-%a_thisfile_name = '2023-10-19_datafile_00'; f.pid_lims = [0 3];
-%a_thisfile_name = '2023-10-19_datafile_01'; f.pid_lims = [0 3];
-%a_thisfile_name = '2023-10-19_datafile_02'; f.pid_lims = [0 3];
-%a_thisfile_name = '2023-10-19_datafile_03'; f.pid_lims = [0 3];
-%a_thisfile_name = '2023-10-19_datafile_04'; f.pid_lims = [0 3];
-%a_thisfile_name = '2023-10-19_datafile_05'; f.pid_lims = [0 1.2];
 %a_thisfile_name = '2023-10-20_datafile_00'; f.pid_lims = [0 1.2];
 %a_thisfile_name = '2023-10-20_datafile_01'; f.pid_lims = [0 1.2];
 
@@ -103,22 +85,33 @@ f.colors{4} = '#7E2F8E';
 
 %a_thisfile_name = '2023-11-03_datafile_06';
 %a_thisfile_name = '2023-11-03_datafile_10';
-a_thisfile_name = '2023-11-06_datafile_07';
 
+%a_thisfile_name = '2023-11-06_datafile_06';
+%a_thisfile_name = '2023-11-07_datafile_02';
+%a_thisfile_name = '2023-11-07_datafile_08';
 %f.pid_lims = [0 3.5];
-%f.olfa_lims_sccm = [0 105];
-plot_opts.plot_all = 'yes';
 
-%a_thisfile_name = '2023-10-20_datafile_00';
-f.pid_lims = [0 3];
-f.olfa_lims_sccm = [0 100];
-plot_opts.show_error_bars = 'no';
-f.time_to_cut = 2;
-f.olfa_lims_int = [143 575];
-%f.position = [140 200 1355 686];
-%f.position = [960 210 780 686];  % not that small
-f.position = [260 230 812 709];
-%f.position = [166 210 650 600];    % for PowerPoint (1/2 size)
+%a_thisfile_name = '2023-11-08_datafile_01';
+%a_thisfile_name = '2023-11-08_datafile_02';
+%a_thisfile_name = '2023-11-08_datafile_03';
+%a_thisfile_name = '2023-11-08_datafile_04';
+%a_thisfile_name = '2023-11-08_datafile_05';
+%f.pid_lims = [0 2.5];
+%f.pid_lims = [0 3];
+%f.pid_lims = [0 .5];
+
+%a_thisfile_name = '2023-11-09_datafile_00';
+%a_thisfile_name = '2023-11-09_datafile_17';
+
+%a_thisfile_name = '2023-11-10_datafile_09';
+%a_thisfile_name = '2023-11-10_datafile_10';
+%a_thisfile_name = '2023-11-10_datafile_11';
+a_thisfile_name = '2023-11-10_datafile_12';
+f.time_to_cut = 1;
+f.pid_lims = [0 8];
+
+f.olfa_lims_sccm = [0 105];
+%f.time_to_cut = 2;
 
 %% load .mat file
 dir_this_mat_file = strcat(a_dir_OlfaControlGUI,'\analysis\data (.mat files)\',a_thisfile_name,'.mat');
@@ -420,12 +413,12 @@ try
     end
     
     %% plot: flow v. pid
-    f1 = figure; f1.NumberTitle = 'off'; f1.Position = f.position; hold on;
-    f1.Name = ['FLOW v. PID: ',a_thisfile_name];
+    f2 = figure; f2.NumberTitle = 'off'; f2.Position = f.f2_position; hold on;
+    f2.Name = ['FLOW v. PID: ',a_thisfile_name];
     title(['FLOW v. PID:     ', a_thisfile_name]);
     subtitle(a_this_note);
-    %legend('Location','northwest');
-    f1_ax = gca;
+    legend('Location','northwest');
+    f2_ax = gca;
     ylabel('PID (V)')
     if ~isempty(f.pid_lims); ylim(f.pid_lims); end
     
@@ -435,15 +428,35 @@ try
             if strcmp(plot_opts.plot_flow_as_sccm,'no')
                 p = scatter(d_olfa_flow(i).int_means(:,1),d_olfa_flow(i).int_means(:,2),f.dot_size,'filled');
                 xlabel('Olfa flow (int)');
-                if ~isempty(f.olfa_lims_int); f1_ax.XLim = f.olfa_lims_int; end
+                if ~isempty(f.olfa_lims_int); f2_ax.XLim = f.olfa_lims_int; end
             end
             if strcmp(plot_opts.plot_flow_as_sccm,'yes')
                 p = scatter(d_olfa_flow(i).sccm_means(:,1),d_olfa_flow(i).sccm_means(:,2),f.dot_size,'filled');
                 xlabel('Olfa flow (sccm)');
-                if ~isempty(f.olfa_lims_sccm); f1_ax.XLim = f.olfa_lims_sccm; end
+                if ~isempty(f.olfa_lims_sccm); f2_ax.XLim = f.olfa_lims_sccm; end
             end
             p.DisplayName = d_olfa_flow(i).vial_num;
             p.MarkerFaceColor = f.colors{i};
+
+            %% plot the error bars
+            if strcmp(plot_opts.show_error_bars,'yes')
+                x = d_olfa_flow(i).sccm_means(:,1);
+                y = d_olfa_flow(i).sccm_means(:,2);
+                for e=1:length(d_olfa_flow(i).sccm_means)
+                    flow_std = d_olfa_flow(i).events.OV_keep(e).flow_std_sccm;
+                    pid_std = d_olfa_flow(i).events.OV_keep(e).pid_std;
+                    
+                    xneg(e,1) = flow_std/2;
+                    xpos(e,1) = flow_std/2;
+                    yneg(e,1) = pid_std/2;
+                    ypos(e,1) = pid_std/2;
+
+                end
+                e = errorbar(x,y,yneg,ypos,xneg,xpos,'o');
+                e.HandleVisibility = 'off';
+                e.Color = p.MarkerFaceColor;
+            end
+
         end
     end
 
