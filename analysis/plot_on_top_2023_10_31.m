@@ -7,10 +7,15 @@ set(0,'DefaultTextInterpreter','none')
 a_title = '';
 a_subtitle = '';
 
-%87f_position = [166 210 1300 600];    % for PowerPoint
-f_position = [28 210 1300 600];
-f2_position = [260 230 812 709];
-f3_position = [1001 224 812 709];
+f = struct();
+%f.f_position = [166 210 1300 600];    % for PowerPoint
+f.f_position = [28 210 1300 600];
+%f.f2_position = [260 230 812 709];
+%f.f3_position = [1000 224 812 709];
+f.f2_position = [260 210 650 600];      % for PowerPoint (1/2 size)
+f.f3_position = [1000 210 650 600];     % for PowerPoint (1/2 size)
+f.x_lim = [-2 30];  % for individual plots
+f.x_lim = [-2 10];
 
 c = struct();
 %{
@@ -26,6 +31,7 @@ c.colors{1} = [.6353 .0784 .1843];
 c.colors{4} = [0.4667    0.6745    0.1882];
 c.colors{3} = [0.9294    0.6941    0.1255];
 c.colors{2} = 'm';
+c.colors{5} = 'g';
 c.flow_color = [0 .447 .741];
 c.flow_width = 0.1;
 c.pid_width = 2;
@@ -35,12 +41,12 @@ c.yellow = [.929 .694 .125];
 %% plot options
 c.pid_lims = [0 5];
 c.flow_lims = [0 105];
-c.ctrl_lims = [];
+c.ctrl_lims = [0 260];
 
 c.time_to_cut = 6;
 c.plot_by_flow = 'yes';     % plot each flow rate individually
 c.plot_error_bars = 'yes';
-c.plot_by_vial = 'no';      % colors based on vial #
+c.plot_by_vial = 'yes';      % colors based on vial #
 c.plot_ctrl = 'yes';
 
 %% datafile names
@@ -260,16 +266,253 @@ file_names = {'2023-11-06_datafile_03.mat'
 %}
 
 %% 11-07-2023
+%{
 a_title = 'Ethyl Tiglate';
-c.time_to_cut = 5;
-c.pid_lims = [0 3.5];
+c.time_to_cut = 6;
+c.pid_lims = [0 2.5];
+c.flow_lims = [0 110];
 c.ctrl_lims = [120 210];
-a_subtitle = 'MFC pressure: 39.29 psi';
+a_subtitle = 'MFC pressure: 41.23 psi';
+
+% all (kind of)
+a_subtitle = '2023-11-07 - Ethyl Tiglate';
+file_names = {'2023-11-07_datafile_06.mat'  % E1
+    '2023-11-07_datafile_08.mat';   % E1
+    '2023-11-07_datafile_05.mat';   % E2
+    %'2023-11-07_datafile_11.mat';   % E2
+    '2023-11-07_datafile_07.mat';   % E3
+    '2023-11-07_datafile_09.mat';   % E3
+    '2023-11-07_datafile_03.mat'    % E4
+    '2023-11-07_datafile_10.mat'};  % E4
+%}
+
+
+%{
+
+% before adding odor
+a_subtitle = '2023-11-07 - before adding odor';
+file_names = {'2023-11-07_datafile_02.mat'  % E1
+    '2023-11-07_datafile_05.mat';   % E2
+    '2023-11-07_datafile_04.mat';   % E3
+    '2023-11-07_datafile_03.mat'};  % E4
+% E1
+a_subtitle = 'E1 11-07-2023';
+c.plot_by_vial = 'no';
+file_names = {'2023-11-07_datafile_02'
+    '2023-11-07_datafile_06'
+    '2023-11-07_datafile_08'};
+% E3
+a_subtitle = 'E3 11-07-2023';
+c.plot_by_vial = 'no';
+file_names = {'2023-11-07_datafile_04'
+    '2023-11-07_datafile_07'
+    '2023-11-07_datafile_09'};
+
+% E1 before & after shaking it up
+a_subtitle = 'E1: before & after shaking the vial';
+c.plot_by_vial = 'no';
+file_names = {'2023-11-07_datafile_01'
+    '2023-11-07_datafile_02'};
+
+
+% E2 & E4 yesterday
+a_subtitle = '11/06 - MFC pressure: 39.54 psi';
+file_names = {'2023-11-06_datafile_10.mat'  % E2
+    '2023-11-06_datafile_08.mat'};  % E4
+% E2 & E4 today
+a_subtitle = '11/07 - MFC pressure: 41.23 psi';
+file_names = {'2023-11-07_datafile_05.mat'  % E2
+    '2023-11-07_datafile_03.mat'};  % E4
 
 % E1: yesterday vs. today
+a_subtitle = 'E1 11/06 vs. 11/07';
+c.plot_by_vial = 'no';
 file_names = {'2023-11-06_datafile_06.mat'
-    '2023-11-07_datafile_00.mat'
-    '2023-11-07_datafile_01.mat'};
+    '2023-11-07_datafile_01.mat'
+    '2023-11-07_datafile_02.mat'};
+% E2: yesterday vs. today
+a_subtitle = 'E2 11/06 vs. 11/07';
+c.plot_by_vial = 'no';
+file_names = {'2023-11-06_datafile_10.mat'
+    '2023-11-07_datafile_05.mat'};
+% E3: yesterday vs. today
+a_subtitle = 'E3 11/06 vs. 11/07';
+c.plot_by_vial = 'no';
+file_names = {'2023-11-06_datafile_07.mat'
+    '2023-11-07_datafile_04.mat'};
+% E4: yesterday vs. today
+a_subtitle = 'E4 11/06 vs. 11/07';
+c.plot_by_vial = 'no';
+file_names = {'2023-11-06_datafile_08.mat'
+    '2023-11-07_datafile_03.mat'};
+%}
+
+%% 11-08-2023
+%{
+a_title = '11-08-2023';
+c.time_to_cut = 1;
+c.pid_lims = [0 8];
+c.flow_lims = [0 110];
+
+
+a_subtitle = 'Pinene baseline';
+file_names = {'2023-11-08_datafile_09.mat'
+    '2023-11-08_datafile_10.mat'
+    '2023-11-08_datafile_11.mat'
+    '2023-11-08_datafile_12.mat'};
+
+a_subtitle = 'Pinene spt char';
+file_names = {'2023-11-08_datafile_13.mat'
+    '2023-11-08_datafile_14.mat'
+    '2023-11-08_datafile_15.mat'
+    '2023-11-08_datafile_16.mat'};
+%}
+%{
+c.plot_by_vial = 'no';
+a_subtitle = 'Ethyl Tiglate vs. Mineral oil';
+file_names = {'2023-11-08_datafile_01.mat'
+    '2023-11-08_datafile_02.mat'
+    '2023-11-08_datafile_03.mat'
+    '2023-11-08_datafile_04.mat'
+    '2023-11-08_datafile_05.mat'};
+
+% Mineral oil
+c.plot_by_vial = 'no';
+c.plot_by_flow = 'no';
+c.plot_ctrl = 'no';
+c.pid_lims = [0 .4];
+c.time_to_cut = 0;
+a_subtitle = 'Mineral oil (MC 1): pre & post isopropanol';
+file_names = {'2023-11-08_datafile_02.mat'
+    '2023-11-08_datafile_04.mat'};
+    %'2023-11-08_datafile_05.mat'};
+
+% Mineral oil pre & post cleaning iso valve
+c.plot_by_vial = 'no';
+c.plot_by_flow = 'yes';
+c.plot_ctrl = 'no';
+c.pid_lims = [0 .05];
+%c.pid_lims = [0 1.05];
+c.time_to_cut = 0;
+a_subtitle = 'Mineral oil (MC 7): Pre & post isopropanol';
+file_names = {'2023-11-08_datafile_06.mat'
+    '2023-11-08_datafile_07.mat'};
+
+% Ethyl Tiglate
+c.plot_by_vial = 'no';
+a_subtitle = 'Ethyl Tiglate';
+file_names = {'2023-11-08_datafile_01.mat'
+    '2023-11-08_datafile_03.mat'};
+%}
+
+
+%% 11-09-2023
+%{
+a_title = '11-09-2023';
+c.time_to_cut = 3;
+c.pid_lims = [0 8];
+c.flow_lims = [0 110];
+c.ctrl_lims = [120 210];
+f.x_lim = [-2 30];
+
+a_subtitle = 'swapped E1 and E3 vials';
+file_names = {'2023-11-09_datafile_21'
+    '2023-11-09_datafile_22'
+    '2023-11-09_datafile_23'
+    '2023-11-09_datafile_24'};
+
+a_subtitle = 'Pinene spt char';
+file_names = {'2023-11-09_datafile_17'
+    '2023-11-09_datafile_18'
+    '2023-11-09_datafile_19'
+    '2023-11-09_datafile_20'};
+a_subtitle = 'E2 & E4, first run';
+file_names = {'2023-11-09_datafile_18'
+    '2023-11-09_datafile_20'};
+a_subtitle = 'E2 & E4';
+file_names = {'2023-11-09_datafile_18'
+    '2023-11-09_datafile_22'
+    '2023-11-09_datafile_20'
+    '2023-11-09_datafile_24'};
+a_subtitle = 'E1 & E3';
+file_names = {'2023-11-09_datafile_17'
+    '2023-11-09_datafile_19'};
+a_subtitle = 'E1 & E3, swapped vials';
+file_names = {'2023-11-09_datafile_21'
+    '2023-11-09_datafile_23'};
+%}
+
+%{
+a_subtitle = 'E2 & E4, second run';
+file_names = {'2023-11-09_datafile_22'
+    '2023-11-09_datafile_24'};
+a_subtitle = 'Pinene baseline';
+file_names = {'2023-11-09_datafile_13'
+    '2023-11-09_datafile_14'
+    '2023-11-09_datafile_15'
+    '2023-11-09_datafile_16'};
+%}
+%{
+% different E2 attempts
+a_subtitle = 'E2';
+c.plot_by_vial = 'no';
+file_names = {'2023-11-09_datafile_00_E2'
+    %'2023-11-09_datafile_01'
+    %'2023-11-09_datafile_02'
+    '2023-11-09_datafile_03'
+    '2023-11-09_datafile_04'
+    '2023-11-09_datafile_05'
+    '2023-11-09_datafile_08'};
+
+a_subtitle = 'E2 proportional valve';
+c.plot_by_vial = 'no';
+file_names = {%'2023-11-09_datafile_00_E2'
+    '2023-11-09_datafile_08'
+    '2023-11-09_datafile_09'
+    '2023-11-09_datafile_10'
+    '2023-11-09_datafile_11'};
+file_names = {'2023-11-09_datafile_05.mat'
+    '2023-11-09_datafile_06.mat'
+    '2023-11-09_datafile_07.mat'};
+%}
+
+%% 11-10-2023
+a_title = '11-10-2023';
+c.time_to_cut = 5;
+c.pid_lims = [0 8];
+c.flow_lims = [0 150];
+%c.ctrl_lims = [120 210];
+f.x_lim = [-2 16];
+
+%c.plot_ctrl = 'no';
+c.plot_by_flow = 'no';
+%{
+a_subtitle = 'Pinene baseline (100cc)';
+file_names = {'2023-11-10_datafile_01'
+    '2023-11-10_datafile_02'
+    '2023-11-10_datafile_03'
+    '2023-11-10_datafile_04'};
+
+a_subtitle = 'Pinene baseline (after needle fixes)';
+file_names = {'2023-11-10_datafile_01'
+    '2023-11-10_datafile_08'
+    '2023-11-10_datafile_07'
+    '2023-11-10_datafile_05'};
+%}
+
+a_subtitle = 'E2 & E4';
+c.ctrl_lims = [120 210];
+file_names = {'2023-11-10_datafile_10'
+    '2023-11-10_datafile_12'};
+a_subtitle = 'Pinene';
+c.flow_lims = [0 110];
+file_names = {'2023-11-10_datafile_09'
+    '2023-11-10_datafile_10'
+    '2023-11-10_datafile_11'
+    '2023-11-10_datafile_12'
+    '2023-11-10_datafile_13'};
+
+
 
 %% preallocate array
 d = struct('file_name','', ...
@@ -280,24 +523,21 @@ data(length(file_names)) = d;
 
 %% load these files into the array
 for i=1:length(file_names)
-    this_file_name = file_names{i};
-    data(i).file_name = this_file_name;
-    a = load(this_file_name,'d_olfa_data_combined','d_olfa_flow','data_pid');
+    a_this_file_name = file_names{i};
+    data(i).file_name = a_this_file_name;
+    a = load(a_this_file_name,'d_olfa_data_combined','d_olfa_flow','data_pid');
     data(i).d_olfa_data_combined = a.d_olfa_data_combined;
     data(i).d_olfa_flow = a.d_olfa_flow;
     data(i).data_pid = a.data_pid;
 end
 
-clearvars a d
 flow_values = [data(i).d_olfa_data_combined.flow_value];
 
 %% plot each flow value separately
 if strcmp(c.plot_by_flow,'yes')
     for i=1:length(flow_values)
-        f = figure; hold on; f.Position = f_position; legend('Interpreter','none');
+        f_0 = figure; hold on; f_0.Position = f.f_position; legend('Interpreter','none');
         xlabel('Time (s)');
-        yyaxis left; ylabel('Flow (SCCM)')
-        ylim([c.flow_lims])
         yyaxis right; ylabel('PID (V)')
         ylim([c.pid_lims]);
         this_flow_value = flow_values(i);
@@ -305,49 +545,62 @@ if strcmp(c.plot_by_flow,'yes')
         
         %% for each file
         for r=1:length(data)
-            this_file_name = data(r).file_name;
-            shortened_file_name = extractAfter(this_file_name,11);
+            a_this_file_name = data(r).file_name;
+            shortened_file_name = extractAfter(a_this_file_name,11);
             shortened_file_name = erase(shortened_file_name,'.mat');
 
             % for each vial
             for j=1:length(data(r).d_olfa_flow)
-
                 % check if there was a trial at this flow value
-                this_file_combined_data = data(r).d_olfa_flow(j).d_olfa_data_combined;
                 this_file_flow_values = [data(r).d_olfa_flow(j).d_olfa_data_combined.flow_value];
-                %this_file_combined_data = data(r).d_olfa_data_combined;
-                %this_file_flow_values = [data(r).d_olfa_data_combined.flow_value];
                 [lia, locb] = ismember(this_flow_value,this_file_flow_values);  % get index of where ismember
                 
                 %% if there was a trial at this flow value
                 if lia == 1
                     % and shit didn't hit the fan
                     if ~isempty(data(r).d_olfa_flow(j).d_olfa_data_combined(locb).pid_mean1)
-                    %if ~isempty(data(r).d_olfa_data_combined(locb).pid_mean1)
                         %% plot the first trial
                         % find the t_event that's closest to the first flow time
                         t_event_values = [data(r).d_olfa_flow(j).events.OV_keep.t_event];
-                        %t_flow_start = data(r).d_olfa_data_combined(locb).data1.flow_sccm(1,1);
                         t_flow_start = data(r).d_olfa_flow(j).d_olfa_data_combined(locb).data1.flow_sccm(1,1);
                         [val,idx]=min(abs(t_event_values-t_flow_start));
                         this_t_event = data(r).d_olfa_flow(j).events.OV_keep(idx).t_event;
             
                         this_vial_num = data(r).d_olfa_flow(j).vial_num;
                         this_flow_data = data(r).d_olfa_flow(j).flow.flow_sccm;
+                        this_ctrl_data = data(r).d_olfa_flow(j).ctrl.ctrl_int;
                         this_pid_data = data(r).data_pid;
                         
                         %% shift all of this data to zero
                         this_flow_data(:,1) = this_flow_data(:,1) - this_t_event;
+                        this_ctrl_data(:,1) = this_ctrl_data(:,1) - this_t_event;
                         this_pid_data(:,1) = this_pid_data(:,1) - this_t_event;
-            
-                        %% plot flow
-                        yyaxis left;
-                        p_flow = plot(this_flow_data(:,1),this_flow_data(:,2));
-                        p_flow.HandleVisibility = 'off';
-                        p_flow.Color = c.flow_color;
-                        p_flow.LineWidth = c.flow_width;
-                        p_flow.LineStyle = '-';
-                        p_flow.Marker = 'none';
+                        
+                        if strcmp(c.plot_ctrl,'yes')
+                            %% plot ctrl
+                            yyaxis left; ylabel('Ctrl (int')
+                            ylim([c.ctrl_lims])
+                            p_ctrl = plot(this_ctrl_data(:,1),this_ctrl_data(:,2));
+                            p_ctrl.HandleVisibility = 'off';
+                            if strcmp(c.plot_by_vial,'yes')
+                                vial_num = str2double(this_vial_num(2));
+                                p_ctrl.Color = c.colors{vial_num};
+                            else
+                                p_ctrl.Color = c.colors{r};
+                            end
+                            p_ctrl.LineStyle = '-';
+                            p_ctrl.Marker = 'none';
+                        else
+                            %% plot flow
+                            yyaxis left; ylabel('Flow (SCCM)')
+                            ylim([c.flow_lims])
+                            p_flow = plot(this_flow_data(:,1),this_flow_data(:,2));
+                            p_flow.HandleVisibility = 'off';
+                            p_flow.Color = c.flow_color;
+                            p_flow.LineWidth = c.flow_width;
+                            p_flow.LineStyle = '-';
+                            p_flow.Marker = 'none';
+                        end
             
                         %% plot PID
                         yyaxis right;
@@ -364,41 +617,53 @@ if strcmp(c.plot_by_flow,'yes')
                         p_pid.LineStyle = '-';
                         p_pid.Marker = 'none';
                         
-                        xlim([-2 30]);
+                        %xlim([-2 30]);
+                        xlim(f.x_lim);
             
                         %% if there was a second trial at this flow value
                         if ~isempty(data(r).d_olfa_data_combined(locb).data2)        
-                            
                             % find the t_event that's closest to the first flow time
                             t_flow_start2 = data(r).d_olfa_data_combined(locb).data2.flow_sccm(1,1);
                             [val2,idx2]=min(abs(t_event_values-t_flow_start2));
-                            this_t_event2 = data(r).d_olfa_flow.events.OV_keep(idx2).t_event;
+                            this_t_event2 = data(r).d_olfa_flow(j).events.OV_keep(idx2).t_event;
             
-                            this_flow_data2 = data(r).d_olfa_flow.flow.flow_sccm;
+                            this_flow_data2 = data(r).d_olfa_flow(j).flow.flow_sccm;
                             this_pid_data2 = data(r).data_pid;
             
                             % shift all of this data to zero
                             this_flow_data2(:,1) = this_flow_data2(:,1) - this_t_event2;
                             this_pid_data2(:,1) = this_pid_data2(:,1) - this_t_event2;
-            
-                            % plot flow
-                            yyaxis left;
-                            p_flow2 = plot(this_flow_data2(:,1),this_flow_data2(:,2));
-                            p_flow2.HandleVisibility = 'off';
-                            p_flow2.Color = c.flow_color;
-                            p_flow2.LineWidth = c.flow_width;
-                            p_flow2.LineStyle = '-';
-                            p_flow2.Marker = 'none';
+
+                            if strcmp(c.plot_ctrl,'yes')
+                                yyaxis left; ylabel('Ctrl (int')
+                                ylim([c.ctrl_lims])
+                                p_ctrl2 = plot(this_ctrl_data(:,1),this_ctrl_data(:,2));
+                                p_ctrl2.HandleVisibility = 'off';
+                                if strcmp(c.plot_by_vial,'yes')
+                                    vial_num = str2double(this_vial_num(2));
+                                    p_ctrl2.Color = c.colors{vial_num};
+                                else
+                                    p_ctrl2.Color = c.colors{r};
+                                end
+                                p_ctrl2.LineStyle = '-';
+                                p_ctrl2.Marker = 'none';
+                            else
+                                % plot flow
+                                yyaxis left; ylabel('Flow (SCCM)')
+                                p_flow2 = plot(this_flow_data2(:,1),this_flow_data2(:,2));
+                                p_flow2.HandleVisibility = 'off';
+                                p_flow2.Color = c.flow_color;
+                                p_flow2.LineWidth = c.flow_width;
+                                p_flow2.LineStyle = '-';
+                                p_flow2.Marker = 'none';
+                            end
                             
                             % plot PID
                             yyaxis right;
                             p_pid2 = plot(this_pid_data2(:,1),this_pid_data2(:,2));
                             p_pid2.HandleVisibility = 'off';
-                            if strcmp(c.plot_by_vial,'yes')
-                                p_pid2.Color = c.colors{vial_num};
-                            else
-                                p_pid2.Color = p_pid.Color;
-                            end
+                            if strcmp(c.plot_by_vial,'yes'); p_pid2.Color = c.colors{vial_num};
+                            else; p_pid2.Color = p_pid.Color; end
                             p_pid2.LineWidth = c.pid_width;
                             p_pid2.LineStyle = '-';
                             p_pid2.Marker = 'none';
@@ -411,11 +676,12 @@ if strcmp(c.plot_by_flow,'yes')
         end
     end
 end
+clearvars -except a_* c f data
 
 %% set up spt char plot
 f2 = figure; hold on;
 f2.Name = ['FLOW v. PID: ', a_title];
-f2.Position = f2_position;
+f2.Position = f.f2_position;
 ax2 = gca;
 legend('Location','northwest','Interpreter','none');
 xlabel('Flow (SCCM)')
@@ -429,7 +695,7 @@ if ~isempty(a_subtitle); subtitle(a_subtitle); end
 %% set up ctrl plot
 if strcmp(c.plot_ctrl,'yes')
     f3 = figure; hold on;
-    f3.Position = f3_position;
+    f3.Position = f.f3_position;
     f3.Name = ['FLOW v. CTRL: ', a_title];
     ax3 = gca;
     legend('Location','northwest','Interpreter','none');
@@ -442,9 +708,10 @@ if strcmp(c.plot_ctrl,'yes')
 end
 
 %% plot flow v. PID for each file
+% for each file
 for r=1:length(data)
-    this_file_name = data(r).file_name;
-    shortened_file_name = extractAfter(this_file_name,11);
+    a_this_file_name = data(r).file_name;
+    shortened_file_name = extractAfter(a_this_file_name,11);
     shortened_file_name = erase(shortened_file_name,'.mat');
 
     % for each vial
@@ -563,3 +830,4 @@ for r=1:length(data)
     end
 end
 
+clearvars -except a_* c f data
