@@ -11,7 +11,7 @@
 5. converts ctrl to voltage
 6. smooths PID (moving average over 50ms window)
 7. splits into sections (for each OV event)
-	- for each section (longer than 5 seconds):
+	- for each section (longer than 1 second):
 		- cuts first 50 ms
 		- gets all flow & PID data (& calculates mean)
 8. saves .mat file

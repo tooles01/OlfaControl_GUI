@@ -64,35 +64,6 @@ file = uigetfile("*.csv",uibox_title);
 
 %% enter data file name
 
-%a_thisfile_name = '2023-10-11_datafile_19'; a_this_note = '10 sccm - 15s on, 5s off';
-%a_thisfile_name = '2023-10-11_datafile_20'; a_this_note = '10 sccm - 15s on, 5s off';
-%a_thisfile_name = '2023-10-11_datafile_21'; a_this_note = '20 sccm - 15s on, 20s off';
-%a_thisfile_name = '2023-10-11_datafile_22'; a_this_note = '20 sccm - 15s on, 20s off (teflon output)';
-%a_thisfile_name = '2023-10-11_datafile_23'; a_this_note = '100 sccm - 15s on, 20s off (teflon output)';
-%a_thisfile_name = '2023-10-11_datafile_24'; a_this_note = '100 sccm - 15s on, 20s off (teflon output) (slightly adjusted tubing)';
-%a_thisfile_name = '2023-10-11_datafile_25'; a_this_note = '100 sccm - 15s on, 20s off (teflon output) (adjusted tubing again)';
-
-%a_thisfile_name = '2023-10-12_datafile_00'; a_this_note = 'Ethyl Tiglate - 15s on, 20s off (with fake open)'; % capillary output
-%a_thisfile_name = '2023-10-12_datafile_01'; a_this_note = 'Ethyl Tiglate - 15s on, 20s off (no fake open)'; % capillary output
-%a_thisfile_name = '2023-10-12_datafile_02'; a_this_note = 'Ethyl Tiglate - 15s on, 20s off (no fake open)'; % capillary output
-%a_thisfile_name = '2023-10-12_datafile_03'; a_this_note = 'Ethyl Tiglate - 15s on, 30s off (no fake open)'; % capillary output
-%a_thisfile_name = '2023-10-12_datafile_04'; a_this_note = 'Ethyl Tiglate - 15s on, 30s off (no fake open)'; % capillary output
-%a_thisfile_name = '2023-10-12_datafile_05'; a_this_note = 'Ethyl Tiglate - 15s on, 30s off (with fake open)'; % capillary output
-%a_thisfile_name = '2023-10-12_datafile_06'; a_this_note = 'Ethyl Tiglate - 15s on, 30s off (with fake open)'; % capillary output
-%a_thisfile_name = '2023-10-12_datafile_07'; a_this_note = 'Ethyl Tiglate - 15s on, 30s off (with fake open)'; % capillary output
-
-%a_thisfile_name = '2023-10-17_datafile_00'; a_this_note = 'empty vial'; flow_inc = 10;
-%a_thisfile_name = '2023-10-18_datafile_00'; a_this_note = 'empty vial, Kp=.05, Ki=.0001'; flow_inc = 10;
-%a_thisfile_name = '2023-10-18_datafile_01'; a_this_note = 'empty vial, Kp=.03, Ki=.0005 (sequential)'; flow_inc = 10;
-%a_thisfile_name = '2023-10-18_datafile_02'; a_this_note = 'empty vial, Kp=.03, Ki=.0005 (random order)'; flow_inc = 10;
-
-%a_thisfile_name = '2023-10-19_datafile_00'; a_this_note = 'Ethyl Tiglate - 15s on 30s off (with fake open) Kp=.03, Ki=.0005 (sequential)'; flow_inc = 5;
-%a_thisfile_name = '2023-10-19_datafile_01'; a_this_note = 'Ethyl Tiglate - 15s on 30s off (with fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 5;
-%a_thisfile_name = '2023-10-19_datafile_02'; a_this_note = 'Ethyl Tiglate - 15s on 45s off (with fake open) Kp=.03, Ki=.0005 (sequential)'; flow_inc = 5;
-%a_thisfile_name = '2023-10-19_datafile_03'; a_this_note = 'Ethyl Tiglate - 15s on 45s off (with fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 5;
-%a_thisfile_name = '2023-10-19_datafile_04'; a_this_note = 'Ethyl Tiglate - 15s on 45s off (with fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 5;
-%a_thisfile_name = '2023-10-19_datafile_05'; a_this_note = 'Acetophenone - 15s on 45s off (no fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 10;
-
 %a_thisfile_name = '2023-10-20_datafile_00'; a_this_note = 'Acetophenone - 8s on 20s off (no fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 10;
 %a_thisfile_name = '2023-10-20_datafile_01'; a_this_note = 'Acetophenone - 8s on 20s off (no fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 10;
 %a_thisfile_name = '2023-10-27_datafile_01'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off'; flow_inc = 10;
@@ -159,7 +130,96 @@ file = uigetfile("*.csv",uibox_title);
 %a_thisfile_name = '2023-11-03_datafile_05'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
 %a_thisfile_name = '2023-11-03_datafile_06'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
 %a_thisfile_name = '2023-11-03_datafile_07'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-a_thisfile_name = '2023-11-03_datafile_08'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-03_datafile_08'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-03_datafile_09'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-03_datafile_10'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-03_datafile_11'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-03_datafile_12'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+
+%a_thisfile_name = '2023-11-06_datafile_00'; a_this_note = 'Ethyl Tiglate - E1-E4 pre-trial setup'; flow_inc = 100;
+%a_thisfile_name = '2023-11-06_datafile_01'; a_this_note = 'Ethyl Tiglate - E1-E4 pre-trial setup'; flow_inc = 100;
+%a_thisfile_name = '2023-11-06_datafile_02'; a_this_note = 'Ethyl Tiglate - E1-E4 pre-trial setup'; flow_inc = 100;
+%a_thisfile_name = '2023-11-06_datafile_03'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-06_datafile_04'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-06_datafile_05'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+
+%a_thisfile_name = '2023-11-06_datafile_06'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-06_datafile_07'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-06_datafile_08'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-06_datafile_09'; a_this_note = 'Ethyl Tiglate - E1-E4 pre-trial setup'; flow_inc = 100;
+%a_thisfile_name = '2023-11-06_datafile_10'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+
+%a_thisfile_name = '2023-11-07_datafile_00'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-07_datafile_01'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-07_datafile_02'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-07_datafile_03'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-07_datafile_04'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-07_datafile_05'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-07_datafile_06'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order) (added 500mL)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-07_datafile_07'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off (random order) (added 500mL)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-07_datafile_08'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order) (added 500mL)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-07_datafile_09'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off (random order) (added 500mL)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-07_datafile_10'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-07_datafile_11'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+
+%a_thisfile_name = '2023-11-08_datafile_01'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-08_datafile_02'; a_this_note = 'E1: Mineral oil - 10s on 30s off'; flow_inc = 100;
+%a_thisfile_name = '2023-11-08_datafile_03'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-08_datafile_04'; a_this_note = 'E1: Mineral oil - 10s on 30s off'; flow_inc = 100;
+%a_thisfile_name = '2023-11-08_datafile_05'; a_this_note = 'E1: Mineral oil, 2-Heptanone iso valve (MC 7)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-08_datafile_06'; a_this_note = 'E1: Mineral oil, Ethyl Tiglate iso valve (MC 7)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-08_datafile_07'; a_this_note = 'E1: Mineral oil, Ethyl Tiglate iso valve (MC 7) - after cleaning'; flow_inc = 10;
+
+%a_thisfile_name = '2023-11-08_datafile_09'; a_this_note = 'E1: Pinene baseline (100 sccm)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-08_datafile_10'; a_this_note = 'E2: Pinene baseline (100 sccm)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-08_datafile_11'; a_this_note = 'E3: Pinene baseline (100 sccm)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-08_datafile_12'; a_this_note = 'E4: Pinene baseline (100 sccm)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-08_datafile_13'; a_this_note = 'E1: Pinene - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-08_datafile_14'; a_this_note = 'E2: Pinene - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-08_datafile_15'; a_this_note = 'E3: Pinene - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-08_datafile_16'; a_this_note = 'E4: Pinene - 10s on 30s off'; flow_inc = 20;
+
+%a_thisfile_name = '2023-11-09_datafile_00'; a_this_note = 'E1-E4: Pinene - 5s on 5s off'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_00_E2'; a_this_note = 'E2 - 5s on 5s off'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_01'; a_this_note = 'E2: Pinene - new cap'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_02'; a_this_note = 'E2: Pinene - new cap'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_03'; a_this_note = 'E2: Pinene - new needle'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_04'; a_this_note = 'E2: Pinene - tightened iso valve'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_05'; a_this_note = 'E2: Pinene - using E1''s vial'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_06'; a_this_note = 'E3: Pinene - 5s on 5s off'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_07'; a_this_note = 'E4: Pinene - 5s on 5s off'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_08'; a_this_note = 'E2: Pinene - reconnected fSens to manifold'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_09'; a_this_note = 'E2: Pinene - new proportional valve'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_10'; a_this_note = 'E2: Pinene - original proportional valve'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_11'; a_this_note = 'E2: Pinene - new proportional valve'; flow_inc = 100;
+
+%a_thisfile_name = '2023-11-09_datafile_13'; a_this_note = 'E1: Pinene baseline (100 sccm)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_14'; a_this_note = 'E2: Pinene baseline (100 sccm)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_15'; a_this_note = 'E3: Pinene baseline (100 sccm)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_16'; a_this_note = 'E4: Pinene baseline (100 sccm)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-09_datafile_17'; a_this_note = 'E1: Pinene - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-09_datafile_18'; a_this_note = 'E2: Pinene - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-09_datafile_19'; a_this_note = 'E3: Pinene - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-09_datafile_20'; a_this_note = 'E4: Pinene - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-09_datafile_21'; a_this_note = 'E1: Pinene - 10s on 30s off'; flow_inc = 20; % with vial C
+%a_thisfile_name = '2023-11-09_datafile_22'; a_this_note = 'E2: Pinene - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2023-11-09_datafile_23'; a_this_note = 'E3: Pinene - 10s on 30s off'; flow_inc = 20; % with vial A
+%a_thisfile_name = '2023-11-09_datafile_24'; a_this_note = 'E4: Pinene - 10s on 30s off'; flow_inc = 20;
+
+%a_thisfile_name = '2023-11-10_datafile_00'; a_this_note = 'E1-E4 Pinene baseline (100 sccm)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-10_datafile_01'; a_this_note = 'E1: Pinene baseline (100 sccm) (8s on 20s off)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-10_datafile_02'; a_this_note = 'E2: Pinene baseline (100 sccm) (8s on 20s off)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-10_datafile_03'; a_this_note = 'E3: Pinene baseline (100 sccm) (8s on 20s off)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-10_datafile_04'; a_this_note = 'E4: Pinene baseline (100 sccm) (8s on 20s off)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-10_datafile_05'; a_this_note = 'E4: Pinene baseline (100 sccm) (8s on 20s off) - blew on the needle'; flow_inc = 100;
+%a_thisfile_name = '2023-11-10_datafile_06'; a_this_note = 'E3: Pinene baseline (100 sccm) (8s on 20s off) - adjusted needle'; flow_inc = 100;
+%a_thisfile_name = '2023-11-10_datafile_07'; a_this_note = 'E3: Pinene baseline (100 sccm) (8s on 20s off) - new needle'; flow_inc = 100;
+%a_thisfile_name = '2023-11-10_datafile_08'; a_this_note = 'E2: Pinene baseline (100 sccm) (8s on 20s off) - new needle'; flow_inc = 100;
+
+%a_thisfile_name = '2023-11-10_datafile_09'; a_this_note = 'E1: Pinene - 8s on 20s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-10_datafile_10'; a_this_note = 'E2: Pinene - 8s on 20s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-10_datafile_11'; a_this_note = 'E3: Pinene - 8s on 20s off'; flow_inc = 10;
+a_thisfile_name = '2023-11-10_datafile_12'; a_this_note = 'E4: Pinene - 8s on 20s off'; flow_inc = 10;
 
 
 %% set up directories
@@ -483,7 +543,8 @@ for i=1:length(d_olfa_flow)
         e_t_end = e_t_start + e_duration;
         
         % ignore the event if the duration is less than 5.3 seconds
-        if (e_duration >= 5.3)
+        if (e_duration >= 1)
+        %if (e_duration >= 5.3)
 
             % cut first 50ms
             e_t_start = e_t_start + 0.050;
@@ -552,7 +613,7 @@ end
 
 clearvars i e* these* this* next* *_pair
 
-%% create a lil extra struct
+%% create d_olfa_data_combined
 % for each vial in d_olfa_flow
 for v=1:length(d_olfa_flow)
     sourceStructArray = d_olfa_flow(v).events.OV_keep;  % TODO fix this, needs to specify which row of d_olfa_flow
@@ -576,7 +637,7 @@ for v=1:length(d_olfa_flow)
         targetStructArray(i) = targetStruct;            % Assign the target struct to the target struct array
     end
 
-    %% sort by flow mean
+    %% sort by flow mean (create d_olfa_data_sorted)
     fieldName = 'flow_mean_sccm';
     fieldValues = {targetStructArray.(fieldName)};
     fieldValues = cell2mat(fieldValues);
