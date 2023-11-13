@@ -86,7 +86,7 @@ def find_olfaControl_directory():
                 logger.debug('\t' + i)
         
         gui_directory = path_list[0]
-        logger.info('OlfaControl_GUI directory found at:\t' + gui_directory)
+        logger.debug('OlfaControl_GUI directory found at:\t' + gui_directory)
     
     return gui_directory
 

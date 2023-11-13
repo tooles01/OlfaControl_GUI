@@ -273,6 +273,7 @@ class Vial(QGroupBox):
         # Send to olfactometer_window (to send to Arduino)
         strToSend = 'S_OV_' + str(duration) + '_' + self.full_vialNum
         self.olfactometer_parent_object.send_to_master(strToSend)
+        logger.info('Opening %s for %s seconds',self.full_vialNum,duration)
         
         # Send to main GUI window (to write to datafile)
         device = 'olfactometer ' + self.full_vialNum
@@ -368,7 +369,6 @@ class Vial(QGroupBox):
     
     # VALVE TIMER
     def start_valve_timer(self, duration):
-        #logger.debug('starting valve timer')
         self.time_valve_opened_at = datetime.now()
         self.timedelta_valve_open_full_dur = timedelta(0,int(duration))
         self.valve_timer.start()
@@ -568,6 +568,7 @@ class olfactometer_window(QGroupBox):
         self.m_mode_lbl = QLabel("Logging:")
         self.m_mode_wid = QComboBox()
         self.m_mode_wid.addItems(config_olfa.master_modes)
+        self.m_mode_wid.setCurrentIndex(2)  # matches master Arduino default level (4: notice)
         self.m_mode_btn = QPushButton(text="Send")
         self.m_mode_lbl.setToolTip("Change master logging level")
         self.m_mode_wid.setToolTip("Change master logging level")
