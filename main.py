@@ -127,44 +127,58 @@ class worker_additive(QObject):
         self.complete_stimulus_list = []
         self.duration_on = 5
         self.duration_off = 5
-
+        self.sccm2Ard_dict = []
+        self.ard2Sccm_dict = []
+    
     @pyqtSlot()
     def exp(self):
         # wait so olfa has time to set vial to debug mode
-        '''
-        #time.sleep(waitBtSpAndOV)
-        #time.sleep(waitBtSpAndOV)
+        time.sleep(config_main.waitBtSpAndOV)
+        time.sleep(config_main.waitBtSpAndOV)
 
         # do an off duration so we have a better baseline
-        #time.sleep(self.duration_off)
-        '''
+        time.sleep(self.duration_off)
+
         
         # iterate through stimulus list
         for stimulus in self.complete_stimulus_list:
             if self.threadON == True:
+                
                 # for each vial: send setpoint
                 for v in range(len(self.vials_to_run)):
                     vial = self.vials_to_run[v]
-                    sp = stimulus[v]
-                    logger.info('Setting %s to %s sccm', vial, sp)
-                    self.w_sendThisSp.emit(vial,sp)
-                    time.sleep(config_main.waitBtSps)
-                # for each vial: open valve
-                for v in range(len(self.vials_to_run)):
-                    vial = self.vials_to_run[v]
-                    logger.debug('Opening %s for %s seconds',vial,self.duration_on)
-                    self.w_send_OpenValve.emit(vial,self.duration_on)
-                    time.sleep(config_main.waitBtSps)
-
+                    this_setpoint_sccm = stimulus[v]
+                    
+                    # convert it to arduino integer
+                    this_setpoint_int = utils_olfa_48line.convertToInt(this_setpoint_sccm,self.sccm2Ard_dict[v])
+                    
+                    # send the setpoint
+                    logger.info('Setting %s to %s sccm',vial,this_setpoint_sccm)
+                    self.w_sendThisSp.emit(vial,this_setpoint_int)
+                    time.sleep(config_main.waitBtSpAndOV)
+                
+                # create the string to send : vial will be E12345
+                vial_string = ''
+                slave_name = self.vials_to_run[0]
+                slave_name = slave_name[:-1]
+                vial_string = vial_string + slave_name
+                for v in self.vials_to_run:
+                    vial_string = vial_string + v[1:]
+                
+                # open the vials
+                logger.debug('Opening %s for %s seconds',vial_string,self.duration_on)
+                self.w_send_OpenValve.emit(vial_string,self.duration_on)
+                
                 # wait until the vials have closed
-                time.sleep(self.duration_on)    # fix this
+                time.sleep(self.duration_on)
 
                 # wait for the rest duration
-                time.sleep(self.duration_off)   # fix this
+                # TODO calculate what this actually should be
+                time.sleep(self.duration_off - config_main.waitBtSpAndOV)
             
             if self.threadON == False:
                 break
-
+        
         self.finished.emit()
         self.threadON = False
 
@@ -359,7 +373,7 @@ class mainWindow(QMainWindow):
         
         else:
             self.program_selection_btn.setText("Select")
-            logger.warning('program selection unchecked: remove program widgets')
+            logger.debug('program selection unchecked')
             
             self.program_parameters_box.setEnabled(False)
             
@@ -850,37 +864,55 @@ class mainWindow(QMainWindow):
         
         # GET PROGRAM PARAMETERS
         additive_vials_to_run = copy.copy(self.additive_program_window.vials_to_run)
-        dur_ON = int(self.additive_program_window.open_dur_wid.text())
-        dur_OFF = int(self.additive_program_window.rest_dur_wid.text())
+        if additive_vials_to_run != []:
+            # GET SLAVE NAME
+            self.slave_to_run = additive_vials_to_run[0]
+            self.slave_to_run = self.slave_to_run[:-1]
 
-        # GET STIMULUS LIST
-        additive_stimulus_list = copy.copy(self.additive_program_window.vial_flows_complete_list)
+            dur_ON = int(self.additive_program_window.open_dur_wid.text())
+            dur_OFF = int(self.additive_program_window.rest_dur_wid.text())
+            
+            # GET STIMULUS LIST
+            additive_stimulus_list = copy.copy(self.additive_program_window.vial_flows_complete_list)
+            
+            # GET DICTIONARIES FOR THESE VIALS
+            these_sccm2Ard_dicts = []
+            these_ard2Sccm_dicts = []
+            for v in additive_vials_to_run:
+                this_vial_num = v[1:]   # remove slave name
+                vial_idx = int(this_vial_num) - 1
+                for s in self.olfactometer.slave_objects:
+                    if s.name == self.slave_to_run:
+                        thisVial = s.vials[vial_idx]
+                        sccm2Ard_dict_to_use = self.olfactometer.sccm2Ard_dicts.get(thisVial.cal_table)
+                        ard2Sccm_dict_to_use = self.olfactometer.ard2Sccm_dicts.get(thisVial.cal_table)
+                        these_sccm2Ard_dicts.append(sccm2Ard_dict_to_use)
+                        these_ard2Sccm_dicts.append(ard2Sccm_dict_to_use)
 
-        # GET DICTIONARIES FOR THESE VIALS
-        vial_1 = additive_vials_to_run[0]
-        vial_2 = additive_vials_to_run[1]
-
-
-        # SEND PARAMETERS TO ADDITIVE WORKER OBJECT
-        self.obj_additive.vials_to_run = copy.copy(additive_vials_to_run)
-        self.obj_additive.complete_stimulus_list = copy.copy(additive_stimulus_list)
-        self.obj_additive.duration_on = copy.copy(dur_ON)
-        self.obj_additive.duration_off = copy.copy(dur_OFF)
-
-        # SET VIALS TO DEBUG MODE
-        for v in additive_vials_to_run:
-            strToSend = 'MS_debug_' + str(v)
-            self.olfactometer.send_to_master(strToSend)
-            logger.debug('setting vial %s to debug mode', str(v))
-        
-        # START RECORDING
-        if self.begin_record_btn.isChecked() == False:
-            self.begin_record_btn.click()
-        
-        # START WORKER THREAD
-        self.obj_additive.threadON = True
-        logger.debug('starting thread_additive')
-        self.thread_additive.start()
+            # SEND PARAMETERS TO ADDITIVE WORKER OBJECT
+            self.obj_additive.vials_to_run = copy.copy(additive_vials_to_run)
+            self.obj_additive.complete_stimulus_list = copy.copy(additive_stimulus_list)
+            self.obj_additive.sccm2Ard_dict = copy.copy(these_sccm2Ard_dicts)
+            self.obj_additive.ard2Sccm_dict = copy.copy(these_ard2Sccm_dicts)
+            self.obj_additive.duration_on = copy.copy(dur_ON)
+            self.obj_additive.duration_off = copy.copy(dur_OFF)
+            
+            # SET VIALS TO DEBUG MODE
+            for v in additive_vials_to_run:
+                strToSend = 'MS_debug_' + str(v)
+                self.olfactometer.send_to_master(strToSend)
+                logger.debug('setting vial %s to debug mode', str(v))
+            
+            # START RECORDING
+            if self.begin_record_btn.isChecked() == False:
+                self.begin_record_btn.click()
+            
+            # START WORKER THREAD
+            self.obj_additive.threadON = True
+            logger.debug('starting thread_additive')
+            self.thread_additive.start()
+        else:
+            logger.info('No vials selected - cannot run program')
     
     def set_up_threads_sptchar(self):
         self.obj_sptchar = worker_sptChar()
