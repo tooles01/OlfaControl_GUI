@@ -116,6 +116,7 @@ class worker_additive(QObject):
     finished = pyqtSignal()
     w_sendThisSp = pyqtSignal(str,int)
     w_send_OpenValve = pyqtSignal(str,float)
+    w_send_Command = pyqtSignal(str)
     w_incProgBar = pyqtSignal(int)
 
     def __init__(self):
@@ -132,6 +133,12 @@ class worker_additive(QObject):
     
     @pyqtSlot()
     def exp(self):
+        # set vials to debug mode
+        for v in self.vials_to_run:
+            time.sleep(config_main.waitBtSpAndOV)
+            strToSend = 'MS_debug_' + str(v)
+            self.w_send_Command.emit(strToSend)        
+        
         # wait so olfa has time to set vial to debug mode
         time.sleep(config_main.waitBtSpAndOV)
         time.sleep(config_main.waitBtSpAndOV)
@@ -139,10 +146,19 @@ class worker_additive(QObject):
         # do an off duration so we have a better baseline
         time.sleep(self.duration_off)
 
+        # calculate full duration of entire shenanigan (for progress bar)
+        self.full_trial_duration_sec = (self.duration_on+self.duration_off) * len(self.complete_stimulus_list)
+        self.trial_start_time = datetime.now()
         
         # iterate through stimulus list
         for stimulus in self.complete_stimulus_list:
             if self.threadON == True:
+                
+                # update progress bar
+                current_time = datetime.now()
+                time_elapsed = (current_time - self.trial_start_time).total_seconds()
+                ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
+                self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
                 
                 # for each vial: send setpoint
                 for v in range(len(self.vials_to_run)):
@@ -169,15 +185,39 @@ class worker_additive(QObject):
                 logger.debug('Opening %s for %s seconds',vial_string,self.duration_on)
                 self.w_send_OpenValve.emit(vial_string,self.duration_on)
                 
+                # update progress bar
+                current_time = datetime.now()
+                time_elapsed = (current_time - self.trial_start_time).total_seconds()
+                ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
+                self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
+                
                 # wait until the vials have closed
                 time.sleep(self.duration_on)
 
+                # update progress bar
+                current_time = datetime.now()
+                time_elapsed = (current_time - self.trial_start_time).total_seconds()
+                ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
+                self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
+                
                 # wait for the rest duration
                 # TODO calculate what this actually should be
                 time.sleep(self.duration_off - config_main.waitBtSpAndOV)
+                
+                # update progress bar
+                current_time = datetime.now()
+                time_elapsed = (current_time - self.trial_start_time).total_seconds()
+                ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
+                self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
             
             if self.threadON == False:
                 break
+        
+        # update progress bar
+        current_time = datetime.now()
+        time_elapsed = (current_time - self.trial_start_time).total_seconds()
+        ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
+        self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
         
         self.finished.emit()
         self.threadON = False
@@ -897,12 +937,6 @@ class mainWindow(QMainWindow):
             self.obj_additive.duration_on = copy.copy(dur_ON)
             self.obj_additive.duration_off = copy.copy(dur_OFF)
             
-            # SET VIALS TO DEBUG MODE
-            for v in additive_vials_to_run:
-                strToSend = 'MS_debug_' + str(v)
-                self.olfactometer.send_to_master(strToSend)
-                logger.debug('setting vial %s to debug mode', str(v))
-            
             # START RECORDING
             if self.begin_record_btn.isChecked() == False:
                 self.begin_record_btn.click()
@@ -932,6 +966,7 @@ class mainWindow(QMainWindow):
 
         self.obj_additive.w_sendThisSp.connect(self.sendThisSetpoint)
         self.obj_additive.w_send_OpenValve.connect(self.send_OpenValve)
+        self.obj_additive.w_send_Command.connect(self.send_Command)
         self.obj_additive.w_incProgBar.connect(self.increment_progress_bar)
         self.obj_additive.finished.connect(self.threadIsFinished)
         self.thread_additive.started.connect(self.obj_additive.exp)
@@ -983,6 +1018,11 @@ class mainWindow(QMainWindow):
 
         # write to datafile
         self.receive_data_from_device('olfactometer ' + vial_name,'OV',str(dur))
+
+    def send_Command(self, stringToSend:str):
+        strToSend = stringToSend
+        self.olfactometer.send_to_master(strToSend)
+
     ##############################
     
     
