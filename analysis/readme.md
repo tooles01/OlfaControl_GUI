@@ -111,3 +111,34 @@
 
 - get_section_data
 </details>
+
+
+
+#
+### analysis_plot_standard_olfa
+**plots file from standard olfa**
+
+--> different file type: (data starts at 4th row of file)
+- Column 1: vial number
+- Column 2: flow rate
+- Column 3 -> end: PID values
+
+
+
+1. loads .csv file (from OlfaControlGUI\results_files\standard olfa)
+2. calculates PID baseline value (minimum PID value recorded during first trial)
+3. for each trial:
+	- adjust PID
+		- remove missing cells
+		- make array of time values
+		- shift PID up to zero
+	- calculate mean PID
+		- only use specific section of data:
+			- beginning of dataset: cut off the # of seconds specified by user
+			- end of dataset: 0.25sec before PID drops below 0.1V
+	- plot trial (if user selected to)
+	- add mean (& std) to the data structure
+4. create combined data structure
+5. save it to C:\..\data (.mat files)
+6. plot the spt char figure
+
