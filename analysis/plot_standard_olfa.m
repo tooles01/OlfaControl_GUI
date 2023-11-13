@@ -28,6 +28,7 @@ plot_opts.x_lines = 'yes';           % x lines of where the mean was calculated 
 
 %% display variables
 a_this_note = '';
+flow_inc = [];
 
 f = struct();   % struct containing all figure variables
 f.dot_size = 60;
@@ -82,11 +83,11 @@ c.time_to_cut = 2.00;  % don't look at any data before this time
 %a_thisfile_name = '2023-11-13_datafile_00_v11_A'; a_this_note = 'Pinene vial 11 - 8s on, 20s off (suction on)';
 %a_thisfile_name = '2023-11-13_datafile_01_v12_B'; a_this_note = 'Pinene vial 12 - 8s on, 20s off (suction on)';
 %a_thisfile_name = '2023-11-13_datafile_02_v11_A'; a_this_note = 'Pinene vial 11 - 8s on, 20s off (suction off)';
-a_thisfile_name = '2023-11-13_datafile_03_v12_B'; a_this_note = 'Pinene vial 12 - 8s on, 20s off (suction off)';
+a_thisfile_name = '2023-11-13_datafile_03_v12_B'; a_this_note = 'Pinene vial 12 - 8s on, 20s off (suction off)'; flow_inc = 20;
 
 f.pid_lims = [0 8];
 c.time_to_cut = 2;
-plot_opts.individual_trials = 'yes';
+plot_opts.individual_trials = 'no';
 
 
 %% load file
@@ -106,7 +107,7 @@ a_raw_file = a_raw_file(:,2:end);
 
 clearvars header_goes_til
 
-%% adjust PID
+%% get PID baseline value
 
 % set baseline to zero
 pid_values = a_raw_file(1,2:end);
@@ -127,18 +128,17 @@ clearvars last*
 %% cut additional time off & recalculate stats
 
 %%
+if strcmp(plot_opts.individual_trials,'yes'); close all; end
 
 %% initialize data structures
 
-standard_olfa_data = [];
 d_olfa_data = [];   % TODO change to d_olfa_data_combined
 d_olfa_data(1).flow_value = [];
 d_olfa_data(1).pid_mean = [];
+d_olfa_data(1).pid_std = [];
 d_olfa_data(1).data = [];
 
-%% plot each sccm value by itself
-if strcmp(plot_opts.individual_trials,'yes'); close all; end
-
+%% calculate stuff
 % for each trial (each row of the file)
 for i=1:height(a_raw_file)
     sccm_value = a_raw_file(i,1);
@@ -146,7 +146,7 @@ for i=1:height(a_raw_file)
 
     this_sccm_value = sccm_value{1};
     
-    %% adjust data
+    %% adjust PID
     % remove missing cells
     last_index = length(pid_values);
     while ismissing(pid_values{last_index})
@@ -179,6 +179,8 @@ for i=1:height(a_raw_file)
         % if PID started below 0.1 (aka this was a 0 sccm trial), just make it a 3 second trial
         idx_of_3_sec_later = (3.0/c.nidaq_freq) + 1;
         end_idx = idx_of_3_sec_later;
+        disp('this was a 0 sccm trial')
+        pause
     end
     
     % get all the data for this period
@@ -187,6 +189,7 @@ for i=1:height(a_raw_file)
     
     % calculate the mean value
     mean_pid = mean(this_pid_data);
+    std_pid = std(this_pid_data);
     
     %% plot this trial by itself
     if strcmp(plot_opts.individual_trials,'yes')
@@ -210,20 +213,17 @@ for i=1:height(a_raw_file)
         end
     end
     
-    % save just the mean value
-    this_pair = [this_sccm_value mean_pid];
-    standard_olfa_data = [standard_olfa_data; this_pair];
-
     %% add it to the data structure
     % reshape data
     d_time_data = reshape(time_data,length(time_data),1);
     d_pid_data = reshape(pid_values,length(pid_values),1);
     d_olfa_data(i).flow_value = this_sccm_value;
     d_olfa_data(i).pid_mean = mean_pid;
+    d_olfa_data(i).pid_std = std_pid;
     d_olfa_data(i).data = [d_time_data d_pid_data];
     
 end
-clearvars end_idx idx_* this_* new_* last_ i header_goes_til
+clearvars -except a_* c d_olfa_data dir_* f flow_inc pid_adjustment_value plot_opts
 
 %% sort the data structure (create d_olfa_data_sorted)
 fieldName = 'flow_value';
@@ -240,17 +240,20 @@ d_olfa_data_combined(1).pid_mean2 = [];
 d_olfa_data_combined(1).data1 = [];
 d_olfa_data_combined(1).data2 = [];
 
-% TODO fix this, add flow_inc
-flow_value = 10;
-for i=1:10
+if isempty(flow_inc); disp('WARNING no flow_inc entered: using 10'); flow_inc = 10; end
+flow_value = flow_inc;
+num_iterations = 100/flow_inc;
+for i=1:num_iterations
     d_olfa_data_combined(i).flow_value = flow_value;
-    flow_value = flow_value + 10;
+    flow_value = flow_value + flow_inc;
 end
 
 %% add shit to the combined data structure
+
 for i=1:length(d_olfa_data_sorted)
     this_flow_value = d_olfa_data_sorted(i).flow_value;
-    idx_to_use = this_flow_value / 10;
+    idx_to_use = this_flow_value / flow_inc;
+    
     % check if the first slot has been used yet
     if isempty(d_olfa_data_combined(idx_to_use).pid_mean1)
         d_olfa_data_combined(idx_to_use).pid_mean1 = d_olfa_data_sorted(i).pid_mean;
@@ -260,8 +263,8 @@ for i=1:length(d_olfa_data_sorted)
         d_olfa_data_combined(idx_to_use).data2 = d_olfa_data_sorted(i).data;
     end
 end
-clearvars idx_* last_ field*
 
+clearvars -except a_* c d* f pid_adjustment_value plot_opts
 
 %% save the data structure
 mat_file_dir = strcat(pwd,'\','data (.mat files)\',a_thisfile_name,'.mat');
@@ -293,9 +296,11 @@ if ~isempty(f.pid_lims); ylim(f.pid_lims); end
 
 blue_color = [0 .4470 .7410];
 
-s = scatter(standard_olfa_data(:,1),standard_olfa_data(:,2),f.dot_size,'filled');
+s = scatter([d_olfa_data.flow_value],[d_olfa_data.pid_mean],f.dot_size,'filled');
 s.MarkerFaceColor = blue_color;
 s.DisplayName = 'standard olfa';
+
+% if error bars on etc etc TODO
 
 clearvars *_color last_* disp* number_of_data plot_* i *flow_value*
 
