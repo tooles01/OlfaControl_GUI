@@ -770,6 +770,7 @@ class VialDetailsPopup(QWidget):
                 #logger.debug('make sure other vials are not in calibration mode (maybe ?)')
         
         except ValueError as err:
+            # TODO 11/8/2023: got this error when trying to write to file while calibration was running
             logger.warning('ValueError:' + str(err))
         
         # Clear the array
@@ -779,9 +780,12 @@ class VialDetailsPopup(QWidget):
         # Write the data from the widget to the file
         pair_to_write = eval(self.write_to_file_wid.text())     # Convert from string to tuple
         logger.debug('Writing to cal file: %s', pair_to_write)
-        with open(self.new_cal_file_dir,'a',newline='') as f:
-            writer = csv.writer(f,delimiter=',')
-            writer.writerow(pair_to_write)
+        try:
+            with open(self.new_cal_file_dir,'a',newline='') as f:
+                writer = csv.writer(f,delimiter=',')
+                writer.writerow(pair_to_write)
+        except PermissionError as err:
+            logger.warning('Cannot write to file: make sure you don''t have it open anywhere')
 
         # Display what we wrote to the table
         str_to_display = self.write_to_file_wid.text()
