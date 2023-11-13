@@ -1,5 +1,7 @@
 %% plot file from olfa calibration
 
+% get standard olfa datafile, plot & save
+%%
 clear variables
 %close all
 set(0,'DefaultTextInterpreter','none')
@@ -19,22 +21,21 @@ dir_data_files = [a_dir_OlfaControlGUI '\result_files\standard olfa\'];
 addpath(genpath(dir_data_files));
 
 %% select shit to plot
+plot_opts = struct();
 
-plot_individual_trials = 'no';  % plot each trial by itself
-plot_all_points = 'yes';         % plot all the points on a single graph
-plot_x_lines = 'yes';           % x lines of where the mean was calculated from
-plot_cheap_olfa = 'no';
+plot_opts.individual_trials = 'no';  % plot each trial by itself
+plot_opts.x_lines = 'yes';           % x lines of where the mean was calculated from
 
 %% display variables
 a_this_note = '';
-PID_color = [.4667 .6745 .1882];
 
-f = struct();
-f.pid_lims = [];
+f = struct();   % struct containing all figure variables
 f.dot_size = 60;
+f.PID_color = [.4667 .6745 .1882];
+f.pid_lims = [];
 
-f.f_all_position = [960 210 780 686];
-f.f_all_position = [960 210 650 600];     % for PowerPoint (1/2 size)
+%f.f_all_position = [960 210 780 686];
+%f.f_all_position = [960 210 650 600];     % for PowerPoint (1/2 size)
 %f.f_all_position = [166 210 1300 600];    % for PowerPoint
 
 %f.f_position = [166 210 1300 600];      % for PowerPoint
@@ -55,10 +56,9 @@ c.time_to_cut = 2.00;  % don't look at any data before this time
 %a_thisfile_name = '2023-10-04_datafile_02_standard_olfa.csv'; %a_this_note ='5s on, 10s off'; f.pid_lims = [-0.1 3.6];
 %a_thisfile_name = '2023-10-04_datafile_03_standard_olfa.csv'; a_this_note ='10s on, 10s off'; f.pid_lims = [-0.1 3.6];
 %a_thisfile_name = '2023-10-05_datafile_00_standard_olfa.csv'; a_this_note ='Ethyl Tiglate 10s on, 20s off'; f.pid_lims = [-0.1 3.6];
-%plot_cheap_olfa = 'yes';
 
-%a_thisfile_name = '2023-10-09_acetophenone.csv'; plot_all_points = 'yes';
-%a_thisfile_name = '2023-10-09_mixed.csv';  plot_individual_trials = 'no'; plot_all_points = 'yes';
+%a_thisfile_name = '2023-10-09_acetophenone.csv'; plot_opts.all_points = 'yes';
+%a_thisfile_name = '2023-10-09_mixed.csv';  plot_opts.individual_trials = 'no'; plot_opts.all_points = 'yes';
 %a_thisfile_name = '2023-10-09_ethyl tiglate pure.csv'; a_this_note ='Ethyl Tiglate Pure - 8s on, 20s off'; f.pid_lims = [-0.1 3];
 %a_thisfile_name = '2023-10-10_datafile_01.csv'; a_this_note ='Ethyl Tiglate Pure - 8s on, 20s off'; %f.pid_lims = [-0.1 3];
 %a_thisfile_name = '2023-10-10_datafile_02.csv'; a_this_note ='Ethyl Tiglate Pure - 8s on, 20s off'; f.pid_lims = [0 3];
@@ -71,14 +71,22 @@ c.time_to_cut = 2.00;  % don't look at any data before this time
 
 %a_thisfile_name= '2023-10-20_datafile00_acetophenone.csv'; a_this_note = 'Acetophenone vial 11 - 8s on, 20s off';
 %f.pid_lims = [0 1.2];
-a_thisfile_name= '2023-11-06_datafile_00_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
-a_thisfile_name= '2023-11-06_datafile_01_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
-a_thisfile_name = '2023-11-06_datafile_02_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
-f.pid_lims = [0 3];
-c.time_to_cut = 5;
+%a_thisfile_name= '2023-11-06_datafile_00_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
+%a_thisfile_name= '2023-11-06_datafile_01_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
+%a_thisfile_name = '2023-11-06_datafile_02_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
+%a_thisfile_name = '2023-11-07_datafile_00_ethyltiglate_B.csv'; a_this_note = 'Ethyl Tiglate vial 9 - 10s on, 30s off';
+%f.pid_lims = [0 3];
 
-%plot_all_points = 'no';
-plot_individual_trials = 'yes';
+%a_thisfile_name = '2023-11-10_datafile_00_vialC'; a_this_note = 'Pinene vial 12 - 8s on, 20s off';
+%a_thisfile_name = '2023-11-10_datafile_02_vialF'; a_this_note = 'Pinene vial 12 - 8s on, 20s off (no suction)';
+%a_thisfile_name = '2023-11-13_datafile_00_v11_A'; a_this_note = 'Pinene vial 11 - 8s on, 20s off (suction on)';
+%a_thisfile_name = '2023-11-13_datafile_01_v12_B'; a_this_note = 'Pinene vial 12 - 8s on, 20s off (suction on)';
+%a_thisfile_name = '2023-11-13_datafile_02_v11_A'; a_this_note = 'Pinene vial 11 - 8s on, 20s off (suction off)';
+a_thisfile_name = '2023-11-13_datafile_03_v12_B'; a_this_note = 'Pinene vial 12 - 8s on, 20s off (suction off)';
+
+f.pid_lims = [0 8];
+c.time_to_cut = 2;
+plot_opts.individual_trials = 'yes';
 
 
 %% load file
@@ -118,20 +126,7 @@ clearvars last*
 %% smooth PID   % TODO maybe
 %% cut additional time off & recalculate stats
 
-%% create spt char figure
-if strcmp(plot_individual_trials,'yes'); close all; end
-if strcmp(plot_all_points,'yes')
-    f_all = figure(); hold on; f_all.Position = f.f_all_position;
-    f_all.NumberTitle = 'off';
-    f_all.Name = 'f_all';
-    f_main_ax = gca;
-    title(a_thisfile_name)
-    if ~strcmp(a_this_note,''); subtitle(a_this_note); end
-    xlabel('Flow (SCCM)')
-    ylabel('PID (V)')
-    xlim([0 100])
-    if ~isempty(f.pid_lims); ylim(f.pid_lims); end
-end
+%%
 
 %% initialize data structures
 
@@ -142,6 +137,8 @@ d_olfa_data(1).pid_mean = [];
 d_olfa_data(1).data = [];
 
 %% plot each sccm value by itself
+if strcmp(plot_opts.individual_trials,'yes'); close all; end
+
 % for each trial (each row of the file)
 for i=1:height(a_raw_file)
     sccm_value = a_raw_file(i,1);
@@ -192,7 +189,7 @@ for i=1:height(a_raw_file)
     mean_pid = mean(this_pid_data);
     
     %% plot this trial by itself
-    if strcmp(plot_individual_trials,'yes')
+    if strcmp(plot_opts.individual_trials,'yes')
         f1 = figure(i+1); hold on;
         f1.Position = f.f_position;
         f1_subtitle = [num2str(this_sccm_value) ' sccm'];
@@ -204,22 +201,15 @@ for i=1:height(a_raw_file)
         if ~isempty(f.pid_lims); ylim(f.pid_lims); end
         p = plot(time_data,pid_values);
         p.LineWidth = 2;
-        p.Color = PID_color;
+        p.Color = f.PID_color;
         
         % draw xlines
-        if strcmp(plot_x_lines,'yes')
+        if strcmp(plot_opts.x_lines,'yes')
             xline(this_time_data(1));
             xline(this_time_data(end));
         end
     end
     
-    %% add to f_all
-    if strcmp(plot_all_points,'yes')
-        x = this_sccm_value * (ones(1,length(this_pid_data)));
-        s = scatter(f_main_ax,x,this_pid_data,'filled');
-        s.SizeData = 4;
-    end    
-
     % save just the mean value
     this_pair = [this_sccm_value mean_pid];
     standard_olfa_data = [standard_olfa_data; this_pair];
@@ -286,7 +276,7 @@ else
     disp(['File already existed, rewrote: ', disp_file_dir])
 end
 
-%% figure
+%% spt char figure
 f2 = figure; hold on;
 %legend('Location','northwest');
 f2.Position = f.f2_position;
