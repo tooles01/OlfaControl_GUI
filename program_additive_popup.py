@@ -26,6 +26,7 @@ class additiveProgramSettingsPopup(QWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        self.olfactometer_object = self.parent.olfactometer
         self.vials_to_run = []
         self.vial_flows_complete_list = []
 
@@ -51,28 +52,19 @@ class additiveProgramSettingsPopup(QWidget):
         self.layout_vial_selection = QVBoxLayout()
 
         # check how many slaves are active
-        num_active_slaves = 1   # TODO
-        num_columns_in_layout = num_active_slaves
-
+        currently_active_slaves = self.olfactometer_object.active_slaves
+        
         self.slave_layouts = []
         self.slave_vial_btn_objects_array = []
         # for each column (slave):
-        for i in range(num_columns_in_layout):
+        for s in currently_active_slaves:
             this_layout = QVBoxLayout()
             self.vial_btn_objects = []
-            for v in range(0,8):
-                vial_name = 'A' + str(v+1)
+            for v in range(0,self.olfactometer_object.vialsPerSlave):
+                vial_name = s + str(v+1)
                 this_btn = QPushButton(text=vial_name,checkable=True)
                 self.vial_btn_objects.append(this_btn)
                 this_layout.addWidget(this_btn)
-            '''
-            # for each vial:
-            for v in range(0,8):    # TODO
-                # create a pushbutton with that vial name
-                vial_name = 'A' + str(v+1)
-                this_btn = QPushButton(text=vial_name,checkable=True)
-                this_layout.addWidget(this_btn)
-            '''
             self.slave_layouts.append(this_layout)
             self.slave_vial_btn_objects_array.append(self.vial_btn_objects)
 
@@ -122,7 +114,7 @@ class additiveProgramSettingsPopup(QWidget):
             # for number of slaves:
             for s in range(len(self.slave_layouts)):
                 # for each vial:
-                for v in range(0,8):
+                for v in range(0,self.olfactometer_object.vialsPerSlave):
                     # check if button is selected or not
                     if self.slave_vial_btn_objects_array[s][v].isChecked() == True:
                         # if button is checked, it needs to be used in this trial
