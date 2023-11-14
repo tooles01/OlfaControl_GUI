@@ -1,8 +1,11 @@
 %% plot each sccm value , overlay all vials
 
 
+%%
 clear variables
 set(0,'DefaultTextInterpreter','none')
+%#ok<*NASGU>
+
 %% config variables
 a_title = '';
 a_subtitle = '';
@@ -49,470 +52,9 @@ c.plot_error_bars = 'yes';
 c.plot_by_vial = 'yes';      % colors based on vial #
 c.plot_ctrl = 'yes';
 
-%% datafile names
-%% 10-30-2023 2-Heptanone
-% did not pressurize anything
-%c.pid_lims = [0 6];
-%{
-c.time_to_cut = 9;
-file_names = {'2023-10-30_datafile_01.mat'
-    '2023-10-30_datafile_02.mat'
-    '2023-10-30_datafile_03.mat'
-    '2023-10-30_datafile_04.mat'
-    '2023-10-30_datafile_05.mat'};
-file_names = {'2023-10-30_datafile_02.mat'
-    '2023-10-30_datafile_03.mat'
-    '2023-10-30_datafile_04.mat'
-    '2023-10-30_datafile_05.mat'};
-% pressurized each time
-file_names = {'2023-10-30_datafile_06.mat'
-    '2023-10-30_datafile_08.mat'
-    '2023-10-30_datafile_09.mat'
-    '2023-10-30_datafile_10.mat'};
-% all files
-file_names = {'2023-10-30_datafile_01.mat'
-    '2023-10-30_datafile_02.mat'
-    '2023-10-30_datafile_03.mat'
-    '2023-10-30_datafile_04.mat'
-    '2023-10-30_datafile_05.mat'
-    '2023-10-30_datafile_06.mat'
-    '2023-10-30_datafile_08.mat'
-    '2023-10-30_datafile_09.mat'
-    '2023-10-30_datafile_10.mat'};
 
-%}
-
-%% 10-31-2023 2-Heptanone
-%c.time_to_cut = 9;
-%{
-% before I added odor to the vial
-file_names = {'2023-10-31_datafile_00.mat'
-    '2023-10-31_datafile_01.mat'
-    '2023-10-31_datafile_02.mat'};
-% after I added odor to the vial
-file_names = {'2023-10-31_datafile_03.mat'
-    '2023-10-31_datafile_04.mat'
-    '2023-10-31_datafile_05.mat'
-    '2023-10-31_datafile_06.mat'};
-% all trials
-file_names = {'2023-10-31_datafile_00.mat'
-    '2023-10-31_datafile_01.mat'
-    '2023-10-31_datafile_02.mat'
-    '2023-10-31_datafile_03.mat'
-    '2023-10-31_datafile_04.mat'
-    '2023-10-31_datafile_05.mat'
-    '2023-10-31_datafile_06.mat'};
-%}
-
-%% 10-31-2023 Acetophenone
-%{
-% E1->E4
-file_names = {'2023-10-31_datafile_07.mat'
-    '2023-10-31_datafile_08.mat'
-    '2023-10-31_datafile_09.mat'
-    '2023-10-31_datafile_10.mat'};
-c.pid_lims = [0 1];
-% now in backwards order
-file_names = {'2023-10-31_datafile_11.mat'
-    '2023-10-31_datafile_12.mat'
-    '2023-10-31_datafile_13.mat'
-    '2023-10-31_datafile_14.mat'};
-% all together
-file_names = {'2023-10-31_datafile_07.mat'
-    '2023-10-31_datafile_08.mat'
-    '2023-10-31_datafile_09.mat'
-    '2023-10-31_datafile_10.mat'
-    '2023-10-31_datafile_11.mat'
-    '2023-10-31_datafile_12.mat'
-    '2023-10-31_datafile_13.mat'
-    '2023-10-31_datafile_14.mat'};
-%}
-%% 11-01-2023 Ethyl Tiglate
-
-%{
-a_subtitle = 'by mixing chamber position';
-c.time_to_cut = 6;
-c.pid_lims = [0 3.5];
-a_title = 'Ethyl Tiglate';
-file_names = {'2023-11-01_datafile_01.mat'
-    '2023-11-01_datafile_02.mat'
-    '2023-11-01_datafile_03.mat'
-    '2023-11-01_datafile_04.mat'};
-
-% all
-% E1 MC
-file_names = {'2023-11-01_datafile_01.mat'
-    '2023-11-01_datafile_02.mat'};
-% E2 MC
-file_names = {'2023-11-01_datafile_03.mat'
-    '2023-11-01_datafile_04.mat'};
-% E1 olfa manifold
-file_names = {'2023-11-01_datafile_01.mat'
-    '2023-11-01_datafile_04.mat'};
-% E2 olfa manifold
-file_names = {'2023-11-01_datafile_02.mat'
-    '2023-11-01_datafile_03.mat'};
-%}
-
-%% 11-02-2023 Ethyl Tiglate
-
-%{
-a_title = 'Ethyl Tiglate';
-a_subtitle = '11-02-2023';
-c.time_to_cut = 5;
-c.pid_lims = [0 3.5];
-file_names = {'2023-11-02_datafile_03.mat'
-    '2023-11-02_datafile_04.mat'
-    '2023-11-02_datafile_05.mat'
-    '2023-11-02_datafile_06.mat'
-    '2023-11-02_datafile_07.mat'
-    '2023-11-02_datafile_08.mat'
-    '2023-11-02_datafile_09.mat'};
-%}
-
-%% 11-03-2023 Ethyl Tiglate
-
-%{
-a_title = 'Ethyl Tiglate 11-02-2023';
-c.time_to_cut = 6;
-c.pid_lims = [0 3.5];
-c.ctrl_lims = [120 210];
-
-% random order
-a_subtitle = 'trials in random order';
-file_names = {'2023-11-03_datafile_10'
-    '2023-11-03_datafile_11'
-    '2023-11-03_datafile_12'};
-% new prop valve
-a_subtitle = 'swapped E3 proportional valve';
-file_names = {'2023-11-03_datafile_06.mat'
-    '2023-11-03_datafile_08.mat'
-    '2023-11-03_datafile_09.mat'};
-% before adding odor
-a_subtitle = 'before adding odor to vials';
-file_names = {'2023-11-03_datafile_00.mat'
-    '2023-11-03_datafile_01.mat'
-    '2023-11-03_datafile_02.mat'
-    '2023-11-03_datafile_03.mat'
-    '2023-11-03_datafile_04.mat'
-    '2023-11-03_datafile_05.mat'};
-% after adding odor
-a_subtitle = 'after adding 1mL to vials';
-file_names = {'2023-11-03_datafile_06.mat'
-    '2023-11-03_datafile_07.mat'
-    '2023-11-03_datafile_08.mat'};
-% only E3
-file_names = {'2023-11-03_datafile_01.mat'
-    '2023-11-03_datafile_03.mat'
-    '2023-11-03_datafile_05.mat'
-    '2023-11-03_datafile_07.mat'
-    '2023-11-03_datafile_09.mat'};
-
-% only E1
-file_names = {'2023-11-03_datafile_00.mat'
-    '2023-11-03_datafile_02.mat'
-    '2023-11-03_datafile_04.mat'
-    '2023-11-03_datafile_06.mat'};
-
-% all
-file_names = {'2023-11-03_datafile_00.mat'
-    '2023-11-03_datafile_01.mat'
-    '2023-11-03_datafile_02.mat'
-    '2023-11-03_datafile_03.mat'
-    '2023-11-03_datafile_04.mat'
-    '2023-11-03_datafile_05.mat'
-    '2023-11-03_datafile_06.mat'
-    '2023-11-03_datafile_07.mat'
-    '2023-11-03_datafile_08.mat'
-    '2023-11-03_datafile_09.mat'};
-%}
-
-%% 11-06-2023 Ethyl Tiglate
-%{
-a_title = 'Ethyl Tiglate 11-06-2023';
-c.time_to_cut = 5;
-c.pid_lims = [0 3.5];
-c.ctrl_lims = [120 210];
-
-% after decreasing pressure
-a_subtitle = 'MFC pressure: 39.54 psi';
-file_names = {'2023-11-06_datafile_06.mat'
-    '2023-11-06_datafile_07.mat'
-    '2023-11-06_datafile_08.mat'
-    '2023-11-06_datafile_10.mat'};
-% before decreasing pressure
-a_subtitle = 'MFC pressure: 54.48 psi';
-file_names = {'2023-11-06_datafile_03.mat'
-    '2023-11-06_datafile_04.mat'
-    '2023-11-06_datafile_05.mat'};
-% E1
-a_subtitle = 'E1';
-file_names = {'2023-11-06_datafile_03.mat'
-    '2023-11-06_datafile_06.mat'};
-% E3
-a_subtitle = 'E3';
-file_names = {'2023-11-06_datafile_04.mat'
-    '2023-11-06_datafile_07.mat'};
-% E4
-a_subtitle = 'E4';
-file_names = {'2023-11-06_datafile_05.mat'
-    '2023-11-06_datafile_08.mat'};
-
-
-% all
-file_names = {'2023-11-06_datafile_03.mat'
-    '2023-11-06_datafile_04.mat'
-    '2023-11-06_datafile_05.mat'};
-%}
-
-%% 11-07-2023
-%{
-a_title = 'Ethyl Tiglate';
-c.time_to_cut = 6;
-c.pid_lims = [0 2.5];
-c.flow_lims = [0 110];
-c.ctrl_lims = [120 210];
-a_subtitle = 'MFC pressure: 41.23 psi';
-
-% all (kind of)
-a_subtitle = '2023-11-07 - Ethyl Tiglate';
-file_names = {'2023-11-07_datafile_06.mat'  % E1
-    '2023-11-07_datafile_08.mat';   % E1
-    '2023-11-07_datafile_05.mat';   % E2
-    %'2023-11-07_datafile_11.mat';   % E2
-    '2023-11-07_datafile_07.mat';   % E3
-    '2023-11-07_datafile_09.mat';   % E3
-    '2023-11-07_datafile_03.mat'    % E4
-    '2023-11-07_datafile_10.mat'};  % E4
-%}
-
-
-%{
-
-% before adding odor
-a_subtitle = '2023-11-07 - before adding odor';
-file_names = {'2023-11-07_datafile_02.mat'  % E1
-    '2023-11-07_datafile_05.mat';   % E2
-    '2023-11-07_datafile_04.mat';   % E3
-    '2023-11-07_datafile_03.mat'};  % E4
-% E1
-a_subtitle = 'E1 11-07-2023';
-c.plot_by_vial = 'no';
-file_names = {'2023-11-07_datafile_02'
-    '2023-11-07_datafile_06'
-    '2023-11-07_datafile_08'};
-% E3
-a_subtitle = 'E3 11-07-2023';
-c.plot_by_vial = 'no';
-file_names = {'2023-11-07_datafile_04'
-    '2023-11-07_datafile_07'
-    '2023-11-07_datafile_09'};
-
-% E1 before & after shaking it up
-a_subtitle = 'E1: before & after shaking the vial';
-c.plot_by_vial = 'no';
-file_names = {'2023-11-07_datafile_01'
-    '2023-11-07_datafile_02'};
-
-
-% E2 & E4 yesterday
-a_subtitle = '11/06 - MFC pressure: 39.54 psi';
-file_names = {'2023-11-06_datafile_10.mat'  % E2
-    '2023-11-06_datafile_08.mat'};  % E4
-% E2 & E4 today
-a_subtitle = '11/07 - MFC pressure: 41.23 psi';
-file_names = {'2023-11-07_datafile_05.mat'  % E2
-    '2023-11-07_datafile_03.mat'};  % E4
-
-% E1: yesterday vs. today
-a_subtitle = 'E1 11/06 vs. 11/07';
-c.plot_by_vial = 'no';
-file_names = {'2023-11-06_datafile_06.mat'
-    '2023-11-07_datafile_01.mat'
-    '2023-11-07_datafile_02.mat'};
-% E2: yesterday vs. today
-a_subtitle = 'E2 11/06 vs. 11/07';
-c.plot_by_vial = 'no';
-file_names = {'2023-11-06_datafile_10.mat'
-    '2023-11-07_datafile_05.mat'};
-% E3: yesterday vs. today
-a_subtitle = 'E3 11/06 vs. 11/07';
-c.plot_by_vial = 'no';
-file_names = {'2023-11-06_datafile_07.mat'
-    '2023-11-07_datafile_04.mat'};
-% E4: yesterday vs. today
-a_subtitle = 'E4 11/06 vs. 11/07';
-c.plot_by_vial = 'no';
-file_names = {'2023-11-06_datafile_08.mat'
-    '2023-11-07_datafile_03.mat'};
-%}
-
-%% 11-08-2023
-%{
-a_title = '11-08-2023';
-c.time_to_cut = 1;
-c.pid_lims = [0 8];
-c.flow_lims = [0 110];
-
-
-a_subtitle = 'Pinene baseline';
-file_names = {'2023-11-08_datafile_09.mat'
-    '2023-11-08_datafile_10.mat'
-    '2023-11-08_datafile_11.mat'
-    '2023-11-08_datafile_12.mat'};
-
-a_subtitle = 'Pinene spt char';
-file_names = {'2023-11-08_datafile_13.mat'
-    '2023-11-08_datafile_14.mat'
-    '2023-11-08_datafile_15.mat'
-    '2023-11-08_datafile_16.mat'};
-%}
-%{
-c.plot_by_vial = 'no';
-a_subtitle = 'Ethyl Tiglate vs. Mineral oil';
-file_names = {'2023-11-08_datafile_01.mat'
-    '2023-11-08_datafile_02.mat'
-    '2023-11-08_datafile_03.mat'
-    '2023-11-08_datafile_04.mat'
-    '2023-11-08_datafile_05.mat'};
-
-% Mineral oil
-c.plot_by_vial = 'no';
-c.plot_by_flow = 'no';
-c.plot_ctrl = 'no';
-c.pid_lims = [0 .4];
-c.time_to_cut = 0;
-a_subtitle = 'Mineral oil (MC 1): pre & post isopropanol';
-file_names = {'2023-11-08_datafile_02.mat'
-    '2023-11-08_datafile_04.mat'};
-    %'2023-11-08_datafile_05.mat'};
-
-% Mineral oil pre & post cleaning iso valve
-c.plot_by_vial = 'no';
-c.plot_by_flow = 'yes';
-c.plot_ctrl = 'no';
-c.pid_lims = [0 .05];
-%c.pid_lims = [0 1.05];
-c.time_to_cut = 0;
-a_subtitle = 'Mineral oil (MC 7): Pre & post isopropanol';
-file_names = {'2023-11-08_datafile_06.mat'
-    '2023-11-08_datafile_07.mat'};
-
-% Ethyl Tiglate
-c.plot_by_vial = 'no';
-a_subtitle = 'Ethyl Tiglate';
-file_names = {'2023-11-08_datafile_01.mat'
-    '2023-11-08_datafile_03.mat'};
-%}
-
-
-%% 11-09-2023
-%{
-a_title = '11-09-2023';
-c.time_to_cut = 3;
-c.pid_lims = [0 8];
-c.flow_lims = [0 110];
-c.ctrl_lims = [120 210];
-f.x_lim = [-2 30];
-
-a_subtitle = 'swapped E1 and E3 vials';
-file_names = {'2023-11-09_datafile_21'
-    '2023-11-09_datafile_22'
-    '2023-11-09_datafile_23'
-    '2023-11-09_datafile_24'};
-
-a_subtitle = 'Pinene spt char';
-file_names = {'2023-11-09_datafile_17'
-    '2023-11-09_datafile_18'
-    '2023-11-09_datafile_19'
-    '2023-11-09_datafile_20'};
-a_subtitle = 'E2 & E4, first run';
-file_names = {'2023-11-09_datafile_18'
-    '2023-11-09_datafile_20'};
-a_subtitle = 'E2 & E4';
-file_names = {'2023-11-09_datafile_18'
-    '2023-11-09_datafile_22'
-    '2023-11-09_datafile_20'
-    '2023-11-09_datafile_24'};
-a_subtitle = 'E1 & E3';
-file_names = {'2023-11-09_datafile_17'
-    '2023-11-09_datafile_19'};
-a_subtitle = 'E1 & E3, swapped vials';
-file_names = {'2023-11-09_datafile_21'
-    '2023-11-09_datafile_23'};
-%}
-
-%{
-a_subtitle = 'E2 & E4, second run';
-file_names = {'2023-11-09_datafile_22'
-    '2023-11-09_datafile_24'};
-a_subtitle = 'Pinene baseline';
-file_names = {'2023-11-09_datafile_13'
-    '2023-11-09_datafile_14'
-    '2023-11-09_datafile_15'
-    '2023-11-09_datafile_16'};
-%}
-%{
-% different E2 attempts
-a_subtitle = 'E2';
-c.plot_by_vial = 'no';
-file_names = {'2023-11-09_datafile_00_E2'
-    %'2023-11-09_datafile_01'
-    %'2023-11-09_datafile_02'
-    '2023-11-09_datafile_03'
-    '2023-11-09_datafile_04'
-    '2023-11-09_datafile_05'
-    '2023-11-09_datafile_08'};
-
-a_subtitle = 'E2 proportional valve';
-c.plot_by_vial = 'no';
-file_names = {%'2023-11-09_datafile_00_E2'
-    '2023-11-09_datafile_08'
-    '2023-11-09_datafile_09'
-    '2023-11-09_datafile_10'
-    '2023-11-09_datafile_11'};
-file_names = {'2023-11-09_datafile_05.mat'
-    '2023-11-09_datafile_06.mat'
-    '2023-11-09_datafile_07.mat'};
-%}
-
-%% 11-10-2023
-a_title = '11-10-2023';
-c.time_to_cut = 5;
-c.pid_lims = [0 8];
-c.flow_lims = [0 150];
-%c.ctrl_lims = [120 210];
-f.x_lim = [-2 16];
-
-%c.plot_ctrl = 'no';
-c.plot_by_flow = 'no';
-%{
-a_subtitle = 'Pinene baseline (100cc)';
-file_names = {'2023-11-10_datafile_01'
-    '2023-11-10_datafile_02'
-    '2023-11-10_datafile_03'
-    '2023-11-10_datafile_04'};
-
-a_subtitle = 'Pinene baseline (after needle fixes)';
-file_names = {'2023-11-10_datafile_01'
-    '2023-11-10_datafile_08'
-    '2023-11-10_datafile_07'
-    '2023-11-10_datafile_05'};
-%}
-
-a_subtitle = 'E2 & E4';
-c.ctrl_lims = [120 210];
-file_names = {'2023-11-10_datafile_10'
-    '2023-11-10_datafile_12'};
-a_subtitle = 'Pinene';
-c.flow_lims = [0 110];
-file_names = {'2023-11-10_datafile_09'
-    '2023-11-10_datafile_10'
-    '2023-11-10_datafile_11'
-    '2023-11-10_datafile_12'
-    '2023-11-10_datafile_13'};
-
-
+%% load datafile
+a_files_to_plot;
 
 %% preallocate array
 d = struct('file_name','', ...
@@ -617,7 +159,6 @@ if strcmp(c.plot_by_flow,'yes')
                         p_pid.LineStyle = '-';
                         p_pid.Marker = 'none';
                         
-                        %xlim([-2 30]);
                         xlim(f.x_lim);
             
                         %% if there was a second trial at this flow value
@@ -678,7 +219,8 @@ if strcmp(c.plot_by_flow,'yes')
 end
 clearvars -except a_* c f data
 
-%% set up spt char plot
+%% set up plots
+% flow v. PID
 f2 = figure; hold on;
 f2.Name = ['FLOW v. PID: ', a_title];
 f2.Position = f.f2_position;
@@ -690,9 +232,8 @@ ylabel('PID (V)')
 ylim(c.pid_lims)
 title(a_title);
 if ~isempty(a_subtitle); subtitle(a_subtitle); end
-%xlim([37 83]); ylim([1 3]);
 
-%% set up ctrl plot
+% flow v. ctrl
 if strcmp(c.plot_ctrl,'yes')
     f3 = figure; hold on;
     f3.Position = f.f3_position;
@@ -713,7 +254,7 @@ for r=1:length(data)
     a_this_file_name = data(r).file_name;
     shortened_file_name = extractAfter(a_this_file_name,11);
     shortened_file_name = erase(shortened_file_name,'.mat');
-
+    
     % for each vial
     for i=1:length(data(r).d_olfa_flow)
 
@@ -764,13 +305,12 @@ for r=1:length(data)
         clearvars this_event*
         %% add means to the big data struct
         data(r).new_means = this_file_new_means;
-    
+        
         %% add this to the plot
         x_flow = [];
         if ~isempty(this_file_new_means)
             x_flow = this_file_new_means(:,1);
             y_pid = this_file_new_means(:,2);
-            %s = scatter(x_flow,y_pid,'filled');
             s = scatter(ax2,x_flow,y_pid,'filled');
             s.DisplayName = this_vial_num + " " + shortened_file_name;
             if strcmp(c.plot_by_vial,'yes')
@@ -826,7 +366,7 @@ for r=1:length(data)
                     catch ME; e_ctrl.Color = s2.CData; end
                 end
             end
-        end    
+        end
     end
 end
 
