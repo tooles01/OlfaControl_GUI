@@ -82,6 +82,7 @@ def find_olfaControl_directory():
         # If multiple paths found: print (for user)
         if len(path_list) > 1:
             logger.debug('Multiple OlfaControl_GUI paths found:')
+            # TODO ignore the .code-workspace files
             for i in path_list:
                 logger.debug('\t' + i)
         
