@@ -1,4 +1,4 @@
-import sys, os, logging, csv, copy
+import sys, os, logging, csv, copy, json
 from PyQt5 import QtCore, QtSerialPort
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import *
@@ -240,7 +240,8 @@ class Vial(QGroupBox):
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)
         
-        self.set_flowrate(self.setpoint)    # update setpoint
+        if self.setpoint  != 0:
+            self.set_flowrate(self.setpoint)    # update setpoint
     
     def open_vial(self, duration):
         '''
@@ -615,12 +616,18 @@ class olfactometer_window(QGroupBox):
         self.settings_groupbox = QGroupBox('Other Settings')
         
         # Select directory where flow calibration tables are stored
-        self.flow_cal_dir_btn = QPushButton('Select Directory',checkable=True)
+        self.flow_cal_dir_btn = QPushButton('Select Calibration Table Directory',checkable=True)
         self.flow_cal_dir_btn.setToolTip('Select directory for flow calibration tables')
         self.flow_cal_dir_btn.toggled.connect(self.flow_cal_dir_btn_toggled)
+        
+        # Select config file
+        self.load_config_btn = QPushButton('Load config',checkable=True)
+        self.load_config_btn.setToolTip('Load config file containing calibration tables')
+        self.load_config_btn.toggled.connect(self.load_config_btn_toggled)
 
         layout = QHBoxLayout()
         layout.addWidget(self.flow_cal_dir_btn)
+        layout.addWidget(self.load_config_btn)
         self.settings_groupbox.setLayout(layout)
 
     def flow_cal_dir_btn_toggled(self,checked): # TODO finish debugging/cleaning this up
@@ -629,15 +636,44 @@ class olfactometer_window(QGroupBox):
             dlg.setFileMode(QFileDialog.Directory)
             if dlg.exec_():
                 directory_selected = dlg.selectedFiles()
-                #print('did it')
                 # now get all the files in this directory
                 self.flow_cal_dir = directory_selected[0]
                 self.get_calibration_tables()
                 self.flow_cal_dir_btn.setChecked(False)
 
         else:
-            #print('btn unchecked')
             pass
+    
+    def load_config_btn_toggled(self,checked):
+        if checked:
+            dlg = QFileDialog()
+            dlg.setFileMode(QFileDialog.ExistingFile)   # The name of a single existing file
+            if dlg.exec_():
+                
+                # load the config file
+                file_selected = dlg.selectedFiles()
+                self.config_file_dir = file_selected[0]
+                with open(self.config_file_dir) as f:
+                    self.config_obj = json.load(f)   # dict
+                self.config_olfa = self.config_obj['Olfactometers']     # list
+                self.config_olfa = self.config_olfa[0]                  # dict
+                self.config_cal_tables = self.config_obj['Calibration tables']  # dict
+                
+                # update vial calibration tables
+                for s in self.slave_objects:
+                    for v in s.vials:
+                        vial_name = v.full_vialNum
+                        if vial_name in self.config_cal_tables:
+                            cal_table = self.config_cal_tables.get(vial_name)
+                            wid = v.vial_details_window.db_cal_table_combobox
+                            cal_table_options_list = [wid.itemText(i) for i in range(wid.count())]
+                            if cal_table in cal_table_options_list:
+                                v.cal_table = cal_table
+                                v.vial_details_window.db_cal_table_combobox.setCurrentText(v.cal_table)
+                            else:
+                                logger.debug('config file has an invalid cal table: %s', cal_table)
+            
+            self.load_config_btn.setChecked(False)
     
     def create_raw_comm_groupbox(self):
         self.raw_comm_box = QGroupBox("Raw Communication Data")

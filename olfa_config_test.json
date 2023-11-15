@@ -1,0 +1,75 @@
+{
+    "Other stuff" : [
+        {
+            "maybe output flow sensor": "put that info here"
+        }
+        
+    ],
+
+    "Calibration tables" :
+    {
+        "E1" : "E1_2023-10-10",
+        "E2" : "E2_2023-10-18",
+        "E3" : "E3_2023-11-01",
+        "E4" : "E4_2023-10-26",
+        "E5" : "E5_2023-10-26"
+    },
+
+    "Olfactometers" : [
+        {
+            "name" : "E (actually this is a bad format, bc the script is designed to find out the name from the address",
+            "address" : "put the I2C address here",
+
+            "Flow Sensors" : [
+                {
+                    "1" : {
+                        "type" : "Honeywell 3100V",
+                        "calibration table" : "E1_2023-10-10"
+                    },
+                    "2" : {
+                        "type" : "Honeywell 3100V",
+                        "calibration table" : "E2_2023-10-18"
+                    },
+                    "3" : {
+                        "type" : "Honeywell 3100V",
+                        "calibration table" : "E3_2023-11-01"
+                    },
+                    "4" : {
+                        "type" : "Honeywell 3100V",
+                        "calibration table" : "E4_2023-10-26"
+                    },
+                    "5" : {
+                        "type" : "Honeywell 3100V",
+                        "calibration table" : "Honeywell_3100V"
+                    },
+                    "6" : {
+                        "type" : "Honeywell 3100V",
+                        "calibration table" : "Honeywell_3100V"
+                    },
+                    "7" : {
+                        "type" : "Honeywell 3100V",
+                        "calibration table" : "Honeywell_3100V"
+                    },
+                    "8" : {
+                        "type" : "Honeywell 3100V",
+                        "calibration table" : "Honeywell_3100V"
+                    }
+
+                }
+            ],
+            
+            "Vials" : {
+                "1" : {
+                    "conc": 0.010,
+                    "odor" : "acetophenone"
+                },
+                "2" : {
+                    "conc": 0.010,
+                    "odor" : "acetophenone"
+                }
+            }
+
+        }
+
+    ]
+}
