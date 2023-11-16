@@ -126,9 +126,11 @@ flow_values = unique(flow_values);      % remove duplicate values
 if strcmp(c.plot_by_flow,'yes')
     % for each flow value
     for i=1:length(flow_values)
+        this_flow_value = flow_values(i);
 
         %% create figure
         f_0 = figure; hold on; f_0.Position = f.f_position; legend('Interpreter','none');
+        f_0.Name = this_flow_value + " sccm";
         xlabel('Time (s)');
         yyaxis right; ylabel('PID (V)')
         ylim([c.pid_lims]);
@@ -441,9 +443,10 @@ for r=1:length(data)
             idx_of_start_time = (c.time_to_cut/c.nidaq_freq) + 1;
             new_pid_data = this_event_pid_data(idx_of_start_time:end,:);
             
-            % give it .5 seconds to get up there a little bit
-            if (c.time_to_cut < 0.5)
-                new_pid_data_1 = get_section_data(new_pid_data,.5,new_pid_data(end,1));
+            % give it 2 seconds to get up there a little bit
+            c.time_to_get_up_there = 2;
+            if (c.time_to_cut < c.time_to_get_up_there)
+                new_pid_data_1 = get_section_data(new_pid_data,c.time_to_get_up_there,new_pid_data(end,1));
             else
                 new_pid_data_1 = new_pid_data;
             end
@@ -455,10 +458,11 @@ for r=1:length(data)
                 end_time = time_below_threshold - .1;
                 end_idx = find(new_pid_data(:,1) <= end_time,1,'last');
             else
-                % if PID started below 0.1 (aka this was a 0 sccm trial), just make it a 3 second trial
-                end_time = 3;
-                end_idx = find(new_pid_data(:,1) <= end_time,1);
-                disp('this was a 0 sccm trial')
+                % if PID started below 0.1 (aka this was a 0 sccm trial), just make it a 4 second trial
+                end_time = 4;
+                end_idx = find(new_pid_data(:,1) <= end_time,1,'last');
+                str = ['this was a 0 sccm trial (', num2str(this_event_flow_mean),' sccm, i=', num2str(i), ')'];
+                disp(str)
             end
 
             % get all the data for this period

@@ -11,8 +11,8 @@ set(0,'DefaultTextInterpreter','none')
 
 %% set up directories
 % enter directory for this computer
-a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-%a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+%a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
 
 a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
 dir_data_files = [a_dir_OlfaControlGUI '\result_files\standard olfa\'];
@@ -68,7 +68,7 @@ a_thisfile_name = '2023-10-09_acetophenone.csv'; plot_opts.all_points = 'yes';
 
 %a_thisfile_name= '2023-11-06_datafile_00_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
 %a_thisfile_name= '2023-11-06_datafile_01_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
-%a_thisfile_name = '2023-11-06_datafile_02_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
+a_thisfile_name = '2023-11-06_datafile_02_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off'; flow_inc = 10;
 %a_thisfile_name = '2023-11-07_datafile_00_ethyltiglate_B.csv'; a_this_note = 'Ethyl Tiglate vial 9 - 10s on, 30s off';
 %f.pid_lims = [0 3];
 
@@ -77,12 +77,12 @@ a_thisfile_name = '2023-10-09_acetophenone.csv'; plot_opts.all_points = 'yes';
 %a_thisfile_name = '2023-11-13_datafile_00_v11_A'; a_this_note = 'Pinene vial 11 - 8s on, 20s off (suction on)';
 %a_thisfile_name = '2023-11-13_datafile_01_v12_B'; a_this_note = 'Pinene vial 12 - 8s on, 20s off (suction on)';
 %a_thisfile_name = '2023-11-13_datafile_02_v11_A'; a_this_note = 'Pinene vial 11 - 8s on, 20s off (suction off)';
-a_thisfile_name = '2023-11-13_datafile_03_v12_B'; a_this_note = 'Pinene vial 12 - 8s on, 20s off (suction off)'; flow_inc = 20;
+%a_thisfile_name = '2023-11-13_datafile_03_v12_B'; a_this_note = 'Pinene vial 12 - 8s on, 20s off (suction off)'; flow_inc = 20;
 
 f.pid_lims = [0 8];
 %c.time_to_cut = 2;
 c.time_to_cut = 0;
-plot_opts.individual_trials = 'no';
+%plot_opts.individual_trials = 'yes';
 
 %% load file
 
@@ -167,9 +167,9 @@ for i=1:height(a_raw_file)
     idx_of_start_time = (c.time_to_cut/c.nidaq_freq) + 1;
     new_pid_data = pid_data(idx_of_start_time:end,:);
     
-    % give it .5 seconds to get up there a little bit
-    if (c.time_to_cut < 0.5)
-        new_pid_data_1 = get_section_data(new_pid_data,.5,new_pid_data(end,1));
+    % give it 2 seconds to get up there a little bit
+    if (c.time_to_cut < 2)
+        new_pid_data_1 = get_section_data(new_pid_data,2,new_pid_data(end,1));
     else
         new_pid_data_1 = new_pid_data;
     end
@@ -181,10 +181,11 @@ for i=1:height(a_raw_file)
         end_time = time_below_threshold - .1;
         end_idx = find(new_pid_data(:,1) <= end_time,1,'last');
     else
-        % if PID started below 0.1 (aka this was a 0 sccm trial), just make it a 3 second trial
-        end_time = 3;
-        end_idx = find(new_pid_data(:,1) <= end_time,1);
-        disp('this was a 0 sccm trial')
+        % if PID started below 0.1 (aka this was a 0 sccm trial), just make it a 4 second trial
+        end_time = 4;
+        end_idx = find(new_pid_data(:,1) <= end_time,1,'last');
+        str = ['this was a 0 sccm trial (', num2str(this_sccm_value),' sccm, i=', num2str(i), ')'];
+        disp(str)
     end
     
     % get all the data for this period
