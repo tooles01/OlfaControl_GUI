@@ -288,7 +288,7 @@ legend('Location','northwest');
 f2.Position = f.f2_position;
 f2.NumberTitle = 'off';
 f2.Name = a_thisfile_name;
-\title(a_thisfile_name)
+title(a_thisfile_name)
 if ~strcmp(a_this_note,''); subtitle(a_this_note); end
 
 xlabel('Flow (SCCM)')
