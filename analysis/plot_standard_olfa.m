@@ -11,8 +11,8 @@ set(0,'DefaultTextInterpreter','none')
 
 %% set up directories
 % enter directory for this computer
-%a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+%a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
 
 a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
 dir_data_files = [a_dir_OlfaControlGUI '\result_files\standard olfa\'];
@@ -35,10 +35,6 @@ f.dot_size = 60;
 f.PID_color = [.4667 .6745 .1882];
 f.pid_lims = [];
 
-%f.f_all_position = [960 210 780 686];
-%f.f_all_position = [960 210 650 600];     % for PowerPoint (1/2 size)
-%f.f_all_position = [166 210 1300 600];    % for PowerPoint
-
 %f.f_position = [166 210 1300 600];      % for PowerPoint
 f.f_position = [166 210 650 600];       % for PowerPoint (1/2 size)
 %f.f_position = [-1895 575 650 600];     % left side display
@@ -49,7 +45,6 @@ c = struct();   % struct containing all config variables
 c.nidaq_freq = 0.01;  % collection frequency etc etc
 c.time_to_cut = 2.00;  % don't look at any data before this time
 
-
 %% enter data file name
 %a_thisfile_name = '2023-10-02_datafile_00_shannon.csv';
 %a_thisfile_name = '2023-10-04_datafile_00_standard_olfa.csv'; %a_this_note = '5s on, 5s off'; f.pid_lims = [-0.1 3.6];
@@ -57,8 +52,7 @@ c.time_to_cut = 2.00;  % don't look at any data before this time
 %a_thisfile_name = '2023-10-04_datafile_02_standard_olfa.csv'; %a_this_note ='5s on, 10s off'; f.pid_lims = [-0.1 3.6];
 %a_thisfile_name = '2023-10-04_datafile_03_standard_olfa.csv'; a_this_note ='10s on, 10s off'; f.pid_lims = [-0.1 3.6];
 %a_thisfile_name = '2023-10-05_datafile_00_standard_olfa.csv'; a_this_note ='Ethyl Tiglate 10s on, 20s off'; f.pid_lims = [-0.1 3.6];
-
-%a_thisfile_name = '2023-10-09_acetophenone.csv'; plot_opts.all_points = 'yes';
+a_thisfile_name = '2023-10-09_acetophenone.csv'; plot_opts.all_points = 'yes';
 %a_thisfile_name = '2023-10-09_mixed.csv';  plot_opts.individual_trials = 'no'; plot_opts.all_points = 'yes';
 %a_thisfile_name = '2023-10-09_ethyl tiglate pure.csv'; a_this_note ='Ethyl Tiglate Pure - 8s on, 20s off'; f.pid_lims = [-0.1 3];
 %a_thisfile_name = '2023-10-10_datafile_01.csv'; a_this_note ='Ethyl Tiglate Pure - 8s on, 20s off'; %f.pid_lims = [-0.1 3];
@@ -69,9 +63,9 @@ c.time_to_cut = 2.00;  % don't look at any data before this time
 %a_thisfile_name= '2023-10-17_olf62_datafile01.csv'; a_this_note = 'olfa_62 vial 5: Ethyl Tiglate Pure - 8s on, 20s off';
 %a_thisfile_name= '2023-10-17_olf62_datafile02.csv'; a_this_note = 'olfa_62 vial 8: Ethyl Tiglate Pure - 8s on, 20s off';
 %f.pid_lims = [0 3.3];
-
 %a_thisfile_name= '2023-10-20_datafile00_acetophenone.csv'; a_this_note = 'Acetophenone vial 11 - 8s on, 20s off';
 %f.pid_lims = [0 1.2];
+
 %a_thisfile_name= '2023-11-06_datafile_00_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
 %a_thisfile_name= '2023-11-06_datafile_01_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
 %a_thisfile_name = '2023-11-06_datafile_02_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
@@ -86,9 +80,9 @@ c.time_to_cut = 2.00;  % don't look at any data before this time
 a_thisfile_name = '2023-11-13_datafile_03_v12_B'; a_this_note = 'Pinene vial 12 - 8s on, 20s off (suction off)'; flow_inc = 20;
 
 f.pid_lims = [0 8];
-c.time_to_cut = 2;
+%c.time_to_cut = 2;
+c.time_to_cut = 0;
 plot_opts.individual_trials = 'no';
-
 
 %% load file
 
@@ -125,7 +119,6 @@ pid_adjustment_value = min(pid_values);
 
 clearvars last*
 %% smooth PID   % TODO maybe
-%% cut additional time off & recalculate stats
 
 %%
 if strcmp(plot_opts.individual_trials,'yes'); close all; end
@@ -163,33 +156,43 @@ for i=1:height(a_raw_file)
     % shift the pid values up to 0
     pid_values = cell2mat(pid_values);
     pid_values = pid_values - pid_adjustment_value;
+
+    pid_data = [];
+    pid_data(:,1) = time_data;
+    pid_data(:,2) = pid_values;
     
     %% calculate mean PID value
 
     % start at c.time_to_cut seconds into the trial
     idx_of_start_time = (c.time_to_cut/c.nidaq_freq) + 1;
-    new_time_data = time_data(idx_of_start_time:end);
-    new_pid_data = pid_values(idx_of_start_time:end);
+    new_pid_data = pid_data(idx_of_start_time:end,:);
     
-    idx_below_threshold = find(new_pid_data < 0.1,1);   % find where PID drops below 0.1
+    % give it .5 seconds to get up there a little bit
+    if (c.time_to_cut < 0.5)
+        new_pid_data_1 = get_section_data(new_pid_data,.5,new_pid_data(end,1));
+    else
+        new_pid_data_1 = new_pid_data;
+    end
+    
+    idx_below_threshold = find(new_pid_data_1(:,2) < 0.1,1);   % find where PID drops below 0.1
+    time_below_threshold = new_pid_data_1(idx_below_threshold,1);
     if ~(idx_below_threshold == 1)
-        % end time is 0.25s before PID drops below 0.1
-        end_idx = idx_below_threshold - (round(0.25/c.nidaq_freq));
+        % end time is 0.1s before PID drops below 0.1
+        end_time = time_below_threshold - .1;
+        end_idx = find(new_pid_data(:,1) <= end_time,1,'last');
     else
         % if PID started below 0.1 (aka this was a 0 sccm trial), just make it a 3 second trial
-        idx_of_3_sec_later = (3.0/c.nidaq_freq) + 1;
-        end_idx = idx_of_3_sec_later;
+        end_time = 3;
+        end_idx = find(new_pid_data(:,1) <= end_time,1);
         disp('this was a 0 sccm trial')
-        pause
     end
     
     % get all the data for this period
-    this_time_data = new_time_data(1:end_idx);
-    this_pid_data = new_pid_data(1:end_idx);
+    this_pid_data = new_pid_data(1:end_idx,:);
     
     % calculate the mean value
-    mean_pid = mean(this_pid_data);
-    std_pid = std(this_pid_data);
+    mean_pid = mean(this_pid_data(:,2));
+    std_pid = std(this_pid_data(:,2));
     
     %% plot this trial by itself
     if strcmp(plot_opts.individual_trials,'yes')
@@ -208,8 +211,8 @@ for i=1:height(a_raw_file)
         
         % draw xlines
         if strcmp(plot_opts.x_lines,'yes')
-            xline(this_time_data(1));
-            xline(this_time_data(end));
+            xline(this_pid_data(1,1));
+            xline(end_time);
         end
     end
     
@@ -281,12 +284,11 @@ end
 
 %% spt char figure
 f2 = figure; hold on;
-%legend('Location','northwest');
+legend('Location','northwest');
 f2.Position = f.f2_position;
 f2.NumberTitle = 'off';
-%f2.Name = a_thisfile_name;
-f2.Name = 'f2';
-title(a_thisfile_name)
+f2.Name = a_thisfile_name;
+\title(a_thisfile_name)
 if ~strcmp(a_this_note,''); subtitle(a_this_note); end
 
 xlabel('Flow (SCCM)')
@@ -296,7 +298,7 @@ if ~isempty(f.pid_lims); ylim(f.pid_lims); end
 
 blue_color = [0 .4470 .7410];
 
-s = scatter([d_olfa_data.flow_value],[d_olfa_data.pid_mean],f.dot_size,'filled');
+s = scatter([d_olfa_data.flow_value],[d_olfa_data.pid_mean],'filled');
 s.MarkerFaceColor = blue_color;
 s.DisplayName = 'standard olfa';
 

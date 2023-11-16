@@ -135,7 +135,7 @@
 	- calculate mean PID
 		- only use specific section of data:
 			- beginning of dataset: cut off the # of seconds specified by user
-			- end of dataset: 0.25sec before PID drops below 0.1V
+			- end of dataset: 0.1sec before PID drops below 0.1V
 	- plot trial (if user selected to)
 	- add mean (& std) to the data structure
 4. create combined data structure
