@@ -64,78 +64,6 @@ file = uigetfile("*.csv",uibox_title);
 
 %% enter data file name
 
-%a_thisfile_name = '2023-10-20_datafile_00'; a_this_note = 'Acetophenone - 8s on 20s off (no fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 10;
-%a_thisfile_name = '2023-10-20_datafile_01'; a_this_note = 'Acetophenone - 8s on 20s off (no fake open) Kp=.03, Ki=.0005 (random)'; flow_inc = 10;
-%a_thisfile_name = '2023-10-27_datafile_01'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-10-27_datafile_02'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-10-27_datafile_03'; a_this_note = 'E4: 2-Heptanone - 8s on 20s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-27_datafile_04'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-27_datafile_05'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;   % BAD (not all iso valves connected)
-%a_thisfile_name = '2023-10-27_datafile_06'; a_this_note = 'E2: 2-Heptanone - 10s on 30s off'; flow_inc = 20;   % BAD (not all iso valves connected)
-%a_thisfile_name = '2023-10-27_datafile_08'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-27_datafile_11'; a_this_note = 'E2: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-27_datafile_14'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-27_datafile_15'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-
-%a_thisfile_name = '2023-10-30_datafile_00'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-30_datafile_01'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-30_datafile_02'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-30_datafile_03'; a_this_note = 'E2: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-30_datafile_04'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-30_datafile_05'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-30_datafile_06'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-30_datafile_08'; a_this_note = 'E2: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-30_datafile_09'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-30_datafile_10'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-
-%a_thisfile_name = '2023-10-31_datafile_00'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_01'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_02'; a_this_note = 'E2: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_03'; a_this_note = 'E2: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_04'; a_this_note = 'E3: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_05'; a_this_note = 'E4: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_06'; a_this_note = 'E1: 2-Heptanone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_07'; a_this_note = 'E1: Acetophenone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_08'; a_this_note = 'E2: Acetophenone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_09'; a_this_note = 'E3: Acetophenone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_10'; a_this_note = 'E4: Acetophenone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_11'; a_this_note = 'E4: Acetophenone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_12'; a_this_note = 'E3: Acetophenone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_13'; a_this_note = 'E2: Acetophenone - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-10-31_datafile_14'; a_this_note = 'E1: Acetophenone - 10s on 30s off'; flow_inc = 20;
-
-%a_thisfile_name = '2023-11-01_datafile_00'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (E1 MC)'; flow_inc = 20;
-%a_thisfile_name = '2023-11-01_datafile_01'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (E1 MC)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-01_datafile_02'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off (E1 MC)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-01_datafile_03'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off (E2 MC)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-01_datafile_04'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (E2 MC)'; flow_inc = 10;
-
-%a_thisfile_name = '2023-11-02_datafile_00'; a_this_note = 'Ethyl Tiglate - pre-trial setup'; flow_inc = 100;
-%a_thisfile_name = '2023-11-02_datafile_01'; a_this_note = 'Ethyl Tiglate - pre-trial setup'; flow_inc = 100;
-%a_thisfile_name = '2023-11-02_datafile_02'; a_this_note = 'Ethyl Tiglate - pre-trial setup'; flow_inc = 100;
-
-%a_thisfile_name = '2023-11-02_datafile_03'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-02_datafile_04'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-02_datafile_05'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-02_datafile_06'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-02_datafile_07'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-02_datafile_08'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-02_datafile_09'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off'; flow_inc = 20;
-
-%a_thisfile_name = '2023-11-03_datafile_00'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-03_datafile_01'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-03_datafile_02'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-03_datafile_03'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-03_datafile_04'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-03_datafile_05'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-03_datafile_06'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-03_datafile_07'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-03_datafile_08'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-03_datafile_09'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-03_datafile_10'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-03_datafile_11'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-03_datafile_12'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-
 %a_thisfile_name = '2023-11-06_datafile_00'; a_this_note = 'Ethyl Tiglate - E1-E4 pre-trial setup'; flow_inc = 100;
 %a_thisfile_name = '2023-11-06_datafile_01'; a_this_note = 'Ethyl Tiglate - E1-E4 pre-trial setup'; flow_inc = 100;
 %a_thisfile_name = '2023-11-06_datafile_02'; a_this_note = 'Ethyl Tiglate - E1-E4 pre-trial setup'; flow_inc = 100;
@@ -148,36 +76,6 @@ file = uigetfile("*.csv",uibox_title);
 %a_thisfile_name = '2023-11-06_datafile_08'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
 %a_thisfile_name = '2023-11-06_datafile_09'; a_this_note = 'Ethyl Tiglate - E1-E4 pre-trial setup'; flow_inc = 100;
 %a_thisfile_name = '2023-11-06_datafile_10'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-
-%a_thisfile_name = '2023-11-07_datafile_00'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-07_datafile_01'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-07_datafile_02'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-07_datafile_03'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-07_datafile_04'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-07_datafile_05'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-07_datafile_06'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order) (added 500mL)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-07_datafile_07'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off (random order) (added 500mL)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-07_datafile_08'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order) (added 500mL)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-07_datafile_09'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off (random order) (added 500mL)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-07_datafile_10'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-07_datafile_11'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-
-%a_thisfile_name = '2023-11-08_datafile_01'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-08_datafile_02'; a_this_note = 'E1: Mineral oil - 10s on 30s off'; flow_inc = 100;
-%a_thisfile_name = '2023-11-08_datafile_03'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-08_datafile_04'; a_this_note = 'E1: Mineral oil - 10s on 30s off'; flow_inc = 100;
-%a_thisfile_name = '2023-11-08_datafile_05'; a_this_note = 'E1: Mineral oil, 2-Heptanone iso valve (MC 7)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-08_datafile_06'; a_this_note = 'E1: Mineral oil, Ethyl Tiglate iso valve (MC 7)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-08_datafile_07'; a_this_note = 'E1: Mineral oil, Ethyl Tiglate iso valve (MC 7) - after cleaning'; flow_inc = 10;
-
-%a_thisfile_name = '2023-11-08_datafile_09'; a_this_note = 'E1: Pinene baseline (100 sccm)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-08_datafile_10'; a_this_note = 'E2: Pinene baseline (100 sccm)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-08_datafile_11'; a_this_note = 'E3: Pinene baseline (100 sccm)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-08_datafile_12'; a_this_note = 'E4: Pinene baseline (100 sccm)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-08_datafile_13'; a_this_note = 'E1: Pinene - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-08_datafile_14'; a_this_note = 'E2: Pinene - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-08_datafile_15'; a_this_note = 'E3: Pinene - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-08_datafile_16'; a_this_note = 'E4: Pinene - 10s on 30s off'; flow_inc = 20;
 
 %a_thisfile_name = '2023-11-09_datafile_00'; a_this_note = 'E1-E4: Pinene - 5s on 5s off'; flow_inc = 100;
 %a_thisfile_name = '2023-11-09_datafile_00_E2'; a_this_note = 'E2 - 5s on 5s off'; flow_inc = 100;
@@ -219,8 +117,32 @@ file = uigetfile("*.csv",uibox_title);
 %a_thisfile_name = '2023-11-10_datafile_09'; a_this_note = 'E1: Pinene - 8s on 20s off'; flow_inc = 10;
 %a_thisfile_name = '2023-11-10_datafile_10'; a_this_note = 'E2: Pinene - 8s on 20s off'; flow_inc = 10;
 %a_thisfile_name = '2023-11-10_datafile_11'; a_this_note = 'E3: Pinene - 8s on 20s off'; flow_inc = 10;
-a_thisfile_name = '2023-11-10_datafile_12'; a_this_note = 'E4: Pinene - 8s on 20s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-10_datafile_12'; a_this_note = 'E4: Pinene - 8s on 20s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-10_datafile_13'; a_this_note = 'E1: Pinene - 8s on 20s off'; flow_inc = 10;
+%a_thisfile_name = '2023-11-10_datafile_14'; a_this_note = 'E1: Pinene - 8s on 20s off (vial F)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-10_datafile_15'; a_this_note = 'E1: Pinene - 8s on 20s off (vial F) (no suction)'; flow_inc = 10;
 
+%a_thisfile_name = '2023-11-13_datafile_00'; a_this_note = 'E1-E4 Pinene baseline (suction off)'; flow_inc = 100;
+%a_thisfile_name = '2023-11-13_datafile_01'; a_this_note = 'E1-E4 Pinene baseline (suction on)'; flow_inc = 100;
+
+%a_thisfile_name = '2023-11-13_datafile_02'; a_this_note = 'E1 Pinene - 8s on 20s off (vial A) (suction on)'; flow_inc = 20;
+%a_thisfile_name = '2023-11-13_datafile_03'; a_this_note = 'E2 Pinene - 8s on 20s off (vial B) (suction on)'; flow_inc = 20;
+%a_thisfile_name = '2023-11-13_datafile_04'; a_this_note = 'E3 Pinene - 8s on 20s off (vial C) (suction on)'; flow_inc = 20;
+%a_thisfile_name = '2023-11-13_datafile_05'; a_this_note = 'E4 Pinene - 8s on 20s off (vial D) (suction on)'; flow_inc = 20;
+%a_thisfile_name = '2023-11-13_datafile_06'; a_this_note = 'E1 Pinene - 8s on 20s off (vial A) (suction off)'; flow_inc = 20;
+%a_thisfile_name = '2023-11-13_datafile_07'; a_this_note = 'E2 Pinene - 8s on 20s off (vial B) (suction off)'; flow_inc = 20;
+%a_thisfile_name = '2023-11-13_datafile_08'; a_this_note = 'E3 Pinene - 8s on 20s off (vial C) (suction off)'; flow_inc = 20;
+%a_thisfile_name = '2023-11-13_datafile_09'; a_this_note = 'E4 Pinene - 8s on 20s off (vial D) (suction off)'; flow_inc = 20;
+
+%a_thisfile_name = '2023-11-13_datafile_17'; a_this_note = 'E4 Pinene - 8s on 20s off (vial D) (suction off)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-13_datafile_18'; a_this_note = 'E4 Pinene - 8s on 20s off (vial D) (suction on)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-13_datafile_19'; a_this_note = 'E3 Pinene - 8s on 20s off (vial C) (suction on)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-13_datafile_20'; a_this_note = 'E3 Pinene - 8s on 20s off (vial C) (suction off)'; flow_inc = 10;
+
+%a_thisfile_name = '2023-11-16_datafile_00'; a_this_note = 'E4 Pinene - 8s on 20s off (vial D) (suction off)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-16_datafile_01'; a_this_note = 'E1 empty - 8s on 20s off (suction off)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-16_datafile_02'; a_this_note = 'Contamination test (pinene v. empty) - 8s on 20s off (suction off)'; flow_inc = 100;
+a_thisfile_name = '2023-11-16_datafile_03'; a_this_note = 'E3 Pinene - 8s on 20s off (vial C) (suction off)'; flow_inc = 10;
 
 %% set up directories
 dir_data_files = [a_dir_OlfaControlGUI '\result_files\48-line olfa\'];
@@ -327,47 +249,117 @@ for i=1:num_data
         
         % get the vial number
         idx_olfa_start = strfind(i_inst,c.instName_olfa);
-        i_vial_num = i_inst(idx_olfa_start+length(c.instName_olfa)+1:end);        
+        i_vial_num = i_inst(idx_olfa_start+length(c.instName_olfa)+1:end);
+
+        if (length(i_vial_num) == 2)
+            % single vial thing happened
         
-        % if we don't have data for this vial yet, add a row for it to the structures
-        matches = strfind(d_olfa_vials_recorded,i_vial_num);     % check if this vial is in vials recorded
-        if isempty(matches)
-            % add to vials recorded
-            d_olfa_vials_recorded = [d_olfa_vials_recorded i_vial_num];
+            % if we don't have data for this vial yet, add a row for it to the structures
+            matches = strfind(d_olfa_vials_recorded,i_vial_num);     % check if this vial is in vials recorded
+            if isempty(matches)
+                % add to vials recorded
+                d_olfa_vials_recorded = [d_olfa_vials_recorded i_vial_num];
+                
+                % add it to the structures
+                d_olfa_flow(length(d_olfa_flow)+1).vial_num = i_vial_num;
+                d_olfa_flow(length(d_olfa_flow)).flow.flow_int = [];
+                d_olfa_flow(length(d_olfa_flow)).flow.flow_sccm = [];
+                d_olfa_flow(length(d_olfa_flow)).ctrl.ctrl_int = [];
+                d_olfa_flow(length(d_olfa_flow)).ctrl.ctrl_volt = [];
+                d_olfa_flow(length(d_olfa_flow)).events.OV = [];
+                d_olfa_flow(length(d_olfa_flow)).events.Sp = [];
             
-            % add it to the structures
-            d_olfa_flow(length(d_olfa_flow)+1).vial_num = i_vial_num;
-            d_olfa_flow(length(d_olfa_flow)).flow.flow_int = [];
-            d_olfa_flow(length(d_olfa_flow)).flow.flow_sccm = [];
-            d_olfa_flow(length(d_olfa_flow)).ctrl.ctrl_int = [];
-            d_olfa_flow(length(d_olfa_flow)).ctrl.ctrl_volt = [];
-            d_olfa_flow(length(d_olfa_flow)).events.OV = [];
-            d_olfa_flow(length(d_olfa_flow)).events.Sp = [];
+            end
 
-        end
-
-        % find out which struct row this vial is
-        vial_list = {d_olfa_flow().vial_num};               % list of values under vial_num
-        i_vial_idx =  find(strcmp(vial_list,i_vial_num));   % index of this vial
+            % find out which struct row this vial is
+            vial_list = {d_olfa_flow().vial_num};               % list of values under vial_num
+            i_vial_idx =  find(strcmp(vial_list,i_vial_num));   % index of this vial
+            
+            i_this_pair = [i_time i_valu];
+            
+            % add to d_olfa_flow(i_vial_idx).flow.flow_int
+            if strcmp(i_para,'FL')
+                d_olfa_flow(i_vial_idx).flow.flow_int = [d_olfa_flow(i_vial_idx).flow.flow_int;i_this_pair];    % TODO speed this up
+            
+            % add to d_olfa_flow(v).ctrl.ctrl_int
+            elseif strcmp(i_para,'Ctrl')
+                d_olfa_flow(i_vial_idx).ctrl.ctrl_int = [d_olfa_flow(i_vial_idx).ctrl.ctrl_int;i_this_pair];    % TODO speed this up
         
-        i_this_pair = [i_time i_valu];
+            % add to events
+            else
+                % add to d_olfa_events.all
+                num_e = length(d_olfa_events.all) + 1;
+                d_olfa_events.all(num_e).time = i_time;
+                d_olfa_events.all(num_e).vial = i_vial_num;
+                d_olfa_events.all(num_e).event = i_para;
+                d_olfa_events.all(num_e).value = i_valu;
+                
+                % add to d_olfa_events.OV
+                if strcmp(i_para,'OV')
+                    num_e = length(d_olfa_events.OV) + 1;
+                    d_olfa_events.OV(num_e).t_start = i_time;
+                    d_olfa_events.OV(num_e).vial = i_vial_num;
+                    d_olfa_events.OV(num_e).duration = i_valu;
+                end
+                % add to d_olfa_events.Sp
+                if strcmp(i_para,'Sp')
+                    num_e = length(d_olfa_events.Sp) + 1;
+                    d_olfa_events.Sp(num_e).time = i_time;
+                    d_olfa_events.Sp(num_e).vial = i_vial_num;
+                    d_olfa_events.Sp(num_e).value_int = i_valu;
+                end
+                
+                % nope neither of those matter
+                % but also let's add it to d_olfa_flow
+                
+                % add to d_olfa_flow(v).events.OV
+                if strcmp(i_para,'OV')
+                    n = length(d_olfa_flow(i_vial_idx).events.OV) + 1;
+                    d_olfa_flow(i_vial_idx).events.OV(n).time = i_time;
+                    d_olfa_flow(i_vial_idx).events.OV(n).value = i_valu;
+                    %{
+                    % if you want to do it as a matrix instead of a struct:
+                    %n = height(d_olfa_flow(i_vial_idx).events.OV) + 1;
+                    %d_olfa_flow(i_vial_idx).events.OV(n,1) = i_time;
+                    %d_olfa_flow(i_vial_idx).events.OV(n,2) = i_valu;
+                    %}
+                end
+                % add to d_olfa_flow(v).events.Sp
+                if strcmp(i_para,'Sp')
+                    n = length(d_olfa_flow(i_vial_idx).events.Sp) + 1;
+                    d_olfa_flow(i_vial_idx).events.Sp(n).time = i_time;
+                    d_olfa_flow(i_vial_idx).events.Sp(n).value = i_valu;
+                    %{
+                    % if you want to do it as a matrix instead of a struct:
+                    n = height(d_olfa_flow(i_vial_idx).events.Sp) + 1;
+                    d_olfa_flow(i_vial_idx).events.Sp(n,1) = i_time;
+                    d_olfa_flow(i_vial_idx).events.Sp(n,2) = i_valu;
+                    %}
+                end
+            end
         
-        % add to d_olfa_flow(i_vial_idx).flow.flow_int
-        if strcmp(i_para,'FL')
-            d_olfa_flow(i_vial_idx).flow.flow_int = [d_olfa_flow(i_vial_idx).flow.flow_int;i_this_pair];    % TODO speed this up
-        
-        % add to d_olfa_flow(v).ctrl.ctrl_int
-        elseif strcmp(i_para,'Ctrl')
-            d_olfa_flow(i_vial_idx).ctrl.ctrl_int = [d_olfa_flow(i_vial_idx).ctrl.ctrl_int;i_this_pair];    % TODO speed this up
-        
-        % add to events
         else
-            % add to d_olfa_events.all
-            num_e = length(d_olfa_events.all) + 1;
-            d_olfa_events.all(num_e).time = i_time;
-            d_olfa_events.all(num_e).vial = i_vial_num;
-            d_olfa_events.all(num_e).event = i_para;
-            d_olfa_events.all(num_e).value = i_valu;
+            % this was an event that affected more than one vial
+            slave_name = i_vial_num(1);
+            vial_numbers = i_vial_num(2:end);
+            num_vials_affected = length(vial_numbers);
+
+            % for each vial in the string
+            for v=1:num_vials_affected
+                this_vial_num = vial_numbers(v);
+                this_vial_full_num = [slave_name this_vial_num];
+                
+                % find out which struct row this vial is (hopefully we have already collected data for this vial)
+                vial_list = {d_olfa_flow().vial_num};                       % list of values under vial_num
+                i_vial_idx = find(strcmp(vial_list,this_vial_full_num));    % index of this vial
+
+                % add it to this vial's events
+                if strcmp(i_para,'OV')
+                    n = length(d_olfa_flow(i_vial_idx).events.OV) + 1;
+                    d_olfa_flow(i_vial_idx).events.OV(n).time = i_time;
+                    d_olfa_flow(i_vial_idx).events.OV(n).value = i_valu;
+                end
+            end
             
             % add to d_olfa_events.OV
             if strcmp(i_para,'OV')
@@ -376,41 +368,7 @@ for i=1:num_data
                 d_olfa_events.OV(num_e).vial = i_vial_num;
                 d_olfa_events.OV(num_e).duration = i_valu;
             end
-            % add to d_olfa_events.Sp
-            if strcmp(i_para,'Sp')
-                num_e = length(d_olfa_events.Sp) + 1;
-                d_olfa_events.Sp(num_e).time = i_time;
-                d_olfa_events.Sp(num_e).vial = i_vial_num;
-                d_olfa_events.Sp(num_e).value_int = i_valu;
-            end
-
-            % nope neither of those matter
-            % but also let's add it to d_olfa_flow
             
-            % add to d_olfa_flow(v).events.OV
-            if strcmp(i_para,'OV')
-                n = length(d_olfa_flow(i_vial_idx).events.OV) + 1;
-                d_olfa_flow(i_vial_idx).events.OV(n).time = i_time;
-                d_olfa_flow(i_vial_idx).events.OV(n).value = i_valu;
-                %{
-                % if you want to do it as a matrix instead of a struct:
-                %n = height(d_olfa_flow(i_vial_idx).events.OV) + 1;
-                %d_olfa_flow(i_vial_idx).events.OV(n,1) = i_time;
-                %d_olfa_flow(i_vial_idx).events.OV(n,2) = i_valu;
-                %}
-            end
-            % add to d_olfa_flow(v).events.Sp
-            if strcmp(i_para,'Sp')
-                n = length(d_olfa_flow(i_vial_idx).events.Sp) + 1;
-                d_olfa_flow(i_vial_idx).events.Sp(n).time = i_time;
-                d_olfa_flow(i_vial_idx).events.Sp(n).value = i_valu;
-                %{
-                % if you want to do it as a matrix instead of a struct:
-                n = height(d_olfa_flow(i_vial_idx).events.Sp) + 1;
-                d_olfa_flow(i_vial_idx).events.Sp(n,1) = i_time;
-                d_olfa_flow(i_vial_idx).events.Sp(n,2) = i_valu;
-                %}
-            end
         end
     
     end
