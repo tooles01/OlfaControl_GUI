@@ -57,6 +57,7 @@ c.plot_by_flow = 'yes';     % plot each flow rate individually
 c.plot_error_bars = 'yes';
 c.plot_by_vial = 'yes';      % colors based on vial #
 c.plot_ctrl = 'yes';
+c.plot_flow = 'no';
 
 
 %% load datafile
@@ -130,10 +131,9 @@ if strcmp(c.plot_by_flow,'yes')
 
         %% create figure
         f_0 = figure; hold on; f_0.Position = f.f_position; legend('Interpreter','none');
-        f_0.Name = this_flow_value + " sccm";
+        f_0.NumberTitle = 'off';
+        f_0.Name = a_subtitle + " (" + this_flow_value + " sccm)";
         xlabel('Time (s)');
-        yyaxis right; ylabel('PID (V)')
-        ylim([c.pid_lims]);
         this_flow_value = flow_values(i);
         title([num2str(this_flow_value) ' SCCM'])
         
@@ -195,19 +195,25 @@ if strcmp(c.plot_by_flow,'yes')
                             p_ctrl.LineStyle = '-';
                             p_ctrl.Marker = 'none';
                         else
-                            %% plot flow
-                            yyaxis left; ylabel('Flow (SCCM)')
-                            ylim([c.flow_lims])
-                            p_flow = plot(this_flow_data(:,1),this_flow_data(:,2));
-                            p_flow.HandleVisibility = 'off';
-                            p_flow.Color = c.flow_color;
-                            p_flow.LineWidth = c.flow_width;
-                            p_flow.LineStyle = '-';
-                            p_flow.Marker = 'none';
+                            if strcmp(c.plot_flow,'yes')
+                                %% plot flow
+                                yyaxis left; ylabel('Flow (SCCM)')
+                                ylim([c.flow_lims])
+                                p_flow = plot(this_flow_data(:,1),this_flow_data(:,2));
+                                p_flow.HandleVisibility = 'off';
+                                p_flow.Color = c.flow_color;
+                                p_flow.LineWidth = c.flow_width;
+                                p_flow.LineStyle = '-';
+                                p_flow.Marker = 'none';
+                            end
                         end
 
                         %% plot PID
-                        yyaxis right;
+                        if ~(strcmp(c.plot_ctrl,'no') && strcmp(c.plot_flow,'no'))
+                            yyaxis right;
+                        end
+                        ylabel('PID (V)')
+                        ylim([c.pid_lims]);
                         r_ax = gca; r_ax.YColor = 'k';
                         p_pid = plot(this_pid_data(:,1),this_pid_data(:,2));
                         p_pid.DisplayName = this_vial_num + " " + shortened_file_name;
@@ -247,13 +253,20 @@ if strcmp(c.plot_by_flow,'yes')
                         this_pid_data = data(r).d_olfa_data_sorted(this_idx).data;
 
                         % plot PID
-                        yyaxis right;
+                        if ~(strcmp(c.plot_ctrl,'no') && strcmp(c.plot_flow,'no'))
+                            yyaxis right;
+                        end
                         r_ax = gca; r_ax.YColor = 'k';
                         p_pid = plot(this_pid_data(:,1),this_pid_data(:,2));
                         p_pid.DisplayName = shortened_file_name;
                         p_pid.LineWidth = c.pid_width;
                         p_pid.LineStyle = '-';
                         p_pid.Marker = 'none';
+                        if (j==1)
+                            this_file_color = p_pid.Color;
+                        else
+                            p_pid.Color = this_file_color;
+                        end
                         if (j>1); p_pid.HandleVisibility = 'off'; end
                         
                         xlim(f.x_lim);
@@ -498,20 +511,15 @@ for r=1:length(data)
                 xpos = zeros(length(this_file_new_stds),1);
                 yneg = zeros(length(this_file_new_stds),1);
                 ypos = zeros(length(this_file_new_stds),1);
-                yneg_ctrl = zeros(length(this_file_new_stds),1);
-                ypos_ctrl = zeros(length(this_file_new_stds),1);
                 % for each event
                 for e=1:length(this_file_new_stds)
                     % xneg and xpos will be 1/2 the std dev at each point
                     flow_std = this_file_new_stds(e,1);
                     pid_std = this_file_new_stds(e,2);
-                    ctrl_std = this_file_ctrl_stds(e);
                     xneg(e,1) = flow_std/2;
                     xpos(e,1) = flow_std/2;
                     yneg(e,1) = pid_std/2;
                     ypos(e,1) = pid_std/2;
-                    yneg_ctrl(e,1) = ctrl_std/2;
-                    ypos_ctrl(e,1) = ctrl_std/2;
                 end
                 e = errorbar(ax2,x_flow,y_pid,yneg,ypos,xneg,xpos,'o');
                 e.HandleVisibility = 'off';
