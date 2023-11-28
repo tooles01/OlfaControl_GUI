@@ -134,7 +134,6 @@ class Vial(QGroupBox):
         self.setpoint_slider.setToolTip('Adjusts flow set rate.')
         self.setpoint_slider.setTickPosition(3)     # draw tick marks on both sides
         self.setpoint_set_lineedit = QLineEdit()
-        #self.setpoint_set_lineedit.setMaximumWidth(4)
         self.setpoint_set_lineedit.setAlignment(QtCore.Qt.AlignCenter)
         self.setpoint_set_lineedit.setPlaceholderText('Set value')
         self.setpoint_set_lineedit.setStatusTip('Type to set flow rate')
@@ -142,7 +141,6 @@ class Vial(QGroupBox):
         self.setpoint_read_widget.setMinimumSize(50,50)
         self.setpoint_read_widget.setDigitCount(5)
         self.setpoint_read_widget.setToolTip('Current flow reading')
-        self.setpoint_read_widget.setMaximumHeight(50)
         
         self.setpoint_slider_layout = QGridLayout()
         self.setpoint_slider_layout.addWidget(self.setpoint_slider,0,0,2,1)
@@ -184,8 +182,7 @@ class Vial(QGroupBox):
         setpoint_set_read_height = 50
         self.setpoint_set_lineedit.setMaximumHeight(setpoint_set_read_height)
         self.setpoint_read_widget.setMaximumHeight(setpoint_set_read_height)
-        self.setpoint_slider.setMaximumHeight(setpoint_set_read_height*2)
-        self.setpoint_slider.setFixedHeight(100)
+        self.setpoint_slider.setFixedHeight(setpoint_set_read_height*2)
         # width
         half_col_width = self.read_flow_vals_btn.sizeHint().width()
         #self.setpoint_slider.setFixedWidth(half_col_width)
@@ -462,7 +459,7 @@ class olfactometer_window(QGroupBox):
         # look for calibration table directory
         self.flow_cal_dir = utils.find_calibration_table_directory()
         if os.path.exists(self.flow_cal_dir):
-            logger.info('found directory')
+            logger.debug('found calibration file directory')
             self.get_calibration_tables()
         else:
             logger.error('Could not find flow calibration directory (searched \'%s\')', self.flow_cal_dir)
@@ -546,21 +543,22 @@ class olfactometer_window(QGroupBox):
         self.create_raw_comm_groupbox()
         self.create_slave_groupbox()
         
-        col1_max_width = self.master_groupbox.sizeHint().width()
+        col1_max_width = self.connect_box.sizeHint().width()
         self.connect_box.setFixedWidth(col1_max_width)
         self.master_groupbox.setFixedWidth(col1_max_width)
         
-        self.connect_box.setMaximumHeight(self.connect_box.sizeHint().height())
-        self.master_groupbox.setMaximumHeight(114)
-        self.raw_comm_box.setMaximumHeight(202)
+        self.connect_box.setFixedHeight(self.connect_box.sizeHint().height())
+        self.master_groupbox.setFixedHeight(self.master_groupbox.sizeHint().height())
+        self.raw_comm_box.setMaximumHeight(self.raw_comm_box.sizeHint().height())
+        self.slave_groupbox.setMinimumWidth(self.slave_widget.size().width() + 56)
         
         mainLayout = QGridLayout()
         self.setLayout(mainLayout)
         mainLayout.addWidget(self.connect_box,0,0,1,1)
         mainLayout.addWidget(self.master_groupbox,1,0,1,1)
-        mainLayout.addWidget(self.settings_groupbox,2,0,1,1)
-        mainLayout.addWidget(self.raw_comm_box,0,1,3,1)
-        mainLayout.addWidget(self.slave_groupbox,3,0,1,2)
+        mainLayout.addWidget(self.settings_groupbox,0,1,2,1)
+        mainLayout.addWidget(self.raw_comm_box,0,2,2,1)
+        mainLayout.addWidget(self.slave_groupbox,2,0,1,3)
         
     def create_connect_box(self):
         self.connect_box = QGroupBox("Connect to master Arduino")
@@ -619,13 +617,11 @@ class olfactometer_window(QGroupBox):
         manualcmd_layout.addWidget(self.m_manualcmd_wid)
         manualcmd_layout.addWidget(self.m_manualcmd_btn)
         
-
         layout = QVBoxLayout()
         layout.addLayout(m_mode_layout)
         layout.addLayout(timebt_layout)
         layout.addLayout(manualcmd_layout)
         self.master_groupbox.setLayout(layout)
-        #self.master_groupbox.setMinimumWidth(400)
         
     def create_settings_groupbox(self):
         self.settings_groupbox = QGroupBox('Other Settings')
@@ -732,12 +728,8 @@ class olfactometer_window(QGroupBox):
         self.slave_scrollArea.setWidget(self.slave_widget)
         self.nothing_layout = QHBoxLayout()                     # Layout for putting QScrollArea into self.slave_groupbox
         self.nothing_layout.addWidget(self.slave_scrollArea)
-        
         self.slave_groupbox.setLayout(self.nothing_layout)
-        #self.slave_groupbox.setMinimumWidth(self.slave_scrollArea.sizeHint().width())
-        self.slave_groupbox.setMinimumWidth(self.slave_widget.sizeHint().width() + 40)
-
-
+    
     # CONNECT FUNCTIONS
     def get_ports(self):
         self.port_widget.clear()
@@ -966,7 +958,7 @@ class olfactometer_window(QGroupBox):
 
 
 if __name__ == "__main__":
-    logger.debug('opening window')
+    #logger.debug('opening window')
     app1 = QApplication(sys.argv)
     theWindow = olfactometer_window()
     theWindow.show()

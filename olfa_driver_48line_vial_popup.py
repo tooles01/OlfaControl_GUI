@@ -172,7 +172,6 @@ class VialDetailsPopup(QWidget):
         layout_full.addLayout(layout_btns)
         
         self.db_std_widgets_box.setLayout(layout_full)
-        #self.db_std_widgets_box.setFixedHeight(layout_widgets.sizeHint().height() + 24)
     
     def create_setpoint_box(self):
         self.db_setpoint_groupbox = QGroupBox('Setpoint')
@@ -181,7 +180,6 @@ class VialDetailsPopup(QWidget):
         self.setpoint_slider.setToolTip('Adjusts flow set rate.')
         self.setpoint_slider.setTickPosition(3)     # draw tick marks on both sides
         self.setpoint_set_lineedit = QLineEdit()
-        #self.setpoint_set_lineedit.setMaximumWidth(4)
         self.setpoint_set_lineedit.setAlignment(QtCore.Qt.AlignCenter)
         self.setpoint_set_lineedit.setPlaceholderText('Set flow rate')
         self.setpoint_set_lineedit.setStatusTip('Type to set flow rate')
@@ -193,18 +191,19 @@ class VialDetailsPopup(QWidget):
         self.setpoint_slider.valueChanged.connect(lambda: self.slider_changed(value=self.setpoint_slider.value(),spt_set_wid=self.setpoint_set_lineedit))
         self.setpoint_slider.sliderReleased.connect(lambda: self.slider_released(self.setpoint_slider))
         self.setpoint_set_lineedit.returnPressed.connect(self.text_changed)
-        
         layout_setpoint = QGridLayout()
         layout_setpoint.addWidget(self.setpoint_slider,0,0,2,1)
         layout_setpoint.addWidget(self.setpoint_set_lineedit,0,1,1,2)
         layout_setpoint.addWidget(self.setpoint_read_widget,1,1,1,2)
+        
         # height
         setpoint_set_read_height = 50
         self.setpoint_set_lineedit.setMaximumHeight(setpoint_set_read_height)
         self.setpoint_read_widget.setMaximumHeight(setpoint_set_read_height)
-        self.setpoint_slider.setMaximumHeight(setpoint_set_read_height*2)
+        self.setpoint_slider.setFixedHeight(setpoint_set_read_height*2)
         self.db_setpoint_groupbox.setLayout(layout_setpoint)
-        self.db_setpoint_groupbox.setMaximumWidth(120)
+        self.db_setpoint_groupbox.setMaximumWidth(self.db_setpoint_groupbox.sizeHint().width())
+        #self.db_setpoint_groupbox.setMaximumWidth(120)
     
     def create_flow_ctrl_box(self):
         self.db_flow_control_box = QGroupBox('Flow control parameters')
@@ -243,7 +242,7 @@ class VialDetailsPopup(QWidget):
         flow_control_layout.addLayout(flow_control_wids)
         self.db_flow_control_box.setLayout(flow_control_layout)
         self.db_flow_control_box.setMinimumWidth(self.db_flow_control_box.sizeHint().width())
-        self.db_flow_control_box.setFixedHeight(flow_control_wids.sizeHint().height() + 24)
+        #self.db_flow_control_box.setFixedHeight(flow_control_wids.sizeHint().height() + 24)
         
         self.db_flow_control_box.setEnabled(False)     # disable until manual control options toggled
     
