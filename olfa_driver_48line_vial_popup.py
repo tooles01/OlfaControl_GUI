@@ -28,7 +28,7 @@ console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
 
 # add file handler
-main_datafile_directory = utils.find_datafile_directory()
+main_datafile_directory = utils.find_log_directory()
 if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory)   # if folder doesn't exist, make it
 file_handler = utils.create_file_handler(main_datafile_directory)
 logger.addHandler(file_handler)
