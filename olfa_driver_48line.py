@@ -18,7 +18,7 @@ console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
 
 # add file handler
-main_datafile_directory = utils.find_datafile_directory()
+main_datafile_directory = utils.find_log_directory()
 if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory)   # if folder doesn't exist, make it
 file_handler = utils.create_file_handler(main_datafile_directory)
 logger.addHandler(file_handler)
@@ -615,19 +615,19 @@ class olfactometer_window(QGroupBox):
     def create_settings_groupbox(self):
         self.settings_groupbox = QGroupBox('Other Settings')
         
+        # Select config file
+        self.load_config_btn = QPushButton('Load olfa config file',checkable=True)
+        self.load_config_btn.setToolTip('Load config file containing calibration tables')
+        self.load_config_btn.toggled.connect(self.load_config_btn_toggled)
+        
         # Select directory where flow calibration tables are stored
         self.flow_cal_dir_btn = QPushButton('Select Calibration Table Directory',checkable=True)
         self.flow_cal_dir_btn.setToolTip('Select directory for flow calibration tables')
         self.flow_cal_dir_btn.toggled.connect(self.flow_cal_dir_btn_toggled)
         
-        # Select config file
-        self.load_config_btn = QPushButton('Load config',checkable=True)
-        self.load_config_btn.setToolTip('Load config file containing calibration tables')
-        self.load_config_btn.toggled.connect(self.load_config_btn_toggled)
-
-        layout = QHBoxLayout()
-        layout.addWidget(self.flow_cal_dir_btn)
+        layout = QVBoxLayout()
         layout.addWidget(self.load_config_btn)
+        layout.addWidget(self.flow_cal_dir_btn)
         self.settings_groupbox.setLayout(layout)
 
     def flow_cal_dir_btn_toggled(self,checked): # TODO finish debugging/cleaning this up
@@ -922,14 +922,6 @@ class olfactometer_window(QGroupBox):
                                     # Append it to the current list of values
                                     v.vial_details_window.serial_values.append(int(flowVal))
                                     v.vial_details_window.collected_values_window.append(str(flowVal))
-                                    '''
-                                    # debugging 'ValueError' in vial popup
-                                    current_length = len(v.vial_details_window.serial_values)
-                                    if current_length == 0:
-                                        logger.debug('serial values is empty')
-                                    else:
-                                        logger.debug(v.vial_details_window.serial_values[current_length-1])
-                                    '''
             
             except UnicodeDecodeError:
                 logger.warning("Serial read error")

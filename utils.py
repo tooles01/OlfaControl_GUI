@@ -1,6 +1,6 @@
 import logging, os, glob
 from datetime import datetime
-
+import config_main
 
 
 #################################
@@ -75,7 +75,7 @@ def find_olfaControl_directory():
     # If not found: print warning
     if not path_list:
         gui_directory = []
-        logger.warning('can\'t find OlfaControl_GUI folder :/')
+        #logger.debug('can\'t find OlfaControl_GUI folder :/')
     
     # If found: use the first path listed
     else:
@@ -89,31 +89,27 @@ def find_olfaControl_directory():
         gui_directory = path_list[0]
         logger.debug('OlfaControl_GUI directory found at:\t' + gui_directory)
     
-    return gui_directory
+    return gui_directory    # type is list
 
-def find_datafile_directory():
-    folder_to_save_to = 'result_files'
-    
-    # Find OlfaControl_GUI directory
-    olfaControl_dir = find_olfaControl_directory()
-    
-    # If not found: save to C:\\
-    if not olfaControl_dir:
-        # yolo
-        c_drive_git_path = os.path.expanduser('C:\\')
-        save_files_to = c_drive_git_path + '\\' + folder_to_save_to    
-    
-    # If found:
+def find_log_directory():
+    # Check for OlfaControl_GUI directory
+    olfacontrolgui_directory = find_olfaControl_directory()
+
+    # If not found: use the directory we are currently in
+    if not olfacontrolgui_directory:
+        directory_to_save_to = os.getcwd()
     else:
-        save_files_to = olfaControl_dir + '\\' + folder_to_save_to
+        directory_to_save_to = olfacontrolgui_directory
     
-    '''
+    # check if there is a folder called result files
+    result_file_directory = directory_to_save_to + '\\' + config_main.result_file_folder_name
+    
     # If folder does not exist, create it
-    if not os.path.exists(save_files_to):
-        os.mkdir(save_files_to)
-    '''
+    if not os.path.exists(result_file_directory):
+        logger.info('creating result file directory at %s', result_file_directory)
+        os.mkdir(result_file_directory)
     
-    return save_files_to
+    return result_file_directory
 
 
 
