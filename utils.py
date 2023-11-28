@@ -111,6 +111,20 @@ def find_log_directory():
     
     return result_file_directory
 
+def find_calibration_table_directory():
+    # check for OlfaControl_GUI directory
+    olfacontrolgui_directory = find_olfaControl_directory()
+
+    # if not found, use whatever directory we are currently in
+    if not olfacontrolgui_directory:
+        directory_to_search = os.getcwd()
+    else:
+        directory_to_search = olfacontrolgui_directory
+
+    # check if there is a folder called calibration tables
+    calibration_table_directory = directory_to_search + '\\' + config_main.calibration_file_dir_name
+
+    return calibration_table_directory
 
 
 

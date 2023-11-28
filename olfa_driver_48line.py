@@ -305,19 +305,30 @@ class Vial(QGroupBox):
     def set_flowrate(self, value):
         # Check if out of range
         if (value >= 0) and (value <= int(config_olfa.mfc_capacity)):
-            # Convert from sccm to integer
-            setpoint_sccm = value
-            setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
-            logger.info('set ' + self.full_vialNum + ' to ' + str(setpoint_sccm) + ' sccm')
-            self.setpoint = setpoint_sccm
-            
-            # Send to olfactometer_window (to send to Arduino)
-            strToSend = 'S_Sp_' + str(setpoint_integer) + '_' + self.full_vialNum
-            self.olfactometer_parent_object.send_to_master(strToSend)
-            
-            # Send to main GUI window (to write to datafile)
-            device = 'olfactometer ' + self.full_vialNum
-            self.write_to_datafile(device,'Sp',setpoint_integer)
+            if self.sccmToInt_dict != None:
+                # Convert from sccm to integer
+                setpoint_sccm = value
+                setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
+                logger.info('set ' + self.full_vialNum + ' to ' + str(setpoint_sccm) + ' sccm')
+                self.setpoint = setpoint_sccm
+                
+                # Send to olfactometer_window (to send to Arduino)
+                strToSend = 'S_Sp_' + str(setpoint_integer) + '_' + self.full_vialNum
+                self.olfactometer_parent_object.send_to_master(strToSend)
+                
+                # Send to main GUI window (to write to datafile)
+                device = 'olfactometer ' + self.full_vialNum
+                self.write_to_datafile(device,'Sp',setpoint_integer)
+            else:
+                msg_box = QMessageBox()
+                msg_box.setWindowTitle(self.full_vialNum)
+                msg_box.setText('No valid calibration table entered for ' + self.full_vialNum + '\n\n'
+                                'Please load calibration tables in order to send setpoints to this MFC')
+                msg_box.setStandardButtons(QMessageBox.Ok)
+                msg_box.exec()
+                self.setpoint_slider.setValue(0)
+                self.setpoint_set_lineedit.setText('0')
+                self.setpoint_set_lineedit.setPlaceholderText('Set value')
         
         if (value < 0) or (value > int(config_olfa.mfc_capacity)):
             if value > int(config_olfa.mfc_capacity):
@@ -448,11 +459,15 @@ class olfactometer_window(QGroupBox):
         self.def_timebt = config_olfa.def_timebt
         self.vialsPerSlave = config_olfa.vialsPerSlave
         
-        self.flow_cal_dir = utils.find_olfaControl_directory() + '\\calibration_tables' # NOTE: this takes a super long time
+        # look for calibration table directory
+        self.flow_cal_dir = utils.find_calibration_table_directory()
         if os.path.exists(self.flow_cal_dir):
+            logger.info('found directory')
             self.get_calibration_tables()
         else:
-            logger.error('Cannot find flow cal directory (searched in %s)', self.flow_cal_dir)
+            logger.error('Could not find flow calibration directory (searched \'%s\')', self.flow_cal_dir)
+            self.flow_cal_dir = ''
+        
         self.generate_ui()
         
         self.master_groupbox.setEnabled(False)
@@ -899,29 +914,41 @@ class olfactometer_window(QGroupBox):
                     for s in self.slave_objects:    # find out which vial this is
                         for v in s.vials:
                             if v.full_vialNum == slave_vial:
-                                # Convert to sccm
-                                flowVal_raw = int(flowVal)
-                                flowVal_sccm = utils_olfa_48line.convertToSCCM(flowVal_raw,v.intToSccm_dict)
-                                
-                                # Write it to the vial details box
-                                flowVal_sccm_str = str(flowVal_sccm)
-                                if len(str(flowVal_sccm)) < 5:
-                                    if len(str(flowVal_sccm)) == 4: flowVal_sccm_str = '0' + str(flowVal_sccm)
-                                    if len(str(flowVal_sccm)) == 3: flowVal_sccm_str = '00' + str(flowVal_sccm)
-                                dataStr = str(flowVal) + '\t' + flowVal_sccm_str + '\t' + str(ctrlVal)
-                                v.vial_details_window.data_receive_box.append(dataStr)
-                                
-                                # Write it to the setpoint read widget
-                                v.setpoint_read_widget.display(round(flowVal_sccm))
-                                
-                                # Write it to the setpoint read widget (in the vial details box)
-                                v.vial_details_window.setpoint_read_widget.display(round(flowVal_sccm))
-                                
-                                # If calibration is on: write it to the vial details popup
-                                if v.vial_details_window.calibration_on == True:
-                                    # Append it to the current list of values
-                                    v.vial_details_window.serial_values.append(int(flowVal))
-                                    v.vial_details_window.collected_values_window.append(str(flowVal))
+                                if v.intToSccm_dict != None:
+                                    # Convert to sccm
+                                    flowVal_raw = int(flowVal)
+                                    flowVal_sccm = utils_olfa_48line.convertToSCCM(flowVal_raw,v.intToSccm_dict)
+                                    
+                                    # Write it to the vial details box
+                                    flowVal_sccm_str = str(flowVal_sccm)
+                                    if len(str(flowVal_sccm)) < 5:
+                                        if len(str(flowVal_sccm)) == 4: flowVal_sccm_str = '0' + str(flowVal_sccm)
+                                        if len(str(flowVal_sccm)) == 3: flowVal_sccm_str = '00' + str(flowVal_sccm)
+                                    dataStr = str(flowVal) + '\t' + flowVal_sccm_str + '\t' + str(ctrlVal)
+                                    v.vial_details_window.data_receive_box.append(dataStr)
+                                    
+                                    # Write it to the setpoint read widget
+                                    v.setpoint_read_widget.display(round(flowVal_sccm))
+                                    
+                                    # Write it to the setpoint read widget (in the vial details box)
+                                    v.vial_details_window.setpoint_read_widget.display(round(flowVal_sccm))
+                                    
+                                    # If calibration is on: write it to the vial details popup
+                                    if v.vial_details_window.calibration_on == True:
+                                        # Append it to the current list of values
+                                        v.vial_details_window.serial_values.append(int(flowVal))
+                                        v.vial_details_window.collected_values_window.append(str(flowVal))
+                                else:
+                                    # stop reading flow
+                                    logger.debug('no longer reading flow from %s', v.full_vialNum)
+                                    if v.read_flow_vals_btn.isChecked(): v.read_flow_vals_btn.setChecked(False)
+                                    
+                                    msg_box = QMessageBox()
+                                    msg_box.setWindowTitle(v.full_vialNum)
+                                    msg_box.setText('No valid calibration table entered for ' + v.full_vialNum + '\n\n'
+                                                    'Please load calibration tables in order to read flow value')
+                                    msg_box.setStandardButtons(QMessageBox.Ok)
+                                    msg_box.exec()
             
             except UnicodeDecodeError:
                 logger.warning("Serial read error")
