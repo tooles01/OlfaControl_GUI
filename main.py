@@ -18,7 +18,7 @@ current_date = utils.currentDate
 
 ##############################
 # CREATE LOGGER
-main_datafile_directory = utils.find_datafile_directory()
+main_datafile_directory = utils.find_log_directory()
 if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory)   # if folder doesn't exist, make it
 logger = logging.getLogger(name='main')
 logger.setLevel(logging.DEBUG)
@@ -282,14 +282,8 @@ class mainWindow(QMainWindow):
             this_handler_type = type(r).__name__
             if this_handler_type == 'FileHandler': self.log_file_dir = r.baseFilename
         if self.log_file_dir == '': logger.warning('not logging to any file')
-        # shorten directory for readability
-        beginning_idx = self.log_file_dir.find(config_main.strToFind)
-        self.log_file_dir = self.log_file_dir[beginning_idx:]
-        slash_idx = self.log_file_dir.find('\\')
-        self.log_file_dir = self.log_file_dir[slash_idx:]
-        self.log_file_dir = '..' + self.log_file_dir
         self.log_file_dir_label = QLineEdit(text=self.log_file_dir,readOnly=True)
-        self.log_file_dir_label.setToolTip('edit in header of main.py (if you need to change this)')
+        self.log_file_dir_label.setToolTip('edit in config_main.py (if you need to change this)')
         
         layout = QVBoxLayout()
         layout.addWidget(QLabel('Log file location:'))
