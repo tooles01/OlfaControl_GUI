@@ -1,11 +1,7 @@
 # Config variables for main.py
 
-# Location for log file directory
-strToFind = 'OlfactometerEngineeringGroup'
-
 ##############################
 # PARAMETERS FOR 48-LINE OLFACTOMETER
-vialsPerSlave = 9
 no_active_slaves_warning = 'no active slaves pls connect olfa or something'
 
 default_pid_gain = '1x'        # write to datafile
@@ -19,3 +15,8 @@ waitBtSpAndOV = .5      # setpoint characterization
 #waitBtSps = 1           # additive
 
 ##############################
+
+
+# Location for log file directory (for utils.py)
+result_file_folder_name = 'result_files'
+calibration_file_dir_name = 'calibration_tables'
