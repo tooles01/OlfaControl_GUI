@@ -28,7 +28,7 @@ plot_opts.plot_flow_as_sccm = 'yes';
 % pick one of these
 plot_opts.olfa = 'no';
 plot_opts.pid = 'yes';
-plot_opts.output_flow = 'no';
+plot_opts.output_flow = 'yes';
 plot_opts.ctrl = 'yes';
 plot_opts.ctrl_as_voltage = 'no';
 
@@ -135,17 +135,42 @@ a_this_note = '';
 %a_thisfile_name = '2023-11-02_datafile_01';
 %a_thisfile_name = '2023-11-02_datafile_02';
 %a_thisfile_name = '2023-11-02_datafile_04';
-f.flow_ylims = [0 120];
-f.pid_ylims = [0 3.5];
+%f.flow_ylims = [0 120];
+%f.pid_ylims = [0 3.5];
 %a_thisfile_name = '2023-11-06_datafile_01';
 %a_thisfile_name = '2023-11-06_datafile_02';
 %a_thisfile_name = '2023-11-06_datafile_06';
 %a_thisfile_name = '2023-11-06_datafile_09';
 
-a_thisfile_name = '2023-11-06_datafile_10';
-f.x_lim = [679.823 900];
+%a_thisfile_name = '2023-11-06_datafile_10';
+%f.x_lim = [679.823 900];
 %f.x_lim = [801.37 900];
-f.scale_time = 'yes';
+%f.scale_time = 'yes';
+
+%a_thisfile_name = '2023-11-08_datafile_09';
+%a_thisfile_name = '2023-11-08_datafile_10';
+%a_thisfile_name = '2023-11-08_datafile_11';
+%a_thisfile_name = '2023-11-08_datafile_12';
+%a_thisfile_name = '2023-11-09_datafile_00';
+%a_thisfile_name = '2023-11-09_datafile_01';
+%a_thisfile_name = '2023-11-09_datafile_02';
+%a_thisfile_name = '2023-11-09_datafile_03';
+%a_thisfile_name = '2023-11-09_datafile_04';
+%a_thisfile_name = '2023-11-09_datafile_05';
+%a_thisfile_name = '2023-11-09_datafile_06';
+%a_thisfile_name = '2023-11-09_datafile_07';
+%a_thisfile_name = '2023-11-09_datafile_08';
+%a_thisfile_name = '2023-11-09_datafile_09';
+%a_thisfile_name = '2023-11-09_datafile_10';
+%a_thisfile_name = '2023-11-09_datafile_11';
+%a_thisfile_name = '2023-11-09_datafile_17';
+
+%a_thisfile_name = '2023-11-10_datafile_01';
+%a_thisfile_name = '2023-11-09_datafile_00_E2';
+a_thisfile_name = '2023-11-13_datafile_00';
+a_thisfile_name = '2023-11-13_datafile_01';
+
+f.pid_ylims = [0 8];
 
 %f.position = [549 166 1353 684];
 %f.position = [166 600 775 275];     % for OneNote
@@ -335,7 +360,7 @@ try
                         yyaxis right;
                     end
                     ylabel('Prop valve value (int)')
-                    ylim([-5 260])
+                    ylim([0 260])
                 end
             end
             if strcmp(f.scale_time,'yes')
@@ -346,6 +371,7 @@ try
             end
             p2 = plot(d_ctrl_x,d_ctrl_y);
             p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
+            %p2.HandleVisibility = 'off';
             p2.LineStyle = '-';
             %p2a = scatter(d_ctrl_x,d_ctrl_y,'filled','HandleVisibility','off');
         end
