@@ -2,7 +2,7 @@
 import logging, random
 from PyQt5.QtWidgets import *
 
-import utils
+import utils, config_main
 
 
 # CREATE LOGGER
@@ -17,12 +17,10 @@ def_flow_per_trial = 100
 def_min_flow = 10
 def_max_flow = 100
 def_inc_flow = 10
-def_open_dur = 5
-def_rest_dur = 5
-def_num_trials = 10
 
 
 class additiveProgramSettingsPopup(QWidget):
+    
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
@@ -85,11 +83,11 @@ class additiveProgramSettingsPopup(QWidget):
         self.inc_flow_lbl = QLabel('Increment flow by:')
         self.inc_flow_wid = QLineEdit(text=str(def_inc_flow))
         self.open_dur_lbl = QLabel('Vial open duration (s):')
-        self.open_dur_wid = QLineEdit(text=str(def_open_dur))
+        self.open_dur_wid = QLineEdit(text=str(config_main.default_dur_ON))
         self.rest_dur_lbl = QLabel('Rest between trials (s):')
-        self.rest_dur_wid = QLineEdit(text=str(def_rest_dur))
+        self.rest_dur_wid = QLineEdit(text=str(config_main.default_dur_OFF))
         self.num_trials_lbl = QLabel('Number of trials:')
-        self.num_trials_wid = QLineEdit(text=str(def_num_trials))
+        self.num_trials_wid = QLineEdit(text=str(config_main.default_numTrials))
         
         
         layout = QFormLayout()
@@ -156,22 +154,37 @@ class additiveProgramSettingsPopup(QWidget):
         num_vials_to_run = len(self.vials_to_run)
 
         # convert everything to ints or whatever
-        flow_per_trial = int(self.flow_per_trial)
+        total_flow_per_trial = int(self.flow_per_trial)
         min_flow = int(self.min_flow)
         inc_flow = int(self.inc_flow)
         num_trials = int(self.num_trials)
 
         # create list of setpoints (2 or 3 vials)
-        
+        random_max_gen_value = round(total_flow_per_trial/inc_flow)
+        min_for_random = round(min_flow / inc_flow)
+
         # for each trial
         for i in range(num_trials):
             # get setpoints
             this_trial_setpoints = []
+
+            # generate first setpoint
+            sccmVal1 = random.randint(min_for_random,random_max_gen_value)
+            sccmVal1 = sccmVal1 * inc_flow
+            sccmVal2 = total_flow_per_trial - sccmVal1
+            
+            this_trial_setpoints.append(sccmVal1)
+            this_trial_setpoints.append(sccmVal2)
+            
+            '''
             if num_vials_to_run == 3 or 2:
-                max_for_first_setpoint = flow_per_trial - ((num_vials_to_run-1)*min_flow)
-                sccmVal1 = random.randint(min_flow,max_for_first_setpoint)
+                max_for_first_setpoint = total_flow_per_trial - ((num_vials_to_run-1)*min_flow)
+                if max_for_first_setpoint != 0:
+                    sccmVal1 = random.randint(min_flow,max_for_first_setpoint)
+                else:
+                    sccmVal1 = 0
                 this_trial_setpoints.append(sccmVal1)
-                remaining_flow = flow_per_trial-sccmVal1
+                remaining_flow = total_flow_per_trial-sccmVal1
                 if num_vials_to_run == 2:
                     sccmVal2 = random.randint(min_flow,remaining_flow)
                     this_trial_setpoints.append(sccmVal2)
@@ -179,24 +192,25 @@ class additiveProgramSettingsPopup(QWidget):
                     max_for_second_setpoint = remaining_flow - min_flow
                     sccmVal2 = random.randint(min_flow,max_for_second_setpoint)
                     this_trial_setpoints.append(sccmVal2)
-                    remaining_flow = flow_per_trial - (sccmVal1+sccmVal2)
+                    remaining_flow = total_flow_per_trial - (sccmVal1+sccmVal2)
                     sccmVal3 = random.randint(min_flow,remaining_flow)
                     this_trial_setpoints.append(sccmVal3)
                 
             else:
                 logger.warning('%s vials selected, must be 2 or 3 vials', num_vials_to_run)
-
+            '''
+            
             self.vial_flows_complete_list.append(this_trial_setpoints)
             
         '''
         # create list of setpoints
         for i in range(num_trials):
             this_trial_setpoints = []
-            max_for_first_setpoint = flow_per_trial-((num_vials_to_run-1)*min_flow)
+            max_for_first_setpoint = total_flow_per_trial-((num_vials_to_run-1)*min_flow)
 
             sccmVal1 = random.randint(min_flow,max_for_first_setpoint)
             this_trial_setpoints.append(sccmVal1)
-            remaining = flow_per_trial-sccmVal1
+            remaining = total_flow_per_trial-sccmVal1
             for num_vials in range(num_vials_to_run-1):
                 this_vial_num = num_vials+2
                 # if it's not the last one
