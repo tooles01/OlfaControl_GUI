@@ -106,10 +106,18 @@ f.f2_position = [1050 230 812 709];
 %a_thisfile_name = '2023-11-10_datafile_09';
 %a_thisfile_name = '2023-11-10_datafile_10';
 %a_thisfile_name = '2023-11-10_datafile_11';
-a_thisfile_name = '2023-11-10_datafile_12';
-f.time_to_cut = 1;
-f.pid_lims = [0 8];
+%a_thisfile_name = '2023-11-10_datafile_12';
+%f.pid_lims = [0 8];
 
+%a_thisfile_name = '2023-11-16_datafile_00';
+f.pid_lims = [0 7];
+%a_thisfile_name = '2023-11-16_datafile_01';
+%f.pid_lims = [0 .200];
+%a_thisfile_name = '2023-11-16_datafile_02';
+%a_thisfile_name = '2023-11-16_datafile_03';
+a_thisfile_name = '2023-11-16_datafile_04';
+
+f.time_to_cut = 1;
 f.olfa_lims_sccm = [0 105];
 %f.time_to_cut = 2;
 
