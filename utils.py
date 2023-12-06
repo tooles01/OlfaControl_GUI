@@ -79,10 +79,13 @@ def find_olfaControl_directory():
     
     # If found: use the first path listed
     else:
+        # Ignore .code-workspace files
+        str_to_exclude = ".code-workspace"
+        path_list = [item for item in path_list if str_to_exclude not in item]
+        
         # If multiple paths found: print (for user)
         if len(path_list) > 1:
             logger.debug('Multiple OlfaControl_GUI paths found:')
-            # TODO ignore the .code-workspace files
             for i in path_list:
                 logger.debug('\t' + i)
         
