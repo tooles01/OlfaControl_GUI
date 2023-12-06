@@ -3,6 +3,7 @@ import numpy.matlib as np
 from PyQt5 import sip
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QTimer
 from datetime import datetime
 
 import NiDAQ_driver, flow_sensor_driver, olfa_driver_original, olfa_driver_48line
@@ -96,7 +97,7 @@ class worker_sptChar(QObject):
                 self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
 
                 # wait for the time between trials
-                time.sleep(self.duration_off)
+                time.sleep(self.duration_off-config_main.waitBtSpAndOV)
                 
                 # update progress bar
                 current_time = datetime.now()
@@ -397,11 +398,7 @@ class mainWindow(QMainWindow):
 
             if self.program_to_run == "setpoint characterization":
                 self.create_48line_program_widgets()
-                '''
-                #logger.debug('setpoint characterization selected')
-                #programs_48lineolfa.create_sptchar_parameter_widgets(self.program_parameters_box)
-                '''
-
+            
             if self.program_to_run == "additive":
                 self.create_additive_widgets()
         
@@ -430,8 +427,6 @@ class mainWindow(QMainWindow):
             '\nAdditive:\n'
             ' - Multiple odor lines\n'
             ' - Setpoint = total flow from all lines (setpoints for individual lines vary from trial to trial)')
-            #'\n - Single setpoint (consisting of total flow from all line) (different setpoints for individual lines from trial to trial)\n'
-            #' - Individual line flows vary between trials')
         self.program_selection_btn = QPushButton(text='Select',checkable=True,toggled=self.program_select_toggled)
         
         layout = QFormLayout()
@@ -450,13 +445,25 @@ class mainWindow(QMainWindow):
         self.program_start_box = QGroupBox()
         self.program_start_btn = QPushButton(text='Start Program',checkable=True,toggled=self.program_start_clicked)
         self.program_progress_bar = QProgressBar()
+        self.program_timer_label = QLabel()
+        self.program_timer = QTimer()
+        self.program_timer.timeout.connect(self.update_program_timer)
+        layout_second_row = QHBoxLayout()
+        layout_second_row.addWidget(self.program_start_btn)
+        layout_second_row.addWidget(self.program_timer_label)
+        layout_second_row.addWidget(QLabel('remaining'))
+        
         self.program_start_box_layout = QVBoxLayout()
         self.program_start_box_layout.addWidget(self.program_progress_bar)
-        self.program_start_box_layout.addWidget(self.program_start_btn)
+        self.program_start_box_layout.addLayout(layout_second_row)
         self.program_start_box.setLayout(self.program_start_box_layout)
     
     def increment_progress_bar(self, val):
         self.program_progress_bar.setValue(val)
+    
+    def update_program_timer(self):
+        # TODO finish this
+        pass
     
     def create_48line_program_widgets(self):
         if self.program_to_run == "setpoint characterization":
