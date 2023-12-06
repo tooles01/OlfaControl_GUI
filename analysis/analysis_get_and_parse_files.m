@@ -142,7 +142,9 @@ file = uigetfile("*.csv",uibox_title);
 %a_thisfile_name = '2023-11-16_datafile_00'; a_this_note = 'E4 Pinene - 8s on 20s off (vial D) (suction off)'; flow_inc = 10;
 %a_thisfile_name = '2023-11-16_datafile_01'; a_this_note = 'E1 empty - 8s on 20s off (suction off)'; flow_inc = 10;
 %a_thisfile_name = '2023-11-16_datafile_02'; a_this_note = 'Contamination test (pinene v. empty) - 8s on 20s off (suction off)'; flow_inc = 100;
-a_thisfile_name = '2023-11-16_datafile_03'; a_this_note = 'E3 Pinene - 8s on 20s off (vial C) (suction off)'; flow_inc = 10;
+%a_thisfile_name = '2023-11-16_datafile_03'; a_this_note = 'E3 Pinene - 8s on 20s off (vial C) (suction off)'; flow_inc = 10;
+a_thisfile_name = '2023-11-16_datafile_04'; a_this_note = 'E3 & E4 Pinene - 8s on 20s off (suction off)'; flow_inc = 10;
+a_thisfile_name = '2023-11-20_datafile_02';
 
 %% set up directories
 dir_data_files = [a_dir_OlfaControlGUI '\result_files\48-line olfa\'];
@@ -360,7 +362,7 @@ for i=1:num_data
                     d_olfa_flow(i_vial_idx).events.OV(n).value = i_valu;
                 end
             end
-            
+
             % add to d_olfa_events.OV
             if strcmp(i_para,'OV')
                 num_e = length(d_olfa_events.OV) + 1;

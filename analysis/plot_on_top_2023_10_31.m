@@ -264,6 +264,28 @@ if strcmp(c.plot_by_flow,'yes')
                         p_pid.Marker = 'none';
                         if (j==1)
                             this_file_color = p_pid.Color;
+                            
+                            % check existing line colors
+                            hLines = findobj(gca, 'Type', 'line');
+                            existingColors = cell(1, numel(hLines));
+                            
+                            for m=1:numel(hLines)
+                                existingColors{i} = get(hLines(i), 'Color');
+                            end
+                            
+                            % Convert existing colors to a character matrix
+                            existingColorsCell = cat(1, existingColors{:});
+                            
+                            % find a color not in the existing list
+                            standardColors = get(gca,'ColorOrder');
+                            availableColors = setdiff(standardColors, existingColorsCell, 'rows', 'stable');
+                            
+                            % unique color
+                            newColor = availableColors(1,:);
+                            this_file_color = newColor;
+                            p_pid.Color = newColor;
+                            
+
                         else
                             p_pid.Color = this_file_color;
                         end

@@ -18,7 +18,7 @@ console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
 
 # add file handler
-main_datafile_directory = utils.find_datafile_directory()
+main_datafile_directory = utils.find_log_directory()
 if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory)   # if folder doesn't exist, make it
 file_handler = utils.create_file_handler(main_datafile_directory)
 logger.addHandler(file_handler)
@@ -134,7 +134,6 @@ class Vial(QGroupBox):
         self.setpoint_slider.setToolTip('Adjusts flow set rate.')
         self.setpoint_slider.setTickPosition(3)     # draw tick marks on both sides
         self.setpoint_set_lineedit = QLineEdit()
-        #self.setpoint_set_lineedit.setMaximumWidth(4)
         self.setpoint_set_lineedit.setAlignment(QtCore.Qt.AlignCenter)
         self.setpoint_set_lineedit.setPlaceholderText('Set value')
         self.setpoint_set_lineedit.setStatusTip('Type to set flow rate')
@@ -142,7 +141,6 @@ class Vial(QGroupBox):
         self.setpoint_read_widget.setMinimumSize(50,50)
         self.setpoint_read_widget.setDigitCount(5)
         self.setpoint_read_widget.setToolTip('Current flow reading')
-        self.setpoint_read_widget.setMaximumHeight(50)
         
         self.setpoint_slider_layout = QGridLayout()
         self.setpoint_slider_layout.addWidget(self.setpoint_slider,0,0,2,1)
@@ -184,15 +182,15 @@ class Vial(QGroupBox):
         setpoint_set_read_height = 50
         self.setpoint_set_lineedit.setMaximumHeight(setpoint_set_read_height)
         self.setpoint_read_widget.setMaximumHeight(setpoint_set_read_height)
-        self.setpoint_slider.setMaximumHeight(setpoint_set_read_height*2)
-        self.setpoint_slider.setFixedHeight(100)
+        self.setpoint_slider.setFixedHeight(setpoint_set_read_height*2)
         # width
         half_col_width = self.read_flow_vals_btn.sizeHint().width()
+        self.valve_open_btn.setFixedWidth(half_col_width)
         #self.setpoint_slider.setFixedWidth(half_col_width)
         self.setpoint_set_lineedit.setMaximumWidth(half_col_width)
         self.setpoint_read_widget.setMaximumWidth(half_col_width)
         self.read_flow_vals_btn.setFixedWidth(self.read_flow_vals_btn.sizeHint().width())
-        self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
+        #self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
         self.setpoint_slider.setFixedWidth(32)
     
     # SETPOINT SLIDER
@@ -305,19 +303,30 @@ class Vial(QGroupBox):
     def set_flowrate(self, value):
         # Check if out of range
         if (value >= 0) and (value <= int(config_olfa.mfc_capacity)):
-            # Convert from sccm to integer
-            setpoint_sccm = value
-            setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
-            logger.info('set ' + self.full_vialNum + ' to ' + str(setpoint_sccm) + ' sccm')
-            self.setpoint = setpoint_sccm
-            
-            # Send to olfactometer_window (to send to Arduino)
-            strToSend = 'S_Sp_' + str(setpoint_integer) + '_' + self.full_vialNum
-            self.olfactometer_parent_object.send_to_master(strToSend)
-            
-            # Send to main GUI window (to write to datafile)
-            device = 'olfactometer ' + self.full_vialNum
-            self.write_to_datafile(device,'Sp',setpoint_integer)
+            if self.sccmToInt_dict != None:
+                # Convert from sccm to integer
+                setpoint_sccm = value
+                setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
+                logger.info('set ' + self.full_vialNum + ' to ' + str(setpoint_sccm) + ' sccm')
+                self.setpoint = setpoint_sccm
+                
+                # Send to olfactometer_window (to send to Arduino)
+                strToSend = 'S_Sp_' + str(setpoint_integer) + '_' + self.full_vialNum
+                self.olfactometer_parent_object.send_to_master(strToSend)
+                
+                # Send to main GUI window (to write to datafile)
+                device = 'olfactometer ' + self.full_vialNum
+                self.write_to_datafile(device,'Sp',setpoint_integer)
+            else:
+                msg_box = QMessageBox()
+                msg_box.setWindowTitle(self.full_vialNum)
+                msg_box.setText('No valid calibration table entered for ' + self.full_vialNum + '\n\n'
+                                'Please load calibration tables in order to send setpoints to this MFC')
+                msg_box.setStandardButtons(QMessageBox.Ok)
+                msg_box.exec()
+                self.setpoint_slider.setValue(0)
+                self.setpoint_set_lineedit.setText('0')
+                self.setpoint_set_lineedit.setPlaceholderText('Set value')
         
         if (value < 0) or (value > int(config_olfa.mfc_capacity)):
             if value > int(config_olfa.mfc_capacity):
@@ -448,11 +457,15 @@ class olfactometer_window(QGroupBox):
         self.def_timebt = config_olfa.def_timebt
         self.vialsPerSlave = config_olfa.vialsPerSlave
         
-        self.flow_cal_dir = utils.find_olfaControl_directory() + '\\calibration_tables' # NOTE: this takes a super long time
+        # look for calibration table directory
+        self.flow_cal_dir = utils.find_calibration_table_directory()
         if os.path.exists(self.flow_cal_dir):
+            logger.debug('found calibration file directory')
             self.get_calibration_tables()
         else:
-            logger.error('Cannot find flow cal directory (searched in %s)', self.flow_cal_dir)
+            logger.error('Could not find flow calibration directory (searched \'%s\')', self.flow_cal_dir)
+            self.flow_cal_dir = ''
+        
         self.generate_ui()
         
         self.master_groupbox.setEnabled(False)
@@ -531,21 +544,22 @@ class olfactometer_window(QGroupBox):
         self.create_raw_comm_groupbox()
         self.create_slave_groupbox()
         
-        col1_max_width = self.master_groupbox.sizeHint().width()
+        mainLayout = QGridLayout()
+        self.setLayout(mainLayout)
+        mainLayout.addWidget(self.connect_box,          0,0,1,1)      # row, column, rowSpan, columnSpan
+        mainLayout.addWidget(self.master_groupbox,      1,0,1,1)
+        mainLayout.addWidget(self.settings_groupbox,    0,1,2,1)
+        mainLayout.addWidget(self.raw_comm_box,         0,2,2,1)
+        mainLayout.addWidget(self.slave_groupbox,       2,0,1,3)
+        
+        col1_max_width = self.connect_box.sizeHint().width()
         self.connect_box.setFixedWidth(col1_max_width)
         self.master_groupbox.setFixedWidth(col1_max_width)
         
-        self.connect_box.setMaximumHeight(self.connect_box.sizeHint().height())
-        self.master_groupbox.setMaximumHeight(114)
-        self.raw_comm_box.setMaximumHeight(202)
-        
-        mainLayout = QGridLayout()
-        self.setLayout(mainLayout)
-        mainLayout.addWidget(self.connect_box,0,0,1,1)
-        mainLayout.addWidget(self.master_groupbox,1,0,1,1)
-        mainLayout.addWidget(self.settings_groupbox,2,0,1,1)
-        mainLayout.addWidget(self.raw_comm_box,0,1,3,1)
-        mainLayout.addWidget(self.slave_groupbox,3,0,1,2)
+        self.connect_box.setFixedHeight(self.connect_box.sizeHint().height())
+        self.master_groupbox.setFixedHeight(self.master_groupbox.sizeHint().height())
+        self.raw_comm_box.setMaximumHeight(self.raw_comm_box.sizeHint().height())
+        self.slave_groupbox.setMinimumWidth(self.slave_widget.size().width() + 56)  # this is the exact size for the scroll area to have no horizontal anything
         
     def create_connect_box(self):
         self.connect_box = QGroupBox("Connect to master Arduino")
@@ -604,30 +618,28 @@ class olfactometer_window(QGroupBox):
         manualcmd_layout.addWidget(self.m_manualcmd_wid)
         manualcmd_layout.addWidget(self.m_manualcmd_btn)
         
-
         layout = QVBoxLayout()
         layout.addLayout(m_mode_layout)
         layout.addLayout(timebt_layout)
         layout.addLayout(manualcmd_layout)
         self.master_groupbox.setLayout(layout)
-        #self.master_groupbox.setMinimumWidth(400)
         
     def create_settings_groupbox(self):
         self.settings_groupbox = QGroupBox('Other Settings')
+        
+        # Select config file
+        self.load_config_btn = QPushButton('Load olfa config file',checkable=True)
+        self.load_config_btn.setToolTip('Load config file containing calibration tables')
+        self.load_config_btn.toggled.connect(self.load_config_btn_toggled)
         
         # Select directory where flow calibration tables are stored
         self.flow_cal_dir_btn = QPushButton('Select Calibration Table Directory',checkable=True)
         self.flow_cal_dir_btn.setToolTip('Select directory for flow calibration tables')
         self.flow_cal_dir_btn.toggled.connect(self.flow_cal_dir_btn_toggled)
         
-        # Select config file
-        self.load_config_btn = QPushButton('Load config',checkable=True)
-        self.load_config_btn.setToolTip('Load config file containing calibration tables')
-        self.load_config_btn.toggled.connect(self.load_config_btn_toggled)
-
-        layout = QHBoxLayout()
-        layout.addWidget(self.flow_cal_dir_btn)
+        layout = QVBoxLayout()
         layout.addWidget(self.load_config_btn)
+        layout.addWidget(self.flow_cal_dir_btn)
         self.settings_groupbox.setLayout(layout)
 
     def flow_cal_dir_btn_toggled(self,checked): # TODO finish debugging/cleaning this up
@@ -717,12 +729,8 @@ class olfactometer_window(QGroupBox):
         self.slave_scrollArea.setWidget(self.slave_widget)
         self.nothing_layout = QHBoxLayout()                     # Layout for putting QScrollArea into self.slave_groupbox
         self.nothing_layout.addWidget(self.slave_scrollArea)
-        
         self.slave_groupbox.setLayout(self.nothing_layout)
-        #self.slave_groupbox.setMinimumWidth(self.slave_scrollArea.sizeHint().width())
-        self.slave_groupbox.setMinimumWidth(self.slave_widget.sizeHint().width() + 40)
-
-
+    
     # CONNECT FUNCTIONS
     def get_ports(self):
         self.port_widget.clear()
@@ -899,37 +907,41 @@ class olfactometer_window(QGroupBox):
                     for s in self.slave_objects:    # find out which vial this is
                         for v in s.vials:
                             if v.full_vialNum == slave_vial:
-                                # Convert to sccm
-                                flowVal_raw = int(flowVal)
-                                flowVal_sccm = utils_olfa_48line.convertToSCCM(flowVal_raw,v.intToSccm_dict)
-                                
-                                # Write it to the vial details box
-                                flowVal_sccm_str = str(flowVal_sccm)
-                                if len(str(flowVal_sccm)) < 5:
-                                    if len(str(flowVal_sccm)) == 4: flowVal_sccm_str = '0' + str(flowVal_sccm)
-                                    if len(str(flowVal_sccm)) == 3: flowVal_sccm_str = '00' + str(flowVal_sccm)
-                                dataStr = str(flowVal) + '\t' + flowVal_sccm_str + '\t' + str(ctrlVal)
-                                v.vial_details_window.data_receive_box.append(dataStr)
-                                
-                                # Write it to the setpoint read widget
-                                v.setpoint_read_widget.display(round(flowVal_sccm))
-                                
-                                # Write it to the setpoint read widget (in the vial details box)
-                                v.vial_details_window.setpoint_read_widget.display(round(flowVal_sccm))
-                                
-                                # If calibration is on: write it to the vial details popup
-                                if v.vial_details_window.calibration_on == True:
-                                    # Append it to the current list of values
-                                    v.vial_details_window.serial_values.append(int(flowVal))
-                                    v.vial_details_window.collected_values_window.append(str(flowVal))
-                                    '''
-                                    # debugging 'ValueError' in vial popup
-                                    current_length = len(v.vial_details_window.serial_values)
-                                    if current_length == 0:
-                                        logger.debug('serial values is empty')
-                                    else:
-                                        logger.debug(v.vial_details_window.serial_values[current_length-1])
-                                    '''
+                                if v.intToSccm_dict != None:
+                                    # Convert to sccm
+                                    flowVal_raw = int(flowVal)
+                                    flowVal_sccm = utils_olfa_48line.convertToSCCM(flowVal_raw,v.intToSccm_dict)
+                                    
+                                    # Write it to the vial details box
+                                    flowVal_sccm_str = str(flowVal_sccm)
+                                    if len(str(flowVal_sccm)) < 5:
+                                        if len(str(flowVal_sccm)) == 4: flowVal_sccm_str = '0' + str(flowVal_sccm)
+                                        if len(str(flowVal_sccm)) == 3: flowVal_sccm_str = '00' + str(flowVal_sccm)
+                                    dataStr = str(flowVal) + '\t' + flowVal_sccm_str + '\t' + str(ctrlVal)
+                                    v.vial_details_window.data_receive_box.append(dataStr)
+                                    
+                                    # Write it to the setpoint read widget
+                                    v.setpoint_read_widget.display(round(flowVal_sccm))
+                                    
+                                    # Write it to the setpoint read widget (in the vial details box)
+                                    v.vial_details_window.setpoint_read_widget.display(round(flowVal_sccm))
+                                    
+                                    # If calibration is on: write it to the vial details popup
+                                    if v.vial_details_window.calibration_on == True:
+                                        # Append it to the current list of values
+                                        v.vial_details_window.serial_values.append(int(flowVal))
+                                        v.vial_details_window.collected_values_window.append(str(flowVal))
+                                else:
+                                    # stop reading flow
+                                    logger.debug('no longer reading flow from %s', v.full_vialNum)
+                                    if v.read_flow_vals_btn.isChecked(): v.read_flow_vals_btn.setChecked(False)
+                                    
+                                    msg_box = QMessageBox()
+                                    msg_box.setWindowTitle(v.full_vialNum)
+                                    msg_box.setText('No valid calibration table entered for ' + v.full_vialNum + '\n\n'
+                                                    'Please load calibration tables in order to read flow value')
+                                    msg_box.setStandardButtons(QMessageBox.Ok)
+                                    msg_box.exec()
             
             except UnicodeDecodeError:
                 logger.warning("Serial read error")
@@ -947,7 +959,7 @@ class olfactometer_window(QGroupBox):
 
 
 if __name__ == "__main__":
-    logger.debug('opening window')
+    #logger.debug('opening window')
     app1 = QApplication(sys.argv)
     theWindow = olfactometer_window()
     theWindow.show()
