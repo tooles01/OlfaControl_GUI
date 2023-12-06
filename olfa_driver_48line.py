@@ -185,11 +185,12 @@ class Vial(QGroupBox):
         self.setpoint_slider.setFixedHeight(setpoint_set_read_height*2)
         # width
         half_col_width = self.read_flow_vals_btn.sizeHint().width()
+        self.valve_open_btn.setFixedWidth(half_col_width)
         #self.setpoint_slider.setFixedWidth(half_col_width)
         self.setpoint_set_lineedit.setMaximumWidth(half_col_width)
         self.setpoint_read_widget.setMaximumWidth(half_col_width)
         self.read_flow_vals_btn.setFixedWidth(self.read_flow_vals_btn.sizeHint().width())
-        self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
+        #self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
         self.setpoint_slider.setFixedWidth(32)
     
     # SETPOINT SLIDER
@@ -543,6 +544,14 @@ class olfactometer_window(QGroupBox):
         self.create_raw_comm_groupbox()
         self.create_slave_groupbox()
         
+        mainLayout = QGridLayout()
+        self.setLayout(mainLayout)
+        mainLayout.addWidget(self.connect_box,          0,0,1,1)      # row, column, rowSpan, columnSpan
+        mainLayout.addWidget(self.master_groupbox,      1,0,1,1)
+        mainLayout.addWidget(self.settings_groupbox,    0,1,2,1)
+        mainLayout.addWidget(self.raw_comm_box,         0,2,2,1)
+        mainLayout.addWidget(self.slave_groupbox,       2,0,1,3)
+        
         col1_max_width = self.connect_box.sizeHint().width()
         self.connect_box.setFixedWidth(col1_max_width)
         self.master_groupbox.setFixedWidth(col1_max_width)
@@ -550,15 +559,7 @@ class olfactometer_window(QGroupBox):
         self.connect_box.setFixedHeight(self.connect_box.sizeHint().height())
         self.master_groupbox.setFixedHeight(self.master_groupbox.sizeHint().height())
         self.raw_comm_box.setMaximumHeight(self.raw_comm_box.sizeHint().height())
-        self.slave_groupbox.setMinimumWidth(self.slave_widget.size().width() + 56)
-        
-        mainLayout = QGridLayout()
-        self.setLayout(mainLayout)
-        mainLayout.addWidget(self.connect_box,0,0,1,1)
-        mainLayout.addWidget(self.master_groupbox,1,0,1,1)
-        mainLayout.addWidget(self.settings_groupbox,0,1,2,1)
-        mainLayout.addWidget(self.raw_comm_box,0,2,2,1)
-        mainLayout.addWidget(self.slave_groupbox,2,0,1,3)
+        self.slave_groupbox.setMinimumWidth(self.slave_widget.size().width() + 56)  # this is the exact size for the scroll area to have no horizontal anything
         
     def create_connect_box(self):
         self.connect_box = QGroupBox("Connect to master Arduino")
