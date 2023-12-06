@@ -9,6 +9,7 @@ baudrate = 9600     # for communicating w/ master
 ##############################
 # DONT CHANGE THIS STUFF
 vialsPerSlave = 9
+#vialsPerSlave = 6
 master_modes = ["6: verbose",
                 "5: trace",
                 "4: notice",
@@ -16,6 +17,7 @@ master_modes = ["6: verbose",
                 "2: error",
                 "1: fatal"]
 slave_names = ['A','B','C','D','E','F']
+#slave_names = ['A','B','C']
 cal_table_file_tyoe = '.txt'
 ##############################
 
@@ -33,6 +35,8 @@ def_Kp_value = '0.03'
 def_Ki_value = '0.0005'
 def_Kd_value = '0.0000'
 def_manual_cmd = 'S_PV_150_A2'
+def_mfc_cal_value = '200'
+def_calibration_duration = '60'     # calibration per flow rate
 ##############################
 
 

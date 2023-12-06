@@ -14,9 +14,7 @@ import config_olfa_48line as config_olfa
 ##############################
 # DEFAULT VALUES
 def_pressurize_duration = '1'
-def_mfc_cal_value = '100'
 mfc_capacity = '200'            # flow sensor max flow
-def_calibration_duration = '60' # calibration per flow rate
 ##############################
 
 ##############################
@@ -66,7 +64,7 @@ class VialDetailsPopup(QWidget):
         self.setWindowTitle('Vial ' + self.full_vialNum + ' - Details')
 
     # GUI FEATURES
-    def create_ui_features(self):        
+    def create_ui_features(self):
         self.create_std_widgets_box()
         self.create_setpoint_box()
         self.create_flow_ctrl_box()
@@ -76,7 +74,7 @@ class VialDetailsPopup(QWidget):
         # Values Received
         self.data_receive_lbl = QLabel(("Flow val (int), Flow (SCCM), Ctrl val (int)"))
         self.data_receive_box = QTextEdit(readOnly=True)
-        self.data_receive_box.setFixedWidth(220)
+        #self.data_receive_box.setFixedWidth(220)
 
         # Layout
         layout_col1_widgets = QGridLayout()
@@ -275,28 +273,6 @@ class VialDetailsPopup(QWidget):
         
         self.db_manual_control_box.setEnabled(False)     # disable until manual control options toggled
     
-    # ISO VALVE TIMER
-    def start_vlve_duration_timer(self):
-        duration = 15   # max time iso valve can be open
-        self.vlve_open_start_time = datetime.now()
-        self.vlve_open_full_duration = timedelta(0,int(duration))
-        self.db_vlve_timer.start(int(duration))
-
-    def show_vlve_duration_time(self):
-        current_time = datetime.now()
-        current_vlve_dur = current_time - self.vlve_open_start_time
-        if current_vlve_dur >= self.vlve_open_full_duration:
-            self.end_vlve_duration_timer()
-
-        vlve_dur_display_value = str(current_vlve_dur)
-        vlve_dur_display_value = vlve_dur_display_value[5:]
-        vlve_dur_display_value = vlve_dur_display_value[:-4]    # leave 2 digits after the decimal point
-        self.db_vlve_timer_lbl.setText(vlve_dur_display_value)
-
-    def end_vlve_duration_timer(self):
-        self.db_vlve_timer.stop()
-        self.db_vlve_toggle_btn.setChecked(False)
-    
     def create_calibration_box(self):
         self.db_cal_box = QGroupBox('Flow Sensor Calibration')
 
@@ -311,24 +287,16 @@ class VialDetailsPopup(QWidget):
         
         # MFC value (SCCM value)
         self.mfc_value_lbl = QLabel('MFC value (sccm):')
-        self.mfc_value_lineedit = QLineEdit(text=def_mfc_cal_value)
+        self.mfc_value_lineedit = QLineEdit(text=config_olfa.def_mfc_cal_value)
         self.start_calibration_btn = QPushButton(text='Start',checkable=True)
         self.start_calibration_btn.setToolTip('Collect flow values for x seconds')
         #self.mfc_value_lineedit.returnPressed.connect(self.start_calibration)   # TODO fix
-        '''
-        self.start_multi_calibration_btn = QPushButton(text='Start x3',checkable=True)
-        self.start_multi_calibration_btn.toggled.connect(self.start_multi_calibration)
-        layout_btns = QHBoxLayout()
-        layout_btns.addWidget(self.create_new_cal_file_btn)
-        layout_btns.addWidget(self.start_calibration_btn)
-        layout_btns.addWidget(self.start_multi_calibration_btn)
-        '''
         self.start_calibration_btn.toggled.connect(self.start_calibration)
         
         # Widget for duration of calibration (& timer for visual)
         self.calibration_duration_lbl = QLabel('Duration (s):')
         self.calibration_duration_lbl.setToolTip('Max 99 seconds')
-        self.calibration_duration_lineedit = QLineEdit(text=def_calibration_duration)
+        self.calibration_duration_lineedit = QLineEdit(text=config_olfa.def_calibration_duration)
         self.calibration_duration_lineedit.setToolTip('Max 99 seconds')
         self.calibration_duration_timer = QTimer()
         self.calibration_duration_timer.setTimerType(0)     # set to millisecond accuracy
@@ -357,8 +325,8 @@ class VialDetailsPopup(QWidget):
         self.cal_results_med_wid = QLineEdit(readOnly=True,maximumWidth=40)
         self.cal_results_mean_wid = QLineEdit(readOnly=True,maximumWidth=40)
         self.cal_results_mean_wid.setText('0')
-        self.write_to_file_wid = QLineEdit(maximumWidth=65)
-        self.write_to_file_btn = QPushButton(text='Write',maximumWidth=80)
+        self.write_to_file_wid = QLineEdit()
+        self.write_to_file_btn = QPushButton(text='Write')
         self.write_to_file_wid.returnPressed.connect(self.save_calibration_value)
         self.write_to_file_btn.clicked.connect(self.save_calibration_value)
         self.write_to_file_wid.setToolTip('(SCCM, int)\nValues to write to calibration file\nWhen calibration is run, median value is placed here. This can also be manually typed in, then written to the file.')
@@ -384,32 +352,52 @@ class VialDetailsPopup(QWidget):
         # Layout
         layout_directory = QFormLayout()
         layout_directory.addRow(QLabel('Directory:'),self.cal_file_dir_wid)
-        layout_widgets = QFormLayout()
-        layout_widgets.addRow(self.cal_file_name_lbl,self.cal_file_name_wid)
-        layout_widgets.addRow(self.mfc_value_lbl,self.mfc_value_lineedit)
-        layout_widgets.addRow(layout_cal_duration)
-        #layout_widgets.addRow(layout_btns)
-        layout_widgets.addRow(self.create_new_cal_file_btn,self.start_calibration_btn)
+        layout_entered_vals = QFormLayout()
+        layout_entered_vals.addRow(self.cal_file_name_lbl,self.cal_file_name_wid)
+        layout_entered_vals.addRow(self.mfc_value_lbl,self.mfc_value_lineedit)
+        layout_entered_vals.addRow(layout_cal_duration)
+        layout_entered_vals.addRow(self.create_new_cal_file_btn,self.start_calibration_btn)
         layout_full = QGridLayout()
         layout_full.addLayout(layout_directory,0,0,1,4)
-        layout_full.addLayout(layout_widgets,1,0)
+        layout_full.addLayout(layout_entered_vals,1,0)
         layout_full.addLayout(layout_collected_vals,1,1)
         layout_full.addLayout(layout_results,1,2)
-        #layout_full.addWidget(self.instructions_window,1,2)
         layout_full.addLayout(layout_cal_file_output,1,3)
         
         self.db_cal_box.setLayout(layout_full)
         
         # Sizing
-        #self.instructions_window.setMaximumHeight(80)
         self.collected_values_window.setMaximumHeight(100)
         self.cal_file_output_display.setMaximumHeight(100)
         self.collected_values_window.setMaximumWidth(80)
-        self.cal_file_output_display.setMaximumWidth(80)
-        #self.instructions_window.setMaximumWidth(200)
+        #self.cal_file_output_display.setMaximumWidth(80)
         self.db_cal_box.setMaximumHeight(self.db_cal_box.sizeHint().height())
+        #self.write_to_file_wid.setMaximumWidth(65)
+        self.write_to_file_btn.setMaximumWidth(80)
         
         self.instructions_window.append('--> To begin calibration, create file')
+    
+    # ISO VALVE TIMER
+    def start_vlve_duration_timer(self):
+        duration = 15   # max time iso valve can be open
+        self.vlve_open_start_time = datetime.now()
+        self.vlve_open_full_duration = timedelta(0,int(duration))
+        self.db_vlve_timer.start(int(duration))
+    
+    def show_vlve_duration_time(self):
+        current_time = datetime.now()
+        current_vlve_dur = current_time - self.vlve_open_start_time
+        if current_vlve_dur >= self.vlve_open_full_duration:
+            self.end_vlve_duration_timer()
+
+        vlve_dur_display_value = str(current_vlve_dur)
+        vlve_dur_display_value = vlve_dur_display_value[5:]
+        vlve_dur_display_value = vlve_dur_display_value[:-4]    # leave 2 digits after the decimal point
+        self.db_vlve_timer_lbl.setText(vlve_dur_display_value)
+    
+    def end_vlve_duration_timer(self):
+        self.db_vlve_timer.stop()
+        self.db_vlve_toggle_btn.setChecked(False)
     
     # PRESSURIZE TIMER
     def start_pressurize(self, duration):
@@ -469,7 +457,6 @@ class VialDetailsPopup(QWidget):
         except ValueError as err:
             logger.error('error in setting MFC value: ' + err)    
     
-
     # COMMANDS
     def vial_open_toggled(self, checked):
         if checked:
@@ -718,28 +705,6 @@ class VialDetailsPopup(QWidget):
             # Stop the timer
             if self.calibration_duration_timer.isActive() == True:
                 self.end_cal_duration_timer()
-    '''
-    def start_multi_calibration(self):
-        if self.start_multi_calibration_btn.isChecked() == True:
-            sccm_val = self.mfc_value_lineedit.text()
-
-            first_value = float(self.cal_results_mean_wid.text())
-            next_value = 9999
-            diff = abs(first_value-next_value)
-
-            while (diff > 0.3):
-                next_value = float(self.cal_results_mean_wid.text())
-                self.start_calibration_btn.setChecked(True)
-
-
-            #for i in range(1,3):
-            #    self.start_calibration_btn.setChecked()
-            #    next_value = float(self.cal_results_mean_wid.text())
-            #    diff = abs(first_value-next_value)
-            #    if diff > 0.3:
-                    # run it again
-           #         pass
-    '''
     
     def analyze_cal_session(self):
         flowVal_median = np.median(self.serial_values)
