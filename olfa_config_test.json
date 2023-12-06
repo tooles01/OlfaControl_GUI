@@ -14,6 +14,7 @@
         "E4" : "E4_2023-10-26",
         "E5" : "E5_2023-10-26"
     },
+    
 
     "Olfactometers" : [
         {
@@ -24,35 +25,43 @@
                 {
                     "1" : {
                         "type" : "Honeywell 3100V",
-                        "calibration table" : "E1_2023-10-10"
+                        "calibration table" : "E1_2023-10-10",
+                        "capacity" : "200"
                     },
                     "2" : {
                         "type" : "Honeywell 3100V",
-                        "calibration table" : "E2_2023-10-18"
+                        "calibration table" : "E2_2023-10-18",
+                        "capacity" : "200"
                     },
                     "3" : {
                         "type" : "Honeywell 3100V",
-                        "calibration table" : "E3_2023-11-01"
+                        "calibration table" : "E3_2023-11-01",
+                        "capacity" : "200"
                     },
                     "4" : {
                         "type" : "Honeywell 3100V",
-                        "calibration table" : "E4_2023-10-26"
+                        "calibration table" : "E4_2023-10-26",
+                        "capacity" : "200"
                     },
                     "5" : {
                         "type" : "Honeywell 3100V",
-                        "calibration table" : "Honeywell_3100V"
+                        "calibration table" : "Honeywell_3100V",
+                        "capacity" : "200"
                     },
                     "6" : {
                         "type" : "Honeywell 3100V",
-                        "calibration table" : "Honeywell_3100V"
+                        "calibration table" : "Honeywell_3100V",
+                        "capacity" : "200"
                     },
                     "7" : {
                         "type" : "Honeywell 3100V",
-                        "calibration table" : "Honeywell_3100V"
+                        "calibration table" : "Honeywell_3100V",
+                        "capacity" : "200"
                     },
                     "8" : {
                         "type" : "Honeywell 3100V",
-                        "calibration table" : "Honeywell_3100V"
+                        "calibration table" : "Honeywell_3100V",
+                        "capacity" : "200"
                     }
 
                 }
