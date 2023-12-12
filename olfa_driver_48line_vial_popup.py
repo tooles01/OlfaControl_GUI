@@ -8,6 +8,7 @@ import numpy as np
 
 import utils
 import config_olfa_48line as config_olfa
+import plot_widget
 
 # TODO close this window if the olfactometer window is closed or the Arduino is disconnected
 
@@ -98,6 +99,7 @@ class VialDetailsPopup(QWidget):
         h_to_use = max(h1,h2)
         self.db_flow_control_box.setFixedHeight(h_to_use)
         self.db_manual_control_box.setFixedHeight(h_to_use)
+        self.data_receive_box.setMinimumWidth(self.data_receive_box.sizeHint().width())
 
     def create_std_widgets_box(self):
         self.db_std_widgets_box = QGroupBox("Settings")
@@ -144,6 +146,10 @@ class VialDetailsPopup(QWidget):
         self.db_manual_btn = QPushButton(text='Enable Manual Options',checkable=True,toggled=self.toggled_manual_settings)
         self.db_manual_btn.setToolTip('Enable manual flow control settings\n\nARE YOU SURE YOU WANT TO DO THIS')
         
+        # SHOW PLOT BUTTON
+        self.show_plot_btn = QPushButton('Show plot', checkable=True)
+        self.show_plot_btn.toggled.connect(self.show_plot_toggled)
+        
         # LAYOUT
         layout_1 = QGridLayout()
         layout_1.addWidget(self.db_valve_open_lbl,0,0)
@@ -168,8 +174,20 @@ class VialDetailsPopup(QWidget):
         layout_full.addLayout(layout_1)
         layout_full.addLayout(layout_cal)
         layout_full.addLayout(layout_btns)
+        layout_full.addWidget(self.show_plot_btn)
         
         self.db_std_widgets_box.setLayout(layout_full)
+    
+    def show_plot_toggled(self, checked):
+        if checked:
+            #logger.debug('show plot toggled')
+            self.show_plot_btn.setText('Hide plot')
+            self.plot_window = plot_widget.plot_window(self)
+            self.plot_window.show()
+
+        else:
+            self.show_plot_btn.setText('Show plot')
+            self.plot_window.hide()
     
     def create_setpoint_box(self):
         self.db_setpoint_groupbox = QGroupBox('Setpoint')

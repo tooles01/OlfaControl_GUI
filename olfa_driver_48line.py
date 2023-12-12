@@ -78,6 +78,10 @@ class Vial(QGroupBox):
         self.full_vialNum = self.slaveName + self.vialNum
         self.olfactometer_parent_object = parent.parent
         
+        self.flow_value_int = '0'
+        self.flow_value_sccm = '0'
+        self.ctrl_value_int = '0'
+
         self.setpoint = int(config_olfa.def_setpoint)
         self.open_duration = config_olfa.def_open_duration
         self.cal_table = config_olfa.default_cal_table
@@ -429,11 +433,26 @@ class slave_8vials(QGroupBox):
 
         self.slave_address_label = QLabel(text='Slave address:')    # TODO slave address dictionary :/ where should it be located
         self.temp_label = QLabel("...,...,.slave active or not, slave info, whatever.,...")
+        #self.show_plot_btn = QPushButton('Show plot',checkable=True)
+        #self.show_plot_btn.toggled.connect(self.show_plot_toggled)
         # TODO add a way to apply commands to multiple vials at once (ex: check the ones you want to apply this setpoint to)
         
         self.slaveInfo_layout = QVBoxLayout()
         #self.slaveInfo_layout.addWidget(self.slave_address_label)
         self.slaveInfo_layout.addWidget(self.temp_label)
+        #self.slaveInfo_layout.addWidget(self.show_plot_btn)
+    '''
+    def show_plot_toggled(self, checked):
+        if checked:
+            logger.debug('show plot toggled')
+            self.plot_window = plot_widget.plot_window(self)
+            self.plot_window.show()
+            self.show_plot_btn.setText('Hide plot')
+
+        else:
+            self.plot_window.hide()
+            self.show_plot_btn.setText('Show plot')
+    '''
     
     def create_vials_box(self):
         self.vials = []
@@ -460,7 +479,6 @@ class olfactometer_window(QGroupBox):
         # look for calibration table directory
         self.flow_cal_dir = utils.find_calibration_table_directory()
         if os.path.exists(self.flow_cal_dir):
-            logger.debug('found calibration file directory')
             self.get_calibration_tables()
         else:
             logger.error('Could not find flow calibration directory (searched \'%s\')', self.flow_cal_dir)
@@ -472,7 +490,6 @@ class olfactometer_window(QGroupBox):
         self.setTitle('Olfactometer')
     
     def get_calibration_tables(self):
-        
         logger.debug('loading flow sensor calibration tables from (%s)', self.flow_cal_dir)
         
         # Get names of all .txt files in flow cal directory
@@ -506,7 +523,7 @@ class olfactometer_window(QGroupBox):
                         except TypeError:
                             pass
                         except KeyError as err:
-                            # Clear dictionaries, stop trying to read this file
+                            # Clear dictionaries & stop trying to read this file
                             logger.error('got a KeyError: %s',err)
                             logger.error('%s does not have correct headings for calibration files', cal_file)
                             thisfile_sccm2Ard_dict = {}
@@ -628,8 +645,8 @@ class olfactometer_window(QGroupBox):
         self.settings_groupbox = QGroupBox('Other Settings')
         
         # Select config file
-        self.load_config_btn = QPushButton('Load olfa config file',checkable=True)
-        self.load_config_btn.setToolTip('Load config file containing calibration tables')
+        self.load_config_btn = QPushButton('Load olfa config',checkable=True)
+        self.load_config_btn.setToolTip('Load olfa config file containing calibration tables')
         self.load_config_btn.toggled.connect(self.load_config_btn_toggled)
         
         # Select directory where flow calibration tables are stored
@@ -656,7 +673,7 @@ class olfactometer_window(QGroupBox):
         else:
             pass
     
-    def load_config_btn_toggled(self,checked):
+    def load_config_btn_toggled(self,checked):  # TODO load a default one at the beginning
         if checked:
             dlg = QFileDialog()
             dlg.setFileMode(QFileDialog.ExistingFile)   # The name of a single existing file
@@ -931,6 +948,12 @@ class olfactometer_window(QGroupBox):
                                         # Append it to the current list of values
                                         v.vial_details_window.serial_values.append(int(flowVal))
                                         v.vial_details_window.collected_values_window.append(str(flowVal))
+
+                                    # Write it to the vial object
+                                    v.flow_value_int = flowVal_raw
+                                    v.flow_value_sccm = flowVal_sccm
+                                    v.ctrl_value_int = ctrlVal
+                                
                                 else:
                                     # stop reading flow
                                     logger.debug('no longer reading flow from %s', v.full_vialNum)
