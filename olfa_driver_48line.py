@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 import utils, utils_olfa_48line, olfa_driver_48line_vial_popup
 import config_olfa_48line as config_olfa
-
+import plot_widget
 
 ##############################
 # CREATE LOGGER
@@ -433,25 +433,26 @@ class slave_8vials(QGroupBox):
 
         self.slave_address_label = QLabel(text='Slave address:')    # TODO slave address dictionary :/ where should it be located
         self.temp_label = QLabel("...,...,.slave active or not, slave info, whatever.,...")
-        #self.show_plot_btn = QPushButton('Show plot',checkable=True)
-        #self.show_plot_btn.toggled.connect(self.show_plot_toggled)
+        self.show_plot_btn = QPushButton('Show plot',checkable=True)
+        self.show_plot_btn.toggled.connect(self.show_plot_toggled)
         # TODO add a way to apply commands to multiple vials at once (ex: check the ones you want to apply this setpoint to)
         
         self.slaveInfo_layout = QVBoxLayout()
         #self.slaveInfo_layout.addWidget(self.slave_address_label)
         self.slaveInfo_layout.addWidget(self.temp_label)
-        #self.slaveInfo_layout.addWidget(self.show_plot_btn)
-    '''
+        self.slaveInfo_layout.addWidget(self.show_plot_btn)
+    
     def show_plot_toggled(self, checked):
         if checked:
             logger.debug('show plot toggled')
-            self.plot_window = plot_widget.plot_window(self)
+            self.plot_window = plot_widget.plot_window_all(self)
             self.plot_window.show()
             self.show_plot_btn.setText('Hide plot')
 
         else:
             self.plot_window.hide()
             self.show_plot_btn.setText('Show plot')
+    '''
     '''
     
     def create_vials_box(self):

@@ -21,9 +21,9 @@ class plot_window(QMainWindow):
         
         
         self.plot_widget = pg.PlotWidget()
-        self.p1 = self.plot_widget.plotItem
+        #self.p1 = self.plot_widget.plotItem
 
-        self.plot_widget.setLabel('bottom', 'Time (s)')                 # Set X-axis label
+        self.plot_widget.setLabel('bottom', 'Time (ms)')                 # Set X-axis label
         self.plot_widget.setLabel('left','Flow (SCCM)')#, color = 'b')                 # Set Y-axis label
         
         self.plot_widget.getPlotItem().setRange(yRange = [-10,260])     # Set Y-axis limits
@@ -93,9 +93,67 @@ class plot_window(QMainWindow):
         self.plot_widget.plot(self.x_data, self.y_data1, pen = 'b', clear=True, name = 'Flow (sccm)', yAxis='left')
         self.plot_widget.plot(self.x_data, self.y_data2, pen = 'r', clear=False, name = 'Ctrl (int)', yAxis='right')
 
-
         # Update legend
         self.legend.scene().invalidate()
+        
+class plot_window_all(QMainWindow):
 
+    def __init__(self, parent):
+        super().__init__()
+
+        self.parent = parent
+        self.slave_name = self.parent.name
+        self.num_vials = len(self.parent.vials)
+
+        self.central_widget = QWidget(self)
+        self.setCentralWidget(self.central_widget)
+
+        self.plot_widget = pg.PlotWidget()
+
+        self.plot_widget.setLabel('bottom', 'Time (ms)')                # Set X-axis label
+        self.plot_widget.setLabel('left','Flow (SCCM)')                 # Set Y-axis label
+        self.plot_widget.getPlotItem().setRange(yRange = [-10,210])     # Set Y-axis limits
+
+        self.legend = self.plot_widget.addLegend()
+
+        self.timer = self.startTimer(timer_interval_ms)
+
+        # Initialize empty data
+        self.x_data = np.array([])
+        self.y_data_array = []
+        for v in self.parent.vials:
+            this_y_data = np.array([])
+            self.y_data_array.append(this_y_data)
+        self.new_x = 0
+
+        # layout
+        layout = QVBoxLayout(self.central_widget)
+        layout.addWidget(self.plot_widget)
+        self.setWindowTitle('Olfa ' + self.slave_name + ' flow data')
+
+    def timerEvent(self, event):
+        # Fetch new real-time data
+        num_data_points_displayed = int((max_time_displayed_s * 1000) / timer_interval_ms)
+        self.new_x = self.new_x + timer_interval_ms
         
+        # Append new data to existing data
+        self.x_data = np.append(self.x_data,self.new_x)
         
+        for n in range(self.num_vials):
+            new_y1 = int(self.parent.vials[n].flow_value_sccm)  # get this vial's flow value
+            
+            old_y_data = self.y_data_array[n]   # append to existing data
+            new_y_data = np.append(old_y_data, new_y1)
+            
+            new_y_data = new_y_data[-num_data_points_displayed:]    # keep only the last x data points
+            self.x_data = self.x_data[-num_data_points_displayed:]
+            self.y_data_array[n] = new_y_data   # update the array
+
+            # plot and clear previous plot
+            if n == 0:  # if it's the first, one, clear the previous plot
+                self.plot_widget.plot(self.x_data, new_y_data, clear=True, name = self.parent.vials[n].full_vialNum)
+            else:
+                self.plot_widget.plot(self.x_data, new_y_data, clear=False, name = self.parent.vials[n].full_vialNum)
+        
+        # Update legend
+        self.legend.scene().invalidate()
