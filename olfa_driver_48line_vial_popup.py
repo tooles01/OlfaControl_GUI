@@ -99,7 +99,7 @@ class VialDetailsPopup(QWidget):
         h_to_use = max(h1,h2)
         self.db_flow_control_box.setFixedHeight(h_to_use)
         self.db_manual_control_box.setFixedHeight(h_to_use)
-        self.data_receive_box.setMinimumWidth(self.data_receive_box.sizeHint().width())
+        self.data_receive_box.setFixedWidth(self.data_receive_box.sizeHint().width())
 
     def create_std_widgets_box(self):
         self.db_std_widgets_box = QGroupBox("Settings")
@@ -147,7 +147,7 @@ class VialDetailsPopup(QWidget):
         self.db_manual_btn.setToolTip('Enable manual flow control settings\n\nARE YOU SURE YOU WANT TO DO THIS')
         
         # SHOW PLOT BUTTON
-        self.show_plot_btn = QPushButton('Show plot', checkable=True)
+        self.show_plot_btn = QPushButton('Show flow/ctrl plot', checkable=True)
         self.show_plot_btn.toggled.connect(self.show_plot_toggled)
         
         # LAYOUT
@@ -180,13 +180,12 @@ class VialDetailsPopup(QWidget):
     
     def show_plot_toggled(self, checked):
         if checked:
-            #logger.debug('show plot toggled')
-            self.show_plot_btn.setText('Hide plot')
-            self.plot_window = plot_widget.plot_window(self)
+            self.show_plot_btn.setText('Hide flow/ctrl plot')
+            self.plot_window = plot_widget.plot_window_single_vial(self)
             self.plot_window.show()
 
         else:
-            self.show_plot_btn.setText('Show plot')
+            self.show_plot_btn.setText('Show flow/ctrl plot')
             self.plot_window.hide()
     
     def create_setpoint_box(self):

@@ -78,10 +78,10 @@ class Vial(QGroupBox):
         self.full_vialNum = self.slaveName + self.vialNum
         self.olfactometer_parent_object = parent.parent
         
+        # Default Values
         self.flow_value_int = '0'
         self.flow_value_sccm = '0'
         self.ctrl_value_int = '0'
-
         self.setpoint = int(config_olfa.def_setpoint)
         self.open_duration = config_olfa.def_open_duration
         self.cal_table = config_olfa.default_cal_table
@@ -90,6 +90,12 @@ class Vial(QGroupBox):
         self.Kp_value = config_olfa.def_Kp_value
         self.Ki_value = config_olfa.def_Ki_value
         self.Kd_value = config_olfa.def_Kd_value
+
+        # For Plot Widget
+        self.plot_flow_btn = QPushButton(self.full_vialNum, checkable=True)
+        self.plot_flow_btn.toggled.connect(self.plot_flow_btn_toggled)
+        self.plot_ctrl_btn = QPushButton(self.full_vialNum, checkable=True)
+        self.plot_ctrl_btn.toggled.connect(self.plot_ctrl_btn_toggled)
         
         self.generate_stuff()
         
@@ -217,6 +223,55 @@ class Vial(QGroupBox):
             pass    # if something other than an integer was entered
     
     # ACTIONS / BUTTON FUNCTIONS
+    def plot_flow_btn_toggled(self, checked):
+        if checked:
+            # Make sure it's already set to debug mode
+            if self.read_flow_vals_btn.isChecked() == False:
+                self.read_flow_vals_btn.setChecked(True)
+            
+            # Tell plot window this vial needs to be plotted
+            self.olfa_plot_object = self.parent().parent.flow_plot_window
+            flag = 0
+            for idx in range(len(self.olfa_plot_object.vials_to_plot)):
+                if self.olfa_plot_object.vials_to_plot[idx] == '-':
+                    self.olfa_plot_object.vials_to_plot[idx] = self
+                    self.olfa_plot_object.vials_to_plot_names[idx] = self.full_vialNum
+                    flag = 1
+                    break
+            if flag == 0:
+                logger.debug('only 4 vials can be plotted at once')
+                self.plot_flow_btn.setChecked(False)
+            
+        else:
+            # Remove from vials_to_plot
+            list_of_vials_to_plot_names = self.parent().parent.flow_plot_window.vials_to_plot_names
+            if self.full_vialNum in list_of_vials_to_plot_names:
+                index = list_of_vials_to_plot_names.index(self.full_vialNum)
+                self.parent().parent.flow_plot_window.vials_to_plot[index] = '-'
+                self.parent().parent.flow_plot_window.vials_to_plot_names[index] = '-'
+    
+    def plot_ctrl_btn_toggled(self, checked):
+        if checked:
+            self.slave_plot_object = self.parent().slave_plot_window
+            # Make sure it's already set to debug mode
+            if self.read_flow_vals_btn.isChecked() == False:
+                self.read_flow_vals_btn.setChecked(True)
+
+            # Tell plot window this vial needs to be plotted
+            flag = 0
+            for idx in range(len(self.slave_plot_object.vials_to_plot)):
+                if self.slave_plot_object.vials_to_plot[idx] == '-':
+                    self.slave_plot_object.vials_to_plot[idx] = self
+                    self.slave_plot_object.vials_to_plot_names[idx] = self.full_vialNum
+                    flag = 1
+                    break
+            if flag == 0:
+                logger.debug('only 4 vials can be plotted at once')
+
+            if self.slave_plot_object.vials_to_plot[0] == '-':
+                self.slave_plot_object.vials_to_plot[0] = self
+                self.slave_plot_object.vials_to_plot_names[0] = self.full_vialNum
+    
     def vial_details_btn_toggled(self, checked):
         if checked:
             # Show vial details window
@@ -369,7 +424,6 @@ class Vial(QGroupBox):
             self.valve_open_btn.setText('Close ' + self.full_vialNum)
             self.vial_details_window.db_valve_open_btn.setText('Close vial')
             self.open_vial(self.valve_dur_spinbox.value())
-            logger.info('Opening %s', self.full_vialNum)
         else:
             self.valve_open_btn.setText('Open ' + self.full_vialNum)
             self.vial_details_window.db_valve_open_btn.setText('Open vial')
@@ -430,30 +484,13 @@ class slave_8vials(QGroupBox):
     
     def create_slaveInfo_box(self):
         self.slave_info_box = QGroupBox()
-
+        # TODO add a way to apply commands to multiple vials at once (ex: check the ones you want to apply this setpoint to)
         self.slave_address_label = QLabel(text='Slave address:')    # TODO slave address dictionary :/ where should it be located
         self.temp_label = QLabel("...,...,.slave active or not, slave info, whatever.,...")
-        self.show_plot_btn = QPushButton('Show plot',checkable=True)
-        self.show_plot_btn.toggled.connect(self.show_plot_toggled)
-        # TODO add a way to apply commands to multiple vials at once (ex: check the ones you want to apply this setpoint to)
         
         self.slaveInfo_layout = QVBoxLayout()
         #self.slaveInfo_layout.addWidget(self.slave_address_label)
         self.slaveInfo_layout.addWidget(self.temp_label)
-        self.slaveInfo_layout.addWidget(self.show_plot_btn)
-    
-    def show_plot_toggled(self, checked):
-        if checked:
-            logger.debug('show plot toggled')
-            self.plot_window = plot_widget.plot_window_all(self)
-            self.plot_window.show()
-            self.show_plot_btn.setText('Hide plot')
-
-        else:
-            self.plot_window.hide()
-            self.show_plot_btn.setText('Show plot')
-    '''
-    '''
     
     def create_vials_box(self):
         self.vials = []
@@ -558,9 +595,9 @@ class olfactometer_window(QGroupBox):
     def generate_ui(self):
         self.create_connect_box()
         self.create_master_groupbox()
+        self.create_slave_groupbox()
         self.create_settings_groupbox()
         self.create_raw_comm_groupbox()
-        self.create_slave_groupbox()
         
         mainLayout = QGridLayout()
         self.setLayout(mainLayout)
@@ -655,10 +692,30 @@ class olfactometer_window(QGroupBox):
         self.flow_cal_dir_btn.setToolTip('Select directory for flow calibration tables')
         self.flow_cal_dir_btn.toggled.connect(self.flow_cal_dir_btn_toggled)
         
+        # Show flow plot
+        self.show_flow_plot_btn = QPushButton('Show flow plot', checkable=True)
+        self.show_flow_plot_btn.toggled.connect(self.show_flow_plot_toggled)
+        self.flow_plot_window = plot_widget.plot_window_all(self)
+        self.flow_plot_window.hide()
+
+        # Layout
         layout = QVBoxLayout()
         layout.addWidget(self.load_config_btn)
         layout.addWidget(self.flow_cal_dir_btn)
+        layout.addWidget(self.show_flow_plot_btn)
         self.settings_groupbox.setLayout(layout)
+
+    def show_flow_plot_toggled(self, checked):
+        if checked:
+            #logger.debug('show flow plot toggled')
+            self.show_flow_plot_btn.setText('Hide flow plot')
+            self.flow_plot_window.update_vial_select_groupbox()
+            self.flow_plot_window.show()
+            self.flow_plot_window.timer_start()
+
+        else:
+            self.show_flow_plot_btn.setText('Show flow plot')
+            self.flow_plot_window.hide()
 
     def flow_cal_dir_btn_toggled(self,checked): # TODO finish debugging/cleaning this up
         if checked:
@@ -983,7 +1040,6 @@ class olfactometer_window(QGroupBox):
 
 
 if __name__ == "__main__":
-    #logger.debug('opening window')
     app1 = QApplication(sys.argv)
     theWindow = olfactometer_window()
     theWindow.show()
