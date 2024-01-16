@@ -241,7 +241,7 @@ class Vial(QGroupBox):
             if flag == 0:
                 logger.debug('only 4 vials can be plotted at once')
                 self.plot_flow_btn.setChecked(False)
-            
+        
         else:
             # Remove from vials_to_plot
             list_of_vials_to_plot_names = self.parent().parent.flow_plot_window.vials_to_plot_names
@@ -273,7 +273,7 @@ class Vial(QGroupBox):
                 self.slave_plot_object.vials_to_plot_names[0] = self.full_vialNum
     
     def vial_details_btn_toggled(self, checked):
-        if checked:
+        if checked: # TODO this often freezes the whole window if done while a program is running 1/11/2024
             # Show vial details window
             self.vial_details_window.show()
             self.vial_details_btn.setText('Close Details')
@@ -357,7 +357,8 @@ class Vial(QGroupBox):
     # COMMANDS
     def K_parameter_update(self, Kx, value):
         strToSend = 'S_Kx_' + Kx + str(value) + '_' + self.full_vialNum
-        self.olfactometer_parent_object.send_to_master(strToSend) # TODO add to log file when K parameters are updated
+        self.olfactometer_parent_object.send_to_master(strToSend)
+        logger.info('K parameters updated for %s: %s', self.full_vialNum, strToSend)
     
     def set_flowrate(self, value):
         # Check if out of range
@@ -390,7 +391,22 @@ class Vial(QGroupBox):
         if (value < 0) or (value > int(config_olfa.mfc_capacity)):
             if value > int(config_olfa.mfc_capacity):
                 logger.warning(str(value) + ' is greater than mfc capacity: try again')
-                # TODO set flowrate to mfc capacity (because slider is going to go to that anyways)
+                if self.sccmToInt_dict != None:
+                    # Convert from sccm to integer
+                    setpoint_sccm = int(config_olfa.mfc_capacity)
+                    setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
+                    logger.info('Set ' + self.full_vialNum + ' to ' + str(setpoint_sccm) + ' sccm')
+                    self.setpoint = setpoint_sccm
+                    # TODO replace the text entered in the box
+
+                    # Send to olfactometer_window (to send to Arduino)
+                    strToSend = 'S_Sp_' + str(setpoint_integer) + '_' + self.full_vialNum
+                    self.olfactometer_parent_object.send_to_master(strToSend)
+
+                    # Send to main GUI window (to write to datafile)
+                    device = 'olfactometer ' + self.full_vialNum
+                    self.write_to_datafile(device,'Sp',setpoint_integer)
+            
             if value < 0:
                 logger.warning('cannot enter negative flow rate: try again')        
     
@@ -485,6 +501,7 @@ class slave_8vials(QGroupBox):
     def create_slaveInfo_box(self):
         self.slave_info_box = QGroupBox()
         # TODO add a way to apply commands to multiple vials at once (ex: check the ones you want to apply this setpoint to)
+        
         self.slave_address_label = QLabel(text='Slave address:')    # TODO slave address dictionary :/ where should it be located
         self.temp_label = QLabel("...,...,.slave active or not, slave info, whatever.,...")
         
@@ -587,8 +604,7 @@ class olfactometer_window(QGroupBox):
                 logger.warning('no calibration files found in this directory')
         
         else:
-            # If flow cal directory does not exist: print warning
-            # TODO this is big issue if none found
+            # If flow cal directory does not exist: print warning --> this is big issue if none found
             # TODO some kind of error message if there are no calibration tables. or disable all the slave devices or something, bc you won't be able to send setpoints
             logger.warning('no .txt files found in this directory :/')    
     
@@ -640,8 +656,8 @@ class olfactometer_window(QGroupBox):
         self.m_mode_wid.addItems(config_olfa.master_modes)
         self.m_mode_wid.setCurrentIndex(2)  # matches master Arduino default level (4: notice)
         self.m_mode_btn = QPushButton(text="Send")
-        self.m_mode_lbl.setToolTip("Change master logging level")
-        self.m_mode_wid.setToolTip("Change master logging level")
+        self.m_mode_lbl.setToolTip("Master Arduino logging level")
+        self.m_mode_wid.setToolTip("Master Arduino logging level")
         self.m_mode_btn.clicked.connect(lambda: self.send_master_mode(self.m_mode_wid.currentText()))
         m_mode_layout = QHBoxLayout()
         m_mode_layout.addWidget(self.m_check_addr_btn)
