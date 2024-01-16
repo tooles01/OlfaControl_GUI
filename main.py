@@ -268,8 +268,8 @@ class mainWindow(QMainWindow):
         self.device_layout = QVBoxLayout()
         self.device_groupbox.setLayout(self.device_layout)
 
-        w = self.datafile_groupbox.sizeHint().width()
         # so that datafile stuff is all on one row
+        w = self.datafile_groupbox.sizeHint().width()
         self.datafile_groupbox.setFixedWidth(w)
         self.datafile_groupbox.setFixedWidth(w + 15)
         self.settings_box.setMinimumWidth(w+5)
@@ -380,6 +380,9 @@ class mainWindow(QMainWindow):
         layout.addWidget(self.add_olfa_orig_btn)
         self.add_devices_groupbox.setLayout(layout)
     
+    
+    ##############################
+    # PROGRAM WIDGETS
     def program_select_toggled(self):
         if self.program_selection_btn.isChecked():
             self.program_selection_btn.setText("Deselect")
@@ -465,6 +468,152 @@ class mainWindow(QMainWindow):
         # TODO finish this
         pass
     
+    def change_parameters_btn_toggled(self,checked):
+        if checked:
+            # DISABLE CHANGE PARAMETERS/START PROGRAM BUTTONS
+            self.change_parameters_btn.setEnabled(False)
+            self.program_start_btn.setEnabled(False)
+
+            # SHOW ADDITIVE POPUP WINDOW
+            self.additive_program_window.show()
+            self.additive_program_window.parameter_set_button.setChecked(False)     # necessary or whole window is grayed out
+    
+    def program_start_clicked(self, checked):
+        if checked:
+            self.program_start_btn.setText('End Program')
+
+            try:
+                if self.program_to_run == "the program":
+                    self.run_odor_calibration()
+                if self.program_to_run == 'setpoint characterization':
+                    self.run_setpoint_characterization()
+                if self.program_to_run == 'additive':
+                    self.run_additive_program()
+            except AttributeError as err:
+                logger.error('No program selected')
+                self.program_start_btn.setChecked(False)
+
+        else:
+            #logger.debug('program start button unclicked')
+            self.program_start_btn.setText('Start Program')
+            # TODO additive takes an extra second to stop
+            # stops trying to send parameters, but prints "finished program" a bit later
+            # probably bc of sleeps?
+            self.threadIsFinished() # TODO this double-prints when program finishes naturally
+    ##############################
+    
+    
+    ##############################
+    # PROGRAMS FOR ORIGINAL OLFA
+    def run_odor_calibration(self):
+        logger.info('running odor calibration procedure')
+        
+        # check that PID is a device & is connected
+        try:
+            if self.pid_nidaq.connectButton.isChecked() == False:
+                logger.debug('connecting to pid')
+                self.pid_nidaq.connectButton.toggle()
+        except AttributeError as err:
+            logger.warning('PID is not added as a device - adding now')
+            self.add_pid_btn.toggle()
+            logger.debug('connecting to pid')
+            self.pid_nidaq.connectButton.toggle()
+
+
+        # TODO: change datafile location
+        # DATAFILE STUFF
+        datafile_name = self.data_file_name_lineEdit.text()
+        self.datafile_dir = self.data_file_dir_lineEdit.text() + '\\' + datafile_name + '.csv'
+        # if file does not exist: create it
+        if not os.path.exists(self.datafile_dir):
+            logger.info('Creating new file: %s', datafile_name)
+            File = datafile_name, ' '
+            file_created_time = utils.get_current_time()
+            file_created_time = file_created_time[:-4]
+            with open(self.datafile_dir,'a',newline='') as f:
+                writer = csv.writer(f,delimiter=',')
+                writer.writerow(File)
+                writer.writerow("")
+        else:
+            logger.warning('file already exists!!!!!!!!')
+
+
+        # GET PROGRAM PARAMETERS
+        vial_flows_complete_list = []
+        n_rep = self.num_repetitions_widget.value()
+        vial_open_duration = self.vial_open_time_widget.value()
+        
+
+
+        # CREATE STIMULUS LIST
+        for v in self.olfactometer.vials:
+            # iterate through vials to see which is checked
+            vial_is_checked = v.vial_checkbox.isChecked()
+            if vial_is_checked == True:
+                this_vial_flow_str = v.vial_flow_list.text()
+                this_vial_flow_values = this_vial_flow_str.split(",")
+                
+                for f in this_vial_flow_values:
+                    this_vial_num = int(v.vialNum)
+                    temp = np.repmat([this_vial_num,f],n_rep,1)     # make number of repetitions of this
+                    vial_flows_complete_list.extend(temp.tolist())  # add to complete list
+        random.shuffle(vial_flows_complete_list)        # randomize
+        self.stimulus_list = vial_flows_complete_list
+
+        # ITERATE THROUGH EACH STIMULUS
+        for stimulus in self.stimulus_list:
+            vial_number = stimulus[0]
+            flow_value = stimulus[1]
+
+            # tell pid to make an empty list, start adding values to it
+            self.pid_nidaq.start_making_data_list()
+
+            # open vial
+            self.olfactometer.olfa_device._set_valveset(vial_number,valvestate=1,suppress_errors=False)
+            
+            # wait x sec
+            time.sleep(vial_open_duration)
+
+            # close vial
+            self.olfactometer.olfa_device._set_valveset(vial_number,valvestate=0,suppress_errors=False)
+
+            # get list of values from pid
+            list_of_pid_values = []
+            # tell pid to stop adding values to the list
+            self.pid_nidaq.stop_making_data_list()
+            list_of_pid_values = self.pid_nidaq.data_list
+            
+            # write this line to the csv file
+            write_to_file = copy.copy(list_of_pid_values)
+            write_to_file.insert(0,flow_value)
+            write_to_file.insert(0,vial_number)
+            write_to_file = tuple(write_to_file)
+            with open(self.datafile_dir,'a',newline='') as f:
+                writer = csv.writer(f,delimiter=',')
+                writer.writerow(write_to_file)
+                
+            
+            
+            
+            #string_to_write_to_file = vial_number + ',' + 
+            
+            # stop recording
+            #self.read_thread.exit()
+            # save
+            # kill urself
+
+        logger.info('all done')
+        # increment file name
+        # self.last_datafile_number = self.this_datafile_number
+        self.this_datafile_number = self.last_datafile_number + 1
+        self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2)  # zero pad
+        data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
+        self.data_file_name_lineEdit.setText(data_file_name)
+    ##############################
+    
+    
+    ##############################
+    # PROGRAM WIDGETS FOR 48-LINE OLFA
     def create_48line_program_widgets(self):
         if self.program_to_run == "setpoint characterization":
             
@@ -501,7 +650,7 @@ class mainWindow(QMainWindow):
             self.p_setpoints_wid.setPlaceholderText('Setpoints to run (sccm)')
             self.p_setpoints_wid.setText(config_main.default_setpoint)
             self.p_sp_order_wid = QComboBox()
-            self.p_sp_order_wid.addItems(['Sequential','Random'])
+            self.p_sp_order_wid.addItems(['Random','Sequential'])
             
             self.p_spt_layout = QHBoxLayout()
             self.p_spt_layout.addWidget(QLabel('Setpoints (sccm):'))
@@ -524,17 +673,12 @@ class mainWindow(QMainWindow):
             self.p_dur_layout.addWidget(self.p_dur_off_wid)
             self.p_dur_layout.addWidget(QLabel('# trials:'))
             self.p_dur_layout.addWidget(self.p_numTrials_wid)
-            
-            self.p_pid_gain_lbl = QLabel('PID gain:')
-            self.p_pid_gain = QLineEdit(text=config_main.default_pid_gain)  # TODO this is a duplicate, remove it
             '''
             self.p_fake_open_lbl = QLabel('Fake open:')
             self.p_fake_open_wid = QComboBox()
             self.p_fake_open_wid.addItems(['On','Off'])
             
             p_btm_row_layout = QHBoxLayout()
-            p_btm_row_layout.addWidget(self.p_pid_gain_lbl)
-            p_btm_row_layout.addWidget(self.p_pid_gain)
             p_btm_row_layout.addWidget(self.p_fake_open_lbl)
             p_btm_row_layout.addWidget(self.p_fake_open_wid)
             '''
@@ -542,8 +686,6 @@ class mainWindow(QMainWindow):
             self.program_parameters_layout.addRow(self.p_vial_select_layout)
             self.program_parameters_layout.addRow(self.p_spt_layout)
             self.program_parameters_layout.addRow(self.p_dur_layout)
-            self.program_parameters_layout.addRow(self.p_pid_gain_lbl,self.p_pid_gain)
-            #self.program_parameters_layout.addRow(p_btm_row_layout)
             
             
             ##############################
@@ -568,7 +710,6 @@ class mainWindow(QMainWindow):
                     self.last_datafile_number = int(last_datafile_num)
                 else:
                     self.last_datafile_number = 99
-
                     logger.debug('last datafile in this folder does not have a number (%s), setting default datafile number to 00', last_datafile)
 
             # get data file number
@@ -676,146 +817,6 @@ class mainWindow(QMainWindow):
         # HIDE POPUP WINDOW
         self.additive_program_window.hide()
     
-    def change_parameters_btn_toggled(self,checked):
-        if checked:
-            # DISABLE CHANGE PARAMETERS/START PROGRAM BUTTONS
-            self.change_parameters_btn.setEnabled(False)
-            self.program_start_btn.setEnabled(False)
-
-            # SHOW ADDITIVE POPUP WINDOW
-            self.additive_program_window.show()
-            self.additive_program_window.parameter_set_button.setChecked(False)     # necessary or whole window is grayed out
-    
-    def program_start_clicked(self, checked):
-        if checked:
-            self.program_start_btn.setText('End Program')
-
-            try:
-                if self.program_to_run == "the program":
-                    self.run_odor_calibration()
-                if self.program_to_run == 'setpoint characterization':
-                    self.run_setpoint_characterization()
-                if self.program_to_run == 'additive':
-                    self.run_additive_program()
-            except AttributeError as err:
-                logger.error('No program selected')
-                self.program_start_btn.setChecked(False)
-
-        else:
-            #logger.debug('program start button unclicked')
-            self.program_start_btn.setText('Start Program')
-            # TODO additive takes an extra second to stop
-            # stops trying to send parameters, but prints "finished program" a bit later
-            # probably bc of sleeps?
-            self.threadIsFinished() # TODO this double-prints when program finishes naturally
-    
-    def run_odor_calibration(self):
-        logger.info('running odor calibration procedure')
-        
-        # check that PID is a device & is connected
-        try:
-            if self.pid_nidaq.connectButton.isChecked() == False:
-                logger.debug('connecting to pid')
-                self.pid_nidaq.connectButton.toggle()
-        except AttributeError as err:
-            logger.warning('PID is not added as a device - adding now')
-            self.add_pid_btn.toggle()
-            logger.debug('connecting to pid')
-            self.pid_nidaq.connectButton.toggle()
-
-
-        # TODO: change datafile location
-        # DATAFILE STUFF
-        datafile_name = self.data_file_name_lineEdit.text()
-        self.datafile_dir = self.data_file_dir_lineEdit.text() + '\\' + datafile_name + '.csv'
-        # if file does not exist: create it
-        if not os.path.exists(self.datafile_dir):
-            logger.info('Creating new file: %s', datafile_name)
-            File = datafile_name, ' '
-            file_created_time = utils.get_current_time()
-            file_created_time = file_created_time[:-4]
-            with open(self.datafile_dir,'a',newline='') as f:
-                writer = csv.writer(f,delimiter=',')
-                writer.writerow(File)
-                writer.writerow("")
-        else:
-            logger.warning('file already exists!!!!!!!!')
-
-
-        # GET PROGRAM PARAMETERS
-        vial_flows_complete_list = []
-        n_rep = self.num_repetitions_widget.value()
-        vial_open_duration = self.vial_open_time_widget.value()
-        
-
-
-        # CREATE STIMULUS LIST
-        for v in self.olfactometer.vials:
-            # iterate through vials to see which is checked
-            vial_is_checked = v.vial_checkbox.isChecked()
-            if vial_is_checked == True:
-                this_vial_flow_str = v.vial_flow_list.text()
-                this_vial_flow_values = this_vial_flow_str.split(",")
-                
-                for f in this_vial_flow_values:
-                    this_vial_num = int(v.vialNum)
-                    temp = np.repmat([this_vial_num,f],n_rep,1)     # make number of repetitions of this
-                    vial_flows_complete_list.extend(temp.tolist())  # add to complete list
-        random.shuffle(vial_flows_complete_list)        # randomize
-        self.stimulus_list = vial_flows_complete_list
-
-        # ITERATE THROUGH EACH STIMULUS
-        for stimulus in self.stimulus_list:
-            vial_number = stimulus[0]
-            flow_value = stimulus[1]
-
-            # tell pid to make an empty list, start adding values to it
-            self.pid_nidaq.start_making_data_list()
-
-            # open vial
-            self.olfactometer.olfa_device._set_valveset(vial_number,valvestate=1,suppress_errors=False)
-            
-            # wait x sec
-            time.sleep(vial_open_duration)
-
-            # close vial
-            self.olfactometer.olfa_device._set_valveset(vial_number,valvestate=0,suppress_errors=False)
-
-            # get list of values from pid
-            list_of_pid_values = []
-            # tell pid to stop adding values to the list
-            self.pid_nidaq.stop_making_data_list()
-            list_of_pid_values = self.pid_nidaq.data_list
-            
-            # write this line to the csv file
-            write_to_file = copy.copy(list_of_pid_values)
-            write_to_file.insert(0,flow_value)
-            write_to_file.insert(0,vial_number)
-            write_to_file = tuple(write_to_file)
-            with open(self.datafile_dir,'a',newline='') as f:
-                writer = csv.writer(f,delimiter=',')
-                writer.writerow(write_to_file)
-                
-            
-            
-            
-            #string_to_write_to_file = vial_number + ',' + 
-            
-            # stop recording
-            #self.read_thread.exit()
-            # save
-            # kill urself
-
-        logger.info('all done')
-        # increment file name
-        # self.last_datafile_number = self.this_datafile_number
-        self.this_datafile_number = self.last_datafile_number + 1
-        self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2)  # zero pad
-        data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
-        self.data_file_name_lineEdit.setText(data_file_name)
-    
-    
-    ##############################
     # PROGRAMS FOR 48-LINE OLFA
     def run_setpoint_characterization(self):
         
@@ -1023,7 +1024,6 @@ class mainWindow(QMainWindow):
     def send_Command(self, stringToSend:str):
         strToSend = stringToSend
         self.olfactometer.send_to_master(strToSend)
-
     ##############################
     
     
@@ -1048,13 +1048,12 @@ class mainWindow(QMainWindow):
                 if self.program_to_run == 'setpoint characterization':
                     self.active_slave_refresh()
             
-            # Results file name/directory
+            # Directory for 48-line olfa
             self.olfa_48line_resultfiles_dir = main_datafile_directory + '\\48-line olfa'
-            # create directory for 48-line olfa
             if not os.path.exists(self.olfa_48line_resultfiles_dir):
                 os.mkdir(self.olfa_48line_resultfiles_dir)
                 logger.debug('created 48-line olfa results files at %s',self.olfa_48line_resultfiles_dir)
-            # create directory for 48-line olfa for today, get datafile number
+            # Directory for 48-line olfa for today, get datafile number
             self.today_olfa_48line_resultfiles_dir = main_datafile_directory + '\\48-line olfa' + '\\' + current_date
             if os.path.exists(self.today_olfa_48line_resultfiles_dir):
                 # check what files are in this folder
@@ -1262,6 +1261,27 @@ class mainWindow(QMainWindow):
     
     def end_recording(self):
         logger.info('Ended recording to file: %s', self.data_file_name_lineEdit.text())        
+        
+        if self.add_olfa_48line_btn.isChecked() == True:
+            # Check directory for last datafile number
+            list_of_files = os.listdir(self.today_olfa_48line_resultfiles_dir)
+            list_of_files = [x for x in list_of_files if '.csv' in x]   # only get csv files
+            if not list_of_files:
+                self.last_datafile_number = -1  # if there are no files
+            else:
+                # find the number of the last data file
+                last_datafile = list_of_files[len(list_of_files)-1]
+                idx_fileExt = last_datafile.rfind('.')
+                last_datafile = last_datafile[:idx_fileExt] # remove file extension
+                idx_underscore = last_datafile.rfind('_')   # find last underscore
+                last_datafile_num = last_datafile[idx_underscore+1:]
+                if last_datafile_num.isnumeric():   # if what's after the underscore is a number
+                    self.last_datafile_number = int(last_datafile_num)
+                else:
+                    self.last_datafile_number = 98  # if the last file doesn't have a number
+                    logger.warning('last datafile in this folder is %s',last_datafile)
+        else:
+            self.last_datafile_number = self.this_datafile_number + 1
         
         # update file number in box
         self.this_datafile_number = self.this_datafile_number + 1
