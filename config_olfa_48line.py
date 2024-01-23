@@ -17,7 +17,6 @@ master_modes = ["6: verbose",
                 "2: error",
                 "1: fatal"]
 slave_names = ['A','B','C','D','E','F']
-#slave_names = ['A','B','C']
 cal_table_file_tyoe = '.txt'
 ##############################
 
@@ -34,7 +33,7 @@ default_cal_table = 'Honeywell_3100V'
 def_Kp_value = '0.03'
 def_Ki_value = '0.0005'
 def_Kd_value = '0.0000'
-def_manual_cmd = 'S_PV_150_A2'
+def_manual_cmd = 'S_OV_10_A1'
 def_mfc_cal_value = '200'
 def_calibration_duration = '60'     # calibration per flow rate
 ##############################
