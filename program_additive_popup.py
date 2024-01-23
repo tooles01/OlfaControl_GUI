@@ -1,6 +1,7 @@
 
 import logging, random
 from PyQt5.QtWidgets import *
+import numpy.matlib as np
 
 import utils, config_main
 
@@ -17,6 +18,7 @@ def_flow_per_trial = 100
 def_min_flow = 10
 def_max_flow = 100
 def_inc_flow = 10
+def_spt_values = '10,20,30,40,50,60,70,80,90'
 
 
 class additiveProgramSettingsPopup(QWidget):
@@ -76,12 +78,14 @@ class additiveProgramSettingsPopup(QWidget):
 
         self.flow_per_trial_lbl = QLabel('Total flow per trial (sccm):')
         self.flow_per_trial_wid = QLineEdit(text=str(def_flow_per_trial))
-        self.min_flow_lbl = QLabel('Min flow (per vial):')
-        self.min_flow_wid = QLineEdit(text=str(def_min_flow))
+        self.flow_values_to_run_lbl = QLabel('Flow values to run (sccm):')
+        self.flow_values_to_run_wid = QLineEdit(text=str(def_spt_values))
+        #self.min_flow_lbl = QLabel('Min flow (per vial):')
+        #self.min_flow_wid = QLineEdit(text=str(def_min_flow))
         #self.max_flow_lbl = QLabel('Max flow (per vial):')
         #self.max_flow_wid = QLineEdit(text=str(def_max_flow))
-        self.inc_flow_lbl = QLabel('Increment flow by:')
-        self.inc_flow_wid = QLineEdit(text=str(def_inc_flow))
+        #self.inc_flow_lbl = QLabel('Increment flow by:')
+        #self.inc_flow_wid = QLineEdit(text=str(def_inc_flow))
         self.open_dur_lbl = QLabel('Vial open duration (s):')
         self.open_dur_wid = QLineEdit(text=str(config_main.default_dur_ON))
         self.rest_dur_lbl = QLabel('Rest between trials (s):')
@@ -92,9 +96,10 @@ class additiveProgramSettingsPopup(QWidget):
         
         layout = QFormLayout()
         layout.addRow(self.flow_per_trial_lbl,self.flow_per_trial_wid)
-        layout.addRow(self.min_flow_lbl,self.min_flow_wid)
+        layout.addRow(self.flow_values_to_run_lbl,self.flow_values_to_run_wid)
+        #layout.addRow(self.min_flow_lbl,self.min_flow_wid)
         #layout.addRow(self.max_flow_lbl,self.max_flow_wid)
-        layout.addRow(self.inc_flow_lbl,self.inc_flow_wid)
+        #layout.addRow(self.inc_flow_lbl,self.inc_flow_wid)
         layout.addRow(self.open_dur_lbl,self.open_dur_wid)
         layout.addRow(self.rest_dur_lbl,self.rest_dur_wid)
         layout.addRow(self.num_trials_lbl,self.num_trials_wid)
@@ -120,9 +125,12 @@ class additiveProgramSettingsPopup(QWidget):
 
             # get all parameters
             self.flow_per_trial = self.flow_per_trial_wid.text()
-            self.min_flow = self.min_flow_wid.text()
+            self.flow_values_to_run = self.flow_values_to_run_wid.text()
+            '''
+            #self.min_flow = self.min_flow_wid.text()
             #self.max_flow = self.max_flow_wid.text()
-            self.inc_flow = self.inc_flow_wid.text()
+            #self.inc_flow = self.inc_flow_wid.text()
+            '''
             self.open_dur = self.open_dur_wid.text()
             self.rest_dur = self.rest_dur_wid.text()
             self.num_trials = self.num_trials_wid.text()
@@ -150,8 +158,32 @@ class additiveProgramSettingsPopup(QWidget):
     def create_stimulus_list(self):
         self.vial_flows_complete_list = []
 
+        num_vials_to_run = len(self.vials_to_run)
+        if num_vials_to_run != 2:
+            logger.error('not currently set up for this number of vials')
+        else:
+            setpoints_to_run = self.flow_values_to_run_wid.text()
+            setpoints_to_run_values = setpoints_to_run.split(",")
+            vial1_name = self.vials_to_run[0]
+            for f in setpoints_to_run_values:
+                setpoint_1 = int(f)
+                setpoint_2 = int(self.flow_per_trial) - setpoint_1
+                temp = np.repmat([setpoint_1,setpoint_2],int(self.num_trials),1)  # make number of repetitions of this
+                self.vial_flows_complete_list.extend(temp.tolist()) # add to complete list
+            random.shuffle(self.vial_flows_complete_list)   # randomize
+
+    
+    '''
+    def create_stimulus_list(self):
+        self.vial_flows_complete_list = []
+
+        
         # check number of vials selected
         num_vials_to_run = len(self.vials_to_run)
+        
+        
+        setpoints_to_run = self.flow_values_to_run_wid.text()
+        setpoints_to_run_values = setpoints_to_run.split(",")
 
         # convert everything to ints or whatever
         total_flow_per_trial = int(self.flow_per_trial)
@@ -176,60 +208,62 @@ class additiveProgramSettingsPopup(QWidget):
             this_trial_setpoints.append(sccmVal1)
             this_trial_setpoints.append(sccmVal2)
             
-            '''
-            if num_vials_to_run == 3 or 2:
-                max_for_first_setpoint = total_flow_per_trial - ((num_vials_to_run-1)*min_flow)
-                if max_for_first_setpoint != 0:
-                    sccmVal1 = random.randint(min_flow,max_for_first_setpoint)
-                else:
-                    sccmVal1 = 0
-                this_trial_setpoints.append(sccmVal1)
-                remaining_flow = total_flow_per_trial-sccmVal1
-                if num_vials_to_run == 2:
-                    sccmVal2 = random.randint(min_flow,remaining_flow)
-                    this_trial_setpoints.append(sccmVal2)
-                if num_vials_to_run == 3:
-                    max_for_second_setpoint = remaining_flow - min_flow
-                    sccmVal2 = random.randint(min_flow,max_for_second_setpoint)
-                    this_trial_setpoints.append(sccmVal2)
-                    remaining_flow = total_flow_per_trial - (sccmVal1+sccmVal2)
-                    sccmVal3 = random.randint(min_flow,remaining_flow)
-                    this_trial_setpoints.append(sccmVal3)
-                
+    '''
+    '''
+        if num_vials_to_run == 3 or 2:
+            max_for_first_setpoint = total_flow_per_trial - ((num_vials_to_run-1)*min_flow)
+            if max_for_first_setpoint != 0:
+                sccmVal1 = random.randint(min_flow,max_for_first_setpoint)
             else:
-                logger.warning('%s vials selected, must be 2 or 3 vials', num_vials_to_run)
-            '''
-            
-            self.vial_flows_complete_list.append(this_trial_setpoints)
-            
-        '''
-        # create list of setpoints
-        for i in range(num_trials):
-            this_trial_setpoints = []
-            max_for_first_setpoint = total_flow_per_trial-((num_vials_to_run-1)*min_flow)
-
-            sccmVal1 = random.randint(min_flow,max_for_first_setpoint)
+                sccmVal1 = 0
             this_trial_setpoints.append(sccmVal1)
-            remaining = total_flow_per_trial-sccmVal1
-            for num_vials in range(num_vials_to_run-1):
-                this_vial_num = num_vials+2
-                # if it's not the last one
-                if this_vial_num == num_vials_to_run:
-                    max_for_this_setpoint = remaining
-                else:
-                    max_for_this_setpoint = remaining-((num_vials+1)*min_flow)
-                try:
-                    next_sccm_val = random.randint(min_flow,max_for_this_setpoint)
-                    remaining = remaining - next_sccm_val
-                    this_trial_setpoints.append(next_sccm_val)
-                except ValueError as err:
-                    logger.debug('max for first setpoint: %s',max_for_first_setpoint)
-                    logger.debug('sccmVal1:\t%s',sccmVal1)
-                    logger.debug('total number of vials: %s',num_vials_to_run)
-                    logger.debug('this vial num: %s',this_vial_num)
-                    logger.debug('this_trial_setpoints: %s',this_trial_setpoints)
-                    logger.debug('max for this setpoint: %s',max_for_this_setpoint)
-                    logger.debug('num_vials:\t%s',num_vials)
+            remaining_flow = total_flow_per_trial-sccmVal1
+            if num_vials_to_run == 2:
+                sccmVal2 = random.randint(min_flow,remaining_flow)
+                this_trial_setpoints.append(sccmVal2)
+            if num_vials_to_run == 3:
+                max_for_second_setpoint = remaining_flow - min_flow
+                sccmVal2 = random.randint(min_flow,max_for_second_setpoint)
+                this_trial_setpoints.append(sccmVal2)
+                remaining_flow = total_flow_per_trial - (sccmVal1+sccmVal2)
+                sccmVal3 = random.randint(min_flow,remaining_flow)
+                this_trial_setpoints.append(sccmVal3)
             
-            self.vial_flows_complete_list.append(this_trial_setpoints)
-        '''
+        else:
+            logger.warning('%s vials selected, must be 2 or 3 vials', num_vials_to_run)
+    '''
+    '''
+        self.vial_flows_complete_list.append(this_trial_setpoints)
+    '''
+        
+    '''
+    # create list of setpoints
+    for i in range(num_trials):
+        this_trial_setpoints = []
+        max_for_first_setpoint = total_flow_per_trial-((num_vials_to_run-1)*min_flow)
+
+        sccmVal1 = random.randint(min_flow,max_for_first_setpoint)
+        this_trial_setpoints.append(sccmVal1)
+        remaining = total_flow_per_trial-sccmVal1
+        for num_vials in range(num_vials_to_run-1):
+            this_vial_num = num_vials+2
+            # if it's not the last one
+            if this_vial_num == num_vials_to_run:
+                max_for_this_setpoint = remaining
+            else:
+                max_for_this_setpoint = remaining-((num_vials+1)*min_flow)
+            try:
+                next_sccm_val = random.randint(min_flow,max_for_this_setpoint)
+                remaining = remaining - next_sccm_val
+                this_trial_setpoints.append(next_sccm_val)
+            except ValueError as err:
+                logger.debug('max for first setpoint: %s',max_for_first_setpoint)
+                logger.debug('sccmVal1:\t%s',sccmVal1)
+                logger.debug('total number of vials: %s',num_vials_to_run)
+                logger.debug('this vial num: %s',this_vial_num)
+                logger.debug('this_trial_setpoints: %s',this_trial_setpoints)
+                logger.debug('max for this setpoint: %s',max_for_this_setpoint)
+                logger.debug('num_vials:\t%s',num_vials)
+        
+        self.vial_flows_complete_list.append(this_trial_setpoints)
+    '''
