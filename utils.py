@@ -64,12 +64,7 @@ def find_olfaControl_directory():
     
     # If not found: search Dropbox
     if not path_list:
-        c_drive_git_path = os.path.expanduser('~\\Dropbox')
-        path_list = glob.glob(c_drive_git_path + '/**/*' + str_to_find,recursive=True)
-    
-    # If not found: search Dropbox (NYU Langone Health)
-    if not path_list:
-        c_drive_git_path = os.path.expanduser('~\\Dropbox (NYU Langone Health)')
+        c_drive_git_path = os.path.expanduser('~\\Dropbox*')
         path_list = glob.glob(c_drive_git_path + str_to_find, recursive=True)
     
     # If not found: print warning
@@ -92,7 +87,7 @@ def find_olfaControl_directory():
         gui_directory = path_list[0]
         logger.debug('OlfaControl_GUI directory found at:\t' + gui_directory)
     
-    return gui_directory    # type is list
+    return gui_directory    # type is string
 
 def find_log_directory():
     # Check for OlfaControl_GUI directory
@@ -119,8 +114,10 @@ def find_calibration_table_directory():
     olfacontrolgui_directory = find_olfaControl_directory()
 
     # if not found, use whatever directory we are currently in
+    # TODO use this strat instead of the whole find_olfaControl_directory
     if not olfacontrolgui_directory:
         directory_to_search = os.getcwd()
+        logger.debug('Searching current directory for calibration tables')
     else:
         directory_to_search = olfacontrolgui_directory
 
