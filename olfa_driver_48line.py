@@ -102,7 +102,7 @@ class Vial(QGroupBox):
         self.vial_details_window.db_valve_open_wid.returnPressed.connect(lambda: self.vial_details_window.db_valve_open_btn.setChecked(True))        
         
         self.setLayout(self.layout)
-        self.valve_open_btn.setMaximumWidth(60)
+        #self.valve_open_btn.setMaximumWidth(60)
         max_width = self.sizeHint().width()
         #self.setMaximumWidth(max_width - 10)
         self.setMaximumWidth(max_width)
@@ -184,7 +184,9 @@ class Vial(QGroupBox):
         self.layout.addRow(self.valve_open_btn)
         self.layout.addRow(self.valve_dur_lbl,self.valve_dur_spinbox)
         self.layout.addRow(self.setpoint_slider_layout)
-        self.layout.addRow(self.read_flow_vals_btn,self.vial_details_btn)
+        self.layout.addRow(self.read_flow_vals_btn)
+        self.layout.addRow(self.vial_details_btn)
+        #self.layout.addRow(self.read_flow_vals_btn,self.vial_details_btn)
         # height
         setpoint_set_read_height = 50
         self.setpoint_set_lineedit.setMaximumHeight(setpoint_set_read_height)
@@ -192,11 +194,12 @@ class Vial(QGroupBox):
         self.setpoint_slider.setFixedHeight(setpoint_set_read_height*2)
         # width
         half_col_width = self.read_flow_vals_btn.sizeHint().width()
-        self.valve_open_btn.setMaximumWidth(half_col_width)
+        #self.valve_open_btn.setMaximumWidth(half_col_width)
         #self.setpoint_slider.setFixedWidth(half_col_width)
+        self.valve_dur_spinbox.setMaximumWidth(half_col_width)
         self.setpoint_set_lineedit.setMaximumWidth(half_col_width)
         self.setpoint_read_widget.setMaximumWidth(half_col_width)
-        self.read_flow_vals_btn.setMaximumWidth(self.read_flow_vals_btn.sizeHint().width())
+        #self.read_flow_vals_btn.setMaximumWidth(self.read_flow_vals_btn.sizeHint().width())
         #self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
         #self.setpoint_slider.setFixedWidth(32)
     
