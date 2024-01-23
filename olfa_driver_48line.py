@@ -134,9 +134,9 @@ class Vial(QGroupBox):
         self.valve_open_btn.toggled.connect(self.vial_open_toggled)
         self.valve_open_dur_changed()
         self.open_valve_layout = QHBoxLayout()
-        self.open_valve_layout.addWidget(self.valve_open_btn)
-        self.open_valve_layout.addWidget(self.valve_dur_lbl)
-        self.open_valve_layout.addWidget(self.valve_dur_spinbox)
+        #self.open_valve_layout.addWidget(self.valve_open_btn)
+        #self.open_valve_layout.addWidget(self.valve_dur_lbl)
+        #self.open_valve_layout.addWidget(self.valve_dur_spinbox)
         
         # SETPOINT PIANO
         self.setpoint_slider = QSlider()
@@ -185,6 +185,9 @@ class Vial(QGroupBox):
         # LAYOUT
         self.layout = QFormLayout()
         self.layout.addRow(self.valveTimer_layout)
+        #self.layout.addWidget(self.valve_open_btn)
+        self.layout.addRow(self.valve_open_btn)
+        self.layout.addRow(self.valve_dur_lbl,self.valve_dur_spinbox)
         self.layout.addRow(self.open_valve_layout)
         self.layout.addRow(self.setpoint_slider_layout)
         self.layout.addRow(self.read_flow_vals_btn,self.vial_details_btn)
