@@ -30,7 +30,7 @@ logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 logger.debug('log file located at: %s', main_datafile_directory)
 ##############################
-
+# test
 
 
 class worker_sptChar(QObject):
