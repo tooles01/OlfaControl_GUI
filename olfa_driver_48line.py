@@ -24,6 +24,7 @@ file_handler = utils.create_file_handler(main_datafile_directory)
 logger.addHandler(file_handler)
 ##############################
 
+default_olfa_config_file = 'olfa_config__default.json'
 
 '''
 import math, time
@@ -541,11 +542,14 @@ class olfactometer_window(QGroupBox):
         
         self.generate_ui()
         
+        # Load default olfa config file (calibration tables)
+        self.load_config_file(default_olfa_config_file)
+        
         self.master_groupbox.setEnabled(False)
         self.setTitle('Olfactometer')
     
     def get_calibration_tables(self):
-        logger.debug('loading flow sensor calibration tables from (%s)', self.flow_cal_dir)
+        logger.debug('Loading all flow sensor calibration tables found at (%s)', self.flow_cal_dir)
         
         # Get names of all .txt files in flow cal directory
         cal_file_names = os.listdir(self.flow_cal_dir)
@@ -699,9 +703,9 @@ class olfactometer_window(QGroupBox):
         self.settings_groupbox = QGroupBox('Other Settings')
         
         # Select config file
-        self.load_config_btn = QPushButton('Load olfa config',checkable=True)
+        self.load_config_btn = QPushButton('Load olfa config')
         self.load_config_btn.setToolTip('Load olfa config file containing calibration tables')
-        self.load_config_btn.toggled.connect(self.load_config_btn_toggled)
+        self.load_config_btn.clicked.connect(self.load_config_btn_clicked)
         
         # Select directory where flow calibration tables are stored
         self.flow_cal_dir_btn = QPushButton('Select Calibration Table Directory',checkable=True)
@@ -747,36 +751,45 @@ class olfactometer_window(QGroupBox):
         else:
             pass
     
-    def load_config_btn_toggled(self,checked):  # TODO load a default one at the beginning
-        if checked:
-            dlg = QFileDialog()
-            dlg.setFileMode(QFileDialog.ExistingFile)   # The name of a single existing file
-            if dlg.exec_():
-                
-                # load the config file
-                file_selected = dlg.selectedFiles()
-                self.config_file_dir = file_selected[0]
-                with open(self.config_file_dir) as f:
-                    self.config_obj = json.load(f)   # dict
-                self.config_olfa = self.config_obj['Olfactometers']     # list
-                self.config_olfa = self.config_olfa[0]                  # dict
-                self.config_cal_tables = self.config_obj['Calibration tables']  # dict
-                
-                # update vial calibration tables
-                for s in self.slave_objects:
-                    for v in s.vials:
-                        vial_name = v.full_vialNum
-                        if vial_name in self.config_cal_tables:
-                            cal_table = self.config_cal_tables.get(vial_name)
-                            wid = v.vial_details_window.db_cal_table_combobox
-                            cal_table_options_list = [wid.itemText(i) for i in range(wid.count())]
-                            if cal_table in cal_table_options_list:
-                                v.cal_table = cal_table
-                                v.vial_details_window.db_cal_table_combobox.setCurrentText(v.cal_table)
-                            else:
-                                logger.debug('config file has an invalid cal table: %s', cal_table)
-            
-            self.load_config_btn.setChecked(False)
+    def load_config_btn_clicked(self):
+        # Open file select dialog
+        dlg = QFileDialog()
+        dlg.setFileMode(QFileDialog.ExistingFile)   # The name of a single existing file
+        dlg.setNameFilter("JSON Files (*.json)")    # Set file filter to .json
+        if dlg.exec_():
+            # Load the config file
+            file_selected = dlg.selectedFiles()
+            file_selected = file_selected[0]
+            self.load_config_file(file_selected)
+    
+    def load_config_file(self, file_selected):
+        # Load the config file
+        self.config_file_dir = file_selected
+        with open(self.config_file_dir) as f:
+            self.config_obj = json.load(f)   # dict
+        logger.info('Loading config file: %s', self.config_file_dir)
+        
+        try:
+            '''
+            self.config_olfa = self.config_obj['Olfactometers']     # list
+            self.config_olfa = self.config_olfa[0]                  # dict
+            '''
+            self.config_cal_tables = self.config_obj['Calibration tables']  # dict
+            # Update vial calibration tables
+            for s in self.slave_objects:
+                for v in s.vials:
+                    vial_name = v.full_vialNum
+                    if vial_name in self.config_cal_tables:
+                        cal_table = self.config_cal_tables.get(vial_name)
+                        wid = v.vial_details_window.db_cal_table_combobox
+                        cal_table_options_list = [wid.itemText(i) for i in range(wid.count())]
+                        if cal_table in cal_table_options_list:
+                            v.cal_table = cal_table
+                            v.vial_details_window.db_cal_table_combobox.setCurrentText(v.cal_table)
+                        else:
+                            logger.debug('config file has an invalid cal table: %s', cal_table)
+        except KeyError:
+            logger.warning('Invalid config file selected - try again')
     
     def create_raw_comm_groupbox(self):
         self.raw_comm_box = QGroupBox("Raw Communication Data")

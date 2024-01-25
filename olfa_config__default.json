@@ -1,6 +1,7 @@
 {
     "Other stuff" : [
         {
+            "note": "ignore this",
             "maybe output flow sensor": "put that info here"
         }
         
@@ -8,19 +9,23 @@
 
     "Calibration tables" :
     {
-        "E1" : "E1_2023-10-10",
-        "E2" : "E2_2023-10-18",
-        "E3" : "E3_2023-11-01",
-        "E4" : "E4_2023-10-26",
-        "E5" : "E5_2023-10-26"
+        "A1" : "Honeywell_3100V",
+        "A2" : "Honeywell_3100V",
+        "A3" : "Honeywell_3100V",
+        "A4" : "Honeywell_3100V",
+        "A5" : "Honeywell_3100V",
+        "A6" : "Honeywell_3100V",
+        "A7" : "Honeywell_3100V",
+        "A8" : "Honeywell_3100V"
     },
     
 
     "Olfactometers" : [
         {
+            "note": "the entire olfactometers section doesn't mean anything, it's just for me to test stuff - all that matters is calibration tables above",
             "name" : "E (actually this is a bad format, bc the script is designed to find out the name from the address",
             "address" : "put the I2C address here",
-
+            
             "Flow Sensors" : [
                 {
                     "1" : {
