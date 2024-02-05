@@ -15,14 +15,15 @@ from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 import nidaqmx
 from nidaqmx import stream_readers 
 import numpy as np
+
 noPortMsg = '~ No NI devices detected ~'
 analogChannel = 'ai0'   # TODO: fix this
 analog_input_max_voltage = 10.0
 analog_input_min_voltage = -10.0
 
 def_timeBt_Hz = 1000
-def_timeBt_s = 1/def_timeBt_Hz
-def_timeBtReadings = def_timeBt_s*1000    # in ms
+def_timeBt_s = 1/def_timeBt_Hz          # Time between readings (in seconds)
+def_timeBtReadings = def_timeBt_s*1000  # in ms
 
 
 class worker_nidaq(QObject):
@@ -32,32 +33,36 @@ class worker_nidaq(QObject):
     def __init__(self, devName):
         super().__init__()
         self.readTheStuff = False
-        self.timeToSleep = def_timeBt_s
+        self.timeToSleep = def_timeBt_s     # Time between readings (in seconds)
         self.devName = devName
         self.analogChan = analogChannel
-        self.save_values_to_list = False        
+        self.save_values_to_list = False
 
         self.data_list = []
     
     @pyqtSlot()
     def read_from_ni_device(self):
-        channelIWant = self.devName + '/' + self.analogChan
-        t = nidaqmx.Task()      # create a task
-        t.ai_channels.add_ai_voltage_chan(channelIWant) # add analog input channel to this task
-        t.ai_channels[0].ai_max = analog_input_max_voltage  # set analog input max voltage
-        t.ai_channels[0].ai_min = analog_input_min_voltage  # set analog input min voltage
-        
-        while self.readTheStuff == True:
-            try:
-                value = t.read(1)   # read 1 sample
-                value = value[0]    # convert from list to float
-                self.sendData_from_worker.emit(value)
-                if self.save_values_to_list == True:
-                    self.data_list.append(value)
-                time.sleep(self.timeToSleep)
+        channelIWant = self.devName + '/' + self.analogChan # Name of the physical channel
+        t = nidaqmx.Task()      # DAQmx task
+        try:
+            t.ai_channels.add_ai_voltage_chan(channelIWant)     # Create channel to measure voltage
+            t.ai_channels[0].ai_max = analog_input_max_voltage  # Maximum value
+            t.ai_channels[0].ai_min = analog_input_min_voltage  # Minimum value
             
-            except:
-                pass
+            while self.readTheStuff == True:
+                try:
+                    value = t.read(1)   # Read 1 sample
+                    value = value[0]    # Convert from list to float
+                    self.sendData_from_worker.emit(value)   # Send to NiDaq class
+                    if self.save_values_to_list == True:
+                        self.data_list.append(value)
+                    time.sleep(self.timeToSleep)
+                
+                except:
+                    logger.warning('error')
+        
+        except nidaqmx.DaqError as err:
+            logger.warning(err)
 
 
 class NiDaq(QGroupBox):
@@ -87,6 +92,7 @@ class NiDaq(QGroupBox):
         self.connectBox.setFixedWidth(max_width)
         self.settingsBox.setFixedWidth(max_width)
 
+        self.setUpThreads()
         
 
     # CONNECT TO DEVICE
@@ -101,12 +107,12 @@ class NiDaq(QGroupBox):
 
         channelLbl = QLabel(text="Channel:")
         
-        self.channelToRead = QLineEdit(readOnly=True)
+        self.channelToRead = QLineEdit()
         self.channelToRead.setToolTip("Device channel to read from")
         self.channel_widget = QComboBox()
         
         if self.port != noPortMsg:
-            self.channelToRead.setText(self.port + '/' + analogChannel)
+            self.channelToRead.setText(analogChannel)
         
         self.connectBoxLayout = QFormLayout()
         self.connectBoxLayout.addRow(self.portLbl,self.portWidget)
@@ -143,18 +149,26 @@ class NiDaq(QGroupBox):
         if checked:
             self.portWidget.setEnabled(False)
             self.refreshButton.setEnabled(False)
+            self.channelToRead.setEnabled(False)
             self.connectButton.setText('Stop reading from ' + str(self.port))
 
-            self.setUpThreads()
-            self.thread_nidaq.start()
+            # Send channel name to worker object
+            self.channel_name = self.channelToRead.text()
+            self.worker_obj_nidaq.analogChan = self.channel_name
             self.worker_obj_nidaq.readTheStuff = True
+            
+            # Start thread
+            self.thread_nidaq.start()
         
         else:
             self.portWidget.setEnabled(True)
-            self.connectButton.setText('Connect to ' + str(self.port))
             self.refreshButton.setEnabled(True)
-
+            self.channelToRead.setEnabled(True)
+            self.connectButton.setText('Connect to ' + str(self.port))
+            
             self.worker_obj_nidaq.readTheStuff = False
+
+            # Quit thread
             self.thread_nidaq.quit()
     
     def setUpThreads(self):
@@ -171,6 +185,7 @@ class NiDaq(QGroupBox):
         lbl = QLabel("Time b/t readings (ms):")
         self.timeWid = QLineEdit(text=str(def_timeBtReadings))
         self.updateBut = QPushButton(text="Update",clicked=self.updateTimeBt)
+        self.timeWid.returnPressed.connect(self.updateTimeBt)
 
         layout = QFormLayout()
         layout.addRow(lbl)
@@ -178,10 +193,11 @@ class NiDaq(QGroupBox):
         self.settingsBox.setLayout(layout)
 
     def updateTimeBt(self):
-        new_time_bt_acquisitions = int(self.timeWid.text())
-        self.worker_obj_nidaq.timeToSleep = new_time_bt_acquisitions
+        new_time_bt_acquisitions_ms = float(self.timeWid.text())
+        new_time_bt_acquisitions_s = new_time_bt_acquisitions_ms/1000
+        self.worker_obj_nidaq.timeToSleep = new_time_bt_acquisitions_s
         try:
-            logger.info('updated time between acquisitions to %s ms',new_time_bt_acquisitions)
+            logger.info('updated time between acquisitions to %s ms',new_time_bt_acquisitions_ms)
         except NameError as err:
             print(err)
         
