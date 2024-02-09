@@ -25,6 +25,7 @@ logger.addHandler(file_handler)
 ##############################
 
 default_olfa_config_file = 'olfa_config__default.json'
+max_calibration_table_value_sccm = '1000'
 
 '''
 import math, time
@@ -103,7 +104,6 @@ class Vial(QGroupBox):
         self.vial_details_window.db_valve_open_wid.returnPressed.connect(lambda: self.vial_details_window.db_valve_open_btn.setChecked(True))        
         
         self.setLayout(self.layout)
-        #self.valve_open_btn.setMaximumWidth(60)
         max_width = self.sizeHint().width()
         #self.setMaximumWidth(max_width - 10)
         self.setMaximumWidth(max_width)
@@ -130,7 +130,9 @@ class Vial(QGroupBox):
         # VALVE OPEN
         self.valve_dur_spinbox = QSpinBox(value=int(config_olfa.def_open_duration))
         self.valve_dur_spinbox.valueChanged.connect(self.valve_open_dur_changed)
+        self.valve_dur_spinbox.setToolTip('Duration to open vial for')
         self.valve_dur_lbl = QLabel("dur (s):")
+        self.valve_dur_lbl.setToolTip('Duration to open vial for')
         self.valve_open_btn = QPushButton(text=str("Open " + self.slaveName + self.vialNum),checkable=True)
         self.valve_open_btn.toggled.connect(self.vial_open_toggled)
         self.valve_open_dur_changed()
@@ -187,7 +189,6 @@ class Vial(QGroupBox):
         self.layout.addRow(self.setpoint_slider_layout)
         self.layout.addRow(self.read_flow_vals_btn)
         self.layout.addRow(self.vial_details_btn)
-        #self.layout.addRow(self.read_flow_vals_btn,self.vial_details_btn)
         # height
         setpoint_set_read_height = 50
         self.setpoint_set_lineedit.setMaximumHeight(setpoint_set_read_height)
@@ -200,8 +201,6 @@ class Vial(QGroupBox):
         self.valve_dur_spinbox.setMaximumWidth(half_col_width)
         self.setpoint_set_lineedit.setMaximumWidth(half_col_width)
         self.setpoint_read_widget.setMaximumWidth(half_col_width)
-        #self.read_flow_vals_btn.setMaximumWidth(self.read_flow_vals_btn.sizeHint().width())
-        #self.vial_details_btn.setFixedWidth(self.vial_details_btn.sizeHint().width())
         #self.setpoint_slider.setFixedWidth(32)
     
     # SETPOINT SLIDER
@@ -344,7 +343,7 @@ class Vial(QGroupBox):
     def close_vial(self):
         # If the button was toggled before the timer finished: send command to Arduino
         if self.valve_timer.isActive():
-            logger.debug('vial ' + self.full_vialNum + ' was closed early')
+            logger.debug(self.full_vialNum + ' was closed early')
             self.end_valve_timer()
             
             # Send to olfactometer_window (to send to Arduino)
@@ -480,7 +479,7 @@ class Vial(QGroupBox):
     
     # ~ just for user experience ~
     def valve_open_dur_changed(self):
-        self.valve_open_btn.setToolTip("open " + self.full_vialNum + " for " + str(self.valve_dur_spinbox.value()) + " seconds")
+        self.valve_open_btn.setToolTip("Open " + self.full_vialNum + " for " + str(self.valve_dur_spinbox.value()) + " seconds")
 
 
 class slave_8vials(QGroupBox):
@@ -569,16 +568,28 @@ class olfactometer_window(QGroupBox):
                 
                 thisfile_sccm2Ard_dict = {}
                 thisfile_ard2Sccm_dict = {}
+                last_sccm_value = max_calibration_table_value_sccm
+                last_sccm_value = int(last_sccm_value) + .01
                 with open(cal_file_full_dir, newline='') as f:
-                    csv_reader = csv.reader(f)
+                    csv_reader = csv.reader(f)      # Create reader object that will process lines from f (file)
                     firstLine = next(csv_reader)    # skip over header line
                     
-                    # get the shit
-                    reader = csv.DictReader(f, delimiter=',')
+                    # For each row in the file
+                    reader = csv.DictReader(f, delimiter=',')   # Create reader object that maps the information in each row to a dict
                     for row in reader:
                         try:
-                            thisfile_sccm2Ard_dict[float(row['SCCM'])] = float(row['int'])
-                            thisfile_ard2Sccm_dict[float(row['int'])] = float(row['SCCM'])
+                            # Check that sccm values are in descending order, then add to dict
+                            this_sccm_value = row.get('SCCM')
+                            this_sccm_value = int(this_sccm_value)
+                            if this_sccm_value < last_sccm_value:
+                                thisfile_sccm2Ard_dict[float(row['SCCM'])] = float(row['int'])
+                                thisfile_ard2Sccm_dict[float(row['int'])] = float(row['SCCM'])
+                                last_sccm_value = this_sccm_value
+                            else:
+                                logger.warning('\tcannot use %s: sccm values are not in descending order', cal_file)
+                                logger.debug('\t\tlast value: %s   this value: %s', last_sccm_value,this_sccm_value)
+                                thisfile_ard2Sccm_dict = {}
+                                thisfile_sccm2Ard_dict = {}
                         except TypeError:
                             pass
                         except KeyError as err:
@@ -628,11 +639,11 @@ class olfactometer_window(QGroupBox):
         mainLayout.addWidget(self.slave_groupbox,       2,0,1,3)
         
         col1_max_width = self.connect_box.sizeHint().width()
-        self.connect_box.setFixedWidth(col1_max_width)
-        self.master_groupbox.setFixedWidth(col1_max_width)
+        self.connect_box.setMaximumWidth(col1_max_width)
+        self.master_groupbox.setMaximumWidth(col1_max_width)
         
-        self.connect_box.setFixedHeight(self.connect_box.sizeHint().height())
-        self.master_groupbox.setFixedHeight(self.master_groupbox.sizeHint().height())
+        self.connect_box.setMaximumHeight(self.connect_box.sizeHint().height())
+        self.master_groupbox.setMaximumHeight(self.master_groupbox.sizeHint().height())
         self.raw_comm_box.setMaximumHeight(self.raw_comm_box.sizeHint().height())
         self.slave_groupbox.setMinimumWidth(self.slave_widget.size().width() + 56)  # this is the exact size for the scroll area to have no horizontal anything
         
@@ -896,7 +907,7 @@ class olfactometer_window(QGroupBox):
     
     def set_connected(self, connected):
         if connected == True:
-            logger.info('connected to ' + self.port_widget.currentText())
+            logger.info('Connected to ' + self.port_widget.currentText())
             self.get_slave_addresses()
             self.master_groupbox.setEnabled(True)
             self.connect_btn.setText("Disconnect")
