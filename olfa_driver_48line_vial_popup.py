@@ -218,6 +218,7 @@ class VialDetailsPopup(QWidget):
         self.setpoint_slider.setFixedHeight(setpoint_set_read_height*2)
         self.db_setpoint_groupbox.setLayout(layout_setpoint)
         self.db_setpoint_groupbox.setMaximumWidth(self.db_setpoint_groupbox.sizeHint().width())
+        self.db_setpoint_groupbox.setMaximumHeight(self.db_setpoint_groupbox.sizeHint().height())
         #self.db_setpoint_groupbox.setMaximumWidth(120)
     
     def create_flow_ctrl_box(self):
@@ -315,6 +316,7 @@ class VialDetailsPopup(QWidget):
         self.calibration_duration_lbl.setToolTip('Max 99 seconds')
         self.calibration_duration_lineedit = QLineEdit(text=config_olfa.def_calibration_duration)
         self.calibration_duration_lineedit.setToolTip('Max 99 seconds')
+        self.calibration_duration_lineedit.returnPressed.connect(lambda: self.start_calibration_btn.setChecked(True))
         self.calibration_duration_timer = QTimer()
         self.calibration_duration_timer.setTimerType(0)     # set to millisecond accuracy
         self.calibration_duration_timer.timeout.connect(self.show_cal_duration_time)
@@ -391,6 +393,7 @@ class VialDetailsPopup(QWidget):
         self.db_cal_box.setMaximumHeight(self.db_cal_box.sizeHint().height())
         #self.write_to_file_wid.setMaximumWidth(65)
         self.write_to_file_btn.setMaximumWidth(80)
+        self.cal_file_output_display.setMinimumWidth(115)
         
         self.instructions_window.append('--> To begin calibration, create file')
     
@@ -603,7 +606,6 @@ class VialDetailsPopup(QWidget):
             self.create_new_cal_file_btn.setToolTip('End calibration\n(the file is already saved though)\n(bc it writes the values in real time)')
             self.cal_file_dir_wid.setEnabled(False)
             self.cal_file_name_wid.setEnabled(False)
-            self.db_std_widgets_box.setEnabled(False)
             self.db_setpoint_groupbox.setEnabled(False)
             #self.db_flow_control_box.setEnabled(False)
             
@@ -638,7 +640,6 @@ class VialDetailsPopup(QWidget):
             self.create_new_cal_file_btn.setToolTip('')
             self.cal_file_dir_wid.setEnabled(True)
             self.cal_file_name_wid.setEnabled(True)
-            self.db_std_widgets_box.setEnabled(True)
             self.db_setpoint_groupbox.setEnabled(True)
             
             # Disable the MFC stuff
@@ -739,7 +740,7 @@ class VialDetailsPopup(QWidget):
             self.cal_results_max_wid.setText(str(flow_max))
             self.cal_results_med_wid.setText(str(flowVal_median))
             self.cal_results_mean_wid.setText(str(flowVal_mean))
-            logger.debug('range of int vals: ' + str(flow_range) + '\t mean: ' + str(flowVal_mean))
+            logger.debug('range of int vals: ' + str(flow_range) + '\t mean: ' + str(flowVal_mean) + '\t(' + str(len(self.serial_values)) + ' values)')
             
             # Put mean value in the widget so the user can decide whether to keep it or not
             self.this_cal_int_value = flowVal_mean
