@@ -42,7 +42,10 @@ As of 1/23/2024, we know that:
 #
 ## Once you open the GUI:
 - Connect to the olfactometer (Connect to Arduino)
-- Load olfa config file. (This file contains the names of the calibration tables to use for each flow sensor. It's more for convenience that anything else.) (Calibration tables should be located in a folder called **calibration_tables** within the OlfaControl_GUI folder. Calibration tables must be in decreasing sequential order, or the interpolation will get all messed up.)
+- Load olfa config (*.json) file. (This file contains the names of the calibration tables to use for each flow sensor, plus the maximum capacity of each flow sensor.)  
+<br>
+
+*Note: Calibration tables should be located in a folder called **calibration_tables** within the OlfaControl_GUI folder. Calibration tables must be in decreasing sequential order, or the interpolation will get all messed up.*
 
 <br>
 <br>
