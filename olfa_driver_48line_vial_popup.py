@@ -15,7 +15,6 @@ import plot_widget
 ##############################
 # DEFAULT VALUES
 def_pressurize_duration = '1'
-mfc_capacity = '200'            # flow sensor max flow
 ##############################
 
 ##############################
@@ -191,7 +190,7 @@ class VialDetailsPopup(QWidget):
     def create_setpoint_box(self):
         self.db_setpoint_groupbox = QGroupBox('Setpoint')
         self.setpoint_slider = QSlider()
-        self.setpoint_slider.setMaximum(int(mfc_capacity))
+        self.setpoint_slider.setMaximum(int(self.parent.mfc_capacity))
         self.setpoint_slider.setToolTip('Adjusts flow set rate.')
         self.setpoint_slider.setTickPosition(3)     # draw tick marks on both sides
         self.setpoint_set_lineedit = QLineEdit()

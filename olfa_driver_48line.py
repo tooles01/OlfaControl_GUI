@@ -25,7 +25,7 @@ logger.addHandler(file_handler)
 ##############################
 
 default_olfa_config_file = 'olfa_config__default.json'
-max_calibration_table_value_sccm = '1000'
+max_calibration_table_value_sccm = '1000'   # TODO change this to mfc capacity
 
 '''
 import math, time
@@ -79,6 +79,7 @@ class Vial(QGroupBox):
         self.vialNum = vialNum
         self.full_vialNum = self.slaveName + self.vialNum
         self.olfactometer_parent_object = parent.parent
+        self.mfc_capacity = config_olfa.mfc_capacity
         
         # Default Values
         self.flow_value_int = '0'
@@ -139,7 +140,7 @@ class Vial(QGroupBox):
         
         # SETPOINT PIANO
         self.setpoint_slider = QSlider()
-        self.setpoint_slider.setMaximum(int(config_olfa.mfc_capacity))
+        self.setpoint_slider.setMaximum(int(self.mfc_capacity))
         self.setpoint_slider.setToolTip('Adjusts flow set rate.')
         self.setpoint_slider.setTickPosition(3)     # draw tick marks on both sides
         self.setpoint_set_lineedit = QLineEdit()
@@ -362,7 +363,7 @@ class Vial(QGroupBox):
     
     def set_flowrate(self, value):
         # Check if out of range
-        if (value >= 0) and (value <= int(config_olfa.mfc_capacity)):
+        if (value >= 0) and (value <= int(self.mfc_capacity)):
             if self.sccmToInt_dict != None:
                 # Convert from sccm to integer
                 setpoint_sccm = value
@@ -388,12 +389,12 @@ class Vial(QGroupBox):
                 self.setpoint_set_lineedit.setText('0')
                 self.setpoint_set_lineedit.setPlaceholderText('Set value')
         
-        if (value < 0) or (value > int(config_olfa.mfc_capacity)):
-            if value > int(config_olfa.mfc_capacity):
+        if (value < 0) or (value > int(self.mfc_capacity)):
+            if value > int(self.mfc_capacity):
                 logger.warning(str(value) + ' is greater than mfc capacity: try again')
                 if self.sccmToInt_dict != None:
                     # Convert from sccm to integer
-                    setpoint_sccm = int(config_olfa.mfc_capacity)
+                    setpoint_sccm = int(self.mfc_capacity)
                     setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
                     logger.info('Set ' + self.full_vialNum + ' to ' + str(setpoint_sccm) + ' sccm')
                     self.setpoint = setpoint_sccm
@@ -510,12 +511,14 @@ class slave_8vials(QGroupBox):
         self.slaveInfo_layout.addWidget(self.temp_label)
     
     def create_vials_box(self):
+        # Create vial object for # of vials listed in vialsPerSlave
         self.vials = []
         for v in range(config_olfa.vialsPerSlave):
             v_vialNum = str(v+1)
             v_vial = Vial(parent=self, vialNum=v_vialNum)
             self.vials.append(v_vial)
-
+        
+        # Add vial objects to layout
         self.vials_layout = QHBoxLayout()
         for v in range(config_olfa.vialsPerSlave):
             self.vials_layout.addWidget(self.vials[v])
@@ -780,27 +783,40 @@ class olfactometer_window(QGroupBox):
             self.config_obj = json.load(f)   # dict
         logger.info('Loading config file: %s', self.config_file_dir)
         
-        try:
-            '''
-            self.config_olfa = self.config_obj['Olfactometers']     # list
-            self.config_olfa = self.config_olfa[0]                  # dict
-            '''
-            self.config_cal_tables = self.config_obj['Calibration tables']  # dict
-            # Update vial calibration tables
+        try:            
+            self.config_cal_tables = self.config_obj['Calibration tables']      # type = dict
+            
+            # Update calibration tables for each vial
             for s in self.slave_objects:
                 for v in s.vials:
                     vial_name = v.full_vialNum
                     if vial_name in self.config_cal_tables:
                         cal_table = self.config_cal_tables.get(vial_name)
                         wid = v.vial_details_window.db_cal_table_combobox
+                        # Confirm that calibration table is valid (it has already been identified in calibration_tables folder)
                         cal_table_options_list = [wid.itemText(i) for i in range(wid.count())]
                         if cal_table in cal_table_options_list:
                             v.cal_table = cal_table
                             v.vial_details_window.db_cal_table_combobox.setCurrentText(v.cal_table)
                         else:
-                            logger.debug('config file has an invalid cal table: %s', cal_table)
-        except KeyError:
+                            logger.warning('config file has an invalid cal table: %s', cal_table)
+            
+        except KeyError as err:
             logger.warning('Invalid config file selected - try again')
+
+
+        try:
+            self.config_mfc_capacity = self.config_obj['Flow Sensor Capacity']  # type = dict
+            # Update flow sensor capacity for each vial
+            for s in self.slave_objects:
+                for v in s.vials:
+                    vial_name = v.full_vialNum
+                    if vial_name in self.config_mfc_capacity:
+                        v.mfc_capacity = self.config_mfc_capacity.get(vial_name)
+                        logger.debug('%s capacity set to %s', vial_name, v.mfc_capacity)
+        
+        except KeyError as err:
+            logger.warning('Selected config file does not include Flow Sensor Capacities')
     
     def create_raw_comm_groupbox(self):
         self.raw_comm_box = QGroupBox("Raw Communication Data")
