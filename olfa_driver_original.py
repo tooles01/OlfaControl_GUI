@@ -1,18 +1,21 @@
 import sys, logging
-from datetime import datetime
 
+from PyQt5 import QtCore
 from PyQt5.QtWidgets import *
+import time, utils
+
+import serial
+from serial import SerialException
 from serial.tools import list_ports
 
-import time, utils
-import serial
 
-currentDate = str(datetime.date(datetime.now()))
 number_of_vials = 8
 
 noPort_msg = "no ports detected :/"
 
 vial_default_flow_values = '100'
+mfc_default_capacity = 200
+mfc_default_flow = 100
 
 logger = logging.getLogger(name='main')
 logger.setLevel(logging.DEBUG)
@@ -66,7 +69,6 @@ class Vial(QHBoxLayout):
     # ACTIONS
     def vial_button_toggled(self, checked):
         if checked:
-            print(type(self.vialNum))
             logger.debug('opening vial %s', self.vialNum)
             self.teensy._set_valveset(self.vialNum, valvestate=1, suppress_errors=False)
 
@@ -85,10 +87,10 @@ class MFC(QWidget):
         self.update_capacity()
 
     def generate_stuff(self):
-        self.mfc_flow_set = QSpinBox(maximum=1000,value=100)
+        self.mfc_flow_set = QSpinBox(maximum=1000,value=mfc_default_flow)
         self.mfc_flow_set.setToolTip('Set MFC flow')
 
-        self.mfc_capacity_set = QSpinBox(maximum=1000,value=100)
+        self.mfc_capacity_set = QSpinBox(maximum=1000,value=mfc_default_capacity)
         self.mfc_capacity_set.setToolTip('Set MFC flow')
         self.mfc_capacity_set.valueChanged.connect(self.update_capacity)
 
@@ -110,7 +112,7 @@ class MFC(QWidget):
 
     def send_mfc_flow_update(self):
         new_flow_value = self.mfc_flow_set.text()
-        logger.debug('updated MFC flow to %s sccm',new_flow_value)
+        logger.info('Updating MFC to %s sccm',new_flow_value)
         # make sure you retreve the correct capacity value
         self.teensy.set_flowrate( int(new_flow_value))
 
@@ -122,7 +124,7 @@ class TeensyOlfa():
         self.dummyvial = 4
         
     def connect_olfa(self, mfc_config, com_settings, flow_units='SCCM', setflow=-1):
-        print(flow_units)
+        logger.debug("flow_units: %s", flow_units)
         self.slaveindex = mfc_config['slave_index']
         self.mfc_type = mfc_config['MFC_type']
         self.capacity = int(mfc_config['capacity'])
@@ -150,13 +152,13 @@ class TeensyOlfa():
         :return: serial port object.
         :rtype: serial.Serial
         """
-        print(baudrate)
+        logger.debug("baudrate: %s", baudrate)
         if isinstance(port, int):
             port = "COM{0}".format(port)
         names_list = list()
         for i in list_ports.comports():
             names_list.append(i[0])
-        if port not in names_list:
+        if port not in names_list:  # NOTE: With this GUI, this error is highly unlikely - the requested port COMES FROM the list of available ports (This section can probably be deleted)
             print(("Serial not found on {0}.".format(port)))
             print('Listing current serial ports with devices:')
             for ser in list_ports.comports():
@@ -165,7 +167,6 @@ class TeensyOlfa():
             time.sleep(.01)  # just to let the above lines print before the exemption is raised. cleans console output.
             raise serial.SerialException('Requested COM port: {0} is not listed as connected.'.format(port))
         else:
-            print(baudrate, timeout, writeTimeout)
             return serial.Serial(port, baudrate=baudrate, timeout=timeout, writeTimeout=writeTimeout)
 
     def set_flowrate(self, flowrate):
@@ -179,23 +180,22 @@ class TeensyOlfa():
         success = False
         start_time = time.time()
         
-        print(self.mfc1_capacity)
         if flowrate > self.mfc1_capacity or flowrate < 0:
             return success
         flownum = (flowrate * 1. / self.mfc1_capacity)*64000
         flownum = int(flownum)
         command = "DMFC {0:d} {1:d} A{2:d}".format(self.slaveindex, self.arduino_port, flownum)
-        print(command)
+        logger.debug("sending command: %s", command)
         confirmation = self.send_command(command)
         confirmation_decoded = confirmation.decode('utf-8')
         if(confirmation_decoded != 'MFC set\r\n'):
-            print("Error setting MFC: ", confirmation_decoded)
+            logger.error("Error setting MFC: %s", confirmation_decoded)
         else:
             # Attempt to read back
             success = True
             command = "DMFC {0:d} {1:d}".format(self.slaveindex, self.arduino_port)
             returnstring = self.send_command(command)
-            print(returnstring)
+            logger.debug("returnstring: %s", returnstring.decode('utf-8'))
             while (returnstring is None or returnstring.startswith(b'Error -2')) and time.time() - start_time < .2:
                 returnstring = self.send_command(command)
             
@@ -435,24 +435,16 @@ class olfactometer_window(QGroupBox):
     
     def toggled_connect(self, checked):
         if checked:
-            logger.error('connecting to olfactometer')
-            print(int(self.portStr[3:]))
+            logger.info('Connecting to olfactometer on %s', self.portStr)
             self.COM_settings_mfc['com_port'] = int(self.portStr[3:])
             self.olfa_device.connect_olfa(self.MFC_settings, self.COM_settings_mfc, flow_units='SCCM', setflow=-1)
-            self.set_connected(True)
-        else:
-            logger.info('Disconnecting from olfactometer on %s', self.portStr)
-            self.olfa_device.disconnect_olfa()
-            self.set_connected(False)    
-    
-    def set_connected(self, connected):
-        if connected == True:
-            self.connect_btn.setText('Stop communication w/ ' + self.portStr)
+            self.connect_btn.setText('Disconnect from ' + self.portStr)
             self.refresh_btn.setEnabled(False)
             self.port_widget.setEnabled(False)
         else:
+            logger.info('Disconnecting from olfactometer on %s', self.portStr)
+            self.olfa_device.disconnect_olfa()
             self.connect_btn.setText('Connect to ' + self.portStr)
-            self.connect_btn.setChecked(False)
             self.refresh_btn.setEnabled(True)
             self.port_widget.setEnabled(True)
 
