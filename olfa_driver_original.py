@@ -2,7 +2,6 @@ import sys, logging
 from datetime import datetime
 
 from PyQt5.QtWidgets import *
-#from PyQt5.QtCore import QObject
 from serial.tools import list_ports
 
 import time, utils
@@ -13,17 +12,15 @@ number_of_vials = 8
 
 noPort_msg = "no ports detected :/"
 
-vial_default_flow_values = '10,14,27,52'
+vial_default_flow_values = '100'
 
 logger = logging.getLogger(name='main')
 logger.setLevel(logging.DEBUG)
 console_handler = utils.create_console_handler()
-#file_handler = utils.create_file_handler(main_datafile_directory)
 logger.addHandler(console_handler)
         
 
-class Vial(QGroupBox):
-
+class Vial(QHBoxLayout):
     def __init__(self, parent, vialNum):
         super().__init__()
         self.parent = parent
@@ -31,8 +28,6 @@ class Vial(QGroupBox):
         self.teensy = self.parent.olfa_device
 
         self.generate_stuff()
-
-        self.setLayout(self.layout)
         self.vial_button.setMaximumWidth(60)
         
     
@@ -63,11 +58,11 @@ class Vial(QGroupBox):
         self.vial_flow_list.setText(vial_default_flow_values)
         
         self.layout = QHBoxLayout()
-        self.layout.addWidget(self.vial_checkbox)
-        self.layout.addWidget(self.vial_button)
-        self.layout.addWidget(self.vial_odor)
-        self.layout.addWidget(self.vial_concentration)
-        self.layout.addWidget(self.vial_flow_list)
+        self.addWidget(self.vial_checkbox)
+        self.addWidget(self.vial_button)
+        self.addWidget(self.vial_odor)
+        self.addWidget(self.vial_concentration)
+        self.addWidget(self.vial_flow_list)
 
     # ACTIONS
     def vial_button_toggled(self, checked):
@@ -109,16 +104,13 @@ class MFC(QWidget):
         self.mainLayout.addWidget(QLabel('SCCM'))
         self.mainLayout.addWidget(self.mfc_flow_update_btn)
 
-
     def update_capacity(self):
         self.capacity =  self.mfc_capacity_set.value()
         self.teensy.mfc1_capacity = self.capacity
 
     def send_mfc_flow_update(self):
-        print("I am sure I am here")
         new_flow_value = self.mfc_flow_set.text()
         logger.debug('updated MFC flow to %s sccm',new_flow_value)
-        print(type(new_flow_value))
         # make sure you retreve the correct capacity value
         self.teensy.set_flowrate( int(new_flow_value))
 
@@ -144,7 +136,11 @@ class TeensyOlfa():
             self.arduino_port = int(mfc_config['arduino_port_num'])
 
         self.serial = self.connect_serial(com_settings['com_port'], baudrate=com_settings['baudrate'], timeout=1, writeTimeout=1)
-     
+    
+    def disconnect_olfa(self):
+        if self.serial.isOpen():
+            self.serial.close()
+    
     def connect_serial(self, port, baudrate, timeout=1, writeTimeout=1):
         """
         Return Serial object after making sure that the port is accessible and that the port is expressed as a string.
@@ -185,9 +181,8 @@ class TeensyOlfa():
         """
         success = False
         start_time = time.time()
-        # print "Setting rate of: ", flowrate
         
-        print( self.mfc1_capacity)
+        print(self.mfc1_capacity)
         if flowrate > self.mfc1_capacity or flowrate < 0:
             return success
         flownum = (flowrate * 1. / self.mfc1_capacity)*64000
@@ -195,7 +190,6 @@ class TeensyOlfa():
         command = "DMFC {0:d} {1:d} A{2:d}".format(self.slaveindex, self.arduino_port, flownum)
         print(command)
         confirmation = self.send_command(command)
-        #print(confirmation)
         if(confirmation != 'MFC set\r\n'):
             print("Error setting MFC: ", confirmation)
         else:
@@ -307,7 +301,6 @@ class TeensyOlfa():
     
     
     def _set_valveset(self, vial_num, valvestate=1, suppress_errors=False):
-
         if vial_num == self.dummyvial:
             self.set_dummy_vial(valvestate)
         if valvestate:
@@ -325,7 +318,6 @@ class TeensyOlfa():
     def send_command(self, command, tries=1):
         self.serial.flushInput()
         for i in range(tries):
-            # logging.debug("Sending command: {0}".format(command))
             self.serial.write(bytes("{0}\r".format(command), 'utf8'))
             line = self.read_line()
             line = self.read_line()
@@ -350,21 +342,11 @@ class olfactometer_window(QGroupBox):
     
     def __init__(self):
         super().__init__()
-
-        #self.make_logger()
         
         self.setTitle('Olfactometer')
         self.setDefaultParams()
         self.olfa_device = TeensyOlfa()
         self.generate_ui()
-        #self.MFC_settings, self.COM_settings_mfc, flow_units='SCCM', setflow=-1
-    
-    #def make_logger(self):
-    
-    #    logger = logging.getLogger(name='main')
-    #    logger.setLevel(logging.DEBUG)
-    #    console_handler = utils.create_console_handler()
-    #    logger.addHandler(console_handler)
     
     def setDefaultParams(self):
         self.COM_settings_mfc = dict()
@@ -391,11 +373,11 @@ class olfactometer_window(QGroupBox):
         self.create_vials_box()
         self.connect_box.setMaximumHeight(self.connect_box.sizeHint().height())
 
-        mainLayout = QVBoxLayout()
+        mainLayout = QGridLayout()
         self.setLayout(mainLayout)
-        mainLayout.addWidget(self.connect_box)
-        mainLayout.addWidget(self.mfcs_groupbox)
-        mainLayout.addWidget(self.vials_groupbox)
+        mainLayout.addWidget(self.connect_box,0,0,1,1)
+        mainLayout.addLayout(self.mfcs_layout,0,1,1,1)
+        mainLayout.addWidget(self.vials_groupbox,1,0,1,2)
         
     def create_connect_box(self):
         self.connect_box = QGroupBox("Connect to Teensy")
@@ -409,18 +391,13 @@ class olfactometer_window(QGroupBox):
         self.connect_box.setLayout(connect_box_layout)
 
     def create_mfcs_box(self):
-        self.mfcs_groupbox = QGroupBox('MFCs')
-
+        
         self.mfc1 = MFC(self)
         self.mfc2 = MFC(self)
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.mfc1)
-        layout.addWidget(self.mfc2)
-        self.mfcs_groupbox.setLayout(layout)
-
-#        drlg.olgsz-frb
-
+        self.mfcs_layout = QVBoxLayout()
+        self.mfcs_layout.addWidget(self.mfc1)
+        self.mfcs_layout.addWidget(self.mfc2)
     
     def create_vials_box(self):
         self.vials_groupbox = QGroupBox('Vials')
@@ -432,8 +409,7 @@ class olfactometer_window(QGroupBox):
 
         self.vials_layout = QVBoxLayout()
         for v in range(number_of_vials):
-            #print(self.vials[v])
-            self.vials_layout.addWidget(self.vials[v])
+            self.vials_layout.addLayout(self.vials[v])
 
         self.vials_groupbox.setLayout(self.vials_layout)
 
@@ -470,27 +446,6 @@ class olfactometer_window(QGroupBox):
             print(int(self.portStr[3:]))
             self.COM_settings_mfc['com_port'] = int(self.portStr[3:])
             self.olfa_device.connect_olfa(self.MFC_settings, self.COM_settings_mfc, flow_units='SCCM', setflow=-1)
-            
-
-        '''
-            i = self.port.index(':')
-            self.comPort = self.port[:i]
-            self.serial = QtSerialPort.QSerialPort(self.comPort,readyRead=self.receive)
-            if not self.serial.isOpen():
-                if self.serial.open(QtCore.QIODevice.ReadWrite):
-                    self.set_connected(True)
-                else:
-                    self.set_connected(False)
-            else:
-                self.set_connected(True)
-        else:
-            try:
-                self.set_connected(False)
-                self.serial.close()
-            except AttributeError:
-                pass
-        '''
-
         
     def set_connected(self, connected):
         if connected == True:
@@ -502,66 +457,6 @@ class olfactometer_window(QGroupBox):
             self.connect_btn.setChecked(False)
             self.refresh_btn.setEnabled(True)
             self.port_widget.setEnabled(True)
-
-    '''
-    def receive(self):
-        if self.serial.canReadLine() == True:
-            text = self.serial.readLine(1024)
-            try:
-                text = text.decode("utf-8")
-                text = text.rstrip('\r\n')
-                self.raw_read_display.append(text)
-
-                strToFind = 'name: '
-                
-                # IF NAME/ADDRESS WERE SENT
-                if strToFind in text:
-                    text=text[3:]       # remove logging info
-                    
-                    # find name
-                    strToFind = 'name: '
-                    beginning_idx = text.find(strToFind)
-                    charsToRemove = len(strToFind)
-                    c = text[charsToRemove:]
-                    slash_idx = c.find('\t')
-                    slave_name_received = c[:slash_idx]
-                    self.active_slaves.append(slave_name_received)
-
-                    # find address
-                    strToFind = 'address: '
-                    beginning_idx = text.find(strToFind)
-                    charsToRemove = len(strToFind) + beginning_idx
-                    slave_address = text[charsToRemove:]
-                    
-                    
-                    # enable groupbox for this slave
-                    for s in self.slave_objects:
-                        if s.name == slave_name_received:
-                            s.setEnabled(True)
-                            # & add the address
-                            address_label = 'Slave Address: {}'.format(slave_address)
-                            s.slave_address_label.setText(address_label)
-
-                        
-                # IF FLOW UPDATE WAS SENT
-                if len(text) == 17:
-                    text = text[3:]     # remove arduino logging info
-
-                    # split up for writing to datafile
-                    slave_vial = text[0:2]
-                    flowVal = text[2:6]
-                    ctrlVal = text[6:10]
-
-                    # send to main GUI
-                    device = 'olfactometer ' + slave_vial
-                    unit = 'FL'
-                    value = flowVal
-                    self.window().receive_data_from_device(device,unit,value)
-            
-            except UnicodeDecodeError as err:
-                print("Serial read error")
-    '''
-
 
 
 if __name__ == "__main__":
