@@ -29,7 +29,6 @@ class Vial(QHBoxLayout):
 
         self.generate_stuff()
         self.vial_button.setMaximumWidth(60)
-        
     
     def generate_stuff(self):
         # checkbox
@@ -83,6 +82,7 @@ class MFC(QWidget):
         self.teensy = self.parent.olfa_device
         self.generate_stuff()
         self.setLayout(self.mainLayout)
+        self.update_capacity()
 
     def generate_stuff(self):
         self.mfc_flow_set = QSpinBox(maximum=1000,value=100)
@@ -115,15 +115,13 @@ class MFC(QWidget):
         self.teensy.set_flowrate( int(new_flow_value))
 
 
-
-
 class TeensyOlfa():
     
     def __init__(self):
         #super().__init__()
         self.dummyvial = 4
         
-    def connect_olfa(self, mfc_config, com_settings, flow_units='SCCM', setflow=-1):   
+    def connect_olfa(self, mfc_config, com_settings, flow_units='SCCM', setflow=-1):
         print(flow_units)
         self.slaveindex = mfc_config['slave_index']
         self.mfc_type = mfc_config['MFC_type']
@@ -167,7 +165,6 @@ class TeensyOlfa():
             time.sleep(.01)  # just to let the above lines print before the exemption is raised. cleans console output.
             raise serial.SerialException('Requested COM port: {0} is not listed as connected.'.format(port))
         else:
-            
             print(baudrate, timeout, writeTimeout)
             return serial.Serial(port, baudrate=baudrate, timeout=timeout, writeTimeout=writeTimeout)
 
@@ -190,8 +187,9 @@ class TeensyOlfa():
         command = "DMFC {0:d} {1:d} A{2:d}".format(self.slaveindex, self.arduino_port, flownum)
         print(command)
         confirmation = self.send_command(command)
-        if(confirmation != 'MFC set\r\n'):
-            print("Error setting MFC: ", confirmation)
+        confirmation_decoded = confirmation.decode('utf-8')
+        if(confirmation_decoded != 'MFC set\r\n'):
+            print("Error setting MFC: ", confirmation_decoded)
         else:
             # Attempt to read back
             success = True
@@ -248,6 +246,7 @@ class TeensyOlfa():
             # Failure
 
         return flow
+    
     def set_dummy_vial(self, valvestate=1):
         """
         Sets the dummy vial.
@@ -299,7 +298,6 @@ class TeensyOlfa():
             logging.error("THIS SHOULDN'T HAPPEN!!!")
         return success
     
-    
     def _set_valveset(self, vial_num, valvestate=1, suppress_errors=False):
         if vial_num == self.dummyvial:
             self.set_dummy_vial(valvestate)
@@ -326,7 +324,6 @@ class TeensyOlfa():
                 extrabytes = self.serial.read(morebytes)
             if line:
                 return line
-
     
     def read_line(self):
         line = None
@@ -359,10 +356,6 @@ class olfactometer_window(QGroupBox):
         self.MFC_settings['capacity'] = 1000
         self.MFC_settings['gas'] = "Air"
         self.MFC_settings["slave_index"] = 1 # this in full honestly is a teensy 
-
-        # self.COM_settings_flowmeter = dict()
-        # self.COM_settings_flowmeter['baudrate'] = 9600
-        # self.COM_settings_flowmeter['com_port'] = 7
 
         self.filepath = 'R:/rinberglabspace/Users/Bea/olfactometry/flow_sensor_calibration/calibration_files/test.csv'
         self.folderpath = 'R:/rinberglabspace/Users/Bea/olfactometry/flow_sensor_calibration/calibration_files'
@@ -446,7 +439,12 @@ class olfactometer_window(QGroupBox):
             print(int(self.portStr[3:]))
             self.COM_settings_mfc['com_port'] = int(self.portStr[3:])
             self.olfa_device.connect_olfa(self.MFC_settings, self.COM_settings_mfc, flow_units='SCCM', setflow=-1)
-        
+            self.set_connected(True)
+        else:
+            logger.info('Disconnecting from olfactometer on %s', self.portStr)
+            self.olfa_device.disconnect_olfa()
+            self.set_connected(False)    
+    
     def set_connected(self, connected):
         if connected == True:
             self.connect_btn.setText('Stop communication w/ ' + self.portStr)
@@ -474,7 +472,6 @@ if __name__ == "__main__":
 
     
     # MAIN APP
-    logger.debug('opening window')
     app1 = QApplication(sys.argv)
     theWindow = olfactometer_window()
     theWindow.show()
