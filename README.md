@@ -5,9 +5,10 @@ GUI for testing the new 8-line olfactometer
 <br>
 
 ## Python versions
-As of 1/23/2024, we know that:
-- Python 3.9 and 3.10 work
-- Python 3.12 does not work
+
+Update 4/29/2024: GUI is compatible with Python 3.9, 3.10, 3.12
+
+~~As of 1/23/2024, we know that: Python 3.9 and 3.10 work, Python 3.12 does not work~~
 
 <br><br>
 
