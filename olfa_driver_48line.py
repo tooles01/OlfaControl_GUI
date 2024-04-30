@@ -108,22 +108,6 @@ class Vial(QGroupBox):
         max_width = self.sizeHint().width()
         #self.setMaximumWidth(max_width - 10)
         self.setMaximumWidth(max_width)
-        '''
-        # SET UP WORKER THREAD WHATEVER
-        self.obj_fake_open_worker = fake_open_worker()
-        self.thread_fake_open = QThread()
-        self.obj_fake_open_worker.moveToThread(self.thread_fake_open)
-        
-        self.obj_fake_open_worker.worker_send_command_to_master.connect(self.olfactometer_parent_object.send_to_master)
-        self.obj_fake_open_worker.finished.connect(self.threadIsFinished)
-        self.thread_fake_open.started.connect(self.obj_fake_open_worker.open_this_vial)
-        '''
-    '''
-    def threadIsFinished(self):
-        logger.debug('thread is finished')
-        self.obj_fake_open_worker.threadON = False
-        self.thread_fake_open.exit()
-    '''
     
     # GUI FEATURES
     def generate_stuff(self):
@@ -783,10 +767,9 @@ class olfactometer_window(QGroupBox):
             self.config_obj = json.load(f)   # dict
         logger.info('Loading config file: %s', self.config_file_dir)
         
+        # Update calibration tables for each vial
         try:            
             self.config_cal_tables = self.config_obj['Calibration tables']      # type = dict
-            
-            # Update calibration tables for each vial
             for s in self.slave_objects:
                 for v in s.vials:
                     vial_name = v.full_vialNum
@@ -803,16 +786,16 @@ class olfactometer_window(QGroupBox):
             
         except KeyError as err:
             logger.warning('Invalid config file selected - try again')
-
-
+        
+        # Update flow sensor capacity for each vial
         try:
             self.config_mfc_capacity = self.config_obj['Flow Sensor Capacity']  # type = dict
-            # Update flow sensor capacity for each vial
             for s in self.slave_objects:
                 for v in s.vials:
                     vial_name = v.full_vialNum
                     if vial_name in self.config_mfc_capacity:
                         v.mfc_capacity = self.config_mfc_capacity.get(vial_name)
+                        v.vial_details_window.setpoint_slider.setMaximum(int(v.mfc_capacity))
                         logger.debug('%s capacity set to %s', vial_name, v.mfc_capacity)
         
         except KeyError as err:
