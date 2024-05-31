@@ -27,49 +27,6 @@ logger.addHandler(file_handler)
 default_olfa_config_file = 'olfa_config__default.json'
 max_calibration_table_value_sccm = '1000'   # TODO change this to mfc capacity
 
-'''
-import math, time
-import config_main
-from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
-
-class fake_open_worker(QObject):
-    finished = pyqtSignal()
-    worker_send_command_to_master = pyqtSignal(str)
-
-    def __init__(self):
-        super().__init__()
-        self.threadON = False
-
-        self.fake_open_dur = 0
-        self.real_open_dur = 0
-        self.full_vialNum = 'E1'
-    
-    @pyqtSlot()
-    def open_this_vial(self):
-        if self.threadON == True:
-
-            # create string for fake open command
-            worker_strToSend = 'S_OV_' + str(self.fake_open_dur) + '_' + self.full_vialNum
-            # send fake open command
-            self.worker_send_command_to_master.emit(worker_strToSend)
-
-            # wait that duration
-            time.sleep(self.fake_open_dur)
-
-            # wait a little bit longer
-            time.sleep(config_main.waitBtSpAndOV)
-
-            # TODO add a check to make sure there's enough time between commands sent to master Arduino (ChatGPT says it takes 2.08ms)
-            
-            ## REAL OPEN
-            # send real command
-            logger.info('Opening %s (%s seconds)',self.full_vialNum,self.real_open_dur)
-            # TODO start the valve timer here
-            worker_strToSend = 'S_OV_' + str(self.real_open_dur) + '_' + self.full_vialNum
-            self.worker_send_command_to_master.emit(worker_strToSend)
-
-            self.finished.emit()
-'''
 
 class Vial(QGroupBox):
 
@@ -94,12 +51,12 @@ class Vial(QGroupBox):
         self.Ki_value = config_olfa.def_Ki_value
         self.Kd_value = config_olfa.def_Kd_value
 
-        # For Plot Widget
+        # For Plot Widget (plot_window_all)
         self.plot_flow_btn = QPushButton(self.full_vialNum, checkable=True)
         self.plot_flow_btn.toggled.connect(self.plot_flow_btn_toggled)
         self.plot_ctrl_btn = QPushButton(self.full_vialNum, checkable=True)
         self.plot_ctrl_btn.toggled.connect(self.plot_ctrl_btn_toggled)
-        
+
         self.generate_stuff()
         
         self.vial_details_window.db_valve_open_wid.returnPressed.connect(lambda: self.vial_details_window.db_valve_open_btn.setChecked(True))        
@@ -208,55 +165,6 @@ class Vial(QGroupBox):
             pass    # if something other than an integer was entered
     
     # ACTIONS / BUTTON FUNCTIONS
-    def plot_flow_btn_toggled(self, checked):
-        if checked:
-            # Make sure it's already set to debug mode
-            if self.read_flow_vals_btn.isChecked() == False:
-                self.read_flow_vals_btn.setChecked(True)
-            
-            # Tell plot window this vial needs to be plotted
-            self.olfa_plot_object = self.parent().parent.flow_plot_window
-            flag = 0
-            for idx in range(len(self.olfa_plot_object.vials_to_plot)):
-                if self.olfa_plot_object.vials_to_plot[idx] == '-':
-                    self.olfa_plot_object.vials_to_plot[idx] = self
-                    self.olfa_plot_object.vials_to_plot_names[idx] = self.full_vialNum
-                    flag = 1
-                    break
-            if flag == 0:
-                logger.debug('only 4 vials can be plotted at once')
-                self.plot_flow_btn.setChecked(False)
-        
-        else:
-            # Remove from vials_to_plot
-            list_of_vials_to_plot_names = self.parent().parent.flow_plot_window.vials_to_plot_names
-            if self.full_vialNum in list_of_vials_to_plot_names:
-                index = list_of_vials_to_plot_names.index(self.full_vialNum)
-                self.parent().parent.flow_plot_window.vials_to_plot[index] = '-'
-                self.parent().parent.flow_plot_window.vials_to_plot_names[index] = '-'
-    
-    def plot_ctrl_btn_toggled(self, checked):
-        if checked:
-            self.slave_plot_object = self.parent().slave_plot_window
-            # Make sure it's already set to debug mode
-            if self.read_flow_vals_btn.isChecked() == False:
-                self.read_flow_vals_btn.setChecked(True)
-
-            # Tell plot window this vial needs to be plotted
-            flag = 0
-            for idx in range(len(self.slave_plot_object.vials_to_plot)):
-                if self.slave_plot_object.vials_to_plot[idx] == '-':
-                    self.slave_plot_object.vials_to_plot[idx] = self
-                    self.slave_plot_object.vials_to_plot_names[idx] = self.full_vialNum
-                    flag = 1
-                    break
-            if flag == 0:
-                logger.debug('only 4 vials can be plotted at once')
-
-            if self.slave_plot_object.vials_to_plot[0] == '-':
-                self.slave_plot_object.vials_to_plot[0] = self
-                self.slave_plot_object.vials_to_plot_names[0] = self.full_vialNum
-    
     def vial_details_btn_toggled(self, checked):
         if checked: # TODO this often freezes the whole window if done while a program is running 1/11/2024
             # Show vial details window
@@ -286,32 +194,6 @@ class Vial(QGroupBox):
             self.set_flowrate(self.setpoint)    # update setpoint
     
     def open_vial(self, duration):
-        '''
-        # calculate how long we need to do the little fake vial open
-        # parameters:
-        # - tube radius
-        # - tube length
-        # - flow rate
-
-        tube_radius_inch = 0.03125  # for 1/16" ID tubing
-        tube_radius_cm = .079375
-        tube_length_cm = 22
-        this_setpoint_sccm = self.setpoint
-        
-        flow_rate_per_second = float(this_setpoint_sccm/60)
-        fake_open_duration = (math.pi * (tube_radius_cm*tube_radius_cm) * tube_length_cm) / flow_rate_per_second
-        fake_open_duration = round(fake_open_duration,1)
-        logger.info('doing fake open for %s seconds', str(fake_open_duration))
-        
-        # SEND PARAMETERS TO WORKER
-        self.obj_fake_open_worker.fake_open_dur = fake_open_duration
-        self.obj_fake_open_worker.real_open_dur = duration
-        self.obj_fake_open_worker.full_vialNum = self.full_vialNum
-        
-        # START WORKER THREAD
-        self.obj_fake_open_worker.threadON = True
-        logger.debug('starting fake worker thread')
-        self.thread_fake_open.start()        '''
         
         # Send to olfactometer_window (to send to Arduino)
         strToSend = 'S_OV_' + str(duration) + '_' + self.full_vialNum
@@ -339,6 +221,59 @@ class Vial(QGroupBox):
             device = 'olfactometer ' + self.full_vialNum
             self.write_to_datafile(device,'CV','0')
     
+    # FOR PLOT WIDGET (plot_window_all)
+    def plot_flow_btn_toggled(self, checked):
+        if checked:
+            # Make sure it's already set to debug mode
+            if self.read_flow_vals_btn.isChecked() == False:
+                self.read_flow_vals_btn.setChecked(True)
+            
+            # Tell plot window this vial needs to be plotted
+            self.olfa_plot_object = self.parent().parent.flow_plot_window
+            flag = 0
+            for idx in range(len(self.olfa_plot_object.vials_to_plot)):
+                if self.olfa_plot_object.vials_to_plot[idx] == '-':
+                    self.olfa_plot_object.vials_to_plot[idx] = self
+                    self.olfa_plot_object.vials_to_plot_names[idx] = self.full_vialNum
+                    flag = 1
+                    break
+            if flag == 0:
+                logger.debug('only 4 vials can be plotted at once')
+                self.plot_flow_btn.setChecked(False)
+        
+        else:
+            # Remove from vials_to_plot
+            list_of_vials_to_plot_names = self.parent().parent.flow_plot_window.vials_to_plot_names
+            if self.full_vialNum in list_of_vials_to_plot_names:
+                index = list_of_vials_to_plot_names.index(self.full_vialNum)
+                self.parent().parent.flow_plot_window.vials_to_plot[index] = '-'
+                self.parent().parent.flow_plot_window.vials_to_plot_names[index] = '-'
+
+            # Make it not set to debug mode
+            if self.read_flow_vals_btn.isChecked() ==True:
+                self.read_flow_vals_btn.setChecked(False)
+    
+    def plot_ctrl_btn_toggled(self, checked):
+        if checked:
+            self.slave_plot_object = self.parent().slave_plot_window
+            # Make sure it's already set to debug mode
+            if self.read_flow_vals_btn.isChecked() == False:
+                self.read_flow_vals_btn.setChecked(True)
+
+            # Tell plot window this vial needs to be plotted
+            flag = 0
+            for idx in range(len(self.slave_plot_object.vials_to_plot)):
+                if self.slave_plot_object.vials_to_plot[idx] == '-':
+                    self.slave_plot_object.vials_to_plot[idx] = self
+                    self.slave_plot_object.vials_to_plot_names[idx] = self.full_vialNum
+                    flag = 1
+                    break
+            if flag == 0:
+                logger.debug('only 4 vials can be plotted at once')
+
+            if self.slave_plot_object.vials_to_plot[0] == '-':
+                self.slave_plot_object.vials_to_plot[0] = self
+                self.slave_plot_object.vials_to_plot_names[0] = self.full_vialNum
     # COMMANDS
     def K_parameter_update(self, Kx, value):
         strToSend = 'S_Kx_' + Kx + str(value) + '_' + self.full_vialNum
@@ -375,14 +310,14 @@ class Vial(QGroupBox):
         
         if (value < 0) or (value > int(self.mfc_capacity)):
             if value > int(self.mfc_capacity):
-                logger.warning(str(value) + ' is greater than mfc capacity: try again')
+                logger.warning(str(value) + ' is greater than ' + self.full_vialNum + ' capacity: setting to ' + self.mfc_capacity + ' sccm')
                 if self.sccmToInt_dict != None:
                     # Convert from sccm to integer
                     setpoint_sccm = int(self.mfc_capacity)
                     setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
                     logger.info('Set ' + self.full_vialNum + ' to ' + str(setpoint_sccm) + ' sccm')
                     self.setpoint = setpoint_sccm
-                    # TODO replace the text entered in the box
+                    self.setpoint_set_lineedit.setText(self.mfc_capacity)
 
                     # Send to olfactometer_window (to send to Arduino)
                     strToSend = 'S_Sp_' + str(setpoint_integer) + '_' + self.full_vialNum
@@ -534,82 +469,6 @@ class olfactometer_window(QGroupBox):
         self.master_groupbox.setEnabled(False)
         self.setTitle('Olfactometer')
     
-    def get_calibration_tables(self):
-        logger.debug('Loading all flow sensor calibration tables found at (%s)', self.flow_cal_dir)
-        
-        # Get names of all .txt files in flow cal directory
-        cal_file_names = os.listdir(self.flow_cal_dir)
-        cal_file_names = [fn for fn in cal_file_names if fn.endswith(config_olfa.cal_table_file_tyoe)]    # only txt files # TODO: change to csv
-        
-        if cal_file_names != []:
-            
-            # Create dictionaries for holding the calibration tables
-            new_sccm2Ard_dicts = {}
-            new_ard2Sccm_dicts = {}
-            
-            # Parse each file
-            for cal_file in cal_file_names:
-                idx_ext = cal_file.find('.')    # NOTE: pos fix: this won't work if the file name has a period in it.. but cmon who's gonna have a stupid file name like that
-                file_name = cal_file[:idx_ext]
-                cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
-                
-                thisfile_sccm2Ard_dict = {}
-                thisfile_ard2Sccm_dict = {}
-                last_sccm_value = max_calibration_table_value_sccm
-                last_sccm_value = int(last_sccm_value) + .01
-                with open(cal_file_full_dir, newline='') as f:
-                    csv_reader = csv.reader(f)      # Create reader object that will process lines from f (file)
-                    firstLine = next(csv_reader)    # skip over header line
-                    
-                    # For each row in the file
-                    reader = csv.DictReader(f, delimiter=',')   # Create reader object that maps the information in each row to a dict
-                    for row in reader:
-                        try:
-                            # Check that sccm values are in descending order, then add to dict
-                            this_sccm_value = row.get('SCCM')
-                            this_sccm_value = int(this_sccm_value)
-                            if this_sccm_value < last_sccm_value:
-                                thisfile_sccm2Ard_dict[float(row['SCCM'])] = float(row['int'])
-                                thisfile_ard2Sccm_dict[float(row['int'])] = float(row['SCCM'])
-                                last_sccm_value = this_sccm_value
-                            else:
-                                logger.warning('\tcannot use %s: sccm values are not in descending order', cal_file)
-                                logger.debug('\t\tlast value: %s   this value: %s', last_sccm_value,this_sccm_value)
-                                thisfile_ard2Sccm_dict = {}
-                                thisfile_sccm2Ard_dict = {}
-                        except TypeError:
-                            pass
-                        except KeyError as err:
-                            # Clear dictionaries & stop trying to read this file
-                            logger.error('got a KeyError: %s',err)
-                            logger.error('%s does not have correct headings for calibration files', cal_file)
-                            thisfile_sccm2Ard_dict = {}
-                            thisfile_ard2Sccm_dict = {}
-                            break
-                        except ValueError as err:
-                            # Clear dictionaries & stop trying to read this file
-                            logger.debug('missing some values, skipping calibration file %s', cal_file)
-                            thisfile_sccm2Ard_dict = {}
-                            thisfile_ard2Sccm_dict = {}
-                            break
-                
-                # If this file was good (aka we got values), save it to the dict of dicts
-                if bool(thisfile_sccm2Ard_dict) == True:
-                    new_sccm2Ard_dicts[file_name] = thisfile_sccm2Ard_dict
-                    new_ard2Sccm_dicts[file_name] = thisfile_ard2Sccm_dict
-            
-            # If we got stuff from these files, replace the old dicts
-            if len(new_sccm2Ard_dicts) != 0:
-                self.sccm2Ard_dicts = new_sccm2Ard_dicts
-                self.ard2Sccm_dicts = new_ard2Sccm_dicts
-            else:
-                logger.warning('no calibration files found in this directory')
-        
-        else:
-            # If flow cal directory does not exist: print warning --> this is big issue if none found
-            # TODO some kind of error message if there are no calibration tables. or disable all the slave devices or something, bc you won't be able to send setpoints
-            logger.warning('no .txt files found in this directory :/')    
-    
     def generate_ui(self):
         self.create_connect_box()
         self.create_master_groupbox()
@@ -633,7 +492,8 @@ class olfactometer_window(QGroupBox):
         self.master_groupbox.setMaximumHeight(self.master_groupbox.sizeHint().height())
         self.raw_comm_box.setMaximumHeight(self.raw_comm_box.sizeHint().height())
         self.slave_groupbox.setMinimumWidth(self.slave_widget.size().width() + 56)  # this is the exact size for the scroll area to have no horizontal anything
-        
+    
+    # CREATE WIDGETS
     def create_connect_box(self):
         self.connect_box = QGroupBox("Connect to master Arduino")
         self.port_widget = QComboBox(currentIndexChanged=self.port_changed)
@@ -723,84 +583,6 @@ class olfactometer_window(QGroupBox):
         layout.addWidget(self.show_flow_plot_btn)
         self.settings_groupbox.setLayout(layout)
 
-    def show_flow_plot_toggled(self, checked):
-        if checked:
-            #logger.debug('show flow plot toggled')
-            self.show_flow_plot_btn.setText('Hide flow plot')
-            self.flow_plot_window.update_vial_select_groupbox()
-            self.flow_plot_window.show()
-            self.flow_plot_window.timer_start()
-
-        else:
-            self.show_flow_plot_btn.setText('Show flow plot')
-            self.flow_plot_window.hide()
-
-    def flow_cal_dir_btn_toggled(self,checked): # TODO finish debugging/cleaning this up
-        if checked:
-            dlg = QFileDialog()
-            dlg.setFileMode(QFileDialog.Directory)
-            if dlg.exec_():
-                directory_selected = dlg.selectedFiles()
-                # now get all the files in this directory
-                self.flow_cal_dir = directory_selected[0]
-                self.get_calibration_tables()
-                self.flow_cal_dir_btn.setChecked(False)
-
-        else:
-            pass
-    
-    def load_config_btn_clicked(self):
-        # Open file select dialog
-        dlg = QFileDialog()
-        dlg.setFileMode(QFileDialog.ExistingFile)   # The name of a single existing file
-        dlg.setNameFilter("JSON Files (*.json)")    # Set file filter to .json
-        if dlg.exec_():
-            # Load the config file
-            file_selected = dlg.selectedFiles()
-            file_selected = file_selected[0]
-            self.load_config_file(file_selected)
-    
-    def load_config_file(self, file_selected):
-        # Load the config file
-        self.config_file_dir = file_selected
-        with open(self.config_file_dir) as f:
-            self.config_obj = json.load(f)   # dict
-        logger.info('Loading config file: %s', self.config_file_dir)
-        
-        # Update calibration tables for each vial
-        try:            
-            self.config_cal_tables = self.config_obj['Calibration tables']      # type = dict
-            for s in self.slave_objects:
-                for v in s.vials:
-                    vial_name = v.full_vialNum
-                    if vial_name in self.config_cal_tables:
-                        cal_table = self.config_cal_tables.get(vial_name)
-                        wid = v.vial_details_window.db_cal_table_combobox
-                        # Confirm that calibration table is valid (it has already been identified in calibration_tables folder)
-                        cal_table_options_list = [wid.itemText(i) for i in range(wid.count())]
-                        if cal_table in cal_table_options_list:
-                            v.cal_table = cal_table
-                            v.vial_details_window.db_cal_table_combobox.setCurrentText(v.cal_table)
-                        else:
-                            logger.warning('config file has an invalid cal table: %s', cal_table)
-            
-        except KeyError as err:
-            logger.warning('Invalid config file selected - try again')
-        
-        # Update flow sensor capacity for each vial
-        try:
-            self.config_mfc_capacity = self.config_obj['Flow Sensor Capacity']  # type = dict
-            for s in self.slave_objects:
-                for v in s.vials:
-                    vial_name = v.full_vialNum
-                    if vial_name in self.config_mfc_capacity:
-                        v.mfc_capacity = self.config_mfc_capacity.get(vial_name)
-                        v.vial_details_window.setpoint_slider.setMaximum(int(v.mfc_capacity))
-                        logger.debug('%s capacity set to %s', vial_name, v.mfc_capacity)
-        
-        except KeyError as err:
-            logger.warning('Selected config file does not include Flow Sensor Capacities')
-    
     def create_raw_comm_groupbox(self):
         self.raw_comm_box = QGroupBox("Raw Communication Data")
 
@@ -844,6 +626,161 @@ class olfactometer_window(QGroupBox):
         self.nothing_layout = QHBoxLayout()                     # Layout for putting QScrollArea into self.slave_groupbox
         self.nothing_layout.addWidget(self.slave_scrollArea)
         self.slave_groupbox.setLayout(self.nothing_layout)
+    
+    # WIDGET FUNCTIONS
+    def show_flow_plot_toggled(self, checked):
+        if checked:
+            self.show_flow_plot_btn.setText('Hide flow plot')
+            self.flow_plot_window.update_vial_select_groupbox()
+            self.flow_plot_window.show()
+            self.flow_plot_window.timer_start()
+
+        else:
+            self.show_flow_plot_btn.setText('Show flow plot')
+            self.flow_plot_window.hide()
+
+    def flow_cal_dir_btn_toggled(self,checked): # TODO finish debugging/cleaning this up
+        if checked:
+            dlg = QFileDialog()
+            dlg.setFileMode(QFileDialog.Directory)
+            if dlg.exec_():
+                directory_selected = dlg.selectedFiles()
+                # now get all the files in this directory
+                self.flow_cal_dir = directory_selected[0]
+                self.get_calibration_tables()
+                self.flow_cal_dir_btn.setChecked(False)
+
+        else:
+            pass
+    
+    def load_config_btn_clicked(self):
+        # Open file select dialog
+        dlg = QFileDialog()
+        dlg.setFileMode(QFileDialog.ExistingFile)   # The name of a single existing file
+        dlg.setNameFilter("JSON Files (*.json)")    # Set file filter to .json
+        if dlg.exec_():
+            # Load the config file
+            file_selected = dlg.selectedFiles()
+            file_selected = file_selected[0]
+            self.load_config_file(file_selected)
+    
+    # OTHER
+    def get_calibration_tables(self):
+        logger.debug('Loading all flow sensor calibration tables found at (%s)', self.flow_cal_dir)
+        
+        # Get names of all .txt files in flow cal directory
+        cal_file_names = os.listdir(self.flow_cal_dir)
+        cal_file_names = [fn for fn in cal_file_names if fn.endswith(config_olfa.cal_table_file_tyoe)]    # only txt files # TODO: change to csv
+        
+        if cal_file_names != []:
+            
+            # Create dictionaries for holding the calibration tables
+            new_sccm2Ard_dicts = {}
+            new_ard2Sccm_dicts = {}
+            
+            # Parse each file
+            for cal_file in cal_file_names:
+                idx_ext = cal_file.find('.')    # NOTE: pos fix: this won't work if the file name has a period in it.. but cmon who's gonna have a stupid file name like that
+                file_name = cal_file[:idx_ext]
+                cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
+                
+                thisfile_sccm2Ard_dict = {}
+                thisfile_ard2Sccm_dict = {}
+                last_sccm_value = max_calibration_table_value_sccm
+                last_sccm_value = int(last_sccm_value) + .01
+                with open(cal_file_full_dir, newline='') as f:
+                    csv_reader = csv.reader(f)      # Create reader object that will process lines from f (file)
+                    firstLine = next(csv_reader)    # skip over header line
+                    
+                    # For each row in the file
+                    reader = csv.DictReader(f, delimiter=',')   # Create reader object that maps the information in each row to a dict
+                    for row in reader:
+                        try:
+                            # Check that sccm values are in descending order, then add to dict
+                            this_sccm_value = row.get('SCCM')
+                            this_sccm_value = int(this_sccm_value)
+                            if this_sccm_value < last_sccm_value:
+                                thisfile_sccm2Ard_dict[float(row['SCCM'])] = float(row['int'])
+                                thisfile_ard2Sccm_dict[float(row['int'])] = float(row['SCCM'])
+                                last_sccm_value = this_sccm_value
+                            else:
+                                logger.warning('\tcannot use %s: sccm values are not in descending order', cal_file)
+                                logger.debug('\t\tlast value: %s   this value: %s', last_sccm_value,this_sccm_value)
+                                thisfile_ard2Sccm_dict = {}
+                                thisfile_sccm2Ard_dict = {}
+                        except TypeError:
+                            pass
+                        except KeyError as err:
+                            # Clear dictionaries & stop trying to read this file
+                            logger.error('got a KeyError: %s',err)
+                            logger.error('%s does not have correct headings for calibration files', cal_file)
+                            thisfile_sccm2Ard_dict = {}
+                            thisfile_ard2Sccm_dict = {}
+                            break
+                        except ValueError as err:
+                            # Clear dictionaries & stop trying to read this file
+                            logger.debug('missing some values, skipping calibration file %s', cal_file)
+                            thisfile_sccm2Ard_dict = {}
+                            thisfile_ard2Sccm_dict = {}
+                            break
+                
+                # If this file was good (aka we got values), save it to the dict of dicts
+                if bool(thisfile_sccm2Ard_dict) == True:
+                    new_sccm2Ard_dicts[file_name] = thisfile_sccm2Ard_dict
+                    new_ard2Sccm_dicts[file_name] = thisfile_ard2Sccm_dict
+            
+            # If we got stuff from these files, replace the old dicts
+            if len(new_sccm2Ard_dicts) != 0:
+                self.sccm2Ard_dicts = new_sccm2Ard_dicts
+                self.ard2Sccm_dicts = new_ard2Sccm_dicts
+            else:
+                logger.warning('no calibration files found in this directory')
+        
+        else:
+            # If flow cal directory does not exist: print warning --> this is big issue if none found
+            # TODO some kind of error message if there are no calibration tables. or disable all the slave devices or something, bc you won't be able to send setpoints
+            logger.warning('no .txt files found in this directory :/')    
+
+    def load_config_file(self, file_selected):
+        # Load the config file
+        self.config_file_dir = file_selected
+        with open(self.config_file_dir) as f:
+            self.config_obj = json.load(f)   # dict
+        logger.info('Loading config file: %s', self.config_file_dir)
+        
+        # Update calibration tables for each vial
+        try:            
+            self.config_cal_tables = self.config_obj['Calibration tables']      # type = dict
+            for s in self.slave_objects:
+                for v in s.vials:
+                    vial_name = v.full_vialNum
+                    if vial_name in self.config_cal_tables:
+                        cal_table = self.config_cal_tables.get(vial_name)
+                        wid = v.vial_details_window.db_cal_table_combobox
+                        # Confirm that calibration table is valid (it has already been identified in calibration_tables folder)
+                        cal_table_options_list = [wid.itemText(i) for i in range(wid.count())]
+                        if cal_table in cal_table_options_list:
+                            v.cal_table = cal_table
+                            v.vial_details_window.db_cal_table_combobox.setCurrentText(v.cal_table)
+                        else:
+                            logger.warning('config file has an invalid cal table: %s', cal_table)
+            
+        except KeyError as err:
+            logger.warning('Invalid config file selected - try again')
+        
+        # Update flow sensor capacity for each vial
+        try:
+            self.config_mfc_capacity = self.config_obj['Flow Sensor Capacity']  # type = dict
+            for s in self.slave_objects:
+                for v in s.vials:
+                    vial_name = v.full_vialNum
+                    if vial_name in self.config_mfc_capacity:
+                        v.mfc_capacity = self.config_mfc_capacity.get(vial_name)
+                        v.vial_details_window.setpoint_slider.setMaximum(int(v.mfc_capacity))
+                        logger.debug('%s capacity set to %s', vial_name, v.mfc_capacity)
+        
+        except KeyError as err:
+            logger.warning('Selected config file does not include Flow Sensor Capacities')
     
     # CONNECT FUNCTIONS
     def get_ports(self):
@@ -918,10 +855,12 @@ class olfactometer_window(QGroupBox):
             logger.info('disconnected from ' + self.port_widget.currentText())
             self.master_groupbox.setEnabled(False)
             self.connect_btn.setText("Connect")
+            self.connect_btn.setToolTip("Connect to " + self.portStr)
             self.connect_btn.setChecked(False)
             self.refresh_btn.setEnabled(True)
             self.port_widget.setEnabled(True)
     
+    # COMMUNICATION
     def get_slave_addresses(self):
         self.prev_active_slaves = copy.copy(self.active_slaves)
         self.active_slaves = []
