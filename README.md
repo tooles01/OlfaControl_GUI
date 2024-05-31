@@ -10,19 +10,13 @@ Update 4/29/2024: GUI is compatible with Python 3.9, 3.10, 3.12
 
 ~~As of 1/23/2024, we know that: Python 3.9 and 3.10 work, Python 3.12 does not work~~
 
-<br><br>
+<br>
 
 # Setup
 
 1. Download/clone the whole folder
 2. Open the command prompt and navigate to this folder
-3. Optional:
-    - Create a virtual environment (instructions below)
-    - Once created, activate the virtual environment
-    
-        ```
-        <name of environment>\scripts\activate.bat
-        ```
+3. *Optional:* Create & activate a virtual environment (instructions below)
 4. Install the required packages
     ```
     pip install -r requirements.txt
@@ -40,10 +34,27 @@ Update 4/29/2024: GUI is compatible with Python 3.9, 3.10, 3.12
 
 <br>
 
-#
+
 ## Once you open the GUI:
 - Connect to the olfactometer (Connect to Arduino)
-- Load olfa config (*.json) file. (This file contains the names of the calibration tables to use for each flow sensor, plus the maximum capacity of each flow sensor.)  
+<p align="center">
+    <img src="images/setup_GUI_01.png" width="50%">
+</p>
+
+- Load olfa config (*.json) file.
+    - This file contains the names of the calibration tables and maximum capacity for each flow sensor.
+    - This step is optional, but allows the user to quickly load that information into the GUI all at once, instead of manually entering it for each line.
+<p align="center">
+    <img src="images/setup_GUI_02.png" width="50%">
+</p>
+
+<p align="center">
+Example config file:
+</p>
+<p align="center">
+    <img src="images/setup_GUI_03.png" width="50%">
+</p>
+
 <br>
 
 *Note: Calibration tables should be located in a folder called **calibration_tables** within the OlfaControl_GUI folder. Calibration tables must be in decreasing sequential order, or the interpolation will get all messed up.*
@@ -53,20 +64,40 @@ Update 4/29/2024: GUI is compatible with Python 3.9, 3.10, 3.12
 
 #
 ### To create a virtual environment:
-1. Open the command prompt and navigate to where you want the environment created.
-2. Create the environment
-    ```
-    python -m venv <name of environment>\
-    ```
 
-    example:
-    ```
-    python -m venv venv1\
-    ```
-    <br>
+A virtual environment is a space separate from your main python install, where you can install just the packages needed for this project without affecting your global python packages.
 
-    If you want to create the environment using a specific python version, use:
-    ```
-    <path to python version> -m venv <name of environment>\
-    ```
+It's not necessary to create one in order to use this GUI, but if you choose to, don't forget to activate it before running the GUI.
+
+<br>
+
+1. Open the command prompt and navigate to the directory where you want the environment created. (For this circumstance, you'll probably want that to be the folder that these files are stored in, "OlfaControl_GUI".)
+
+<p align="center">
+    <img src="images/setup_venv_01.png" width="88%">
+</p>
+
+2. Create the environment:
+    
+    ``` python -m venv <name of environment>\ ```  
+    
+<p align="center">
+    <img src="images/setup_venv_02.png" width="88%">
+</p>
+
+3. Activate the virtual environment:  
+
+    ```<name of environment>\scripts\activate.bat```
+
+<p align="center">
+    <img src="images/setup_venv_03.png" width="88%">
+</p>
+
+Once in the environment, you'll have access to all of the packages specifically installed there, and can run whatever python scripts you need to.
+
+
+<br><br><br>
+
+** *Note:* To create an environment using a specific python version, use:
+``` <path to python version> -m venv <name of environment>\ ```  
 
