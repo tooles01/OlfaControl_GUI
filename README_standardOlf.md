@@ -14,29 +14,31 @@ arduino port = RJ jack the MFC is connected to
 
 
 **alicat_digital:**  
-*DMFC + slaveindex + arduino port + MFC address + flownum*
+*DMFC + slaveindex + arduino port + MFC address + flownum*  
+
+`DMFC 1 2 A32000    // Set (200cc capacity) MFC to 100cc`  
+`DMFC 1 2 A16000    // Set (200cc capacity) MFC to 50cc`  
+`DMFC 1 2 A8000     // Set (200cc capacity) MFC to 25cc`  
 
 flownum = (flowrate / mfc capacity) * 32000  
 MFC address = A (99% of the time) (can be changed on the MFC itself)
-
-`DMFC 1 2 A16000    // Set (200cc capacity) MFC to 100cc`  
-`DMFC 1 2 A8000     // Set (200cc capacity) MFC to 50cc`  
-`DMFC 1 2 A1600     // Set (200cc capacity) MFC to 10cc`  
 
 <br>
 
  *** *Note:* Current version of the standard olf GUI does not include functions for sending/receiving messages on analog, the below  section is just for comprehensive documentation purposes 
 
-> **analog:**  
+ *** *Secondary note: I know this math doesn't make sense, need to check what's up here -ST 5/31/2024*
+
+<br>
+
+**analog:**  
 *MFC + slaveindex + arduino port + flownum*  
-<br>
-flownum = flowrate / mfc capacity  
-<br>
+
 `MFC 1 2 .5         // Set 200cc capacity MFC to 100cc`  
 `MFC 1 2 .25        // Set 200cc capacity MFC to 50cc`  
 `MFC 1 2 .05        // Set 200cc capacity MFC to 10cc`  
 
-
+flownum = flowrate / mfc capacity  
 
 
 ### Vial open
