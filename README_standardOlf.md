@@ -21,15 +21,14 @@ arduino port = RJ jack the MFC is connected to
 `DMFC 1 2 A8000     // Set (200cc capacity) MFC to 25cc`  
 
 flownum = (flowrate / mfc capacity) * 32000  
-MFC address = A (99% of the time) (can be changed on the MFC itself)
+MFC address = A (99% of the time) (this can be changed on the MFC itself)
+
+ *** *note: I know this math doesn't make sense, need to check what's up here -ST 5/31/2024*
+
 
 <br>
 
  *** *Note:* Current version of the standard olf GUI does not include functions for sending/receiving messages on analog, the below  section is just for comprehensive documentation purposes 
-
- *** *Secondary note: I know this math doesn't make sense, need to check what's up here -ST 5/31/2024*
-
-<br>
 
 **analog:**  
 *MFC + slaveindex + arduino port + flownum*  
@@ -40,6 +39,7 @@ MFC address = A (99% of the time) (can be changed on the MFC itself)
 
 flownum = flowrate / mfc capacity  
 
+<br>
 
 ### Vial open
 *vialOn + slaveindex + vialNum*  
@@ -47,6 +47,7 @@ flownum = flowrate / mfc capacity
 `vialOn 1 5     // Opens vial 5`  
 `vialOn 1 5     // Opens vial 6`
 
+<br>
 
 ### Vial close
 *vialOff + slaveindex + vialNum*  
