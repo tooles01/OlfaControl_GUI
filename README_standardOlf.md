@@ -20,11 +20,8 @@ arduino port = RJ jack the MFC is connected to
 `DMFC 1 2 A16000    // Set (200cc capacity) MFC to 50cc`  
 `DMFC 1 2 A8000     // Set (200cc capacity) MFC to 25cc`  
 
-flownum = (flowrate / mfc capacity) * 32000  
+flownum = (flowrate / mfc capacity) * 64000  
 MFC address = A (99% of the time) (this can be changed on the MFC itself)
-
- *** *note: I know this math doesn't make sense, need to check what's up here -ST 5/31/2024*
-
 
 <br>
 
