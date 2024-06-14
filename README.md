@@ -6,22 +6,22 @@ GUI for testing the new 8-line olfactometer
 
 ## Python versions
 
-Update 4/29/2024: GUI is compatible with Python 3.9, 3.10, 3.12
+Update 4/29/2024: GUI is compatible with Python 3.9, 3.10, 3.12  
 
-~~As of 1/23/2024, we know that: Python 3.9 and 3.10 work, Python 3.12 does not work~~
+~~1/23/2024: Python 3.9 and 3.10 work, Python 3.12 does not work~~
 
 <br>
 
 # Setup
 
-1. Download/clone the whole folder
+1. Download/clone this folder
+    - It is recommended to do so via Github Desktop, so you can pull new commits as they happen. (New commits will be bug fixes/etc.)
 2. Open the command prompt and navigate to this folder
 3. *Optional:* Create & activate a virtual environment (instructions below)
 4. Install the required packages: ``` pip install -r requirements.txt ```
-5. Run the GUI
+5. Run the GUI: ```python olfa_driver_48line.py```  
     
-    Olfactometer only: ```python olfa_driver_48line.py```  
-    Big Program for running automated stuff/adding PID: ```python main.py```
+    (Big Program for running automated stuff/adding PID: ```python main.py```)
 
 <br>
 
@@ -48,7 +48,7 @@ Example config file:
 
 <br>
 
-*Note: Calibration tables should be located in a folder called **calibration_tables** within the OlfaControl_GUI folder. Calibration tables must be in decreasing sequential order, or the interpolation will get all messed up.*
+***Note:** Calibration tables should be located in a folder called **calibration_tables** within the OlfaControl_GUI folder. Any new calibration tables must contain values in decreasing sequential order, or the interpolation will get all messed up.*
 
 <br>
 <br>
@@ -58,7 +58,7 @@ Example config file:
 
 A virtual environment is a space separate from your main python install, where you can install just the packages needed for this project without affecting your global python packages.
 
-It's not necessary to create one in order to use this GUI, but if you choose to, don't forget to activate it before running the GUI.
+It's not necessary to create one in order to use this GUI, but if you choose to, don't forget to activate it **each time** before running the GUI.
 
 <br>
 
@@ -70,6 +70,9 @@ It's not necessary to create one in order to use this GUI, but if you choose to,
     
     ``` python -m venv <name of environment>\ ```  
     
+    *Note:* To create an environment using a specific python version:  
+    ``` <path to python version> -m venv <name of environment>\ ```  
+    
     <img src="images/setup_venv_02.png" width="60%">
 
 3. Activate the virtual environment:  
@@ -78,11 +81,4 @@ It's not necessary to create one in order to use this GUI, but if you choose to,
 
     <img src="images/setup_venv_03.png" width="60%">
 
-Once in the environment, you'll have access to all of the packages specifically installed there, and can run whatever python scripts you need to.
-
-
-<br><br><br>
-
-** *Note:* To create an environment using a specific python version, use:
-``` <path to python version> -m venv <name of environment>\ ```  
-
+Once in the environment, you'll have access to all of the packages specifically installed there.
