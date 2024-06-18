@@ -1,13 +1,12 @@
 # flowSensor_driver.py
 # for Honeywell 5100V
 
-import os, sys, logging, csv
+import os, sys, logging, csv, time
 from PyQt5 import QtCore, QtSerialPort
 from PyQt5.QtWidgets import *
 from serial.tools import list_ports
-import utils, utils_olfa_48line
-import time
 import numpy as np
+import utils, utils_olfa_48line
 
 currentDate = utils.currentDate
 noPortMsg = ' ~ No COM ports detected ~'
@@ -37,27 +36,27 @@ class flowSensor(QGroupBox):
         self.connected = False
         self.calibration_on = False
         
-        self.createConnectBox()
+        self.create_connect_box()
         self.create_settings_box()
         self.create_cal_table_box()
-        self.createDataReceiveBoxes()
+        self.create_data_receive_box()
 
         mainLayout = QHBoxLayout()
         col1 = QVBoxLayout()
-        col1.addWidget(self.connectBox)
+        col1.addWidget(self.connect_box)
         col1.addWidget(self.settings_box)
         col1.addWidget(self.cal_table_box)
         col2 = QVBoxLayout()
-        col2.addWidget(self.dataReceiveBox)
+        col2.addWidget(self.data_receive_box)
         col2.addWidget(self.new_cal_box)
         mainLayout.addLayout(col1)
         mainLayout.addLayout(col2)
         '''
         mainLayout = QGridLayout()
-        mainLayout.addWidget(self.connectBox,0,0,)
+        mainLayout.addWidget(self.connect_box,0,0,)
         mainLayout.addWidget(self.settings_box,1,0)
         mainLayout.addWidget(self.cal_table_box,0,1)
-        mainLayout.addWidget(self.dataReceiveBox,0,2,2,1)
+        mainLayout.addWidget(self.data_receive_box,0,2,2,1)
         mainLayout.addWidget(self.new_cal_box,1,1)
         '''
         self.setLayout(mainLayout)
@@ -66,24 +65,24 @@ class flowSensor(QGroupBox):
         self.settings_box.setMaximumHeight(self.settings_box.sizeHint().height())
         self.cal_table_widget.setFixedHeight(130)
         self.cal_table_box.setFixedHeight(self.cal_table_box.sizeHint().height())
-        self.dataReceiveBox.setFixedWidth(self.dataReceiveBox.sizeHint().width())
+        self.data_receive_box.setFixedWidth(self.data_receive_box.sizeHint().width())
 
-        self.setConnected(False)
+        self.set_connected(False)
     
     # CREATE GUI ELEMENTS
-    def createConnectBox(self):
-        self.connectBox = QGroupBox("Connect")
+    def create_connect_box(self):
+        self.connect_box = QGroupBox("Connect")
 
         self.portLbl = QLabel(text="Port/Device:")
-        self.port_widget = QComboBox(currentIndexChanged=self.portChanged)
-        self.connectButton = QPushButton(checkable=True,toggled=self.toggled_connect)
-        self.refreshButton = QPushButton(text="Refresh",clicked=self.getPorts)
-        self.getPorts()
+        self.port_widget = QComboBox(currentIndexChanged=self.port_changed)
+        self.connect_btn = QPushButton(checkable=True,toggled=self.toggled_connect)
+        self.refresh_btn = QPushButton(text="Refresh",clicked=self.get_ports)
+        self.get_ports()
 
-        self.connectBoxLayout = QFormLayout()
-        self.connectBoxLayout.addRow(self.portLbl,self.port_widget)
-        self.connectBoxLayout.addRow(self.refreshButton,self.connectButton)
-        self.connectBox.setLayout(self.connectBoxLayout)
+        connect_box_layout = QFormLayout()
+        connect_box_layout.addRow(self.portLbl,self.port_widget)
+        connect_box_layout.addRow(self.refresh_btn,self.connect_btn)
+        self.connect_box.setLayout(connect_box_layout)
     
     def create_settings_box(self):
         self.settings_box = QGroupBox('Settings')
@@ -103,7 +102,7 @@ class flowSensor(QGroupBox):
         self.get_calibration_tables()
         self.cal_table_widget = QListWidget()
         self.cal_table_widget.addItems(self.sccm2Ard_dicts)
-        default_cal_table_item = self.cal_table_widget.item(calibration_table_item_number)
+        default_cal_table_item = self.cal_table_widget.item(calibration_table_item_number-1)
         self.cal_table_widget.setCurrentItem(default_cal_table_item)
         
         self.cal_table_btn = QPushButton('Set calibration table',checkable=True,toggled=self.cal_tbl_btn_toggled)
@@ -144,18 +143,16 @@ class flowSensor(QGroupBox):
         layout.addWidget(self.cal_table_btn)
         self.cal_table_box.setLayout(layout)
     
-    def createDataReceiveBoxes(self):
-        self.dataReceiveBox = QGroupBox("data received")
+    def create_data_receive_box(self):
+        self.data_receive_box = QGroupBox("data received")
 
-        self.receiveBox = QTextEdit(readOnly=True)
-        receiveBoxLbl = QLabel(text="Flow val (int), Flow val (SCCM)")
-        receiveBoxLayout = QVBoxLayout()
-        receiveBoxLayout.addWidget(receiveBoxLbl)
-        receiveBoxLayout.addWidget(self.receiveBox)
-
-        layout = QHBoxLayout()
-        layout.addLayout(receiveBoxLayout)
-        self.dataReceiveBox.setLayout(layout)
+        self.receive_box = QTextEdit(readOnly=True)
+        receive_box_lbl = QLabel(text="Flow val (int), Flow val (SCCM)")
+        
+        receive_box_layout = QVBoxLayout()
+        receive_box_layout.addWidget(receive_box_lbl)
+        receive_box_layout.addWidget(self.receive_box)
+        self.data_receive_box.setLayout(receive_box_layout)
     
     
     # FUNCTIONS
@@ -366,7 +363,7 @@ class flowSensor(QGroupBox):
     
     
     # CONNECT TO DEVICE
-    def getPorts(self):
+    def get_ports(self):
         self.port_widget.clear()
         ports = list_ports.comports()
         if ports:
@@ -391,17 +388,17 @@ class flowSensor(QGroupBox):
         else:
             logger.debug('no Arduinos detected :(')
     
-    def portChanged(self):
+    def port_changed(self):
         if self.port_widget.count() != 0:
             self.port = self.port_widget.currentText()
             if self.port == noPortMsg:
                 self.portStr = noPortMsg
-                self.connectButton.setEnabled(False)
-                self.connectButton.setText(noPortMsg)
+                self.connect_btn.setEnabled(False)
+                self.connect_btn.setText(noPortMsg)
             else:
                 self.portStr = self.port[:self.port.index(':')]
-                self.connectButton.setEnabled(True)
-                self.connectButton.setText("Connect to  " + self.portStr)
+                self.connect_btn.setEnabled(True)
+                self.connect_btn.setText("Connect to  " + self.portStr)
         
     def toggled_connect(self, checked):
         if checked:
@@ -413,32 +410,32 @@ class flowSensor(QGroupBox):
             if not self.serial.isOpen():
                 if self.serial.open(QtCore.QIODevice.ReadWrite):
                     logger.info('successfully opened port (& set mode to ReadWrite)')
-                    self.setConnected(True)
+                    self.set_connected(True)
                 else:
                     logger.warning('could not successfully open port')
-                    self.setConnected(False)
+                    self.set_connected(False)
             else:
-                self.setConnected(True)
+                self.set_connected(True)
         else:
             try:
                 if self.serial.isOpen():
                     self.serial.close()
                     logger.info('Closed serial port')
-                    self.setConnected(False)
+                    self.set_connected(False)
             except AttributeError:
                 logger.debug('Cannot close port, serial object does not exist')
     
-    def setConnected(self, connected):
+    def set_connected(self, connected):
         if connected == True:
-            self.connectButton.setText('Stop communication w/ ' + self.portStr)
-            self.refreshButton.setEnabled(False)
+            self.connect_btn.setText('Stop communication w/ ' + self.portStr)
+            self.refresh_btn.setEnabled(False)
             self.settings_box.setEnabled(True)
             self.cal_table_box.setEnabled(True)
             self.new_cal_box.setEnabled(True)
         else:
-            self.connectButton.setText('Connect to ' + self.portStr)
-            self.connectButton.setChecked(False)
-            self.refreshButton.setEnabled(True)
+            self.connect_btn.setText('Connect to ' + self.portStr)
+            self.connect_btn.setChecked(False)
+            self.refresh_btn.setEnabled(True)
             self.settings_box.setEnabled(False)
             self.cal_table_box.setEnabled(False)
             self.new_cal_box.setEnabled(False)
@@ -456,7 +453,7 @@ class flowSensor(QGroupBox):
                     flowVal_int = int(text)
                     val_SCCM = utils_olfa_48line.convertToSCCM(flowVal_int,self.intToSccm_dict)
                     dataStr = str_value + '\t' + str(val_SCCM)
-                    self.receiveBox.append(dataStr)
+                    self.receive_box.append(dataStr)
 
                     # send to main window for recording
                     try: self.window().receive_data_from_device('flow sensor','FL',str_value)
@@ -483,5 +480,5 @@ if __name__ == "__main__":
     app1 = QApplication(sys.argv)
     theWindow = flowSensor()
     theWindow.show()
-    theWindow.setWindowTitle('flow sensor')
+    theWindow.setWindowTitle('Flow Sensor Widget')
     sys.exit(app1.exec_())
