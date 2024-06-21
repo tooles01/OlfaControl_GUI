@@ -1,9 +1,8 @@
-import os, logging, csv, time
+import os, logging, csv
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
 from datetime import datetime, timedelta
-from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 import numpy as np
 
 import utils
@@ -31,25 +30,6 @@ if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory
 file_handler = utils.create_file_handler(main_datafile_directory)
 logger.addHandler(file_handler)
 ##############################
-
-
-class calibration_worker(QObject):
-    def __init__(self):
-        super().__init__()
-
-        self.calibration_setpoint = 0
-
-    @pyqtSlot()
-    def read_flow_values(self):
-        t_1 = time.time()
-        t_2 = 0
-        serial_values = []
-        while t_2 < t_1 + 1:
-            t_2 = time.time()
-            this_read = 1
-            serial_values.append(this_read)
-
-        serial_converted = [float(i) for i in serial_values]
 
 
 class VialDetailsPopup(QWidget):
@@ -347,8 +327,8 @@ class VialDetailsPopup(QWidget):
         self.write_to_file_btn = QPushButton(text='Write')
         self.write_to_file_wid.returnPressed.connect(self.save_calibration_value)
         self.write_to_file_btn.clicked.connect(self.save_calibration_value)
-        self.write_to_file_wid.setToolTip('(SCCM, int)\nValues to write to calibration file\nWhen calibration is run, median value is placed here. This can also be manually typed in, then written to the file.')
-        self.write_to_file_btn.setToolTip('Write to file')
+        self.write_to_file_wid.setToolTip('Values to write to calibration file (SCCM, int)\nBy default, mean of collected values is put here. Pairs can also be manually typed in to write to the file.')
+        self.write_to_file_btn.setToolTip('Write pair to calibration file')
         
         layout_results = QGridLayout()
         layout_results.addWidget(QLabel('# of Vals:'),0,0); layout_results.addWidget(self.cal_results_num_wid,0,1)
@@ -618,12 +598,13 @@ class VialDetailsPopup(QWidget):
             else:
                 # Ask user if they want to overwrite the current file
                 msg_box = QMessageBox()
+                msg_box.setWindowTitle('Confirm Overwrite')
                 msg_box.setText(self.new_cal_file_name + ' already exists: overwrite?')
                 msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
                 msg_box.setDefaultButton(QMessageBox.No)
                 ret = msg_box.exec()
                 if ret == QMessageBox.Yes:
-                    logger.info('Deleting %s (%s)', self.new_cal_file_name, self.new_cal_file_dir)
+                    logger.info('Deleting %s.csv (%s)', self.new_cal_file_name, self.new_cal_file_dir)
                     os.remove(self.new_cal_file_dir)
                     self.create_file()
                 if ret == QMessageBox.No:
@@ -708,7 +689,7 @@ class VialDetailsPopup(QWidget):
             self.all_std_devs = []
             self.values_means = []
             
-            # Set calibration object to ON (start getting calibration values from olfactometer window)
+            # Set calibration object to ON (start getting calibratkion values from olfactometer window)
             self.calibration_on = True
             
             # Start calibration timer

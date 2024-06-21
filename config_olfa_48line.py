@@ -35,7 +35,7 @@ def_Ki_value = '0.0005'
 def_Kd_value = '0.0000'
 def_manual_cmd = 'S_OV_10_A1'
 def_mfc_cal_value = '200'
-def_calibration_duration = '60'     # calibration per flow rate
+def_calibration_duration = '15'     # calibration per flow rate
 ##############################
 
 
