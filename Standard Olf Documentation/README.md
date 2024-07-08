@@ -38,6 +38,25 @@ flownum = flowrate / mfc capacity
 
 <br>
 
+### Read flowrate
+
+**alicat_digital:**
+
+`DMFC 1 1       // Read flowrate from MFC 1`  
+`DMFC 1 2       // Read flowrate from MFC 2`
+
+<br>
+
+**analog:**
+
+`MFC 1 1        // Read flowrate from MFC 1`  
+`MFC 1 2        // Read flowrate from MFC 2`
+
+Value is returned as a fraction of the MFC capacity.  
+Ex: **.56** returned on a 200cc MFC would mean **112 sccm**
+<br>
+<br>
+
 ### Vial open
 *vialOn + slaveindex + vialNum*  
 
