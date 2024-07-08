@@ -655,7 +655,6 @@ class VialDetailsPopup(QWidget):
 
     def start_calibration(self):
         if self.start_calibration_btn.isChecked() == True:
-            self.collected_values_window.clear()
 
             # Get sccm value & duration
             self.this_cal_sccm_value = self.mfc_value_lineedit.text()
@@ -671,6 +670,7 @@ class VialDetailsPopup(QWidget):
             self.create_new_cal_file_btn.setEnabled(False)
             self.start_calibration_btn.setText('End early')
             self.start_calibration_btn.setToolTip('Stop collecting flow values')
+            self.collected_values_window.clear()
             
             # Check that olfactometer is connected
             if self.parent.olfactometer_parent_object.connect_btn.isChecked() == False:

@@ -666,15 +666,15 @@ class olfactometer_window(QGroupBox):
     
     # OTHER
     def get_calibration_tables(self):
-        logger.debug('Loading all flow sensor calibration tables found at (%s)', self.flow_cal_dir)
+        logger.debug('Loading all flow sensor calibration tables at (%s)', self.flow_cal_dir)
         
-        # Get names of all .txt files in flow cal directory
+        # Get names of all .txt files in flow cal directory # TODO change to .csv
         cal_file_names = os.listdir(self.flow_cal_dir)
         cal_file_names = [fn for fn in cal_file_names if fn.endswith(config_olfa.cal_table_file_tyoe)]    # only txt files # TODO: change to csv
         
         if cal_file_names != []:
             
-            # Create dictionaries for holding the calibration tables
+            # Create dictionaries for storing the calibration tables
             new_sccm2Ard_dicts = {}
             new_ard2Sccm_dicts = {}
             
@@ -690,7 +690,7 @@ class olfactometer_window(QGroupBox):
                 last_sccm_value = int(last_sccm_value) + .01
                 with open(cal_file_full_dir, newline='') as f:
                     csv_reader = csv.reader(f)      # Create reader object that will process lines from f (file)
-                    firstLine = next(csv_reader)    # skip over header line
+                    firstLine = next(csv_reader)    # Skip over header line
                     
                     # For each row in the file
                     reader = csv.DictReader(f, delimiter=',')   # Create reader object that maps the information in each row to a dict
@@ -698,7 +698,7 @@ class olfactometer_window(QGroupBox):
                         try:
                             # Check that sccm values are in descending order, then add to dict
                             this_sccm_value = row.get('SCCM')
-                            this_sccm_value = int(this_sccm_value)
+                            this_sccm_value = float(this_sccm_value)
                             if this_sccm_value < last_sccm_value:
                                 thisfile_sccm2Ard_dict[float(row['SCCM'])] = float(row['int'])
                                 thisfile_ard2Sccm_dict[float(row['int'])] = float(row['SCCM'])
@@ -712,7 +712,7 @@ class olfactometer_window(QGroupBox):
                             pass
                         except KeyError as err:
                             # Clear dictionaries & stop trying to read this file
-                            logger.error('got a KeyError: %s',err)
+                            logger.debug('KeyError: %s',err)
                             logger.error('%s does not have correct headings for calibration files', cal_file)
                             thisfile_sccm2Ard_dict = {}
                             thisfile_ard2Sccm_dict = {}
@@ -739,7 +739,7 @@ class olfactometer_window(QGroupBox):
         else:
             # If flow cal directory does not exist: print warning --> this is big issue if none found
             # TODO some kind of error message if there are no calibration tables. or disable all the slave devices or something, bc you won't be able to send setpoints
-            logger.warning('no .txt files found in this directory :/')    
+            logger.warning('no .txt files found in this directory :/')
 
     def load_config_file(self, file_selected):
         # Load the config file
@@ -836,8 +836,8 @@ class olfactometer_window(QGroupBox):
                 self.set_connected(True)
         else:
             try:
-                self.set_connected(False)
                 self.serial.close()
+                self.set_connected(False)
             except AttributeError as err:
                 logger.error("error :( --> %s", err)
     
@@ -852,7 +852,7 @@ class olfactometer_window(QGroupBox):
             self.port_widget.setEnabled(False)
         
         else:
-            logger.info('disconnected from ' + self.port_widget.currentText())
+            logger.info('Disconnected from ' + self.port_widget.currentText())
             self.master_groupbox.setEnabled(False)
             self.connect_btn.setText("Connect")
             self.connect_btn.setToolTip("Connect to " + self.portStr)
