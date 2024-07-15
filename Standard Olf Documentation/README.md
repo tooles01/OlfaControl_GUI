@@ -7,32 +7,35 @@ Also you can talk directly to it using the Arduino Serial Monitor if you want to
 ##  Strings for commands
 
 
+| Variable | Description |
+| ----------- | ----------- |
+| *slaveindex* | ValveController I2C address (typically set to "1") set via S1 on the PCB |
+| *arduino port* | RJ jack MFC is connected to. Topmost RJ jack (closest to power) = **1**; RJ jack directly below that = **2** |
+| *MFC address* | MFC Unit ID (typically set to "A"), can be changed on the MFC itself via: Menu --> Adv Setup --> Comm Setup --> Unit ID |
+
+
+
 ### Set flowrate
 
-slaveindex = internal to Teensy/ValveController code (probably)  (actually omg this might be the DIP switch on the ValveController that we set during ValveController flashing)  
-arduino port = RJ jack the MFC is connected to  
-
-
 **alicat_digital:**  
-*DMFC + slaveindex + arduino port + MFC address + flownum*  
+*"DMFC" + slaveindex + arduino port + MFC address + flownum*  
 
-`DMFC 1 2 A32000    // Set (200cc capacity) MFC to 100cc`  
-`DMFC 1 2 A16000    // Set (200cc capacity) MFC to 50cc`  
-`DMFC 1 2 A8000     // Set (200cc capacity) MFC to 25cc`  
+`DMFC 1 2 A32000    // Set MFC 2 (200cc capacity) to 100cc`  
+`DMFC 1 2 A16000    // Set MFC 2 (200cc capacity) to 50cc`  
+`DMFC 1 2 A8000     // Set MFC 2 (200cc capacity) to 25cc`  
 
 flownum = (flowrate / mfc capacity) * 64000  
-MFC address = A (99% of the time) (this can be changed on the MFC itself)
 
 <br>
 
  *** *Note:* Current version of the standard olf GUI does not include functions for sending/receiving messages on analog, the below  section is just for comprehensive documentation purposes 
 
 **analog:**  
-*MFC + slaveindex + arduino port + flownum*  
+*"MFC" + slaveindex + arduino port + flownum*  
 
-`MFC 1 2 .5         // Set 200cc capacity MFC to 100cc`  
-`MFC 1 2 .25        // Set 200cc capacity MFC to 50cc`  
-`MFC 1 2 .05        // Set 200cc capacity MFC to 10cc`  
+`MFC 1 2 .5         // Set MFC 2 (200cc capacity) to 100cc`  
+`MFC 1 2 .25        // Set MFC 2 (200cc capacity) to 50cc`  
+`MFC 1 2 .05        // Set MFC 2 (200cc capacity) to 10cc`  
 
 flownum = flowrate / mfc capacity  
 
@@ -53,30 +56,43 @@ flownum = flowrate / mfc capacity
 `MFC 1 2        // Read flowrate from MFC 2`
 
 Value is returned as a fraction of the MFC capacity.  
-Ex: **.56** returned on a 200cc MFC would mean **112 sccm**
+*Example:* **.56** returned would mean **112 sccm** (on a 200cc MFC)
+
+** *Note:* The analog *read flowrate* command will return the flowrate regardless of the communication protocol the MFC itself is set to (analog/serial)
+
 <br>
 <br>
 
 ### Vial open
-*vialOn + slaveindex + vialNum*  
+*"vialOn" + slaveindex + vialNum*  
 
-`vialOn 1 5     // Opens vial 5`  
-`vialOn 1 5     // Opens vial 6`
+`vialOn 1 5     // Open vial 5`  
+`vialOn 1 5     // Open vial 6`
 
 <br>
 
 ### Vial close
-*vialOff + slaveindex + vialNum*  
+*"vialOff" + slaveindex + vialNum*  
 
-`vialOff 1 5    // Closes vial 5`  
-`vialOff 1 5    // Closes vial 6`  
+`vialOff 1 5    // Close vial 5`  
+`vialOff 1 5    // Close vial 6`  
+
+<br>
+
+## Note for debugging:
+
+When testing a new board with alicat_digital, sometimes need to run
+
+`DMFC 1 1`  
+`DMFC 1 1 A`
+
+before trying to read the MFC back, to clear the buffer (or something like that)
 
 
 <br>
 <br>
-
-##
-##
+<br>
+<br>
 ##
 
 Note for me (Shannon):  
