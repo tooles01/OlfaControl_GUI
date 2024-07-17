@@ -20,7 +20,8 @@ cal_table_file_tyoe = '.txt'
 
 def_cal_setpoints = '0,100,200,300,400,500,600,700,800,900,1000'
 num_calibration_datapoints = 50
-def_cal_table_name = 'Honeywell_3100'
+def_new_cal_table_name = 'Honeywell_3100'
+default_cal_table = 'Honeywell_3100V'
 def_MFC_value = '100'
 def_cal_duration = '10'
 max_calibration_table_value_sccm = '1000'   # TODO change this to mfc capacity
@@ -59,13 +60,13 @@ class flowSensor(QGroupBox):
         self.create_connect_box()
         self.create_settings_box()
         self.create_cal_table_select_box()
-        self.create_calibration_box()
+        self.create_new_calibration_box()
         self.create_data_receive_box()
 
         top_layout = QHBoxLayout()
         col1 = QVBoxLayout()
         col1.addWidget(self.connect_box)
-        col1.addWidget(self.settings_box)
+        #col1.addWidget(self.settings_box)
         col1.addWidget(self.cal_table_select_box)
         col2 = QVBoxLayout()
         col2.addWidget(self.data_receive_box)
@@ -78,10 +79,12 @@ class flowSensor(QGroupBox):
         self.setLayout(self.layout)
         self.setTitle('Flow Sensor')
 
+        self.connect_box.setMaximumHeight(self.connect_box.sizeHint().height())
+        self.new_cal_box.setMaximumHeight(self.new_cal_box.sizeHint().height())
         self.settings_box.setMaximumHeight(self.settings_box.sizeHint().height())
-        self.cal_table_widget.setFixedHeight(130)
-        self.cal_table_select_box.setFixedHeight(self.cal_table_select_box.sizeHint().height())
         self.data_receive_box.setFixedWidth(self.data_receive_box.sizeHint().width())
+
+        self.cal_file_name_wid.setMinimumWidth(175)
 
         self.new_cal_box.setEnabled(False)
 
@@ -116,12 +119,25 @@ class flowSensor(QGroupBox):
         
         self.cal_table_widget = QListWidget()
         self.cal_table_widget.addItems(self.sccm2Ard_dicts)
-        default_cal_table_item = self.cal_table_widget.item(calibration_table_item_number-1)    # TODO fix this
+
+        # Get list of all calibration tables currently in the widget
+        item_list_str = [self.cal_table_widget.item(x).text() for x in range(self.cal_table_widget.count())]
+
+        # Check if default calibration table is there
+        if default_cal_table in item_list_str:
+            index_default_cal_table = item_list_str.index(default_cal_table)                # Get the index of this table
+            default_cal_table_item = self.cal_table_widget.item(index_default_cal_table)    # Get the item at this index
+        else:
+            default_cal_table_item = self.cal_table_widget.item(0)
+        
+        # Set calibration table
         self.cal_table_widget.setCurrentItem(default_cal_table_item)
+        logger.debug('Calibration table set to %s', default_cal_table_item.text())
         
         self.cal_table_btn = QPushButton('Set calibration table',checkable=True,toggled=self.cal_tbl_btn_toggled)
         if self.cal_table_btn.isChecked() == False:
-            self.cal_table_btn.toggle()
+            #self.cal_table_btn.toggle()
+            self.cal_table_btn.setChecked(True)
         
         # LAYOUT
         layout = QVBoxLayout()
@@ -129,11 +145,11 @@ class flowSensor(QGroupBox):
         layout.addWidget(self.cal_table_btn)
         self.cal_table_select_box.setLayout(layout)
     
-    def create_calibration_box(self):
+    def create_new_calibration_box(self):
         self.new_cal_box = QGroupBox('New calibration')
         
         # File name/Directory
-        cal_file_name = def_cal_table_name + '_' + utils.currentDate
+        cal_file_name = def_new_cal_table_name + '_' + utils.currentDate
         self.cal_file_dir_wid = QLineEdit(text=self.flow_cal_dir)
         self.cal_file_name_wid = QLineEdit(text=cal_file_name)
 
@@ -171,7 +187,7 @@ class flowSensor(QGroupBox):
         self.cal_results_mean_wid.setText('0')
         self.write_to_file_wid = QLineEdit()
         self.write_to_file_btn = QPushButton(text='Write')
-        #self.write_to_file_wid.returnPressed.connect(self.save_calibration_value)
+        self.write_to_file_wid.returnPressed.connect(self.save_calibration_value)
         self.write_to_file_btn.clicked.connect(self.save_calibration_value)
         self.write_to_file_wid.setToolTip('Values to write to calibration file (SCCM, int)\nBy default, mean of collected values is put here. Pairs can also be manually typed in to write to the file.')
         self.write_to_file_btn.setToolTip('Write pair to calibration file')
@@ -316,7 +332,7 @@ class flowSensor(QGroupBox):
 
     def cal_tbl_btn_toggled(self, checked): # TODO this is backwards somehow
         if checked:
-            self.cal_table_btn.setText('Change calibration table')
+            self.cal_table_btn.setText('Change current calibration table')
             self.cal_table_widget.setEnabled(False)
             self.calibration_table_changed()
         else:
