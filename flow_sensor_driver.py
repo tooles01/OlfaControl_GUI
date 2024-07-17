@@ -15,7 +15,6 @@ currentDate = utils.currentDate
 noPortMsg = ' ~ No COM ports detected ~'
 
 flowSens_baud = 9600
-sensorType = "Honeywell 3100V"  # TODO
 calibration_table_item_number = 4
 cal_table_file_tyoe = '.txt'
 
@@ -35,6 +34,7 @@ if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log 
 console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
 
+
 class flowSensor(QGroupBox):
 
     def __init__(self, port=""):
@@ -53,19 +53,20 @@ class flowSensor(QGroupBox):
         
         self.generate_ui()
     
+    
     # CREATE GUI ELEMENTS
     def generate_ui(self):
         self.create_connect_box()
         self.create_settings_box()
-        self.create_cal_table_box()
-        self.create_new_calibration_box()
+        self.create_cal_table_select_box()
+        self.create_calibration_box()
         self.create_data_receive_box()
 
         top_layout = QHBoxLayout()
         col1 = QVBoxLayout()
         col1.addWidget(self.connect_box)
         col1.addWidget(self.settings_box)
-        col1.addWidget(self.cal_table_box)
+        col1.addWidget(self.cal_table_select_box)
         col2 = QVBoxLayout()
         col2.addWidget(self.data_receive_box)
         top_layout.addLayout(col1)
@@ -79,8 +80,10 @@ class flowSensor(QGroupBox):
 
         self.settings_box.setMaximumHeight(self.settings_box.sizeHint().height())
         self.cal_table_widget.setFixedHeight(130)
-        self.cal_table_box.setFixedHeight(self.cal_table_box.sizeHint().height())
+        self.cal_table_select_box.setFixedHeight(self.cal_table_select_box.sizeHint().height())
         self.data_receive_box.setFixedWidth(self.data_receive_box.sizeHint().width())
+
+        self.new_cal_box.setEnabled(False)
 
     def create_connect_box(self):
         self.connect_box = QGroupBox("Connect")
@@ -108,8 +111,8 @@ class flowSensor(QGroupBox):
         layout.addWidget(self.timebtreqs_btn)
         self.settings_box.setLayout(layout)
     
-    def create_cal_table_box(self):
-        self.cal_table_box = QGroupBox('Calibration table')
+    def create_cal_table_select_box(self):
+        self.cal_table_select_box = QGroupBox('Calibration table')
         
         self.cal_table_widget = QListWidget()
         self.cal_table_widget.addItems(self.sccm2Ard_dicts)
@@ -124,9 +127,9 @@ class flowSensor(QGroupBox):
         layout = QVBoxLayout()
         layout.addWidget(self.cal_table_widget)
         layout.addWidget(self.cal_table_btn)
-        self.cal_table_box.setLayout(layout)
+        self.cal_table_select_box.setLayout(layout)
     
-    def create_new_calibration_box(self):
+    def create_calibration_box(self):
         self.new_cal_box = QGroupBox('New calibration')
         
         # File name/Directory
@@ -140,10 +143,7 @@ class flowSensor(QGroupBox):
         # Create new file / Start
         self.create_new_cal_file_btn = QPushButton(text='Create file',checkable=True)
         self.create_new_cal_file_btn.toggled.connect(self.create_new_cal_file_toggled)
-        self.start_calibration_btn = QPushButton(text='Start',checkable=True,toggled=self.begin_new_calibration)
-        self.cal_run_btn = QPushButton(text='Record')   # I have no idea what this button does
-        #self.cal_duration_wid.setEnabled(False)
-        #self.cal_run_btn.setEnabled(False)
+        self.start_calibration_btn = QPushButton(text='Start',checkable=True,toggled=self.start_calibration)
 
         # Widget for calibration duration (& timer for visual)
         self.cal_duration_wid = QLineEdit(text=def_cal_duration)
@@ -172,7 +172,7 @@ class flowSensor(QGroupBox):
         self.write_to_file_wid = QLineEdit()
         self.write_to_file_btn = QPushButton(text='Write')
         #self.write_to_file_wid.returnPressed.connect(self.save_calibration_value)
-        #self.write_to_file_btn.clicked.connect(self.save_calibration_value)
+        self.write_to_file_btn.clicked.connect(self.save_calibration_value)
         self.write_to_file_wid.setToolTip('Values to write to calibration file (SCCM, int)\nBy default, mean of collected values is put here. Pairs can also be manually typed in to write to the file.')
         self.write_to_file_btn.setToolTip('Write pair to calibration file')
         layout_results = QGridLayout()
@@ -190,7 +190,11 @@ class flowSensor(QGroupBox):
         layout_cal_file_output = QVBoxLayout()
         layout_cal_file_output.addWidget(QLabel('Written to file:'))
         layout_cal_file_output.addWidget(self.cal_file_output_display)
-
+        
+        # Fix GUI
+        self.mfc_value_wid.setEnabled(False)
+        self.cal_duration_wid.setEnabled(False)
+        self.start_calibration_btn.setEnabled(False)
         
         # LAYOUT
         layout_directory = QFormLayout()
@@ -225,7 +229,6 @@ class flowSensor(QGroupBox):
         self.write_to_file_btn.setMaximumWidth(80)
         self.cal_file_output_display.setMinimumWidth(115)
 
-
     def create_data_receive_box(self):
         self.data_receive_box = QGroupBox("data received")
 
@@ -244,7 +247,7 @@ class flowSensor(QGroupBox):
         
         # Get names of all .txt files in flow cal directory # TODO change to .csv
         cal_file_names = os.listdir(self.flow_cal_dir)
-        cal_file_names = [fn for fn in cal_file_names if fn.endswith(cal_table_file_tyoe)]    # only txt files # TODO: change to csv
+        cal_file_names = [fn for fn in cal_file_names if fn.endswith(cal_table_file_tyoe)]      # only txt files # TODO: change to csv
         
         if cal_file_names != []:
             
@@ -373,11 +376,9 @@ class flowSensor(QGroupBox):
             self.mfc_value_wid.setEnabled(False)
             self.cal_duration_wid.setEnabled(False)
             self.start_calibration_btn.setEnabled(False)
-
     
-    def begin_new_calibration(self, checked):
+    def start_calibration(self, checked):
         if checked:
-            self.collected_values_window.clear()
             
             # Get sccm value & duration
             self.this_cal_sccm_value = self.mfc_value_wid.text()
@@ -386,10 +387,12 @@ class flowSensor(QGroupBox):
             logger.debug('Starting calibration at %s sccm', self.this_cal_sccm_value)
                         
             # Fix the GUI
+            self.write_to_file_btn.setEnabled(False)
             self.create_new_cal_file_btn.setEnabled(False)
             self.start_calibration_btn.setText('End early')
             self.start_calibration_btn.setToolTip('Stop collecting flow values')
-
+            self.collected_values_window.clear()
+            
             # Initialize empty data arrays
             self.serial_values = []
             self.serial_values_std = []
@@ -404,28 +407,15 @@ class flowSensor(QGroupBox):
             # Start calibration timer
             self.start_cal_duration_timer(int(self.this_cal_duration))
 
-
-            # make list of flows to do
-            #spts_list = self.cal_spts_sccm.split(",")
-            #self.spts_complete_list = []
-            #for spt in spts_list:   self.spts_complete_list.append(int(spt))
-
-            # start with the first flow in the list
-            #self.current_calibration_values = []
-            #self.ndatapoints = num_calibration_datapoints   # number of datapoints to collect
-            #self.cal_list_idx = 0
-            #self.current_cal_setpoint = self.spts_complete_list[self.cal_list_idx]
-            #logger.info('set MFC to %s sccm', self.current_cal_setpoint)
-            
-            
-            # enable other buttons
-            #self.cal_duration_wid.setEnabled(True)
-            #self.cal_spt_wid.setEnabled(True)
-            self.cal_run_btn.setEnabled(True)
-
         else:
-            # TODO finish this part
-            logger.info('ended calibration')
+            # Fix the GUI
+            self.write_to_file_btn.setEnabled(True)
+            self.create_new_cal_file_btn.setEnabled(True)
+            self.start_calibration_btn.setText('Start')
+            self.start_calibration_btn.setToolTip('Collect flow values for x seconds')
+
+            # Stop the timer
+            if self.calibration_duration_timer.isActive() == True:  self.end_cal_duration_timer()    
     
     def create_file(self):
         logger.info('Creating calibration file: %s.csv (%s)', self.new_cal_file_name, self.new_cal_file_dir)
@@ -439,35 +429,12 @@ class flowSensor(QGroupBox):
             writer.writerow(File)
             writer.writerow(row_headers)
         
-        # Enable the MFC stuff
+        # Fix the GUI
         self.mfc_value_wid.setEnabled(True)
         self.cal_duration_wid.setEnabled(True)
         self.start_calibration_btn.setEnabled(True)
-    
-    
-    # FLOW CALIBRATION TIMER
-    def start_cal_duration_timer(self, duration):
-        self.calibration_start_time = datetime.now()
-        self.calibration_full_duration = timedelta(0,int(duration))
-        self.calibration_duration_timer.start(int(duration))
-
-    def show_cal_duration_time(self):
-        current_time = datetime.now()
-        current_cal_dur = current_time - self.calibration_start_time
-        if current_cal_dur >= self.calibration_full_duration:
-            self.end_cal_duration_timer()
-        
-        cal_dur_display_value = str(current_cal_dur)
-        cal_dur_display_value = cal_dur_display_value[5:]   # remove beginning digits, 2 values before decimal point
-        cal_dur_display_value = cal_dur_display_value[:-3]  # leave 3 digits after the decimal point
-        self.calibration_duration_label.setText(cal_dur_display_value)
-    
-    def end_cal_duration_timer(self):
-        self.calibration_duration_timer.stop()
-        self.calibration_on = False
-        
-        self.start_calibration_btn.setChecked(False)
-        self.analyze_cal_session()
+        self.collected_values_window.clear()
+        self.cal_file_output_display.clear()
     
     def analyze_cal_session(self):
         flowVal_median = np.median(self.serial_values)
@@ -497,11 +464,59 @@ class flowSensor(QGroupBox):
                 #logger.debug('make sure other vials are not in calibration mode (maybe ?)')
         
         except ValueError as err:
-            # TODO 11/8/2023: got this error when trying to write to file while calibration was running
+            # 11/8/2023: got this error when trying to write to file while calibration was running  -this should be fixed now 6/21/2024
             logger.warning('ValueError:' + str(err))
         
         # Clear the array
-        self.serial_values = [] 
+        self.serial_values = []
+    
+    def save_calibration_value(self):
+        # Write the data from the widget to the file
+        pair_to_write = eval(self.write_to_file_wid.text())     # Convert from string to tuple
+        logger.debug('Writing to cal file: %s', pair_to_write)
+        try:
+            with open(self.new_cal_file_dir,'a',newline='') as f:
+                writer = csv.writer(f,delimiter=',')
+                writer.writerow(pair_to_write)
+        except PermissionError as err:
+            logger.warning('Cannot write to file: make sure you don''t have it open anywhere')
+
+        # Display what we wrote to the table
+        str_to_display = self.write_to_file_wid.text()
+        self.cal_file_output_display.append(str_to_display)
+        
+        # Clear lists
+        self.serial_values = []
+        self.serial_converted = []
+
+        # Reset
+        self.calibration_on = False
+        self.start_calibration_btn.setChecked(False)
+    
+
+    # FLOW CALIBRATION TIMER
+    def start_cal_duration_timer(self, duration):
+        self.calibration_start_time = datetime.now()
+        self.calibration_full_duration = timedelta(0,int(duration))
+        self.calibration_duration_timer.start(int(duration))
+
+    def show_cal_duration_time(self):
+        current_time = datetime.now()
+        current_cal_dur = current_time - self.calibration_start_time
+        if current_cal_dur >= self.calibration_full_duration:
+            self.end_cal_duration_timer()
+        
+        cal_dur_display_value = str(current_cal_dur)
+        cal_dur_display_value = cal_dur_display_value[5:]   # remove beginning digits, 2 values before decimal point
+        cal_dur_display_value = cal_dur_display_value[:-3]  # leave 3 digits after the decimal point
+        self.calibration_duration_label.setText(cal_dur_display_value)
+    
+    def end_cal_duration_timer(self):
+        self.calibration_duration_timer.stop()
+        self.calibration_on = False
+        
+        self.start_calibration_btn.setChecked(False)
+        self.analyze_cal_session()
     
     
     # CONNECT TO DEVICE
@@ -569,7 +584,7 @@ class flowSensor(QGroupBox):
             self.refresh_btn.setEnabled(False)
             self.port_widget.setEnabled(False)
             self.settings_box.setEnabled(True)
-            self.cal_table_box.setEnabled(True)
+            self.cal_table_select_box.setEnabled(True)
             self.new_cal_box.setEnabled(True)
         
         else:
@@ -580,7 +595,7 @@ class flowSensor(QGroupBox):
             self.refresh_btn.setEnabled(True)
             self.port_widget.setEnabled(True)
             self.settings_box.setEnabled(False)
-            self.cal_table_box.setEnabled(False)
+            self.cal_table_select_box.setEnabled(False)
             self.new_cal_box.setEnabled(False)
     
     
@@ -605,6 +620,7 @@ class flowSensor(QGroupBox):
                     # if calibration is on:
                     if self.calibration_on == True:
                         self.serial_values.append(flowVal_int)
+                        self.collected_values_window.append(str(flowVal_int))
 
             except UnicodeDecodeError as err:   logger.error('Serial read error: %s',err)
     
