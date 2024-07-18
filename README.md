@@ -1,21 +1,23 @@
 # OlfaControl_GUI
 
-GUI for testing the new 8-line olfactometer
+Python GUI for using the new 8-line olfactometer and mixing chamber  
+
+([Hardware Setup](https://github.com/tooles01/OlfaControl_Electronics))
 
 <br>
 
 ## Python versions
 
-Update 4/29/2024: GUI is compatible with Python 3.9, 3.10, 3.12  
+Update 4/29/2024: GUI is currently compatible with Python 3.9, 3.10, 3.12  
 
-~~1/23/2024: Python 3.9 and 3.10 work, Python 3.12 does not work~~
 
 <br>
 
 # Setup
 
 1. Download/clone this folder
-    - It is recommended to do so via [Github Desktop](https://docs.github.com/en/desktop/installing-and-authenticating-to-github-desktop/installing-github-desktop), so you can pull new commits (bug fixes/updates) in real time.
+    - It is recommended to do so via [Github Desktop](https://docs.github.com/en/desktop/installing-and-authenticating-to-github-desktop/installing-github-desktop) in order to pull new commits (bug fixes/updates) in real time.
+    - If not using GitHub Desktop, click the green "<>Code" button above, click "Download ZIP", and save the folder to a directory on your computer.
 2. Open the command prompt and navigate to the directory this folder is stored in.
 3. *Optional:* Create & activate a virtual environment (instructions below)
 4. Install the required packages: ``` pip install -r requirements.txt ```
@@ -33,8 +35,9 @@ Update 4/29/2024: GUI is compatible with Python 3.9, 3.10, 3.12
 </p>
 
 - Load olfa config (*.json) file.
-    - This file contains the names of the calibration tables and maximum capacity for each flow sensor.
+    - This file is specific to your olfactometer, and contains the names of the calibration tables and maximum capacity for each flow sensor.
     - This step is optional, but allows for quickly loading that information into the GUI all at once, instead of manually entering it for each of the 8 vial lines.
+
 <p align="center">
     <img src="images/setup_GUI_02.png" width="70%">
 </p>
