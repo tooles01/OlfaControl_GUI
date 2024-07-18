@@ -20,7 +20,7 @@ cal_table_file_tyoe = '.txt'
 
 def_cal_setpoints = '0,100,200,300,400,500,600,700,800,900,1000'
 num_calibration_datapoints = 50
-def_new_cal_table_name = 'Honeywell_3100'
+def_new_cal_table_name = 'Honeywell_3300V'
 default_cal_table = 'Honeywell_3100V'
 def_MFC_value = '100'
 def_cal_duration = '10'
@@ -173,34 +173,38 @@ class flowSensor(QGroupBox):
         # Collected values
         self.collected_values_lbl = QLabel('Collected Values:')
         self.collected_values_window = QTextEdit()
+        self.collected_values_window.setToolTip('Values collected during calibration at this flow rate')
         layout_collected_vals = QVBoxLayout()
         layout_collected_vals.addWidget(self.collected_values_lbl)
         layout_collected_vals.addWidget(self.collected_values_window)
 
         # Calibration results
-        self.cal_results_num_wid = QLineEdit(readOnly=True,maximumWidth=40)
-        self.cal_results_dur_wid = QLineEdit(readOnly=True,maximumWidth=40)
         self.cal_results_min_wid = QLineEdit(readOnly=True,maximumWidth=40)
         self.cal_results_max_wid = QLineEdit(readOnly=True,maximumWidth=40)
         self.cal_results_med_wid = QLineEdit(readOnly=True,maximumWidth=40)
         self.cal_results_mean_wid = QLineEdit(readOnly=True,maximumWidth=40)
+        self.cal_results_range_wid = QLineEdit(readOnly=True,maximumWidth=40)
+        self.cal_results_num_wid = QLineEdit(readOnly=True,maximumWidth=40)
         self.cal_results_mean_wid.setText('0')
         self.write_to_file_wid = QLineEdit()
-        self.write_to_file_btn = QPushButton(text='Write')
+        self.write_to_file_btn = QPushButton(text='Write to file')
         self.write_to_file_wid.returnPressed.connect(self.save_calibration_value)
         self.write_to_file_btn.clicked.connect(self.save_calibration_value)
         self.write_to_file_wid.setToolTip('Values to write to calibration file (SCCM, int)\nBy default, mean of collected values is put here. Pairs can also be manually typed in to write to the file.')
         self.write_to_file_btn.setToolTip('Write pair to calibration file')
         layout_results = QGridLayout()
-        layout_results.addWidget(QLabel('# of Vals:'),0,0); layout_results.addWidget(self.cal_results_num_wid,0,1)
-        layout_results.addWidget(QLabel('Dur:'),0,2);       layout_results.addWidget(self.cal_results_dur_wid,0,3)
-        layout_results.addWidget(QLabel('Min:'),1,0);       layout_results.addWidget(self.cal_results_min_wid,1,1)
-        layout_results.addWidget(QLabel('Max:'),1,2);       layout_results.addWidget(self.cal_results_max_wid,1,3)
-        layout_results.addWidget(QLabel('Median:'),2,0);    layout_results.addWidget(self.cal_results_med_wid,2,1)
-        layout_results.addWidget(QLabel('Mean:'),2,2);      layout_results.addWidget(self.cal_results_mean_wid,2,3)
-        layout_results.addWidget(self.write_to_file_wid,3,0,1,2)
-        layout_results.addWidget(self.write_to_file_btn,3,2,1,2)
-
+        layout_results.addWidget(QLabel('Min:'),0,0);       layout_results.addWidget(self.cal_results_min_wid,0,1)
+        layout_results.addWidget(QLabel('Max:'),0,2);       layout_results.addWidget(self.cal_results_max_wid,0,3)
+        layout_results.addWidget(QLabel('Median:'),1,0);    layout_results.addWidget(self.cal_results_med_wid,1,1)
+        layout_results.addWidget(QLabel('Mean:'),1,2);      layout_results.addWidget(self.cal_results_mean_wid,1,3)
+        layout_results.addWidget(QLabel('Range:'),2,0);     layout_results.addWidget(self.cal_results_range_wid,2,1)
+        layout_results.addWidget(QLabel('# of Vals:'),2,2); layout_results.addWidget(self.cal_results_num_wid,2,3)
+        final_row_layout = QHBoxLayout()
+        final_row_layout.addWidget(QLabel('Results [SCCM, Int]:'))
+        final_row_layout.addWidget(self.write_to_file_wid)
+        final_row_layout.addWidget(self.write_to_file_btn)
+        layout_results.addLayout(final_row_layout,3,0,1,4)
+        
         # Written to cal file
         self.cal_file_output_display = QTextEdit(readOnly=True)
         layout_cal_file_output = QVBoxLayout()
@@ -243,6 +247,7 @@ class flowSensor(QGroupBox):
         self.collected_values_window.setMaximumWidth(80)
 
         self.write_to_file_btn.setMaximumWidth(80)
+        self.write_to_file_wid.setFixedWidth(80)
         self.cal_file_output_display.setMinimumWidth(115)
 
     def create_data_receive_box(self):
@@ -462,12 +467,12 @@ class flowSensor(QGroupBox):
             flow_min = min(self.serial_values)
             flow_max = max(self.serial_values)
             flow_range = flow_max - flow_min
-            self.cal_results_num_wid.setText(str(len(self.serial_values)))
-            self.cal_results_dur_wid.setText(str(self.this_cal_duration))
             self.cal_results_min_wid.setText(str(flow_min))
             self.cal_results_max_wid.setText(str(flow_max))
             self.cal_results_med_wid.setText(str(flowVal_median))
             self.cal_results_mean_wid.setText(str(flowVal_mean))
+            self.cal_results_range_wid.setText(str(flow_range))
+            self.cal_results_num_wid.setText(str(len(self.serial_values)))
             logger.debug('range of int vals: ' + str(flow_range) + '\t mean: ' + str(flowVal_mean) + '\t(' + str(len(self.serial_values)) + ' values)')
             
             # Put mean value in the widget so the user can decide whether to keep it or not
