@@ -9,8 +9,6 @@ Python GUI for using the new 8-line olfactometer and mixing chamber
 ## Python versions
 
 Update 4/29/2024: GUI is currently compatible with Python 3.9, 3.10, 3.12  
-
-
 <br>
 
 # Setup
@@ -20,38 +18,67 @@ Update 4/29/2024: GUI is currently compatible with Python 3.9, 3.10, 3.12
     - If not using GitHub Desktop, click the green "<>Code" button above, click "Download ZIP", and save the folder to a directory on your computer.
 2. Open the command prompt and navigate to the directory this folder is stored in.
 3. *Optional:* Create & activate a virtual environment (instructions below)
-4. Install the required packages: ``` pip install -r requirements.txt ```
+4. Install the required packages by entering: ``` pip install -r requirements.txt ``` into the command prompt.
 5. Run the GUI: ```python olfa_driver_48line.py```  
     
     (Big Program for running automated stuff/adding PID: ```python main.py```)
 
 <br>
 
+## Calibration tables & Config files
 
+### Calibration tables
+
+To read from each flow sensor, the GUI uses a calibration table to convert the value from voltage to flow rate.
+
+<p align="center"> <img src="images/Flow Sensor-GUI-Calibration table.png" width="50%"></p>
+
+Each flow sensor has a slightly different calibration, so it is recommended to use the calibration table for each specific miniMFC to ensure accurate flow control.  
+&nbsp;&nbsp;(*Further information on calibrating flow sensors can be found [here](https://github.com/tooles01/OlfaControl_Electronics/blob/master/8-line%20Olfactometer/Flow_Sensor_Calibration_Protocol.md).)*
+
+*<p align="center"> *Example calibration table:* </p>*
+<p align="center"> <img src="images/setup_GUI_example_calibration_table.png" width="30%"> </p>
+
+***Note:** Calibration tables need to be in a folder called **calibration_tables** within the OlfaControl_GUI folder.*  
+
+
+### Config files
+
+To load these calibration tables into the GUI, you can use a config file that lists the miniMFCs on your olfactometer and their corresponding calibration tables.  
+
+This allows for quickly loading all tables into the GUI all at once (instead of manually entering in the Vial Details box for each odor line).
+
+*<p align="center"> *Example config file:*  </p>*
+<p align="center"> <img src="images/setup_GUI_03_configFile.png" width="35%"> </p>
+<br>
+
+With the GUI open, click "Load config file" and select the desired file. (This must be done each time the GUI is closed and reopened.)
+
+<p align="center"> <img src="images/setup_GUI_02_loadConfig.png" width="70%" ></p>
+
+To confirm that the config file loaded correctly, open up one of the Vial Details boxes and check that the intended calibration table is selected.
+
+<p align="center"> <img src="images/setup_GUI_vialDetails.png" width="70%"> </p>
+<br>
+
+***Note:** Calibration tables need to be located in a folder called **calibration_tables** within the OlfaControl_GUI folder.*
+
+<!--
 # Using the Olfactometer:
 - Connect to the olfactometer (Connect to Arduino)
-<p align="center">
-    <img src="images/setup_GUI_01.png" width="70%">
-</p>
+<p align="center"> <img src="images/setup_GUI_01_connect.png" width="70%"> </p>
 
 - Load olfa config (*.json) file.
     - This file is specific to your olfactometer, and contains the names of the calibration tables and maximum capacity for each flow sensor.
     - This step is optional, but allows for quickly loading that information into the GUI all at once, instead of manually entering it for each of the 8 vial lines.
 
-<p align="center">
-    <img src="images/setup_GUI_02.png" width="70%">
-</p>
+<p align="center"> <img src="images/setup_GUI_02_loadConfig.png" width="70%"> </p>
 
-<p align="center">
-Example olfa config file:
-</p>
-<p align="center">
-    <img src="images/setup_GUI_03_configFile.png" width="35%">
-</p>
+*<p align="center"> *Example config file:* </p>*
+<p align="center"> <img src="images/setup_GUI_03_exampleConfigFile.png" width="35%"> </p>
 
 <br>
-
-***Note:** Calibration tables should be located in a folder called **calibration_tables** within the OlfaControl_GUI folder. Any new calibration tables must contain values in decreasing sequential order, or the interpolation will get all messed up.*
+-->
 
 <br>
 <br>
