@@ -162,6 +162,7 @@ class VialDetailsPopup(QWidget):
             self.show_plot_btn.setText('Hide flow/ctrl plot')
             self.plot_window = plot_widget.plot_window_single_vial(self)
             self.plot_window.show()
+            self.plot_window.timer_start()
 
         else:
             self.show_plot_btn.setText('Show flow/ctrl plot')

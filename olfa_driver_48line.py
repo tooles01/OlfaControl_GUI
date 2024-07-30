@@ -231,14 +231,17 @@ class Vial(QGroupBox):
             # Tell plot window this vial needs to be plotted
             self.olfa_plot_object = self.parent().parent.flow_plot_window
             flag = 0
+            # Check if there is an open spot in plot_window_all.vials_to_plot
             for idx in range(len(self.olfa_plot_object.vials_to_plot)):
                 if self.olfa_plot_object.vials_to_plot[idx] == '-':
+                    # If there is an open space, fill it
                     self.olfa_plot_object.vials_to_plot[idx] = self
                     self.olfa_plot_object.vials_to_plot_names[idx] = self.full_vialNum
                     flag = 1
                     break
+            # If there is not an open space, print a warning (& uncheck the button)
             if flag == 0:
-                logger.debug('only 4 vials can be plotted at once')
+                logger.warning('only 4 vials can be plotted at once')
                 self.plot_flow_btn.setChecked(False)
         
         else:
@@ -274,6 +277,7 @@ class Vial(QGroupBox):
             if self.slave_plot_object.vials_to_plot[0] == '-':
                 self.slave_plot_object.vials_to_plot[0] = self
                 self.slave_plot_object.vials_to_plot_names[0] = self.full_vialNum
+    
     # COMMANDS
     def K_parameter_update(self, Kx, value):
         strToSend = 'S_Kx_' + Kx + str(value) + '_' + self.full_vialNum
@@ -561,8 +565,8 @@ class olfactometer_window(QGroupBox):
         self.settings_groupbox = QGroupBox('Other Settings')
         
         # Select config file
-        self.load_config_btn = QPushButton('Load olfa config')
-        self.load_config_btn.setToolTip('Load olfa config file containing calibration tables')
+        self.load_config_btn = QPushButton('Load config file (*.json)')
+        self.load_config_btn.setToolTip('Load olfa config file (*.json file)\nContains calibration tables and MFC capacity for each odor vial line')
         self.load_config_btn.clicked.connect(self.load_config_btn_clicked)
         
         # Select directory where flow calibration tables are stored
