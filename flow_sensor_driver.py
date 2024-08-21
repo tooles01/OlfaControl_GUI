@@ -155,16 +155,17 @@ class flowSensor(QGroupBox):
 
         # MFC value (SCCM)
         self.mfc_value_wid = QLineEdit(text=def_MFC_value)
+        self.mfc_value_wid.returnPressed.connect(lambda: self.start_calibration_btn.toggle())
         
         # Create new file / Start
         self.create_new_cal_file_btn = QPushButton(text='Create file',checkable=True)
         self.create_new_cal_file_btn.toggled.connect(self.create_new_cal_file_toggled)
         self.start_calibration_btn = QPushButton(text='Start',checkable=True,toggled=self.start_calibration)
-
+        
         # Widget for calibration duration (& timer for visual)
         self.cal_duration_wid = QLineEdit(text=def_cal_duration)
         self.cal_duration_wid.setToolTip('Max 99 seconds')
-        self.cal_duration_wid.returnPressed.connect(lambda: self.start_calibration_btn.setChecked(True))
+        self.cal_duration_wid.returnPressed.connect(lambda: self.start_calibration_btn.toggle())
         self.calibration_duration_timer = QTimer()
         self.calibration_duration_timer.setTimerType(0)     # set to millisecond accuracy
         self.calibration_duration_timer.timeout.connect(self.show_cal_duration_time)
@@ -172,11 +173,11 @@ class flowSensor(QGroupBox):
 
         # Collected values
         self.collected_values_lbl = QLabel('Collected Values:')
-        self.collected_values_window = QTextEdit()
-        self.collected_values_window.setToolTip('Values collected during calibration at this flow rate')
+        self.collected_values_wid = QTextEdit()
+        self.collected_values_wid.setToolTip('Values collected during calibration at this flow rate')
         layout_collected_vals = QVBoxLayout()
         layout_collected_vals.addWidget(self.collected_values_lbl)
-        layout_collected_vals.addWidget(self.collected_values_window)
+        layout_collected_vals.addWidget(self.collected_values_wid)
 
         # Calibration results
         self.cal_results_min_wid = QLineEdit(readOnly=True,maximumWidth=40)
@@ -190,26 +191,24 @@ class flowSensor(QGroupBox):
         self.write_to_file_btn = QPushButton(text='Write to file')
         self.write_to_file_wid.returnPressed.connect(self.save_calibration_value)
         self.write_to_file_btn.clicked.connect(self.save_calibration_value)
-        self.write_to_file_wid.setToolTip('Values to write to calibration file (SCCM, int)\nBy default, mean of collected values is put here. Pairs can also be manually typed in to write to the file.')
+        self.write_to_file_wid.setToolTip('[SCCM, int] Results to write to calibration file\nBy default, mean of collected values is put here. Pairs can also be manually entered.')
         self.write_to_file_btn.setToolTip('Write pair to calibration file')
         layout_results = QGridLayout()
-        layout_results.addWidget(QLabel('Min:'),0,0);       layout_results.addWidget(self.cal_results_min_wid,0,1)
-        layout_results.addWidget(QLabel('Max:'),0,2);       layout_results.addWidget(self.cal_results_max_wid,0,3)
-        layout_results.addWidget(QLabel('Median:'),1,0);    layout_results.addWidget(self.cal_results_med_wid,1,1)
-        layout_results.addWidget(QLabel('Mean:'),1,2);      layout_results.addWidget(self.cal_results_mean_wid,1,3)
-        layout_results.addWidget(QLabel('Range:'),2,0);     layout_results.addWidget(self.cal_results_range_wid,2,1)
-        layout_results.addWidget(QLabel('# of Vals:'),2,2); layout_results.addWidget(self.cal_results_num_wid,2,3)
+        layout_results.addWidget(QLabel('Median:'),     0,0);   layout_results.addWidget(self.cal_results_med_wid,  0,1)
+        layout_results.addWidget(QLabel('Mean:'),       0,2);   layout_results.addWidget(self.cal_results_mean_wid, 0,3)
+        layout_results.addWidget(QLabel('Range:'),      1,0);   layout_results.addWidget(self.cal_results_range_wid,1,1)
+        layout_results.addWidget(QLabel('# of Vals:'),  1,2);   layout_results.addWidget(self.cal_results_num_wid,  1,3)
         final_row_layout = QHBoxLayout()
-        final_row_layout.addWidget(QLabel('Results [SCCM, Int]:'))
+        final_row_layout.addWidget(QLabel('Results:'))
         final_row_layout.addWidget(self.write_to_file_wid)
         final_row_layout.addWidget(self.write_to_file_btn)
         layout_results.addLayout(final_row_layout,3,0,1,4)
         
         # Written to cal file
-        self.cal_file_output_display = QTextEdit(readOnly=True)
+        self.cal_file_written_display = QTextEdit(readOnly=True)
         layout_cal_file_output = QVBoxLayout()
         layout_cal_file_output.addWidget(QLabel('Written to file:'))
-        layout_cal_file_output.addWidget(self.cal_file_output_display)
+        layout_cal_file_output.addWidget(self.cal_file_written_display)
         
         # Fix GUI
         self.mfc_value_wid.setEnabled(False)
@@ -220,16 +219,21 @@ class flowSensor(QGroupBox):
         layout_directory = QFormLayout()
         layout_directory.addRow(QLabel("Directory:"),self.cal_file_dir_wid)
         
-        layout_entered_vals = QFormLayout()
-        layout_entered_vals.addRow(QLabel("File name:"),self.cal_file_name_wid)
-        layout_entered_vals.addRow(QLabel("MFC value (SCCM):"),self.mfc_value_wid)
-
+        layout_file_name = QHBoxLayout()
+        layout_file_name.addWidget(QLabel("File name:"))
+        layout_file_name.addWidget(self.cal_file_name_wid)
+        layout_mfc_value = QHBoxLayout()
+        layout_mfc_value.addWidget(QLabel("MFC value (SCCM):"))
+        layout_mfc_value.addWidget(self.mfc_value_wid)
         layout_cal_duration = QHBoxLayout()
         layout_cal_duration.addWidget(QLabel("Duration (s):"))
         layout_cal_duration.addWidget(self.cal_duration_wid)
         layout_cal_duration.addWidget(self.calibration_duration_label)        
 
+        layout_entered_vals = QFormLayout()
+        layout_entered_vals.addRow(layout_file_name)
         layout_entered_vals.addRow(layout_cal_duration)
+        layout_entered_vals.addRow(layout_mfc_value)
         layout_entered_vals.addRow(self.create_new_cal_file_btn,self.start_calibration_btn)
 
         layout_calibration_box = QGridLayout()
@@ -242,13 +246,13 @@ class flowSensor(QGroupBox):
         self.new_cal_box.setLayout(layout_calibration_box)
         
         # Sizing
-        self.collected_values_window.setMaximumHeight(100)
-        self.cal_file_output_display.setMaximumHeight(100)
-        self.collected_values_window.setMaximumWidth(80)
+        self.collected_values_wid.setMaximumHeight(100)
+        self.cal_file_written_display.setMaximumHeight(100)
 
-        self.write_to_file_btn.setMaximumWidth(80)
+        self.collected_values_wid.setMaximumWidth(80)
         self.write_to_file_wid.setFixedWidth(80)
-        self.cal_file_output_display.setMinimumWidth(115)
+        self.write_to_file_btn.setMaximumWidth(80)
+        self.cal_file_written_display.setMaximumWidth(115)
 
     def create_data_receive_box(self):
         self.data_receive_box = QGroupBox("data received")
@@ -335,7 +339,7 @@ class flowSensor(QGroupBox):
         else:
             logger.warning('no .txt files found in this directory :/')
 
-    def cal_tbl_btn_toggled(self, checked): # TODO this is backwards somehow
+    def cal_tbl_btn_toggled(self, checked):
         if checked:
             self.cal_table_btn.setText('Change current calibration table')
             self.cal_table_widget.setEnabled(False)
@@ -412,7 +416,7 @@ class flowSensor(QGroupBox):
             self.create_new_cal_file_btn.setEnabled(False)
             self.start_calibration_btn.setText('End early')
             self.start_calibration_btn.setToolTip('Stop collecting flow values')
-            self.collected_values_window.clear()
+            self.collected_values_wid.clear()
             
             # Initialize empty data arrays
             self.serial_values = []
@@ -454,8 +458,8 @@ class flowSensor(QGroupBox):
         self.mfc_value_wid.setEnabled(True)
         self.cal_duration_wid.setEnabled(True)
         self.start_calibration_btn.setEnabled(True)
-        self.collected_values_window.clear()
-        self.cal_file_output_display.clear()
+        self.collected_values_wid.clear()
+        self.cal_file_written_display.clear()
     
     def analyze_cal_session(self):
         flowVal_median = np.median(self.serial_values)
@@ -473,7 +477,7 @@ class flowSensor(QGroupBox):
             self.cal_results_mean_wid.setText(str(flowVal_mean))
             self.cal_results_range_wid.setText(str(flow_range))
             self.cal_results_num_wid.setText(str(len(self.serial_values)))
-            logger.debug('range of int vals: ' + str(flow_range) + '\t mean: ' + str(flowVal_mean) + '\t(' + str(len(self.serial_values)) + ' values)')
+            logger.debug(self.this_cal_sccm_value + ' SCCM:\tmedian: ' + str(flowVal_median) + '\t mean: ' + str(flowVal_mean) + '\t range: ' + str(flow_range) + '\t(' + str(len(self.serial_values)) + ' values collected)')
             
             # Put mean value in the widget so the user can decide whether to keep it or not
             self.this_cal_int_value = flowVal_mean
@@ -482,7 +486,6 @@ class flowSensor(QGroupBox):
                 self.write_to_file_wid.setText(pair)
             else:
                 logger.warning('calculated value was not an int - cannot save this value')
-                #logger.debug('make sure other vials are not in calibration mode (maybe ?)')
         
         except ValueError as err:
             # 11/8/2023: got this error when trying to write to file while calibration was running  -this should be fixed now 6/21/2024
@@ -504,7 +507,7 @@ class flowSensor(QGroupBox):
 
         # Display what we wrote to the table
         str_to_display = self.write_to_file_wid.text()
-        self.cal_file_output_display.append(str_to_display)
+        self.cal_file_written_display.append(str_to_display)
         
         # Clear lists
         self.serial_values = []
@@ -641,7 +644,7 @@ class flowSensor(QGroupBox):
                     # if calibration is on:
                     if self.calibration_on == True:
                         self.serial_values.append(flowVal_int)
-                        self.collected_values_window.append(str(flowVal_int))
+                        self.collected_values_wid.append(str(flowVal_int))
 
             except UnicodeDecodeError as err:   logger.error('Serial read error: %s',err)
     
