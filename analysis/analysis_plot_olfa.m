@@ -1,4 +1,4 @@
-%% analysis_plot_olfa_and_pid
+%% analysis_plot_olfa
 % plot olfa over time
 %%
 clearvars
@@ -7,7 +7,7 @@ set(0,'DefaultTextInterpreter','none')
 %#ok<*SAGROW>
 %#ok<*AGROW> 
 
-%% display variables
+%% Display variables
 f = struct();   % struct containing all figure variables
 f.position = [30 200 1700 700];
 f.pid_ylims = [];
@@ -18,7 +18,7 @@ f.pid_width = 1;
 f.x_lim = [];
 f.calibration_value = [];
 
-%% vial colors
+% Vial colors
 f.colors{1} = '#0072BD';    % blue
 f.colors{2} = '#7E2F8E';    % purple
 
@@ -37,14 +37,7 @@ E1_ctrl = [0.8500 0.3250 0.0980];
 
 this_color = [];
 
-%% enter directory for this computer
-a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-%a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-
-a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
-
-addpath(genpath(a_dir_OlfaControlGUI));     % make sure OlfaControlGUI is on matlab path
-%% select shit to plot
+%% Select shit to plot
 plot_opts = struct();
 
 % plot olfa as sccm or int
@@ -54,7 +47,16 @@ plot_opts.plot_flow_as_sccm = 'yes';    % **if datafile does not have calibratio
 plot_opts.ctrl = 'yes';
 plot_opts.ctrl_as_voltage = 'no';
 
-%% enter data file name
+%% Enter directory for this computer
+%a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+%a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+a_dir_OlfaEngDropbox = 'C:\Users\shann\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+
+a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
+
+addpath(genpath(a_dir_OlfaControlGUI));     % make sure OlfaControlGUI is on matlab path
+
+%% Enter data file name
 %{
 %a_thisfile_name = '2020-12-15_exp01_21';
 %a_thisfile_name = '2020-12-16_exp01_22';
@@ -160,7 +162,8 @@ f.position = [549 166 1353 684];
 %a_thisfile_name = '2023-10-11_datafile_16'; plot_opts.ctrl = 'yes';
 %a_thisfile_name = '2023-10-11_datafile_17'; plot_opts.ctrl = 'yes';
 %f.ctrl_ylims = [140 200]; f.flow_ylims = [30 190];
-a_thisfile_name = '2023-10-11_datafile_18'; plot_opts.ctrl = 'yes';
+%a_thisfile_name = '2023-10-11_datafile_18'; plot_opts.ctrl = 'yes';
+a_thisfile_name = '2024-01-19_datafile_00';
 
 %f.flow_ylims = [-5 150];
 %f.pid_ylims = [-.1 7];
@@ -168,13 +171,12 @@ a_thisfile_name = '2023-10-11_datafile_18'; plot_opts.ctrl = 'yes';
 f.position = [166 210 1300 600];    % for PowerPoint
 f.pid_width = 1.5;
 
-%% load .mat file
+%% Load .mat file
 
 % full directory for .mat file
 dir_this_mat_file = strcat(a_dir_OlfaControlGUI,'\analysis\data (.mat files)\',a_thisfile_name,'.mat');
 %dir_this_mat_file = strcat(pwd,'\data (.mat files)\',a_thisfile_name,'.mat');
 
-%% plot
 try
     load(dir_this_mat_file);
     clearvars mat_* dir_*
@@ -238,7 +240,7 @@ try
     
     end
     %}
-    %% make figure
+    %% Make figure
     figTitle = a_thisfile_name;
     if ~strcmp(a_this_note, '')
         figTitle = append(figTitle, ': ',  a_this_note);
@@ -283,7 +285,7 @@ try
         xlim([0 t_end]);
     end
     
-    %% plot: olfa flow
+    %% Plot: olfa flow
     % for each vial
     for i=1:length(d_olfa_flow)
         if contains(d_olfa_flow(i).vial_num,'E1')
@@ -330,7 +332,7 @@ try
         %p.Color = f.colors{i};
     end
     
-    %% plot: olfa ctrl
+    %% Plot: olfa ctrl
     if strcmp(plot_opts.ctrl,'yes')
         % for each vial
         for i=1:length(d_olfa_flow)
@@ -368,7 +370,7 @@ try
         end
     end
     
-    %% plot calibration value
+    %% Plot: calibration value
     if ~isempty(f.calibration_value)
         yyaxis left;
         yline(f.calibration_value,'r','LineWidth',2);

@@ -1,21 +1,33 @@
+# When running functions, Matlab directory must be '**OlfaControlGUI\analysis'
 
-## get files:
-### analysis_get_and_parse_files
-**gets raw .csv datafile, saves as .mat file**
+(import_datafile will not run otherwise)
 
-1. loads selected datafile (from OlfaControlGUI\result_files\48-line olfa)
-2. parses header (PID gain & calibration tables)
+<br><br>
+
+# Load data files:
+### Get raw .csv datafile and save as .mat file
+**analysis_get_and_parse_files.m**
+1. Loads selected datafile (from OlfaControlGUI\result_files\48-line olfa)
+2. Parses header (PID gain & calibration tables)
 	- imports calibration tables if necessary (from OlfaControlGUI\calibration_tables)
-3. adjusts PID (divides by gain & sets baseline to zero)
-4. converts flow to sccm
-5. converts ctrl to voltage
-6. smooths PID (moving average over 50ms window)
-7. splits into sections (for each OV event)
-	- for each section (longer than 1 second):
-		- cuts first 50 ms
-		- gets all flow & PID data (& calculates mean)
-8. saves .mat file
+3. Adjusts PID (divides by gain & sets baseline to zero)
+4. Converts flow to sccm
+5. Converts ctrl to voltage
+6. Smooths PID (moving average over 50ms window)
+7. Splits into sections (for each OV event)
+	- For each section (longer than 1 second):
+		- Cuts first 50 ms
+		- Gets all flow & PID data (& calculates mean)
+8. Saves .mat file
 
+<br>
+
+**Note:**  
+User will need to enter:  
+- Directory of OlfaControl_GUI folder (line 37)
+- Data file name (line 66)
+
+<br>
 <details>
 <summary>dependencies:</summary>
 
@@ -24,18 +36,24 @@
 - import_datafile
 - int_to_SCCM
 </details>
+<br>
+<br>
 
-#
-#
-## for plotting:
+# Plotting:
 
-### analysis_plot_olfa
-**plots olfactometer data over time**
+## Plot olfactometer data over time
+**analysis_plot_olfa.m**
+1. Loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
+2. Plots olfactometer flow data (over time)
 
-1. loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
-2. plots olfactometer flow data (over time)
+<br>
 
+**Note:**  
+User will need to enter:  
+- Directory of OlfaControl_GUI folder (line 51)
+- Data file name (line 60)
 
+<br>
 <details>
 <summary>options:</summary>
 
@@ -51,18 +69,23 @@
 
 - *none*
 </details>
+<br>
 
-
-#
-### analysis_plot_olfa_and_pid
-**plots olfactometer & pid data over time**
-
-1. loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
-2. plots selected data over time
+## Plot olfactometer & PID data over time
+**analysis_plot_olfa_and_pid.m**
+1. Loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
+2. Plots selected data over time
 	- left yaxis: olfa flow
 	- right yaxis: user selects one: olfa ctrl, pid, or output flow sensor
 
+<br>
 
+**Note:**  
+User will need to enter:  
+- Directory of OlfaControl_GUI folder (line 44)
+- Data file name (line 54)
+
+<br>
 <details>
 <summary>options:</summary>
 
@@ -74,27 +97,26 @@
 	- plot or don't plot
 - output flow:
 	- plot or don't plot
+- time scale in seconds or minutes
 </details>
-
 
 <details>
 <summary>dependencies:</summary>
 
 - *none*
 </details>
+<br>
 
+## Plot flow v. PID
+**analysis_spt_char.m**
 
-#
-### analysis_spt_char
-**plots flow v. pid**
-
-1. loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
-2. cuts additional time from each event section (user specifies how many seconds)
-	- recalculates means & standard deviations, adds them back into the structs
-2. plots flow & PID data over time
-3. if selected, plots each event section individually
-4. plots mean flow values v. mean PID values
-	- if selected, plot error bars
+1. Loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
+2. Cuts additional time from each event section (user specifies how many seconds)
+	- Recalculates means & standard deviations, adds them back into the structs
+2. Plots flow & PID data over time
+3. If selected, plots each event section individually
+4. Plots mean flow values v. mean PID values
+	- If selected, plot error bars
 
 
 <details>
@@ -111,34 +133,30 @@
 
 - get_section_data
 </details>
+<br>
 
-
-
-#
-### analysis_plot_standard_olfa
-**plots file from standard olfa**
+## Plot file from standard olfactometer
+**analysis_plot_standard_olfa.m**
 
 --> different file type: (data starts at 4th row of file)
 - Column 1: vial number
 - Column 2: flow rate
 - Column 3 -> end: PID values
 
-
-
-1. loads .csv file (from OlfaControlGUI\results_files\standard olfa)
-2. calculates PID baseline value (minimum PID value recorded during first trial)
-3. for each trial:
-	- adjust PID
+1. Loads .csv file (from OlfaControlGUI\results_files\standard olfa)
+2. Calculates PID baseline value (minimum PID value recorded during first trial)
+3. For each trial:
+	- Adjust PID
 		- remove missing cells
 		- make array of time values
 		- shift PID up to zero
-	- calculate mean PID
+	- Calculate mean PID
 		- only use specific section of data:
 			- beginning of dataset: cut off the # of seconds specified by user
 			- end of dataset: 0.1sec before PID drops below 0.1V
-	- plot trial (if user selected to)
-	- add mean (& std) to the data structure
-4. create combined data structure
-5. save it to C:\..\data (.mat files)
-6. plot the spt char figure
+	- Plot trial (if user selected to)
+	- Add mean (& std) to the data structure
+4. Create combined data structure
+5. Save it to C:\..\data (.mat files)
+6. Plot the spt char figure
 

@@ -8,31 +8,7 @@ set(0,'DefaultTextInterpreter','none')
 %#ok<*SAGROW>
 %#ok<*AGROW> 
 
-%% enter directory for this computer
-%a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-
-a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
-
-% make sure OlfaControlGUI is on matlab path
-addpath(genpath(a_dir_OlfaControlGUI));
-%% select shit to plot
-plot_opts = struct();
-
-% olfa options:
-
-% plot olfa as sccm or int
-plot_opts.plot_flow_as_sccm = 'yes';
-% **if datafile does not have calibration tables listed in header, plot will be in ints regardless
-
-% pick one of these
-plot_opts.olfa = 'no';
-plot_opts.pid = 'yes';
-plot_opts.output_flow = 'yes';
-plot_opts.ctrl = 'yes';
-plot_opts.ctrl_as_voltage = 'no';
-
-%% display variables
+%% Display variables
 f = struct();   % struct containing all figure variables
 f.position = [30 200 1700 700];
 f.pid_ylims = [];
@@ -46,8 +22,35 @@ f.scale_time = 'no';
 
 a_this_note = '';
 
-%% enter data file name
+%% Select shit to plot
+plot_opts = struct();
 
+% olfa options:
+
+% plot olfa as sccm or int
+plot_opts.plot_flow_as_sccm = 'yes';
+% **if datafile does not have calibration tables listed in header, plot will be in ints regardless
+
+% pick one of these
+plot_opts.olfa = 'yes';
+plot_opts.pid = 'no';
+plot_opts.output_flow = 'yes';
+plot_opts.ctrl = 'yes';
+%plot_opts.ctrl = 'no';
+plot_opts.ctrl_as_voltage = 'no';
+plot_opts.plot_in_minutes = 'no';
+
+%% Enter directory for this computer
+%a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+%a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+a_dir_OlfaEngDropbox = 'C:\Users\shann\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+
+a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
+
+% make sure OlfaControlGUI is on matlab path
+addpath(genpath(a_dir_OlfaControlGUI));
+
+%% Enter data file name
 %{
 %a_thisfile_name = '2023-10-18_datafile_00';
 
@@ -167,10 +170,85 @@ a_this_note = '';
 
 %a_thisfile_name = '2023-11-10_datafile_01';
 %a_thisfile_name = '2023-11-09_datafile_00_E2';
-a_thisfile_name = '2023-11-13_datafile_00';
-a_thisfile_name = '2023-11-13_datafile_01';
+%a_thisfile_name = '2023-11-13_datafile_00';
+%a_thisfile_name = '2023-11-13_datafile_01';
+%a_thisfile_name = '2024-01-18_datafile_00';
+%f.pid_ylims = [0 8];
 
-f.pid_ylims = [0 8];
+%% 02-07-2024
+%a_thisfile_name = '2024-02-07_datafile_00'; % 100 sccm, pvalve 255
+%a_thisfile_name = '2024-02-07_datafile_01'; % 100 sccm, pvalve 255
+%calibration_value = 727.0;
+%f.flow_ylims = [720 732];
+%a_thisfile_name = '2024-02-07_datafile_02'; % 80 sccm, pvalve 255
+%a_thisfile_name = '2024-02-07_datafile_03'; % 80 sccm, pvalve 255
+%calibration_value = 650.1;
+%f.flow_ylims = [643 655];
+%a_thisfile_name = '2024-02-07_datafile_04'; % 60 sccm, pvalve 255
+%a_thisfile_name = '2024-02-07_datafile_05'; % 60 sccm, pvalve 255
+%calibration_value = 563.9;
+%f.flow_ylims = [557 569];
+%a_thisfile_name = '2024-02-07_datafile_06'; % 40 sccm, pvalve 255
+%a_thisfile_name = '2024-02-07_datafile_07'; % 40 sccm, pvalve 255
+%calibration_value = 461.8;
+%f.flow_ylims = [455 467];
+%a_thisfile_name = '2024-02-07_datafile_08'; % 20 sccm, pvalve 255
+%a_thisfile_name = '2024-02-07_datafile_09'; % 20 sccm, pvalve 255
+%calibration_value = 335.6;
+%f.flow_ylims = [328.5 340.5];
+%a_thisfile_name = '2024-02-07_datafile_10'; % 0 sccm, pvalve 255
+%a_thisfile_name = '2024-02-07_datafile_11'; % 0 sccm, pvalve 255
+%calibration_value = 197;
+%f.flow_ylims = [190 202];
+
+%a_thisfile_name = '2024-02-07_datafile_12'; % 100 sccm, pvalve 120
+%a_thisfile_name = '2024-02-07_datafile_13'; % 100 sccm, pvalve 120
+%f.flow_ylims = [720 732];
+
+%%
+% 100 sccm, pvalve at 0,1,2,3,4,5V
+%a_thisfile_name = '2024-02-08_datafile_00'; % 100 sccm, pvalve 0
+%a_thisfile_name = '2024-02-08_datafile_02'; % 100 sccm, pvalve 51   % 1V
+%a_thisfile_name = '2024-02-08_datafile_04'; % 100 sccm, pvalve 102  % 2V
+%a_thisfile_name = '2024-02-08_datafile_05'; % 100 sccm, pvalve 153  % 3V
+%a_thisfile_name = '2024-02-08_datafile_03'; % 100 sccm, pvalve 204  % 4V
+%a_thisfile_name = '2024-02-08_datafile_01'; % 100 sccm, pvalve 255  % 5V
+
+% 100 sccm, flow sensor drop over time
+a_thisfile_name = '2024-02-08_datafile_06';
+a_thisfile_name = '2024-02-09_datafile_00';
+
+% 100 sccm, pvalve at 120-220
+a_thisfile_name = '2024-02-13_datafile_01';
+%a_thisfile_name = '2024-02-13_datafile_02';
+%a_thisfile_name = '2024-02-13_datafile_03';
+%a_thisfile_name = '2024-02-13_datafile_04';
+%a_thisfile_name = '2024-02-13_datafile_05';
+%a_thisfile_name = '2024-02-13_datafile_06';
+%a_thisfile_name = '2024-02-13_datafile_07';
+%a_thisfile_name = '2024-02-13_datafile_08';
+%a_thisfile_name = '2024-02-13_datafile_09';
+%a_thisfile_name = '2024-02-13_datafile_10';
+%a_thisfile_name = '2024-02-13_datafile_11';
+
+f.flow_ylims = [723 730];
+%plot_opts.plot_in_minutes = 'yes';
+
+%% 02-09-2024: multiple prop valves open
+%a_thisfile_name = '2024-02-09_datafile_01'; % 100 sccm, 0 pvalves
+%a_thisfile_name = '2024-02-09_datafile_02'; % 100 sccm, 1 pvalve
+%a_thisfile_name = '2024-02-09_datafile_03'; % 100 sccm, 2 pvalves
+%a_thisfile_name = '2024-02-09_datafile_04'; % 100 sccm, 3 pvalves
+%a_thisfile_name = '2024-02-09_datafile_05'; % 100 sccm, 4 pvalves
+%a_thisfile_name = '2024-02-09_datafile_06'; % 100 sccm, 5 pvalves
+%a_thisfile_name = '2024-02-09_datafile_07'; % 100 sccm, 6 pvalves
+%a_thisfile_name = '2024-02-09_datafile_08'; % 100 sccm, 7 pvalves
+%a_thisfile_name = '2024-02-09_datafile_09'; % 100 sccm, 8 pvalves
+
+%f.flow_ylims = [709 731];
+%plot_opts.plot_in_minutes = 'no';
+plot_opts.plot_flow_as_sccm = 'no';
+
 
 %f.position = [549 166 1353 684];
 %f.position = [166 600 775 275];     % for OneNote
@@ -178,13 +256,12 @@ f.position = [166 210 1300 600];    % for PowerPoint
 %f.position = [166 210 650 600];    % for PowerPoint (1/2 size)
 f.pid_width = 1.5;
 
-%% load .mat file
+%% Load .mat file
 
 % full directory for .mat file
 dir_this_mat_file = strcat(a_dir_OlfaControlGUI,'\analysis\data (.mat files)\',a_thisfile_name,'.mat');
 %dir_this_mat_file = strcat(pwd,'\data (.mat files)\',a_thisfile_name,'.mat');
 
-%% plot
 try
     load(dir_this_mat_file);
     clearvars mat_* dir_*
@@ -262,7 +339,7 @@ try
     
     end
     %}
-    %% make figure
+    %% Make figure
     figTitle = a_thisfile_name;
     if ~strcmp(a_this_note, ''); figTitle = append(figTitle, ': ',  a_this_note); end
     
@@ -274,15 +351,23 @@ try
     f1_ax = gca;
     
     % x limits
-    xlabel('Time (s)');
+    if strcmp(plot_opts.plot_in_minutes,'no')
+        xlabel('Time (s)');
+    else
+        xlabel('Time (min)')
+    end
     if ~isempty(f.x_lim)
         xlim(f.x_lim);
     else
         t_end = data_time_raw(end,1);
-        xlim([0 t_end]);
+        if strcmp(plot_opts.plot_in_minutes,'no')
+            xlim([0 t_end]);
+        else
+            xlim([0 t_end/60])
+        end
     end
     
-    %% plot: olfa flow
+    %% Plot: olfa flow
     if strcmp(plot_opts.olfa,'yes')
         % for each vial
         for i=1:length(d_olfa_flow)
@@ -325,6 +410,9 @@ try
                     xlim([-.5 16]);                
                 end
             end
+            if strcmp(plot_opts.plot_in_minutes,'yes')
+                d_olfa_flow_x = d_olfa_flow_x/60;
+            end
             p = plot(d_olfa_flow_x,d_olfa_flow_y);
             p.LineWidth = f.flow_width;
             p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
@@ -332,7 +420,7 @@ try
         end
     end
     
-    %% plot: olfa ctrl
+    %% Plot: olfa ctrl
     if strcmp(plot_opts.ctrl,'yes')
         % for each vial
         for i=1:length(d_olfa_flow)
@@ -369,6 +457,9 @@ try
                 % readjust x limits
                 xlim([-.5 16]);
             end
+            if strcmp(plot_opts.plot_in_minutes,'yes')
+                d_ctrl_x = d_ctrl_x/60;
+            end
             p2 = plot(d_ctrl_x,d_ctrl_y);
             p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
             %p2.HandleVisibility = 'off';
@@ -377,7 +468,7 @@ try
         end
     end
     
-    %% plot: pid
+    %% Plot: PID
     if strcmp(plot_opts.pid,'yes')
         if ~isempty(data_pid)
             d_pid_x = data_pid(:,1);
@@ -393,13 +484,16 @@ try
                 end
             end
             
+            if strcmp(plot_opts.plot_in_minutes,'yes')
+                d_pid_x = d_pid_x/60;
+            end
             p2 = plot(d_pid_x,d_pid_y,'DisplayName','PID');
             p2.LineWidth = f.pid_width;
             p2.Color = f.PID_color;
         end
     end
     
-    %% plot: output flow sensor
+    %% Plot: output flow sensor
     if strcmp(plot_opts.output_flow,'yes')
         if ~isempty(data_fsens_raw)
             yyaxis right;
@@ -409,7 +503,7 @@ try
         end
     end 
     
-    %% plot calibration value
+    %% Plot: calibration value
     if ~isempty(f.calibration_value)
         yyaxis left;
         yline(f.calibration_value,'r','LineWidth',2);

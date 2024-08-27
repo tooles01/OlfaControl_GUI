@@ -16,7 +16,7 @@ clearvars
 %close all
 %#ok<*SAGROW>
 %#ok<*AGROW> 
-%% config variables
+%% Config variables
 c = struct();   % struct containing all config variables
 
 % instrument names (for parsing from datafile)
@@ -31,9 +31,10 @@ c.this_exp_cal_tables = [];
 a_this_note = '';
 flow_inc = [];
 
-%% enter directory for this computer
+%% Enter directory for this computer
 %a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+%a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+a_dir_OlfaEngDropbox = 'C:\Users\shann\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
 
 a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
 
@@ -61,99 +62,73 @@ file = uigetfile("*.csv",uibox_title);
 
 %}
 
+%% Enter data file name
 
-%% enter data file name
+% checking flow sensor reponse to pvalve open
+%a_thisfile_name = '2024-02-07_datafile_00'; a_this_note = '100 sccm, ctrl 255';
+%a_thisfile_name = '2024-02-07_datafile_01'; a_this_note = '100 sccm, ctrl 255';
+%a_thisfile_name = '2024-02-07_datafile_02'; a_this_note = '80 sccm, ctrl 255';
+%a_thisfile_name = '2024-02-07_datafile_03'; a_this_note = '80 sccm, ctrl 255';
+%a_thisfile_name = '2024-02-07_datafile_04'; a_this_note = '60 sccm, ctrl 255';
+%a_thisfile_name = '2024-02-07_datafile_05'; a_this_note = '60 sccm, ctrl 255';
+%a_thisfile_name = '2024-02-07_datafile_06'; a_this_note = '40 sccm, ctrl 255';
+%a_thisfile_name = '2024-02-07_datafile_07'; a_this_note = '40 sccm, ctrl 255';
+%a_thisfile_name = '2024-02-07_datafile_08'; a_this_note = '20 sccm, ctrl 255';
+%a_thisfile_name = '2024-02-07_datafile_09'; a_this_note = '20 sccm, ctrl 255';
+%a_thisfile_name = '2024-02-07_datafile_10'; a_this_note = '0 sccm, ctrl 255';
+%a_thisfile_name = '2024-02-07_datafile_11'; a_this_note = '0 sccm, ctrl 255';
 
-%a_thisfile_name = '2023-11-06_datafile_00'; a_this_note = 'Ethyl Tiglate - E1-E4 pre-trial setup'; flow_inc = 100;
-%a_thisfile_name = '2023-11-06_datafile_01'; a_this_note = 'Ethyl Tiglate - E1-E4 pre-trial setup'; flow_inc = 100;
-%a_thisfile_name = '2023-11-06_datafile_02'; a_this_note = 'Ethyl Tiglate - E1-E4 pre-trial setup'; flow_inc = 100;
-%a_thisfile_name = '2023-11-06_datafile_03'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-06_datafile_04'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-06_datafile_05'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+%a_thisfile_name = '2024-02-07_datafile_12'; a_this_note = '100 sccm, ctrl 120';
+%a_thisfile_name = '2024-02-07_datafile_13'; a_this_note = '100 sccm, ctrl 120';
 
-%a_thisfile_name = '2023-11-06_datafile_06'; a_this_note = 'E1: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-06_datafile_07'; a_this_note = 'E3: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-06_datafile_08'; a_this_note = 'E4: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-06_datafile_09'; a_this_note = 'Ethyl Tiglate - E1-E4 pre-trial setup'; flow_inc = 100;
-%a_thisfile_name = '2023-11-06_datafile_10'; a_this_note = 'E2: Ethyl Tiglate - 10s on 30s off (random order)'; flow_inc = 10;
+% checking flow sensor response at ctrl=0,1,2,3,45V
+%a_thisfile_name = '2024-02-08_datafile_00'; a_this_note = '100 sccm, ctrl 0';
+%a_thisfile_name = '2024-02-08_datafile_01'; a_this_note = '100 sccm, ctrl 255';
+%a_thisfile_name = '2024-02-08_datafile_02'; a_this_note = '100 sccm, ctrl 51';
+%a_thisfile_name = '2024-02-08_datafile_03'; a_this_note = '100 sccm, ctrl 204';
+%a_thisfile_name = '2024-02-08_datafile_04'; a_this_note = '100 sccm, ctrl 102';
+%a_thisfile_name = '2024-02-08_datafile_05'; a_this_note = '100 sccm, ctrl 153';
+%a_thisfile_name = '2024-02-08_datafile_06'; a_this_note = '100 sccm, watching if E4 gets hot';
 
-%a_thisfile_name = '2023-11-09_datafile_00'; a_this_note = 'E1-E4: Pinene - 5s on 5s off'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_00_E2'; a_this_note = 'E2 - 5s on 5s off'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_01'; a_this_note = 'E2: Pinene - new cap'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_02'; a_this_note = 'E2: Pinene - new cap'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_03'; a_this_note = 'E2: Pinene - new needle'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_04'; a_this_note = 'E2: Pinene - tightened iso valve'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_05'; a_this_note = 'E2: Pinene - using E1''s vial'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_06'; a_this_note = 'E3: Pinene - 5s on 5s off'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_07'; a_this_note = 'E4: Pinene - 5s on 5s off'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_08'; a_this_note = 'E2: Pinene - reconnected fSens to manifold'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_09'; a_this_note = 'E2: Pinene - new proportional valve'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_10'; a_this_note = 'E2: Pinene - original proportional valve'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_11'; a_this_note = 'E2: Pinene - new proportional valve'; flow_inc = 100;
+%a_thisfile_name = '2024-02-09_datafile_00'; a_this_note = 'E4 at 100 sccm over time';
+% flow sensor with multiple pvalves open
+%a_thisfile_name = '2024-02-09_datafile_01'; a_this_note = '100 sccm, 0 pvalves open';
+%a_thisfile_name = '2024-02-09_datafile_02'; a_this_note = '100 sccm, 1 pvalve open';
+%a_thisfile_name = '2024-02-09_datafile_03'; a_this_note = '100 sccm, 2 pValves open';
+%a_thisfile_name = '2024-02-09_datafile_04'; a_this_note = '100 sccm, 3 pValves open';
+%a_thisfile_name = '2024-02-09_datafile_05'; a_this_note = '100 sccm, 4 pValves open';
+%a_thisfile_name = '2024-02-09_datafile_06'; a_this_note = '100 sccm, 5 pValves open';
+%a_thisfile_name = '2024-02-09_datafile_07'; a_this_note = '100 sccm, 6 pValves open';
+%a_thisfile_name = '2024-02-09_datafile_08'; a_this_note = '100 sccm, 7 pValves open';
+%a_thisfile_name = '2024-02-09_datafile_09'; a_this_note = '100 sccm, 8 pValves open';
 
-%a_thisfile_name = '2023-11-09_datafile_13'; a_this_note = 'E1: Pinene baseline (100 sccm)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_14'; a_this_note = 'E2: Pinene baseline (100 sccm)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_15'; a_this_note = 'E3: Pinene baseline (100 sccm)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_16'; a_this_note = 'E4: Pinene baseline (100 sccm)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-09_datafile_17'; a_this_note = 'E1: Pinene - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-09_datafile_18'; a_this_note = 'E2: Pinene - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-09_datafile_19'; a_this_note = 'E3: Pinene - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-09_datafile_20'; a_this_note = 'E4: Pinene - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-09_datafile_21'; a_this_note = 'E1: Pinene - 10s on 30s off'; flow_inc = 20; % with vial C
-%a_thisfile_name = '2023-11-09_datafile_22'; a_this_note = 'E2: Pinene - 10s on 30s off'; flow_inc = 20;
-%a_thisfile_name = '2023-11-09_datafile_23'; a_this_note = 'E3: Pinene - 10s on 30s off'; flow_inc = 20; % with vial A
-%a_thisfile_name = '2023-11-09_datafile_24'; a_this_note = 'E4: Pinene - 10s on 30s off'; flow_inc = 20;
+%a_thisfile_name = '2024-02-13_datafile_00'; a_this_note = '100 sccm, watching if E4 gets hot';
 
-%a_thisfile_name = '2023-11-10_datafile_00'; a_this_note = 'E1-E4 Pinene baseline (100 sccm)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-10_datafile_01'; a_this_note = 'E1: Pinene baseline (100 sccm) (8s on 20s off)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-10_datafile_02'; a_this_note = 'E2: Pinene baseline (100 sccm) (8s on 20s off)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-10_datafile_03'; a_this_note = 'E3: Pinene baseline (100 sccm) (8s on 20s off)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-10_datafile_04'; a_this_note = 'E4: Pinene baseline (100 sccm) (8s on 20s off)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-10_datafile_05'; a_this_note = 'E4: Pinene baseline (100 sccm) (8s on 20s off) - blew on the needle'; flow_inc = 100;
-%a_thisfile_name = '2023-11-10_datafile_06'; a_this_note = 'E3: Pinene baseline (100 sccm) (8s on 20s off) - adjusted needle'; flow_inc = 100;
-%a_thisfile_name = '2023-11-10_datafile_07'; a_this_note = 'E3: Pinene baseline (100 sccm) (8s on 20s off) - new needle'; flow_inc = 100;
-%a_thisfile_name = '2023-11-10_datafile_08'; a_this_note = 'E2: Pinene baseline (100 sccm) (8s on 20s off) - new needle'; flow_inc = 100;
+% flow sensor with ctrl at 120,130,140,150,160,170,180,190,200,210,220
+%a_thisfile_name = '2024-02-13_datafile_01'; a_this_note = '100 sccm, ctrl=220';
+%a_thisfile_name = '2024-02-13_datafile_02'; a_this_note = '100 sccm, ctrl=210';
+%a_thisfile_name = '2024-02-13_datafile_03'; a_this_note = '100 sccm, ctrl=200';
+%a_thisfile_name = '2024-02-13_datafile_04'; a_this_note = '100 sccm, ctrl=190';
+%a_thisfile_name = '2024-02-13_datafile_05'; a_this_note = '100 sccm, ctrl=180';
+%a_thisfile_name = '2024-02-13_datafile_06'; a_this_note = '100 sccm, ctrl=170';
+%a_thisfile_name = '2024-02-13_datafile_07'; a_this_note = '100 sccm, ctrl=160';
+%a_thisfile_name = '2024-02-13_datafile_08'; a_this_note = '100 sccm, ctrl=150';
+%a_thisfile_name = '2024-02-13_datafile_09'; a_this_note = '100 sccm, ctrl=140';
+%a_thisfile_name = '2024-02-13_datafile_10'; a_this_note = '100 sccm, ctrl=130';
+%a_thisfile_name = '2024-02-13_datafile_11'; a_this_note = '100 sccm, ctrl=120';
 
-%a_thisfile_name = '2023-11-10_datafile_09'; a_this_note = 'E1: Pinene - 8s on 20s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-10_datafile_10'; a_this_note = 'E2: Pinene - 8s on 20s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-10_datafile_11'; a_this_note = 'E3: Pinene - 8s on 20s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-10_datafile_12'; a_this_note = 'E4: Pinene - 8s on 20s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-10_datafile_13'; a_this_note = 'E1: Pinene - 8s on 20s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-10_datafile_14'; a_this_note = 'E1: Pinene - 8s on 20s off (vial F)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-10_datafile_15'; a_this_note = 'E1: Pinene - 8s on 20s off (vial F) (no suction)'; flow_inc = 10;
+%a_thisfile_name = '2024-02-13_datafile_12'; a_this_note = '100 sccm, watching if E4 gets hot';
 
-%a_thisfile_name = '2023-11-13_datafile_00'; a_this_note = 'E1-E4 Pinene baseline (suction off)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-13_datafile_01'; a_this_note = 'E1-E4 Pinene baseline (suction on)'; flow_inc = 100;
+a_thisfile_name = '2024-01-19_datafile_00';
 
-%a_thisfile_name = '2023-11-13_datafile_02'; a_this_note = 'E1 Pinene - 8s on 20s off (vial A) (suction on)'; flow_inc = 20;
-%a_thisfile_name = '2023-11-13_datafile_03'; a_this_note = 'E2 Pinene - 8s on 20s off (vial B) (suction on)'; flow_inc = 20;
-%a_thisfile_name = '2023-11-13_datafile_04'; a_this_note = 'E3 Pinene - 8s on 20s off (vial C) (suction on)'; flow_inc = 20;
-%a_thisfile_name = '2023-11-13_datafile_05'; a_this_note = 'E4 Pinene - 8s on 20s off (vial D) (suction on)'; flow_inc = 20;
-%a_thisfile_name = '2023-11-13_datafile_06'; a_this_note = 'E1 Pinene - 8s on 20s off (vial A) (suction off)'; flow_inc = 20;
-%a_thisfile_name = '2023-11-13_datafile_07'; a_this_note = 'E2 Pinene - 8s on 20s off (vial B) (suction off)'; flow_inc = 20;
-%a_thisfile_name = '2023-11-13_datafile_08'; a_this_note = 'E3 Pinene - 8s on 20s off (vial C) (suction off)'; flow_inc = 20;
-%a_thisfile_name = '2023-11-13_datafile_09'; a_this_note = 'E4 Pinene - 8s on 20s off (vial D) (suction off)'; flow_inc = 20;
-
-%a_thisfile_name = '2023-11-13_datafile_17'; a_this_note = 'E4 Pinene - 8s on 20s off (vial D) (suction off)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-13_datafile_18'; a_this_note = 'E4 Pinene - 8s on 20s off (vial D) (suction on)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-13_datafile_19'; a_this_note = 'E3 Pinene - 8s on 20s off (vial C) (suction on)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-13_datafile_20'; a_this_note = 'E3 Pinene - 8s on 20s off (vial C) (suction off)'; flow_inc = 10;
-
-%a_thisfile_name = '2023-11-16_datafile_00'; a_this_note = 'E4 Pinene - 8s on 20s off (vial D) (suction off)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-16_datafile_01'; a_this_note = 'E1 empty - 8s on 20s off (suction off)'; flow_inc = 10;
-%a_thisfile_name = '2023-11-16_datafile_02'; a_this_note = 'Contamination test (pinene v. empty) - 8s on 20s off (suction off)'; flow_inc = 100;
-%a_thisfile_name = '2023-11-16_datafile_03'; a_this_note = 'E3 Pinene - 8s on 20s off (vial C) (suction off)'; flow_inc = 10;
-a_thisfile_name = '2023-11-16_datafile_04'; a_this_note = 'E3 & E4 Pinene - 8s on 20s off (suction off)'; flow_inc = 10;
-a_thisfile_name = '2023-11-20_datafile_02';
-
-%% set up directories
+%% Set up directories
 dir_data_files = [a_dir_OlfaControlGUI '\result_files\48-line olfa\'];
 %dir_data_files = [a_dir_OlfaControlGUI '\result_files\cheap olfa\'];
 
 % make sure datafiles are on matlab path
 addpath(genpath(dir_data_files));
 
-%% load file
+%% Load file
 % directory where raw data files are stored
 %{
     % before doing matlab processing, copy the file into this folder (as
@@ -176,7 +151,7 @@ dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\48-line olfa\',a
 raw_wholeFile = import_datafile(a_thisfile_name,dir_this_data_file);
 clearvars dir_* a_thisfile_date
 
-%% parse header
+%% Parse header
 h = struct();
 h.header_goes_til = (find(strcmp(raw_wholeFile,'Time')))+1;
 raw_header = raw_wholeFile(1:h.header_goes_til-2,:);
@@ -194,7 +169,7 @@ if ~isempty(h.PID_gain_row_idx)
 end
 
 clearvars raw_header
-%% parse file
+%% Parse file
 raw_data = raw_wholeFile(h.header_goes_til:end,:);
 clearvars h
 num_data = height(raw_data);
@@ -376,7 +351,7 @@ for i=1:num_data
     end
 end
 clearvars i* n* matches idx_* vial_list d_olfa_vials_recorded
-%% get calibration tables
+%% Get calibration tables
 dir_cal_tables = strcat(a_dir_OlfaControlGUI,'\calibration_tables\');
 
 % for each vial in olfa_data_flow
@@ -403,7 +378,7 @@ for i=1:length(d_olfa_flow)
 end
 
 clearvars cal_* dir_* this_cal_file_data k
-%% adjust PID
+%% Adjust PID
 data_pid = data_pid_raw;
 if ~isempty(data_pid)
 
@@ -436,7 +411,7 @@ if ~isempty(data_pid)
     data_pid(:,2) = data_pid(:,2)/1000;
 
 end
-%% convert olfa to sccm
+%% Convert olfa to sccm
 % for each vial
 for i=1:length(d_olfa_flow)
     % if there are flow values
@@ -463,7 +438,7 @@ end
 
 clearvars i*
 
-%% smooth PID
+%% Smooth PID
 % get moving average (50ms windows)
 
 if ~isempty(data_pid)    
@@ -483,7 +458,7 @@ if ~isempty(data_pid)
 end
 
 
-%% split into sections
+%% Split into sections
 % get flow/pid for each event section
 
 % for each vial
@@ -573,7 +548,7 @@ end
 
 clearvars i e* these* this* next* *_pair
 
-%% create d_olfa_data_combined
+%% Create d_olfa_data_combined
 % for each vial in d_olfa_flow
 for v=1:length(d_olfa_flow)
     sourceStructArray = d_olfa_flow(v).events.OV_keep;  % TODO fix this, needs to specify which row of d_olfa_flow
@@ -597,7 +572,7 @@ for v=1:length(d_olfa_flow)
         targetStructArray(i) = targetStruct;            % Assign the target struct to the target struct array
     end
 
-    %% sort by flow mean (create d_olfa_data_sorted)
+    %% Sort by flow mean (create d_olfa_data_sorted)
     fieldName = 'flow_mean_sccm';
     fieldValues = {targetStructArray.(fieldName)};
     fieldValues = cell2mat(fieldValues);
@@ -606,7 +581,7 @@ for v=1:length(d_olfa_flow)
     
     clearvars field* source* target* i j sortedIndices
     
-    %% initialize the combined data structure
+    %% Initialize the combined data structure
     d_olfa_data_combined = [];
     d_olfa_data_combined(1).flow_value = [];
     d_olfa_data_combined(1).pid_mean1 = [];
@@ -622,7 +597,7 @@ for v=1:length(d_olfa_flow)
         flow_value = flow_value + flow_inc;
     end
 
-    %% add shit to the combined data structure
+    %% Add shit to the combined data structure
     
     % start from this starting index
     starting_idx = 1;
@@ -651,7 +626,7 @@ end
 clearvars i* numElements *flow_value flow_inc r num_iterations starting_idx
 
 
-%% save data
+%% Save data
 clearvars a_dir*
 mat_file_dir = strcat(pwd,'\','data (.mat files)\',a_thisfile_name,'.mat');
 disp_file_dir = strcat('C:\..\data (.mat files)\',a_thisfile_name,'.mat');
