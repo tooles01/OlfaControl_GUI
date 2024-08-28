@@ -54,8 +54,6 @@ class Vial(QGroupBox):
         # For Plot Widget (plot_window_all)
         self.plot_flow_btn = QPushButton(self.full_vialNum, checkable=True)
         self.plot_flow_btn.toggled.connect(self.plot_flow_btn_toggled)
-        self.plot_ctrl_btn = QPushButton(self.full_vialNum, checkable=True)
-        self.plot_ctrl_btn.toggled.connect(self.plot_ctrl_btn_toggled)
 
         self.generate_stuff()
         
@@ -255,28 +253,6 @@ class Vial(QGroupBox):
             # Make it not set to debug mode
             if self.read_flow_vals_btn.isChecked() ==True:
                 self.read_flow_vals_btn.setChecked(False)
-    
-    def plot_ctrl_btn_toggled(self, checked):
-        if checked:
-            self.slave_plot_object = self.parent().slave_plot_window
-            # Make sure it's already set to debug mode
-            if self.read_flow_vals_btn.isChecked() == False:
-                self.read_flow_vals_btn.setChecked(True)
-
-            # Tell plot window this vial needs to be plotted
-            flag = 0
-            for idx in range(len(self.slave_plot_object.vials_to_plot)):
-                if self.slave_plot_object.vials_to_plot[idx] == '-':
-                    self.slave_plot_object.vials_to_plot[idx] = self
-                    self.slave_plot_object.vials_to_plot_names[idx] = self.full_vialNum
-                    flag = 1
-                    break
-            if flag == 0:
-                logger.debug('only 4 vials can be plotted at once')
-
-            if self.slave_plot_object.vials_to_plot[0] == '-':
-                self.slave_plot_object.vials_to_plot[0] = self
-                self.slave_plot_object.vials_to_plot_names[0] = self.full_vialNum
     
     # COMMANDS
     def K_parameter_update(self, Kx, value):
