@@ -11,7 +11,7 @@ Python GUI for using the new 8-line olfactometer and mixing chamber
 Update 4/29/2024: GUI is currently compatible with Python 3.9, 3.10, 3.12  
 <br>
 
-# Setup
+## Setup
 
 1. Download/clone this folder
     - It is recommended to do so via [Github Desktop](https://docs.github.com/en/desktop/installing-and-authenticating-to-github-desktop/installing-github-desktop) in order to pull new commits (bug fixes/updates) in real time.
@@ -34,12 +34,14 @@ To read from each flow sensor, the GUI uses a calibration table to convert the v
 <p align="center"> <img src="images/Flow Sensor-GUI-Calibration table.png" width="50%"></p>
 
 Each flow sensor has a slightly different calibration, so it is recommended to use the calibration table for each specific miniMFC to ensure accurate flow control.  
-&nbsp;&nbsp;(*Further information on calibrating flow sensors can be found [here](https://github.com/tooles01/OlfaControl_Electronics/blob/master/8-line%20Olfactometer/Flow_Sensor_Calibration_Protocol.md).)*
+&nbsp;&nbsp;(Further information on calibrating flow sensors can be found [here](https://github.com/tooles01/OlfaControl_Electronics/blob/master/8-line%20Olfactometer/Flow_Sensor_Calibration_Protocol.md).)
 
+<!--
 *<p align="center"> *Example calibration table:* </p>*
 <p align="center"> <img src="images/setup_GUI_example_calibration_table.png" width="30%"> </p>
+-->
 
-***Note:** Calibration tables need to be in a folder called **calibration_tables** within the OlfaControl_GUI folder.*  
+***Note:*** Calibration tables need to be in a folder called **calibration_tables** within the OlfaControl_GUI folder.  
 
 
 ### Config files
@@ -49,7 +51,7 @@ To load these calibration tables into the GUI, you can use a config file that li
 This allows for quickly loading all tables into the GUI all at once (instead of manually entering in the Vial Details box for each odor line).
 
 *<p align="center"> *Example config file:*  </p>*
-<p align="center"> <img src="images/setup_GUI_03_configFile.png" width="35%"> </p>
+<p align="center"> <img src="images/setup_GUI_03_configFile.png" width="30%"> </p>
 <br>
 
 With the GUI open, click "Load config file" and select the desired file. (This must be done each time the GUI is closed and reopened.)
@@ -60,8 +62,6 @@ To confirm that the config file loaded correctly, open up one of the Vial Detail
 
 <p align="center"> <img src="images/setup_GUI_vialDetails.png" width="70%"> </p>
 <br>
-
-***Note:** Calibration tables need to be located in a folder called **calibration_tables** within the OlfaControl_GUI folder.*
 
 <!--
 # Using the Olfactometer:
@@ -81,10 +81,9 @@ To confirm that the config file loaded correctly, open up one of the Vial Detail
 -->
 
 <br>
-<br>
 
 #
-### To create a virtual environment:
+## To create a virtual environment:
 
 A virtual environment is a space separate from your main python install, where you can install just the packages needed for this project without affecting your global python packages.
 

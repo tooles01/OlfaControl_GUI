@@ -477,7 +477,11 @@ class flowSensor(QGroupBox):
             self.cal_results_mean_wid.setText(str(flowVal_mean))
             self.cal_results_range_wid.setText(str(flow_range))
             self.cal_results_num_wid.setText(str(len(self.serial_values)))
-            logger.debug(self.this_cal_sccm_value + ' SCCM:\tmedian: ' + str(flowVal_median) + '\t mean: ' + str(flowVal_mean) + '\t range: ' + str(flow_range) + '\t(' + str(len(self.serial_values)) + ' values collected)')
+            logger.debug(self.this_cal_sccm_value + ' SCCM:' +
+                         '\t median: ' + str(flowVal_median) +
+                         '\t mean: ' + str(flowVal_mean) +
+                         '\t range: ' + str(flow_range) +
+                         '\t (' + str(self.this_cal_duration) + 'sec, ' + str(len(self.serial_values)) + ' values)')
             
             # Put mean value in the widget so the user can decide whether to keep it or not
             self.this_cal_int_value = flowVal_mean

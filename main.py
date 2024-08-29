@@ -6,7 +6,7 @@ from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtCore import QTimer
 from datetime import datetime
 
-import NiDAQ_driver, flow_sensor_driver, x_olfa_driver_original, olfa_driver_48line
+import NiDAQ_driver, flow_sensor_driver, olfa_driver_original, olfa_driver_48line
 import utils, utils_olfa_48line, program_additive_popup
 import config_main
 
@@ -1101,7 +1101,7 @@ class mainWindow(QMainWindow):
 
     def add_olfa_orig_toggled(self, checked):
         if checked:
-            self.olfactometer = x_olfa_driver_original.olfactometer_window()
+            self.olfactometer = olfa_driver_original.olfactometer_window()
             self.device_layout.addWidget(self.olfactometer)
             logger.debug('created olfactometer object')
             self.add_olfa_48line_btn.setEnabled(False)
