@@ -8,7 +8,7 @@ import pyqtgraph as pg
 timer_interval_ms = 100         # interval for updating plot # TODO change ms to s
 
 # Plot Display Variables
-max_time_displayed_s = 15       # time frame to display # TODO remove
+max_time_displayed_s = 360       # time frame to display # TODO remove
 max_time_displayed_ms = max_time_displayed_s * 1000
 flow_min = -5       # Min & Max flow values (Y-axis)
 flow_max = 150
@@ -22,7 +22,8 @@ class plot_window_all(QMainWindow):
         self.vials_to_plot = ['-','-','-','-']          # List of vials being plotted (List items are Vial objects)
         self.vials_to_plot_names = ['-','-','-','-']
         
-        self.generate_ui()
+        # Create Plot Widget & Pushbuttons
+        self.generate_ui() 
 
         # Layout
         self.central_widget = QWidget(self)
@@ -35,7 +36,7 @@ class plot_window_all(QMainWindow):
 
         # Create Plot Widget
         self.plot_widget = pg.PlotWidget()
-        self.plot_widget.setLabel('bottom', 'Time (s)')                    # Set X-axis label
+        self.plot_widget.setLabel('bottom', 'Time (s)')                     # Set X-axis label
         self.plot_widget.setLabel('left','Flow (SCCM)')                     # Set Y-axis label
         self.plot_widget.getPlotItem().setRange(yRange=[flow_min,flow_max]) # Set Y-axis limits
         self.legend = self.plot_widget.addLegend()                          # Add Legend
