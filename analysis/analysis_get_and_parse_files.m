@@ -38,29 +38,11 @@ a_dir_OlfaEngDropbox = 'C:\Users\shann\Dropbox (NYU Langone Health)\Olfactometer
 
 a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
 
-%{
-%% popup box to select file name # TODO
-default_date = '2023-03-02';
+% Make sure datafiles are on matlab path
+dir_data_files = [a_dir_OlfaControlGUI '\result_files\48-line olfa\'];
+addpath(genpath(dir_data_files));
 
-default_filename = '2023-03-02_datafile_02';
-
-% get date from filename
-idx_und = strfind(a_thisfile_name,'_');
-idx_und = idx_und(1);
-a_thisfile_date = a_thisfile_name(1:idx_und-1);
-
-% full directory for this file
-dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\48-line olfa\',a_thisfile_date,'\');
-
-%default_directory = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)\Control\a_software\OlfaControl_GUI\result_files';
-default_directory = strcat(a_dir_OlfaControlGUI,'\result_files');
-uibox_title = 'Select datafile';
-uibox_deffilename ='d';
-file = uigetfile("*.csv",uibox_title);
-
-%a_default_file_name = '2023-03-02_datafile_02';
-
-%}
+clearvars c_*
 
 %% Enter data file name
 
@@ -119,36 +101,30 @@ file = uigetfile("*.csv",uibox_title);
 
 %a_thisfile_name = '2024-02-13_datafile_12'; a_this_note = '100 sccm, watching if E4 gets hot';
 
-a_thisfile_name = '2024-01-19_datafile_00';
+%a_thisfile_name = '2024-01-19_datafile_00';
+%a_thisfile_name = '2024-08-27_datafile_00'; a_this_note = 'E1 (no vial) 100 sccm test';
+a_thisfile_name = '2024-08-28_datafile_test'; a_this_note = 'nothing';
 
-%% Set up directories
-dir_data_files = [a_dir_OlfaControlGUI '\result_files\48-line olfa\'];
-%dir_data_files = [a_dir_OlfaControlGUI '\result_files\cheap olfa\'];
-
-% make sure datafiles are on matlab path
-addpath(genpath(dir_data_files));
 
 %% Load file
-% directory where raw data files are stored
+% Loads datafile in and saves a copy as a *.mat file 
 %{
-    % before doing matlab processing, copy the file into this folder (as
-    % a .mat file). processing will be done on this version of the file.
-    % (speeds up matlab so it doesn't have to get the .csv everytime & precaution
-    % against things happening to the original files during analysis)
+    % Before doing matlab processing, copies the file into this folder (as a .mat file). 
+    % Processing will be done on this version of the file. 
+    % (Speeds up matlab so it doesn't have to get the .csv everytime & a precaution 
+    % against anything happening to the original files during analysis.)
 %}
     
-% parse out file date
-idx_und = strfind(a_thisfile_name,'_');
-idx_und = idx_und(1);
-a_thisfile_date = a_thisfile_name(1:idx_und-1);
+% Parse out file date
+idx_underscore = strfind(a_thisfile_name,'_');
+a_thisfile_date = a_thisfile_name(1:idx_underscore(1)-1);
 
-% full directory for this file
+% Get full directory for this file
 dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\48-line olfa\',a_thisfile_date,'\');
-%dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\cheap olfa\',a_thisfile_date,'\');
 
-
-% get the .mat file
+% Get the *.mat file
 raw_wholeFile = import_datafile(a_thisfile_name,dir_this_data_file);
+
 clearvars dir_* a_thisfile_date
 
 %% Parse header
@@ -497,17 +473,22 @@ for i=1:length(d_olfa_flow)
                 e_new_event_struct(e).data.flow_sccm = this_section_data_sccm;
             end
 
-            % get PID data for this period
-            this_section_pid_data = get_section_data(data_pid,e_t_start,e_t_end);
-            e_new_event_struct(e).data.pid = this_section_pid_data;
+            % get PID data for this period (if no PID data collected, create matrix of zeroes)
+            if ~isempty(data_pid)
+                this_section_pid_data = get_section_data(data_pid,e_t_start,e_t_end);
+                e_new_event_struct(e).data.pid = this_section_pid_data;
+            else
+                this_section_pid_data = zeros(length(this_section_data_int));
+                e_new_event_struct(e).data.pid = this_section_pid_data;
+            end
 
             % calculate mean flow & pid
             e_new_event_struct(e).flow_mean_int = mean(this_section_data_int(:,2));
             e_new_event_struct(e).flow_mean_sccm = mean(this_section_data_sccm(:,2));
-            e_new_event_struct(e).pid_mean = mean(this_section_pid_data(:,2));
-            e_new_event_struct(e).pid_std = std(this_section_pid_data(:,2));
             e_new_event_struct(e).flow_std_int = std(this_section_data_int(:,2));
             e_new_event_struct(e).flow_std_sccm = std(this_section_data_sccm(:,2));
+            e_new_event_struct(e).pid_mean = mean(this_section_pid_data(:,2));
+            e_new_event_struct(e).pid_std = std(this_section_pid_data(:,2));
 
             % add to matrix of (int_mean, pid_mean) for all events
             int_pair = [e_new_event_struct(e).flow_mean_int e_new_event_struct(e).pid_mean];

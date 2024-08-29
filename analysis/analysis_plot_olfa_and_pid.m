@@ -13,6 +13,7 @@ f = struct();   % struct containing all figure variables
 f.position = [30 200 1700 700];
 f.pid_ylims = [];
 f.flow_ylims = [];
+f.ctrl_ylims = [];
 f.flow_width = 1;
 f.pid_width = 1;
 f.x_lim = [];
@@ -34,9 +35,8 @@ plot_opts.plot_flow_as_sccm = 'yes';
 % pick one of these
 plot_opts.olfa = 'yes';
 plot_opts.pid = 'no';
-plot_opts.output_flow = 'yes';
+plot_opts.output_flow = 'no';
 plot_opts.ctrl = 'yes';
-%plot_opts.ctrl = 'no';
 plot_opts.ctrl_as_voltage = 'no';
 plot_opts.plot_in_minutes = 'no';
 
@@ -51,204 +51,7 @@ a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaCont
 addpath(genpath(a_dir_OlfaControlGUI));
 
 %% Enter data file name
-%{
-%a_thisfile_name = '2023-10-18_datafile_00';
-
-%a_thisfile_name = '2023-10-18_datafile_02';
-% 10 SCCM
-%f.x_lim = [536.472 1000];
-%f.x_lim = [809.812 1000];
-% 100 SCCM
-%f.x_lim = [260.979 1000];
-%f.x_lim = [306.567 1000];
-%f.pid_ylims = [0 .15];
-%f.pid_ylims = [0 .5];
-%f.flow_ylims = [0 100];
-%f.scale_time = 'yes';
-
-%a_thisfile_name = '2023-10-19_datafile_03';
-% 10 SCCM
-%{
-%f.x_lim = [348.782 368.394];
-%f.x_lim = [833.06 852.741];
-%}
-%f.x_lim = [352.394 368.394];
-%f.x_lim = [836.741 900];
-%f.pid_ylims = [0 .5];
-%plot_opts.ctrl = 'yes';
-%f.flow_ylims = [0 100];
-
-%a_thisfile_name = '2023-10-19_datafile_04';
-% 10 SCCM
-%{
-%f.x_lim = [651.172 670.78]; f.pid_ylims = [0 .5];
-%f.x_lim = [1558.8 1578.4]; f.pid_ylims = [0 .5];
-%}
-%f.x_lim = [654.78 670.78]; f.pid_ylims = [0 .5];
-%f.x_lim = [1562.401 1578.4]; f.pid_ylims = [0 .5];
-%f.scale_time = 'yes';
-
-%a_thisfile_name = '2023-10-19_datafile_05';
-% 10 SCCM
-%{
-%f.x_lim = [283.863 303.471];
-%f.x_lim = [830.152 849.76];
-%}
-%f.x_lim = [287.471 303.471];
-%f.x_lim = [833.76 849.76];
-%f.flow_ylims = [0 100];
-%f.pid_ylims = [0 .5];
-%f.scale_time = 'yes';
-
-%}
-%a_thisfile_name = '2023-10-20_datafile_00';
-
-%a_thisfile_name = '2023-10-27_datafile_01'; f.pid_ylims = [0 6];
-% 10 SCCM
-%f.x_lim = [31.541 900];
-%f.x_lim = [72.064 900];
-% 100 SCCM
-%f.x_lim = [760.671 900];
-%f.x_lim = [801.182 900];
-
-%a_thisfile_name = '2023-10-27_datafile_02'; f.pid_ylims = [0 6];
-% 10 SCCM
-%f.x_lim = [72.023 900];
-%f.x_lim = [153.08 900];
-% 100 SCCM
-%f.x_lim = [436.755 900];
-%f.x_lim = [720.489 900];
-%f.scale_time = 'yes';
-
-%a_thisfile_name = '2023-10-27_datafile_03'; f.pid_ylims = [0 6];
-%a_thisfile_name = '2023-10-27_datafile_04'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100];
-%a_thisfile_name = '2023-10-27_datafile_05'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100];
-%a_thisfile_name = '2023-10-27_datafile_06'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100];
-%a_thisfile_name = '2023-10-27_datafile_08'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100]; f.x_lim = [21.508 91.508];
-%a_thisfile_name = '2023-10-27_datafile_11'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100]; f.x_lim = [21.508 91.508];    % make sure you change it to i=2:length
-%a_thisfile_name = '2023-10-27_datafile_14'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100]; f.x_lim = [21.509 91.509];
-%a_thisfile_name = '2023-10-27_datafile_15'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100]; f.x_lim = [21.518 91.518];
-%f.pid_ylims = [0 8];
-%a_thisfile_name = '2023-10-30_datafile_05'; f.pid_ylims = [0 6]; f.flow_ylims = [0 100];
-%a_thisfile_name = '2023-10-31_datafile_00';
-%a_thisfile_name = '2023-10-31_datafile_08';
-%a_thisfile_name = '2023-10-31_datafile_11';
-
-%a_thisfile_name = '2023-11-02_datafile_00';
-%a_thisfile_name = '2023-11-02_datafile_01';
-%a_thisfile_name = '2023-11-02_datafile_02';
-%a_thisfile_name = '2023-11-02_datafile_04';
-%f.flow_ylims = [0 120];
-%f.pid_ylims = [0 3.5];
-%a_thisfile_name = '2023-11-06_datafile_01';
-%a_thisfile_name = '2023-11-06_datafile_02';
-%a_thisfile_name = '2023-11-06_datafile_06';
-%a_thisfile_name = '2023-11-06_datafile_09';
-
-%a_thisfile_name = '2023-11-06_datafile_10';
-%f.x_lim = [679.823 900];
-%f.x_lim = [801.37 900];
-%f.scale_time = 'yes';
-
-%a_thisfile_name = '2023-11-08_datafile_09';
-%a_thisfile_name = '2023-11-08_datafile_10';
-%a_thisfile_name = '2023-11-08_datafile_11';
-%a_thisfile_name = '2023-11-08_datafile_12';
-%a_thisfile_name = '2023-11-09_datafile_00';
-%a_thisfile_name = '2023-11-09_datafile_01';
-%a_thisfile_name = '2023-11-09_datafile_02';
-%a_thisfile_name = '2023-11-09_datafile_03';
-%a_thisfile_name = '2023-11-09_datafile_04';
-%a_thisfile_name = '2023-11-09_datafile_05';
-%a_thisfile_name = '2023-11-09_datafile_06';
-%a_thisfile_name = '2023-11-09_datafile_07';
-%a_thisfile_name = '2023-11-09_datafile_08';
-%a_thisfile_name = '2023-11-09_datafile_09';
-%a_thisfile_name = '2023-11-09_datafile_10';
-%a_thisfile_name = '2023-11-09_datafile_11';
-%a_thisfile_name = '2023-11-09_datafile_17';
-
-%a_thisfile_name = '2023-11-10_datafile_01';
-%a_thisfile_name = '2023-11-09_datafile_00_E2';
-%a_thisfile_name = '2023-11-13_datafile_00';
-%a_thisfile_name = '2023-11-13_datafile_01';
-%a_thisfile_name = '2024-01-18_datafile_00';
-%f.pid_ylims = [0 8];
-
-%% 02-07-2024
-%a_thisfile_name = '2024-02-07_datafile_00'; % 100 sccm, pvalve 255
-%a_thisfile_name = '2024-02-07_datafile_01'; % 100 sccm, pvalve 255
-%calibration_value = 727.0;
-%f.flow_ylims = [720 732];
-%a_thisfile_name = '2024-02-07_datafile_02'; % 80 sccm, pvalve 255
-%a_thisfile_name = '2024-02-07_datafile_03'; % 80 sccm, pvalve 255
-%calibration_value = 650.1;
-%f.flow_ylims = [643 655];
-%a_thisfile_name = '2024-02-07_datafile_04'; % 60 sccm, pvalve 255
-%a_thisfile_name = '2024-02-07_datafile_05'; % 60 sccm, pvalve 255
-%calibration_value = 563.9;
-%f.flow_ylims = [557 569];
-%a_thisfile_name = '2024-02-07_datafile_06'; % 40 sccm, pvalve 255
-%a_thisfile_name = '2024-02-07_datafile_07'; % 40 sccm, pvalve 255
-%calibration_value = 461.8;
-%f.flow_ylims = [455 467];
-%a_thisfile_name = '2024-02-07_datafile_08'; % 20 sccm, pvalve 255
-%a_thisfile_name = '2024-02-07_datafile_09'; % 20 sccm, pvalve 255
-%calibration_value = 335.6;
-%f.flow_ylims = [328.5 340.5];
-%a_thisfile_name = '2024-02-07_datafile_10'; % 0 sccm, pvalve 255
-%a_thisfile_name = '2024-02-07_datafile_11'; % 0 sccm, pvalve 255
-%calibration_value = 197;
-%f.flow_ylims = [190 202];
-
-%a_thisfile_name = '2024-02-07_datafile_12'; % 100 sccm, pvalve 120
-%a_thisfile_name = '2024-02-07_datafile_13'; % 100 sccm, pvalve 120
-%f.flow_ylims = [720 732];
-
-%%
-% 100 sccm, pvalve at 0,1,2,3,4,5V
-%a_thisfile_name = '2024-02-08_datafile_00'; % 100 sccm, pvalve 0
-%a_thisfile_name = '2024-02-08_datafile_02'; % 100 sccm, pvalve 51   % 1V
-%a_thisfile_name = '2024-02-08_datafile_04'; % 100 sccm, pvalve 102  % 2V
-%a_thisfile_name = '2024-02-08_datafile_05'; % 100 sccm, pvalve 153  % 3V
-%a_thisfile_name = '2024-02-08_datafile_03'; % 100 sccm, pvalve 204  % 4V
-%a_thisfile_name = '2024-02-08_datafile_01'; % 100 sccm, pvalve 255  % 5V
-
-% 100 sccm, flow sensor drop over time
-a_thisfile_name = '2024-02-08_datafile_06';
-a_thisfile_name = '2024-02-09_datafile_00';
-
-% 100 sccm, pvalve at 120-220
-a_thisfile_name = '2024-02-13_datafile_01';
-%a_thisfile_name = '2024-02-13_datafile_02';
-%a_thisfile_name = '2024-02-13_datafile_03';
-%a_thisfile_name = '2024-02-13_datafile_04';
-%a_thisfile_name = '2024-02-13_datafile_05';
-%a_thisfile_name = '2024-02-13_datafile_06';
-%a_thisfile_name = '2024-02-13_datafile_07';
-%a_thisfile_name = '2024-02-13_datafile_08';
-%a_thisfile_name = '2024-02-13_datafile_09';
-%a_thisfile_name = '2024-02-13_datafile_10';
-%a_thisfile_name = '2024-02-13_datafile_11';
-
-f.flow_ylims = [723 730];
-%plot_opts.plot_in_minutes = 'yes';
-
-%% 02-09-2024: multiple prop valves open
-%a_thisfile_name = '2024-02-09_datafile_01'; % 100 sccm, 0 pvalves
-%a_thisfile_name = '2024-02-09_datafile_02'; % 100 sccm, 1 pvalve
-%a_thisfile_name = '2024-02-09_datafile_03'; % 100 sccm, 2 pvalves
-%a_thisfile_name = '2024-02-09_datafile_04'; % 100 sccm, 3 pvalves
-%a_thisfile_name = '2024-02-09_datafile_05'; % 100 sccm, 4 pvalves
-%a_thisfile_name = '2024-02-09_datafile_06'; % 100 sccm, 5 pvalves
-%a_thisfile_name = '2024-02-09_datafile_07'; % 100 sccm, 6 pvalves
-%a_thisfile_name = '2024-02-09_datafile_08'; % 100 sccm, 7 pvalves
-%a_thisfile_name = '2024-02-09_datafile_09'; % 100 sccm, 8 pvalves
-
-%f.flow_ylims = [709 731];
-%plot_opts.plot_in_minutes = 'no';
-plot_opts.plot_flow_as_sccm = 'no';
-
+a_thisfile_name = '2024-08-27_datafile_00';
 
 %f.position = [549 166 1353 684];
 %f.position = [166 600 775 275];     % for OneNote
@@ -448,7 +251,9 @@ try
                         yyaxis right;
                     end
                     ylabel('Prop valve value (int)')
-                    ylim([0 260])
+                    if ~isempty(f.ctrl_ylims); ylim(f.ctrl_ylims)
+                    else; ylim([-5 260]); end
+                    %ylim([0 260])
                 end
             end
             if strcmp(f.scale_time,'yes')

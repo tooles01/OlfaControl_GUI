@@ -164,6 +164,7 @@ f.position = [549 166 1353 684];
 %f.ctrl_ylims = [140 200]; f.flow_ylims = [30 190];
 %a_thisfile_name = '2023-10-11_datafile_18'; plot_opts.ctrl = 'yes';
 a_thisfile_name = '2024-01-19_datafile_00';
+a_thisfile_name = '2024-08-27_datafile_00';
 
 %f.flow_ylims = [-5 150];
 %f.pid_ylims = [-.1 7];
@@ -242,12 +243,12 @@ try
     %}
     %% Make figure
     figTitle = a_thisfile_name;
-    if ~strcmp(a_this_note, '')
-        figTitle = append(figTitle, ': ',  a_this_note);
-    end
+    if ~strcmp(a_this_note, ''); figTitle = append(figTitle, ': ',  a_this_note); end
     
     f1 = figure; f1.NumberTitle = 'off'; f1.Position = f.position; hold on;
-    f1.Name = a_thisfile_name; title(figTitle)
+    f1.Name = a_thisfile_name;
+    title(a_thisfile_name)
+    subtitle(a_this_note)
 
     % sccm lines for 2023-09-21_datafile_05
     %{
