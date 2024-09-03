@@ -1,32 +1,29 @@
 # When running functions, Matlab directory must be '**OlfaControlGUI\analysis'
 
-(import_datafile will not run otherwise)
+(*import_datafile.m* will not run otherwise)
 
 <br><br>
 
 # Load data files:
-### Get raw .csv datafile and save as .mat file
+### Get raw *.csv datafile and save as *.mat file
 **analysis_get_and_parse_files.m**
-1. Loads selected datafile (from OlfaControlGUI\result_files\48-line olfa)
+1. Loads selected datafile (from *OlfaControlGUI\result_files\48-line olfa*)
 2. Parses header (PID gain & calibration tables)
-	- imports calibration tables if necessary (from OlfaControlGUI\calibration_tables)
+	- Imports calibration tables if necessary (from *OlfaControlGUI\calibration_tables*)
 3. Adjusts PID (divides by gain & sets baseline to zero)
-4. Converts flow to sccm
-5. Converts ctrl to voltage
+4. Converts flow values to sccm
+5. Converts ctrl values to voltage
 6. Smooths PID (moving average over 50ms window)
-7. Splits into sections (for each OV event)
-	- For each section (longer than 1 second):
+7. Splits into sections (for each open vial event)
+	- For each event (longer than 1 second):
 		- Cuts first 50 ms
 		- Gets all flow & PID data (& calculates mean)
-8. Saves .mat file
-
+8. Saves .mat file  
 <br>
 
 **Note:**  
-User will need to enter:  
-- Directory of OlfaControl_GUI folder (line 37)
-- Data file name (line 66)
-
+User will need to enter **data file name** (line 57).  
+--> Optional: Enter a note describing the file (will save to .mat file; is used as caption/description when running plot functions)
 <br>
 <details>
 <summary>dependencies:</summary>
@@ -43,25 +40,20 @@ User will need to enter:
 
 ## Plot olfactometer data over time
 **analysis_plot_olfa.m**
-1. Loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
-2. Plots olfactometer flow data (over time)
-
+1. Loads .mat file (from *OlfaControlGUI\analysis\data (.mat files)*)
+2. Plots olfactometer flow data (over time)  
 <br>
 
 **Note:**  
-User will need to enter:  
-- Directory of OlfaControl_GUI folder (line 51)
-- Data file name (line 60)
+User will need to enter **data file name** (line 69).  
 
-<br>
 <details>
 <summary>options:</summary>
 
-- flow:
-	- int or sccm
+- flow: plot as int or sccm
 - ctrl (proportional valve):
-	- plot on right yaxis
-	- int or voltage
+	- plot (or don't) on right yaxis
+	- plot as integer or voltage
 </details>
 
 <details>
@@ -73,17 +65,14 @@ User will need to enter:
 
 ## Plot olfactometer & PID data over time
 **analysis_plot_olfa_and_pid.m**
-1. Loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
+1. Loads .mat file (from *OlfaControlGUI\analysis\data (.mat files)*)
 2. Plots selected data over time
 	- left yaxis: olfa flow
-	- right yaxis: user selects one: olfa ctrl, pid, or output flow sensor
-
+	- right yaxis: user selects one: olfa ctrl, pid, or output flow sensor  
 <br>
 
 **Note:**  
-User will need to enter:  
-- Directory of OlfaControl_GUI folder (line 44)
-- Data file name (line 54)
+User will need to enter **data file name** (line 63).  
 
 <br>
 <details>
@@ -110,14 +99,14 @@ User will need to enter:
 ## Plot flow v. PID
 **analysis_spt_char.m**
 
-1. Loads .mat file (from OlfaControlGUI\analysis\data (.mat files))
+1. Loads .mat file (from *OlfaControlGUI\analysis\data (.mat files)*)
 2. Cuts additional time from each event section (user specifies how many seconds)
 	- Recalculates means & standard deviations, adds them back into the structs
 2. Plots flow & PID data over time
 3. If selected, plots each event section individually
 4. Plots mean flow values v. mean PID values
-	- If selected, plot error bars
-
+	- If selected, plot error bars  
+<br>
 
 <details>
 <summary>options:</summary>
@@ -143,7 +132,7 @@ User will need to enter:
 - Column 2: flow rate
 - Column 3 -> end: PID values
 
-1. Loads .csv file (from OlfaControlGUI\results_files\standard olfa)
+1. Loads .csv file (from *OlfaControlGUI\results_files\standard olfa*)
 2. Calculates PID baseline value (minimum PID value recorded during first trial)
 3. For each trial:
 	- Adjust PID
@@ -157,6 +146,6 @@ User will need to enter:
 	- Plot trial (if user selected to)
 	- Add mean (& std) to the data structure
 4. Create combined data structure
-5. Save it to C:\..\data (.mat files)
+5. Save it to *C:\..\data (.mat files)*
 6. Plot the spt char figure
 

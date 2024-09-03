@@ -1,5 +1,5 @@
 %% analysis_plot_olfa_and_pid
-% plot olfa flow & pid values over time
+% Plot olfa flow & pid values over time
 
 %%
 clearvars
@@ -21,37 +21,50 @@ f.calibration_value = [];
 f.PID_color = '#77AC30';
 f.scale_time = 'no';
 
-a_this_note = '';
-
 %% Select shit to plot
 plot_opts = struct();
 
-% olfa options:
-
-% plot olfa as sccm or int
-plot_opts.plot_flow_as_sccm = 'yes';
-% **if datafile does not have calibration tables listed in header, plot will be in ints regardless
-
-% pick one of these
-plot_opts.olfa = 'yes';
+% Pick one of these
+plot_opts.olfa = 'yes'; % TODO change this to 'olfa_flow'
 plot_opts.pid = 'no';
 plot_opts.output_flow = 'no';
+
+% Plot olfa as sccm or int
+plot_opts.plot_flow_as_sccm = 'yes';    % **if datafile does not have calibration tables listed in header, plot will be in ints regardless
+
+% Ctrl options:
 plot_opts.ctrl = 'yes';
 plot_opts.ctrl_as_voltage = 'no';
+
 plot_opts.plot_in_minutes = 'no';
 
-%% Enter directory for this computer
-%a_dir_OlfaEngDropbox = 'C:\Users\Admin\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-%a_dir_OlfaEngDropbox = 'C:\Users\SB13FLLT004\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
-a_dir_OlfaEngDropbox = 'C:\Users\shann\Dropbox (NYU Langone Health)\OlfactometerEngineeringGroup (2)';
+%% Find OlfaControl_GUI directory (& add to path)
 
-a_dir_OlfaControlGUI = strcat(a_dir_OlfaEngDropbox,'\Control\a_software\OlfaControl_GUI');
+% Check if current directory contains 'OlfaControl_GUI'
+c_current_dir = pwd;
+c_str_to_find = 'OlfaControl_GUI';
+c_idx_of_str = strfind(c_current_dir,c_str_to_find);
 
-% make sure OlfaControlGUI is on matlab path
-addpath(genpath(a_dir_OlfaControlGUI));
+% If not, whole thing will fail (i don't feel like writing another try except statement rn)
+if isempty(c_idx_of_str); disp(['Could not find ''' c_str_to_find,''' directory.']); end
 
-%% Enter data file name
-a_thisfile_name = '2024-08-27_datafile_00';
+% Get OlfaControl_GUI path
+c_len_of_strToFind = length(c_str_to_find);
+a_dir_OlfaControlGUI = c_current_dir(1:c_idx_of_str+c_len_of_strToFind-1);
+
+% Make sure datafiles are on matlab path
+dir_data_files = [a_dir_OlfaControlGUI '\result_files\48-line olfa\'];
+addpath(genpath(dir_data_files));
+
+clearvars c_*
+
+%% Enter data file name (& additional plot options)
+% ****Do not include '.csv' at end of file name****
+
+%a_thisfile_name = '2024-08-27_datafile_00';
+%a_thisfile_name = '2024-08-28_2022-08-22_datafile_00'; plot_opts.ctrl = 'no'; plot_opts.pid = 'yes';
+a_thisfile_name = '2024-08-28_2024-01-16_datafile_14'; plot_opts.ctrl = 'yes'; plot_opts.ctrl_as_voltage = 'yes';
+% TODO fix if no ctrl data available (maybe) -08/30/2024
 
 %f.position = [549 166 1353 684];
 %f.position = [166 600 775 275];     % for OneNote
@@ -59,23 +72,22 @@ f.position = [166 210 1300 600];    % for PowerPoint
 %f.position = [166 210 650 600];    % for PowerPoint (1/2 size)
 f.pid_width = 1.5;
 
-%% Load .mat file
+%% Load *.mat file
 
-% full directory for .mat file
+% Full directory for .mat file
 dir_this_mat_file = strcat(a_dir_OlfaControlGUI,'\analysis\data (.mat files)\',a_thisfile_name,'.mat');
-%dir_this_mat_file = strcat(pwd,'\data (.mat files)\',a_thisfile_name,'.mat');
 
 try
     load(dir_this_mat_file);
     clearvars mat_* dir_*
     %{
-    %% plot: in sections (9/21/2022)
+    %% Plot: in sections (9/21/2022)
     % this is for spt characterization plots
     time_around_event = 3;
     for i=1:length(d_olfa_flow)
         this_vial = d_olfa_flow(i).vial_num;
     
-        % since i don't have setpoint data let's do it by OV events
+        % Since i don't have setpoint data let's do it by OV events
         for e=1:length(d_olfa_flow(i).events.OV)
             t_beg_event = d_olfa_flow(i).events.OV(e).time;
             t_end_event = d_olfa_flow(i).events.OV(e).time + d_olfa_flow(i).events.OV(e).value;
@@ -89,10 +101,10 @@ try
             f1_ax = gca;
             xlabel('Time (s)');
     
-            % plot olfa
+            % Plot olfa
             if strcmp(plot_opts.plot_flow_as_sccm,'yes')
                 if ~isempty(d_olfa_flow(i).cal_table_name)
-                    % plot as sccm
+                    % Plot as sccm
                     if ~isempty(d_olfa_flow(i).flow.flow_sccm)
                         ylabel('Olfa flow (sccm)')
                         this_data_shifted = [];
@@ -104,14 +116,14 @@ try
                         %p = plot(d_olfa_flow(i).flow.flow_sccm(:,1),d_olfa_flow(i).flow.flow_sccm(:,2));
                     end
                 else
-                    % plot as integer
+                    % Plot as integer
                     if ~isempty(d_olfa_flow(i).flow.flow_int)
                         ylabel('Olfa flow (integer values)')
                         p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
                     end
                 end
             else
-                % plot as integer
+                % Plot as integer
                 if ~isempty(d_olfa_flow(i).flow.flow_int)
                     ylabel('Olfa flow (integer values)')
                     p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
@@ -120,7 +132,7 @@ try
             p.LineWidth = f.flow_width;
             p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
     
-            % plot pid
+            % Plot PID
             if strcmp(plot_opts.pid,'yes')
                 if ~isempty(data_pid)
                     yyaxis right; colororder('#77AC30');  f1_ax.YColor = '#77AC30';
@@ -142,7 +154,7 @@ try
     
     end
     %}
-    %% Make figure
+    %% Create figure
     figTitle = a_thisfile_name;
     if ~strcmp(a_this_note, ''); figTitle = append(figTitle, ': ',  a_this_note); end
     
@@ -153,7 +165,7 @@ try
     legend('Location','northwest');
     f1_ax = gca;
     
-    % x limits
+    % Set X limits
     if strcmp(plot_opts.plot_in_minutes,'no')
         xlabel('Time (s)');
     else
@@ -170,13 +182,14 @@ try
         end
     end
     
-    %% Plot: olfa flow
+    %% Plot: Olfa flow
     if strcmp(plot_opts.olfa,'yes')
-        % for each vial
+        % For each vial
         for i=1:length(d_olfa_flow)
+            % Plot as SCCM or integer values
             if strcmp(plot_opts.plot_flow_as_sccm,'yes')
                 if ~isempty(d_olfa_flow(i).cal_table_name)
-                    % plot as sccm
+                    % Plot as sccm
                     if ~isempty(d_olfa_flow(i).flow.flow_sccm)
                         d_olfa_flow_x = d_olfa_flow(i).flow.flow_sccm(:,1);
                         d_olfa_flow_y = d_olfa_flow(i).flow.flow_sccm(:,2);
@@ -185,7 +198,7 @@ try
                         else; ylim([-5 150]); end
                     end
                 else
-                    % plot as integer
+                    % Plot as integer
                     if ~isempty(d_olfa_flow(i).flow.flow_int)
                         d_olfa_flow_x = d_olfa_flow(i).flow.flow_int(:,1);
                         d_olfa_flow_y = d_olfa_flow(i).flow.flow_int(:,2);
@@ -195,7 +208,7 @@ try
                     end
                 end
             else
-                % plot as integer
+                % Plot as integer
                 if ~isempty(d_olfa_flow(i).flow.flow_int)
                     d_olfa_flow_x = d_olfa_flow(i).flow.flow_int(:,1);
                     d_olfa_flow_y = d_olfa_flow(i).flow.flow_int(:,2);
@@ -217,18 +230,18 @@ try
                 d_olfa_flow_x = d_olfa_flow_x/60;
             end
             p = plot(d_olfa_flow_x,d_olfa_flow_y);
+            %p = scatter(d_olfa_flow_x,d_olfa_flow_y,'filled');
             p.LineWidth = f.flow_width;
             p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
-            %pa = scatter(d_olfa_flow_x,d_olfa_flow_y,'filled','HandleVisibility','off');
         end
     end
     
-    %% Plot: olfa ctrl
+    %% Plot: Olfa ctrl
     if strcmp(plot_opts.ctrl,'yes')
-        % for each vial
+        % For each vial
         for i=1:length(d_olfa_flow)
             if strcmp(plot_opts.ctrl_as_voltage,'yes')
-                % plot as voltage
+                % Plot as voltage
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_volt)
                     d_ctrl_x = d_olfa_flow(i).ctrl.ctrl_volt(:,1);
                     d_ctrl_y = d_olfa_flow(i).ctrl.ctrl_volt(:,2);
@@ -241,7 +254,7 @@ try
                     ylim([-0.1 5.1])
                 end
             else
-                % plot as integer
+                % Plot as integer
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_int)
                     d_ctrl_x = d_olfa_flow(i).ctrl.ctrl_int(:,1);
                     d_ctrl_y = d_olfa_flow(i).ctrl.ctrl_int(:,2);
@@ -257,9 +270,9 @@ try
                 end
             end
             if strcmp(f.scale_time,'yes')
-                % scale time to zero
+                % Scale time to zero
                 d_ctrl_x = d_ctrl_x - f.x_lim(1);
-                % readjust x limits
+                % Readjust x limits
                 xlim([-.5 16]);
             end
             if strcmp(plot_opts.plot_in_minutes,'yes')
@@ -298,7 +311,7 @@ try
         end
     end
     
-    %% Plot: output flow sensor
+    %% Plot: Output flow sensor
     if strcmp(plot_opts.output_flow,'yes')
         if ~isempty(data_fsens_raw)
             yyaxis right;
@@ -308,7 +321,7 @@ try
         end
     end 
     
-    %% Plot: calibration value
+    %% Plot: Calibration value
     if ~isempty(f.calibration_value)
         yyaxis left;
         yline(f.calibration_value,'r','LineWidth',2);
