@@ -68,7 +68,6 @@ clearvars c_*
 %a_thisfile_name = '2024-02-07_datafile_09'; a_this_note = '20 sccm, ctrl 255';
 %a_thisfile_name = '2024-02-07_datafile_10'; a_this_note = '0 sccm, ctrl 255';
 %a_thisfile_name = '2024-02-07_datafile_11'; a_this_note = '0 sccm, ctrl 255';
-
 %a_thisfile_name = '2024-02-07_datafile_12'; a_this_note = '100 sccm, ctrl 120';
 %a_thisfile_name = '2024-02-07_datafile_13'; a_this_note = '100 sccm, ctrl 120';
 
@@ -113,7 +112,9 @@ clearvars c_*
 %a_thisfile_name = '2024-01-19_datafile_00';
 %a_thisfile_name = '2024-08-27_datafile_00'; a_this_note = 'E1 (no vial) 100 sccm test';
 %a_thisfile_name = '2024-08-28_datafile_test'; a_this_note = 'nothing';
-
+%a_thisfile_name = '2024-08-28_2024-01-16_datafile_14'; a_this_note = 'pinene additive'; flow_inc = 10;
+%a_thisfile_name = '2024-08-28_2024-01-16_datafile_09'; a_this_note = 'pinene spt char';
+a_thisfile_name = '2024-08-28_2023-11-13_datafile_02';
 
 %% Load file
 % Loads datafile (*.csv) and saves a separate copy as a *.mat file 
@@ -545,7 +546,6 @@ clearvars i e* these* this* next* *_pair
 
 % For each vial in d_olfa_flow
 for v=1:length(d_olfa_flow)
-    % TODO fix this line, needs to specify which row of d_olfa_flow
     sourceStructArray = d_olfa_flow(v).events.OV_keep;          % Source (OV_keep events for this vial)
     fieldsToCopy = {'flow_mean_sccm', 'pid_mean','data'};       % Specify the field(s) you want to copy
     
@@ -592,31 +592,22 @@ for v=1:length(d_olfa_flow)
         flow_value = flow_value + flow_inc;
     end
 
-    %% Add shit to the combined data structure (Add 'd_olfa_data_combined' to 'd_olfa_flow')
-    
-    % start from this starting index
-    starting_idx = 1;
-    % check the lengths of the structures: if there are zero values, then the lengths of these two structs will be different
-    r = 0;
-    r = rem(length(d_olfa_data_sorted),length(d_olfa_data_combined));
-    % if there is a remainder, then start at idx 3
-    if r ~= 0; starting_idx = r+1; end
-    
+    %% Populate the combined data structure ('d_olfa_data_combined') & add to 'd_olfa_flow'
+    possible_values = [d_olfa_data_combined.flow_value];
     % For each event that happened
-    for i=starting_idx:length(d_olfa_data_sorted)
+    for i=1:length(d_olfa_data_sorted)
         % Get the flow mean
         this_flow_value = d_olfa_data_sorted(i).flow_mean_sccm;
-        % Get the index this flow mean should be at
-        idx_to_use = round(this_flow_value / flow_inc);
-    
-        if idx_to_use ~= 0
-            if isempty(d_olfa_data_combined(idx_to_use).pid_mean1)
-                d_olfa_data_combined(idx_to_use).pid_mean1 = d_olfa_data_sorted(i).pid_mean;
-                d_olfa_data_combined(idx_to_use).data1 = d_olfa_data_sorted(i).data;
-            else
-                d_olfa_data_combined(idx_to_use).pid_mean2 = d_olfa_data_sorted(i).pid_mean;
-                d_olfa_data_combined(idx_to_use).data2 = d_olfa_data_sorted(i).data;
-            end
+        % Find which flow value that is closest to
+        differences = abs(possible_values - this_flow_value);   % Absolute differences between possible values and this flow value
+        [~,idx_to_use] = min(differences);                      % Index of closest value
+        % Put the data into d_olfa_data_combined
+        if isempty(d_olfa_data_combined(idx_to_use).pid_mean1)
+            d_olfa_data_combined(idx_to_use).pid_mean1 = d_olfa_data_sorted(i).pid_mean;
+            d_olfa_data_combined(idx_to_use).data1 = d_olfa_data_sorted(i).data;
+        else
+            d_olfa_data_combined(idx_to_use).pid_mean2 = d_olfa_data_sorted(i).pid_mean;
+            d_olfa_data_combined(idx_to_use).data2 = d_olfa_data_sorted(i).data;
         end
     end
     d_olfa_flow(v).d_olfa_data_combined = d_olfa_data_combined;

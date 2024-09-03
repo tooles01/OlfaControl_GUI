@@ -18,6 +18,7 @@
 	- For each event (longer than 1 second):
 		- Cuts first 50 ms
 		- Gets all flow & PID data (& calculates mean)
+8. Creates sorted data structure of viable "open vial" events (*d_olfa_data_combined*)
 8. Saves .mat file  
 <br>
 
