@@ -21,21 +21,32 @@ f.calibration_value = [];
 f.PID_color = '#77AC30';
 f.scale_time = 'no';
 
+% Vial colors
+f.colors{1} = '#0072BD';    % blue
+f.colors{2} = '#7E2F8E';    % purple
+f.colors{3} = '#A2142F';    % dark red
+f.colors{4} = '#D95319';    % orange
+f.colors{5} = '#0072BD';    % blue
+f.colors{6} = '#A2142F';    % dark red
+f.colors{7} = '#D95319';    % orange
+f.colors{8} = '#7E2F8E';    % purple
+f.colors{9} = '#7E2F8E';    % purple
+this_color = [];
+
 %% Select shit to plot
 plot_opts = struct();
 
 % Pick one of these
-plot_opts.olfa = 'yes'; % TODO change this to 'olfa_flow'
-plot_opts.pid = 'no';
+plot_opts.olfa_flow = 'yes';
+plot_opts.olfa_ctrl = 'no';
+plot_opts.pid = 'yes';
 plot_opts.output_flow = 'no';
 
-% Plot olfa as sccm or int
-plot_opts.plot_flow_as_sccm = 'yes';    % **if datafile does not have calibration tables listed in header, plot will be in ints regardless
+% Plot units for olfactometer
+plot_opts.flow_in_SCCM = 'yes';    % **if datafile does not have calibration tables listed in header, plot will be in ints regardless
+plot_opts.ctrl_in_V = 'no';
 
-% Ctrl options:
-plot_opts.ctrl = 'yes';
-plot_opts.ctrl_as_voltage = 'no';
-
+% Timescale
 plot_opts.plot_in_minutes = 'no';
 
 %% Find OlfaControl_GUI directory (& add to path)
@@ -62,9 +73,11 @@ clearvars c_*
 % ****Do not include '.csv' at end of file name****
 
 %a_thisfile_name = '2024-08-27_datafile_00';
-%a_thisfile_name = '2024-08-28_2022-08-22_datafile_00'; plot_opts.ctrl = 'no'; plot_opts.pid = 'yes';
-a_thisfile_name = '2024-08-28_2024-01-16_datafile_14'; plot_opts.ctrl = 'yes'; plot_opts.ctrl_as_voltage = 'yes';
+%a_thisfile_name = '2024-08-28_2022-08-22_datafile_00'; plot_opts.olfa_ctrl = 'no'; plot_opts.pid = 'yes';
+%a_thisfile_name = '2024-08-28_2024-01-16_datafile_14'; plot_opts.olfa_ctrl = 'yes'; plot_opts.ctrl_in_V = 'yes';
 % TODO fix if no ctrl data available (maybe) -08/30/2024
+
+a_thisfile_name = '2024-09-19_2020-12-16_exp01_22_edit';    % additive over time
 
 %f.position = [549 166 1353 684];
 %f.position = [166 600 775 275];     % for OneNote
@@ -102,11 +115,11 @@ try
             xlabel('Time (s)');
     
             % Plot olfa
-            if strcmp(plot_opts.plot_flow_as_sccm,'yes')
+            if strcmp(plot_opts.flow_in_SCCM,'yes')
                 if ~isempty(d_olfa_flow(i).cal_table_name)
-                    % Plot as sccm
+                    % Plot as SCCM
                     if ~isempty(d_olfa_flow(i).flow.flow_sccm)
-                        ylabel('Olfa flow (sccm)')
+                        ylabel('Olfa flow (SCCM)')
                         this_data_shifted = [];
                         this_data = d_olfa_flow(i).flow.flow_sccm;
                         this_data = get_section_data(this_data,t_beg_plot,t_end_plot);
@@ -162,6 +175,31 @@ try
     f1.Name = a_thisfile_name;
     title(a_thisfile_name)
     subtitle(a_this_note)
+
+    % sccm lines for 2023-09-21_datafile_05
+    %{
+    yline1 = line([1.5 7.5],[50 50]);
+    yline2 = line([11 17.2],[70 70]);
+    yline3 = line([21.5 27.5],[100 100]);
+    yline4 = line([31 37],[20 20]);
+    yline1.LineStyle = '-.';
+    yline2.LineStyle = '-.';
+    yline3.LineStyle = '-.';
+    yline4.LineStyle = '-.';
+    yline1.LineWidth = 2;
+    yline2.LineWidth = 2;
+    yline3.LineWidth = 2;
+    yline4.LineWidth = 2;
+    yline1.Color = 'black';
+    yline2.Color = 'black';
+    yline3.Color = 'black';
+    yline4.Color = 'black';
+    set(get(get(yline1,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+    set(get(get(yline2,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+    set(get(get(yline3,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+    set(get(get(yline4,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+    %}
+
     legend('Location','northwest');
     f1_ax = gca;
     
@@ -183,17 +221,18 @@ try
     end
     
     %% Plot: Olfa flow
-    if strcmp(plot_opts.olfa,'yes')
+    if strcmp(plot_opts.olfa_flow,'yes')
         % For each vial
         for i=1:length(d_olfa_flow)
+            this_color = f.colors{i};   % Color to plot this vial as
             % Plot as SCCM or integer values
-            if strcmp(plot_opts.plot_flow_as_sccm,'yes')
+            if strcmp(plot_opts.flow_in_SCCM,'yes')
                 if ~isempty(d_olfa_flow(i).cal_table_name)
-                    % Plot as sccm
+                    % Plot as SCCM
                     if ~isempty(d_olfa_flow(i).flow.flow_sccm)
                         d_olfa_flow_x = d_olfa_flow(i).flow.flow_sccm(:,1);
                         d_olfa_flow_y = d_olfa_flow(i).flow.flow_sccm(:,2);
-                        ylabel('Olfa flow (sccm)')
+                        ylabel('Olfa flow (SCCM)')
                         if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
                         else; ylim([-5 150]); end
                     end
@@ -237,15 +276,15 @@ try
     end
     
     %% Plot: Olfa ctrl
-    if strcmp(plot_opts.ctrl,'yes')
+    if strcmp(plot_opts.olfa_ctrl,'yes')
         % For each vial
         for i=1:length(d_olfa_flow)
-            if strcmp(plot_opts.ctrl_as_voltage,'yes')
+            if strcmp(plot_opts.ctrl_in_V,'yes')
                 % Plot as voltage
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_volt)
                     d_ctrl_x = d_olfa_flow(i).ctrl.ctrl_volt(:,1);
                     d_ctrl_y = d_olfa_flow(i).ctrl.ctrl_volt(:,2);
-                    if strcmp(plot_opts.olfa,'no')
+                    if strcmp(plot_opts.olfa_flow,'no')
                         yyaxis left;
                     else
                         yyaxis right;
@@ -258,7 +297,7 @@ try
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_int)
                     d_ctrl_x = d_olfa_flow(i).ctrl.ctrl_int(:,1);
                     d_ctrl_y = d_olfa_flow(i).ctrl.ctrl_int(:,2);
-                    if strcmp(plot_opts.olfa,'no')
+                    if strcmp(plot_opts.olfa_flow,'no')
                         yyaxis left;
                     else
                         yyaxis right;
