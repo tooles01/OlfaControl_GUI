@@ -27,6 +27,7 @@ c.instName_fsens = 'flow sensor';
 % Other variables
 c.pid_gain = [];
 c.this_exp_cal_tables = [];
+c.PID_in_mV = 'yes';        % PID data is assumed to be recorded in mV (for some of the old files, is recorded in V)
 
 a_this_note = '';
 flow_inc = [];
@@ -114,7 +115,10 @@ clearvars c_*
 %a_thisfile_name = '2024-08-28_datafile_test'; a_this_note = 'nothing';
 %a_thisfile_name = '2024-08-28_2024-01-16_datafile_14'; a_this_note = 'pinene additive'; flow_inc = 10;
 %a_thisfile_name = '2024-08-28_2024-01-16_datafile_09'; a_this_note = 'pinene spt char';
-a_thisfile_name = '2024-08-28_2023-11-13_datafile_02';
+%a_thisfile_name = '2024-08-28_2023-11-13_datafile_02';
+
+a_thisfile_name = '2024-09-19_2020-12-16_exp01_22'; a_this_note = 'additive over time'; c.PID_in_mV = 'no';
+%a_thisfile_name = '2024-09-19_2020-12-16_exp01_22_edit'; a_this_note = 'additive over time'; c.PID_in_mV = 'no';
 
 %% Load file
 % Loads datafile (*.csv) and saves a separate copy as a *.mat file 
@@ -138,7 +142,7 @@ raw_wholeFile = import_datafile(a_thisfile_name,dir_this_data_file);
 clearvars dir_* a_thisfile_date
 
 %% Parse header
-% Get calibration tabl names & PID gain from datafile header; add that information to config variables (struct)
+% Get calibration table names & PID gain from datafile header; add that information to config variables (struct)
 
 h = struct();
 h.header_goes_til = (find(strcmp(raw_wholeFile,'Time')))+1;
@@ -193,7 +197,7 @@ for i=1:num_data
     i_valu = raw_data{i,4};
     
     % If instrument name contains 'pid'
-    if contains(i_inst,c.instName_PID)
+    if (contains(i_inst,c.instName_PID) || contains(i_inst,'PID reading'))
         num_p = height(data_pid_raw) + 1;
         data_pid_raw(num_p,1) = i_time;
         data_pid_raw(num_p,2) = i_valu;
@@ -353,7 +357,8 @@ for i=1:length(d_olfa_flow)
     d_olfa_flow(i).cal_table_name = [];
     
     % Get the cal table name
-    for k=1:length(c.this_exp_cal_tables)
+    for k=1:height(c.this_exp_cal_tables)
+    %for k=1:length(c.this_exp_cal_tables)
         if strcmp(i_this_vial,c.this_exp_cal_tables{k,1})
             i_this_cal_table_name = c.this_exp_cal_tables{k,2};  % find the vial in c.this_exp_cal_tables
             d_olfa_flow(i).cal_table_name = i_this_cal_table_name;
@@ -400,7 +405,9 @@ if ~isempty(data_pid)
     end
     
     % Convert from mV to V
-    data_pid(:,2) = data_pid(:,2)/1000;
+    if strcmp(c.PID_in_mV,'yes')
+        data_pid(:,2) = data_pid(:,2)/1000;
+    end
 
 end
 %% Convert olfa flow values to sccm
