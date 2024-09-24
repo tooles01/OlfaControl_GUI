@@ -27,8 +27,9 @@ c.instName_fsens = 'flow sensor';
 % Other variables
 c.pid_gain = [];
 c.this_exp_cal_tables = [];
-c.PID_in_mV = 'yes';        % PID data is assumed to be recorded in mV (for some of the old files, is recorded in V)
+c.PID_in_V = 'no';        % PID data is assumed to be recorded in mV (some of my old files has it recorded in V)
 
+default_cal_table = 'Honeywell_3300V';
 a_this_note = '';
 flow_inc = [];
 
@@ -53,72 +54,21 @@ addpath(genpath(dir_data_files));
 
 clearvars c_*
 
-%% Enter data file name & note
+%% Enter file name, note, PID units (if recorded in mV)
 % ****Do not include '.csv' at end of file name****
 
-% checking flow sensor reponse to pvalve open
-%a_thisfile_name = '2024-02-07_datafile_00'; a_this_note = '100 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-07_datafile_01'; a_this_note = '100 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-07_datafile_02'; a_this_note = '80 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-07_datafile_03'; a_this_note = '80 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-07_datafile_04'; a_this_note = '60 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-07_datafile_05'; a_this_note = '60 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-07_datafile_06'; a_this_note = '40 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-07_datafile_07'; a_this_note = '40 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-07_datafile_08'; a_this_note = '20 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-07_datafile_09'; a_this_note = '20 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-07_datafile_10'; a_this_note = '0 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-07_datafile_11'; a_this_note = '0 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-07_datafile_12'; a_this_note = '100 sccm, ctrl 120';
-%a_thisfile_name = '2024-02-07_datafile_13'; a_this_note = '100 sccm, ctrl 120';
+% Checking if I correctly switched over c.PID_in_mV --> c.PID_in_V
+% ** these files have already been deleted
+%a_thisfile_name = '2024-09-24_2020-12-16_exp01_22_edit'; a_this_note = 'additive over time'; c.PID_in_V = 'yes';
+%a_thisfile_name = '2024-09-24_2021-01-29_exp01_08'; a_this_note = 'B2 spt char'; c.PID_in_V = 'yes';
+%a_thisfile_name = '2024-09-24_2020-07-20_PIDtest_03';   % flow data cannot be parsed bc instrument does not say "olfa" anywhere
 
-% checking flow sensor response at ctrl=0,1,2,3,45V
-%a_thisfile_name = '2024-02-08_datafile_00'; a_this_note = '100 sccm, ctrl 0';
-%a_thisfile_name = '2024-02-08_datafile_01'; a_this_note = '100 sccm, ctrl 255';
-%a_thisfile_name = '2024-02-08_datafile_02'; a_this_note = '100 sccm, ctrl 51';
-%a_thisfile_name = '2024-02-08_datafile_03'; a_this_note = '100 sccm, ctrl 204';
-%a_thisfile_name = '2024-02-08_datafile_04'; a_this_note = '100 sccm, ctrl 102';
-%a_thisfile_name = '2024-02-08_datafile_05'; a_this_note = '100 sccm, ctrl 153';
-%a_thisfile_name = '2024-02-08_datafile_06'; a_this_note = '100 sccm, watching if E4 gets hot';
-
-%a_thisfile_name = '2024-02-09_datafile_00'; a_this_note = 'E4 at 100 sccm over time';
-% flow sensor with multiple pvalves open
-%a_thisfile_name = '2024-02-09_datafile_01'; a_this_note = '100 sccm, 0 pvalves open';
-%a_thisfile_name = '2024-02-09_datafile_02'; a_this_note = '100 sccm, 1 pvalve open';
-%a_thisfile_name = '2024-02-09_datafile_03'; a_this_note = '100 sccm, 2 pValves open';
-%a_thisfile_name = '2024-02-09_datafile_04'; a_this_note = '100 sccm, 3 pValves open';
-%a_thisfile_name = '2024-02-09_datafile_05'; a_this_note = '100 sccm, 4 pValves open';
-%a_thisfile_name = '2024-02-09_datafile_06'; a_this_note = '100 sccm, 5 pValves open';
-%a_thisfile_name = '2024-02-09_datafile_07'; a_this_note = '100 sccm, 6 pValves open';
-%a_thisfile_name = '2024-02-09_datafile_08'; a_this_note = '100 sccm, 7 pValves open';
-%a_thisfile_name = '2024-02-09_datafile_09'; a_this_note = '100 sccm, 8 pValves open';
-
-%a_thisfile_name = '2024-02-13_datafile_00'; a_this_note = '100 sccm, watching if E4 gets hot';
-
-% flow sensor with ctrl at 120,130,140,150,160,170,180,190,200,210,220
-%a_thisfile_name = '2024-02-13_datafile_01'; a_this_note = '100 sccm, ctrl=220';
-%a_thisfile_name = '2024-02-13_datafile_02'; a_this_note = '100 sccm, ctrl=210';
-%a_thisfile_name = '2024-02-13_datafile_03'; a_this_note = '100 sccm, ctrl=200';
-%a_thisfile_name = '2024-02-13_datafile_04'; a_this_note = '100 sccm, ctrl=190';
-%a_thisfile_name = '2024-02-13_datafile_05'; a_this_note = '100 sccm, ctrl=180';
-%a_thisfile_name = '2024-02-13_datafile_06'; a_this_note = '100 sccm, ctrl=170';
-%a_thisfile_name = '2024-02-13_datafile_07'; a_this_note = '100 sccm, ctrl=160';
-%a_thisfile_name = '2024-02-13_datafile_08'; a_this_note = '100 sccm, ctrl=150';
-%a_thisfile_name = '2024-02-13_datafile_09'; a_this_note = '100 sccm, ctrl=140';
-%a_thisfile_name = '2024-02-13_datafile_10'; a_this_note = '100 sccm, ctrl=130';
-%a_thisfile_name = '2024-02-13_datafile_11'; a_this_note = '100 sccm, ctrl=120';
-
-%a_thisfile_name = '2024-02-13_datafile_12'; a_this_note = '100 sccm, watching if E4 gets hot';
-
-%a_thisfile_name = '2024-01-19_datafile_00';
-%a_thisfile_name = '2024-08-27_datafile_00'; a_this_note = 'E1 (no vial) 100 sccm test';
-%a_thisfile_name = '2024-08-28_datafile_test'; a_this_note = 'nothing';
-%a_thisfile_name = '2024-08-28_2024-01-16_datafile_14'; a_this_note = 'pinene additive'; flow_inc = 10;
-%a_thisfile_name = '2024-08-28_2024-01-16_datafile_09'; a_this_note = 'pinene spt char';
-%a_thisfile_name = '2024-08-28_2023-11-13_datafile_02';
-
-a_thisfile_name = '2024-09-19_2020-12-16_exp01_22'; a_this_note = 'additive over time'; c.PID_in_mV = 'no';
-%a_thisfile_name = '2024-09-19_2020-12-16_exp01_22_edit'; a_this_note = 'additive over time'; c.PID_in_mV = 'no';
+% Checking who works and who doesn't
+%a_thisfile_name = '2024-09-24_2020-12-16_exp01_22_edit'; c.PID_in_V = 'yes'; %success
+%a_thisfile_name = '2024-09-24_2021-01-07_exp01_08'; c.PID_in_V = 'yes'; %success
+%a_thisfile_name = '2024-09-24_2021-01-22_exp01_06'; c.PID_in_V = 'yes'; %success
+%a_thisfile_name = '2024-09-24_2021-01-29_exp01_08'; c.PID_in_V = 'yes'; %success
+a_thisfile_name = '2024-09-24_2021-01-22_exp01_06_Copy'; c.PID_in_V = 'yes';
 
 %% Load file
 % Loads datafile (*.csv) and saves a separate copy as a *.mat file 
@@ -358,7 +308,6 @@ for i=1:length(d_olfa_flow)
     
     % Get the cal table name
     for k=1:height(c.this_exp_cal_tables)
-    %for k=1:length(c.this_exp_cal_tables)
         if strcmp(i_this_vial,c.this_exp_cal_tables{k,1})
             i_this_cal_table_name = c.this_exp_cal_tables{k,2};  % find the vial in c.this_exp_cal_tables
             d_olfa_flow(i).cal_table_name = i_this_cal_table_name;
@@ -366,12 +315,16 @@ for i=1:length(d_olfa_flow)
         end
     end
     
-    % Get the cal table data
-    if ~isempty(i_this_cal_table_name)
-        this_cal_file_data = import_cal_table(i_this_cal_table_name,dir_cal_tables);
-        d_olfa_flow(i).cal_table = this_cal_file_data;
+    % If no calibration tables listed, use default
+    if isempty(i_this_cal_table_name)
+        disp(['--> no calibration table listed for ' i_this_vial ', using default: ' default_cal_table]);
+        i_this_cal_table_name = default_cal_table;
     end
-
+    
+    % Get the cal table data
+    this_cal_file_data = import_cal_table(i_this_cal_table_name,dir_cal_tables);
+    d_olfa_flow(i).cal_table = this_cal_file_data;
+    
 end
 
 clearvars cal_* dir_* this_cal_file_data k
@@ -405,7 +358,7 @@ if ~isempty(data_pid)
     end
     
     % Convert from mV to V
-    if strcmp(c.PID_in_mV,'yes')
+    if strcmp(c.PID_in_V,'no')
         data_pid(:,2) = data_pid(:,2)/1000;
     end
 
@@ -415,11 +368,8 @@ end
 for i=1:length(d_olfa_flow)
     % If there are flow values
     if ~(isempty(d_olfa_flow(i).flow.flow_int))
-        % If there is a cal table to use
-        if ~isempty(d_olfa_flow(i).cal_table_name)
-            % Use cal table to convert to sccm
-            d_olfa_flow(i).flow.flow_sccm = int_to_SCCM(d_olfa_flow(i).flow.flow_int,d_olfa_flow(i).cal_table);
-        end
+        % Use cal table to convert to sccm
+        d_olfa_flow(i).flow.flow_sccm = int_to_SCCM(d_olfa_flow(i).flow.flow_int,d_olfa_flow(i).cal_table);
     end
 end
 
@@ -487,11 +437,9 @@ for i=1:length(d_olfa_flow)
 
             % Get this vial flow data for this period
             this_section_data_int = get_section_data(this_flow_data_int,e_t_start,e_t_end);
+            this_section_data_sccm = get_section_data(this_flow_data_sccm,e_t_start,e_t_end);
             e_new_event_struct(e).data.flow_int = this_section_data_int;
-            if ~isempty(this_flow_data_sccm)
-                this_section_data_sccm = get_section_data(this_flow_data_sccm,e_t_start,e_t_end);
-                e_new_event_struct(e).data.flow_sccm = this_section_data_sccm;
-            end
+            e_new_event_struct(e).data.flow_sccm = this_section_data_sccm;
 
             % Get PID data for this period (if no PID data collected, create matrix of zeroes)
             if ~isempty(data_pid)
@@ -501,7 +449,7 @@ for i=1:length(d_olfa_flow)
                 this_section_pid_data = zeros(length(this_section_data_int));
                 e_new_event_struct(e).data.pid = this_section_pid_data;
             end
-
+            
             % Calculate mean flow & pid
             e_new_event_struct(e).flow_mean_int = mean(this_section_data_int(:,2));
             e_new_event_struct(e).flow_mean_sccm = mean(this_section_data_sccm(:,2));
@@ -634,4 +582,9 @@ else
     delete(mat_file_dir);
     save(mat_file_dir);
     disp(['File already existed, rewrote: ', disp_file_dir])
+end
+
+%%
+if isempty(d_olfa_flow)
+    disp('--> Warning: no olfa flow data');
 end
