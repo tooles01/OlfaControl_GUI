@@ -34,11 +34,15 @@ c = struct();
 %c.colors{2} = [119 172 48];
 %c.colors{3} = [237 177 32];
 %}
-c.colors{1} = [.6353 .0784 .1843];
-c.colors{4} = [0.4667    0.6745    0.1882];
-c.colors{3} = [0.9294    0.6941    0.1255];
-c.colors{2} = 'm';
-c.colors{5} = 'g';
+c.colors{1} = [0.6353   0.0784  0.1843];    % dark red
+c.colors{2} = 'm';                          % magenta
+c.colors{3} = [0.9294   0.6941  0.1255];    % orange
+c.colors{4} = [0.4667   0.6745  0.1882];    % olive green
+c.colors{5} = 'g';                          % green
+c.colors{6} = 'r';                          % red
+c.colors{7} = [0.3010   0.7450  0.9330];    % light blue
+c.colors{8} = [0.4940   0.1840  0.5560];    % purple
+
 c.flow_color = [0 .447 .741];
 c.flow_width = 0.1;
 c.pid_width = 2;
@@ -58,7 +62,7 @@ c.plot_error_bars = 'yes';
 c.plot_by_vial = 'yes';      % colors based on vial #
 c.plot_ctrl = 'yes';
 c.plot_flow = 'no';
-
+c.shorten_file_name = 'no';
 
 %% load datafile
 a_files_to_plot;
@@ -216,7 +220,11 @@ if strcmp(c.plot_by_flow,'yes')
                         ylim([c.pid_lims]);
                         r_ax = gca; r_ax.YColor = 'k';
                         p_pid = plot(this_pid_data(:,1),this_pid_data(:,2));
-                        p_pid.DisplayName = this_vial_num + " " + shortened_file_name;
+                        if strcmp(c.shorten_file_name,'yes')
+                            p_pid.DisplayName = this_vial_num + " " + shortened_file_name;
+                        else
+                            p_pid.DisplayName = this_vial_num + " " + a_this_file_name;
+                        end
                         if (k>1); p_pid.HandleVisibility = 'off'; end
                         if strcmp(c.plot_by_vial,'yes')
                             vial_num = str2double(this_vial_num(2));    % figure out which color
@@ -258,7 +266,11 @@ if strcmp(c.plot_by_flow,'yes')
                         end
                         r_ax = gca; r_ax.YColor = 'k';
                         p_pid = plot(this_pid_data(:,1),this_pid_data(:,2));
-                        p_pid.DisplayName = shortened_file_name;
+                        if strcmp(c.shorten_file_name,'yes')
+                            p_pid.DisplayName = shortened_file_name;
+                        else
+                            p_pid.DisplayName = a_this_file_name;
+                        end
                         p_pid.LineWidth = c.pid_width;
                         p_pid.LineStyle = '-';
                         p_pid.Marker = 'none';
@@ -396,7 +408,11 @@ for r=1:length(data)
                 x_flow = this_file_new_means(:,1);
                 y_pid = this_file_new_means(:,2);
                 s = scatter(ax2,x_flow,y_pid,'filled');
-                s.DisplayName = this_vial_num + " " + shortened_file_name;
+                if strcmp(c.shorten_file_name,'yes')
+                    s.DisplayName = this_vial_num + " " + shortened_file_name;
+                else
+                    s.DisplayName = this_vial_num + " " + a_this_file_name;
+                end
                 if strcmp(c.plot_by_vial,'yes')
                     vial_num = str2double(this_vial_num(2));    % figure out which color
                     s.MarkerFaceColor = c.colors{vial_num};
@@ -408,7 +424,11 @@ for r=1:length(data)
                 if strcmp(c.plot_ctrl,'yes')
                     y_ctrl = this_file_ctrl_means;
                     s2 = scatter(ax3,x_flow,y_ctrl,'filled');
-                    s2.DisplayName = this_vial_num + " " + shortened_file_name;
+                    if strcmp(c.shorten_file_name,'yes')
+                        s2.DisplayName = this_vial_num + " " + shortened_file_name;
+                    else
+                        s2.DisplayName = this_vial_num + " " + a_this_file_name;
+                    end
                     if strcmp(c.plot_by_vial,'yes')
                         vial_num = str2double(this_vial_num(2));    % figure out which color
                         s2.MarkerFaceColor = c.colors{vial_num};
@@ -523,7 +543,11 @@ for r=1:length(data)
             x_flow = this_file_new_means(:,1);
             y_pid = this_file_new_means(:,2);
             s = scatter(ax2,x_flow,y_pid,'filled');
-            s.DisplayName =  "standard olfa: " + shortened_file_name;
+            if strcmp(c.shorten_file_name,'yes')
+                s.DisplayName =  "standard olfa: " + shortened_file_name;
+            else
+                s.DisplayName =  "standard olfa: " + a_this_file_name;
+            end
         end
 
         %% plot error bars
