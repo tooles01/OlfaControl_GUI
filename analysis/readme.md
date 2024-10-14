@@ -101,11 +101,11 @@ User will need to enter **data file name** (line 63).
 **analysis_spt_char.m**
 
 1. Loads .mat file (from *OlfaControlGUI\analysis\data (.mat files)*)
-2. Cuts additional time from each event section (user specifies how many seconds)
-	- Recalculates means & standard deviations, adds them back into the structs
-2. Plots flow & PID data over time
-3. If selected, plots each event section individually
-4. Plots mean flow values v. mean PID values
+2. Cuts additional time from beginning of each event section (user specifies how many seconds)
+	- Recalculates means & standard deviations (adds them back into the structs)
+2. Plots entire trial (flow & PID over time)
+3. If selected: plots each event section individually
+4. Plots flow v. PID (mean value over duration of each event)
 	- If selected, plot error bars  
 <br>
 
@@ -124,29 +124,3 @@ User will need to enter **data file name** (line 63).
 - get_section_data
 </details>
 <br>
-
-## Plot file from standard olfactometer
-**analysis_plot_standard_olfa.m**
-
---> different file type: (data starts at 4th row of file)
-- Column 1: vial number
-- Column 2: flow rate
-- Column 3 -> end: PID values
-
-1. Loads .csv file (from *OlfaControlGUI\results_files\standard olfa*)
-2. Calculates PID baseline value (minimum PID value recorded during first trial)
-3. For each trial:
-	- Adjust PID
-		- remove missing cells
-		- make array of time values
-		- shift PID up to zero
-	- Calculate mean PID
-		- only use specific section of data:
-			- beginning of dataset: cut off the # of seconds specified by user
-			- end of dataset: 0.1sec before PID drops below 0.1V
-	- Plot trial (if user selected to)
-	- Add mean (& std) to the data structure
-4. Create combined data structure
-5. Save it to *C:\..\data (.mat files)*
-6. Plot the spt char figure
-
