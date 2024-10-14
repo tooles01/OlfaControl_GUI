@@ -13,7 +13,7 @@ f = struct();   % struct containing all figure variables
 f.position = [30 200 1700 700];
 f.pid_ylims = [];
 f.flow_ylims = [];
-f.ctrl_ylims = [];
+f.ctrl_ylims = [];      % TODO currently for integer vals
 f.flow_width = 1;
 f.pid_width = 1;
 f.x_lim = [];
@@ -74,10 +74,9 @@ clearvars c_*
 
 %a_thisfile_name = '2024-08-27_datafile_00';
 %a_thisfile_name = '2024-08-28_2022-08-22_datafile_00'; plot_opts.olfa_ctrl = 'no'; plot_opts.pid = 'yes';
-%a_thisfile_name = '2024-08-28_2024-01-16_datafile_14'; plot_opts.olfa_ctrl = 'yes'; plot_opts.ctrl_in_V = 'yes';
-% TODO fix if no ctrl data available (maybe) -08/30/2024
+a_thisfile_name = '2024-08-28_2024-01-16_datafile_14'; plot_opts.olfa_ctrl = 'yes'; plot_opts.ctrl_in_V = 'yes';
 
-a_thisfile_name = '2024-09-19_2020-12-16_exp01_22_edit';    % additive over time
+%a_thisfile_name = '2024-09-19_2020-12-16_exp01_22_edit';    % additive over time
 
 %f.position = [549 166 1353 684];
 %f.position = [166 600 775 275];     % for OneNote
@@ -227,24 +226,13 @@ try
             this_color = f.colors{i};   % Color to plot this vial as
             % Plot as SCCM or integer values
             if strcmp(plot_opts.flow_in_SCCM,'yes')
-                if ~isempty(d_olfa_flow(i).cal_table_name)
-                    % Plot as SCCM
-                    if ~isempty(d_olfa_flow(i).flow.flow_sccm)
-                        d_olfa_flow_x = d_olfa_flow(i).flow.flow_sccm(:,1);
-                        d_olfa_flow_y = d_olfa_flow(i).flow.flow_sccm(:,2);
-                        ylabel('Olfa flow (SCCM)')
-                        if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
-                        else; ylim([-5 150]); end
-                    end
-                else
-                    % Plot as integer
-                    if ~isempty(d_olfa_flow(i).flow.flow_int)
-                        d_olfa_flow_x = d_olfa_flow(i).flow.flow_int(:,1);
-                        d_olfa_flow_y = d_olfa_flow(i).flow.flow_int(:,2);
-                        ylabel('Olfa flow (integer values)')
-                        if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
-                        else; ylim([0 1024]); end
-                    end
+                % Plot as SCCM
+                if ~isempty(d_olfa_flow(i).flow.flow_sccm)
+                    d_olfa_flow_x = d_olfa_flow(i).flow.flow_sccm(:,1);
+                    d_olfa_flow_y = d_olfa_flow(i).flow.flow_sccm(:,2);
+                    ylabel('Olfa flow (SCCM)')
+                    if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
+                    else; ylim([-5 150]); end
                 end
             else
                 % Plot as integer
@@ -257,6 +245,7 @@ try
                 end
             end
             
+            % Scale time
             if strcmp(f.scale_time,'yes')
                 if ~isempty(f.x_lim)
                     % scale time to zero
@@ -265,6 +254,7 @@ try
                     xlim([-.5 16]);                
                 end
             end
+            % Minutes or seconds
             if strcmp(plot_opts.plot_in_minutes,'yes')
                 d_olfa_flow_x = d_olfa_flow_x/60;
             end
@@ -279,11 +269,15 @@ try
     if strcmp(plot_opts.olfa_ctrl,'yes')
         % For each vial
         for i=1:length(d_olfa_flow)
+            d_ctrl_x = [];
+            d_ctrl_y = [];
+
             if strcmp(plot_opts.ctrl_in_V,'yes')
                 % Plot as voltage
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_volt)
                     d_ctrl_x = d_olfa_flow(i).ctrl.ctrl_volt(:,1);
                     d_ctrl_y = d_olfa_flow(i).ctrl.ctrl_volt(:,2);
+                    % If olfa flow is not plotted, put ctrl on left axis
                     if strcmp(plot_opts.olfa_flow,'no')
                         yyaxis left;
                     else
@@ -297,6 +291,7 @@ try
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_int)
                     d_ctrl_x = d_olfa_flow(i).ctrl.ctrl_int(:,1);
                     d_ctrl_y = d_olfa_flow(i).ctrl.ctrl_int(:,2);
+                    % If olfa flow is not plotted, put ctrl on left axis
                     if strcmp(plot_opts.olfa_flow,'no')
                         yyaxis left;
                     else
@@ -305,23 +300,37 @@ try
                     ylabel('Prop valve value (int)')
                     if ~isempty(f.ctrl_ylims); ylim(f.ctrl_ylims)
                     else; ylim([-5 260]); end
-                    %ylim([0 260])
                 end
             end
+
+            % Scale time
             if strcmp(f.scale_time,'yes')
                 % Scale time to zero
                 d_ctrl_x = d_ctrl_x - f.x_lim(1);
                 % Readjust x limits
                 xlim([-.5 16]);
             end
+            % Minutes or seconds
             if strcmp(plot_opts.plot_in_minutes,'yes')
                 d_ctrl_x = d_ctrl_x/60;
             end
-            p2 = plot(d_ctrl_x,d_ctrl_y);
-            p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
-            %p2.HandleVisibility = 'off';
-            p2.LineStyle = '-';
-            %p2a = scatter(d_ctrl_x,d_ctrl_y,'filled','HandleVisibility','off');
+
+            % Plot
+            try
+                p2 = plot(d_ctrl_x,d_ctrl_y);
+                p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
+                %p2.HandleVisibility = 'off';
+                p2.LineStyle = '-';
+                %p2a = scatter(d_ctrl_x,d_ctrl_y,'filled','HandleVisibility','off');
+            % Error message in case no ctrl values available
+            catch ME
+                switch ME.identifier
+                    case 'MATLAB:emptyObjectDotAssignment'
+                        disp(['---> No ctrl values available to plot for ' d_olfa_flow(i).vial_num])
+                    otherwise
+                        rethrow(ME)
+                end
+            end                
         end
     end
     

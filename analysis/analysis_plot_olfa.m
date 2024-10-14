@@ -13,7 +13,7 @@ f = struct();   % struct containing all figure variables
 f.position = [30 200 1700 700];
 f.pid_ylims = [];
 f.flow_ylims = [];
-f.ctrl_ylims = [];
+f.ctrl_ylims = [];      % TODO currently for integer vals
 f.flow_width = 1;
 f.pid_width = 1;
 f.x_lim = [];
@@ -232,7 +232,7 @@ try
                 else; ylim([0 1024]); end
             end
         end
-
+        
         p = plot(d_olfa_flow_x,d_olfa_flow_y);
         %p = scatter(d_olfa_flow_x,d_olfa_flow_y,'filled');
         p.LineWidth = f.flow_width;
@@ -245,6 +245,9 @@ try
     if strcmp(plot_opts.olfa_ctrl,'yes')
         % For each vial
         for i=1:length(d_olfa_flow)
+            d_ctrl_x = [];
+            d_ctrl_y = [];
+
             this_color = E1_ctrl;
             %{
             if contains(d_olfa_flow(i).vial_num,'E1'); this_color = E1_ctrl;
@@ -276,8 +279,20 @@ try
                     else; ylim([-5 260]); end
                 end
             end
-            p2 = plot(d_ctrl_x,d_ctrl_y);
-            p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
+            
+            % Plot
+            try
+                p2 = plot(d_ctrl_x,d_ctrl_y);
+                p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
+            % Error message in case no ctrl values available
+            catch ME
+                switch ME.identifier
+                    case 'MATLAB:emptyObjectDotAssignment'
+                        disp(['---> No ctrl values available to plot for ' d_olfa_flow(i).vial_num])
+                    otherwise
+                        rethrow(ME)
+                end
+            end
         end
     end
     
