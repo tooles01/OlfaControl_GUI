@@ -1,44 +1,90 @@
-%% analysis_spt_char
-% Plot flow v. pid graph
+%Plot average olfa flow vs. pid (for each trial, aka OV event)
+%  
+%Required Input:
+%   a_thisfile_name - file name
+%
+%Plot Options:
+%   olfa_flow       - flow values on left yaxis
+%   olfa_ctrl       - ctrl values on right yaxis
+%   pid             - pid data on right yaxis
+%
+%   flow_in_SCCM    - flow units in SCCM (default==yes) 
+%   ctrl_in_V       - ctrl units in V (default=integers)
+%   plot_in_minutes - timescale in minutes (default==seconds)
+%
+%   pid_lims
+%   olfa_lims_sccm
+%
+%   show_error_bars
+%   time_to_cut
+%
+%   plot_over_time
+%   plot_all
+%
+%   plot_x_lines
+%   show_pid_mean
+%   show_flow_mean
+
 
 %%
-clearvars
+
+function a_plot_spt_char(a_thisfile_name,plot_opts)
+    
+arguments
+        a_thisfile_name             (1,1) string = '-'
+        
+        % Data to plot
+        plot_opts.olfa_flow         (1,1) string = 'yes'
+        plot_opts.olfa_ctrl         (1,1) string = 'no'
+        plot_opts.pid               (1,1) string = 'yes'
+        
+        % Units
+        plot_opts.flow_in_SCCM      (1,1) string = 'yes'    % plot olfa as sccm or int
+        plot_opts.ctrl_in_V         (1,1) string = 'no'     % plot ctrl as int or voltage
+        plot_opts.plot_in_minutes   (1,1) string = 'no'
+
+        % Axis Limits
+        plot_opts.pid_lims          (1,:) double = [0 7]
+        plot_opts.olfa_lims_sccm    (1,:) double = [0 105]
+        
+        % Other
+        plot_opts.show_error_bars   (1,1) string = 'no'
+        plot_opts.time_to_cut       (1,:) double = 0        % time to cut off beginning of each section
+        
+        % Additional Figures
+        plot_opts.plot_over_time    (1,1) string = 'no'     % plot the entire trial over time
+        plot_opts.plot_all          (1,1) string = 'no'     % plot each event individually
+        
+        % For individual event plots
+        plot_opts.plot_x_lines      (1,1) string = 'no'     % Overlay x-lines of where the mean was calculated from
+        plot_opts.show_pid_mean     (1,1) string = 'no'     % Overlay mean PID value on plot
+        plot_opts.show_flow_mean    (1,1) string = 'no'     % Overlay mean flow value on plot
+        
+    end
+
+%%
 %close all
 set(0,'DefaultTextInterpreter','none')
-%#ok<*SAGROW>
-%#ok<*AGROW>
 
 %% Display variables
+f = struct();   % struct containing all figure variables
 f.x_lim = [];
 f.olfa_lims_int = [];
-f.olfa_lims_sccm = [0 100];
-f.pid_lims = [];
 f.flow_width = 1;
 f.pid_width = 1.5;
-f.time_to_cut = 0;  % time to cut off beginning of each section
 f.dot_size = 60;
+
+% Vial colors
 f.colors{1} = '#0072BD';
 f.colors{2} = '#A2142F';
 f.colors{3} = '#D95319';
 f.colors{4} = '#7E2F8E';
+
 %f.position = [140 230 1355 686];   % wide - for over time
 %f.position = [166 230 650 600];    % for PowerPoint (1/2 size)
 %f.position = [960 230 780 686];    % not that small
 f.position = [175 230 812 709];
 f.f2_position = [1050 230 812 709];
-
-%% Select shit to plot
-plot_opts = struct();
-plot_opts.flow_in_SCCM = 'yes'; % plot olfa as sccm or int
-
-plot_opts.all_points = 'yes';   % TODO this does nothing right now
-
-plot_opts.plot_over_time = 'no';    % plot the entire trial over time
-plot_opts.plot_all = 'no';         % plot each individually
-plot_opts.plot_x_lines = 'no';      % x lines of where the mean was calculated from
-plot_opts.show_pid_mean = 'no';
-plot_opts.show_flow_mean = 'no';
-plot_opts.show_error_bars = 'no';
 
 
 %% Find OlfaControl_GUI directory (& add to path)
@@ -61,72 +107,16 @@ addpath(genpath(dir_data_files));
 
 clearvars c_*
 
-%% Enter data file name
-
-%a_thisfile_name = '2023-11-08_datafile_01';    % E1 spt char: Ethyl tiglate
-%a_thisfile_name = '2023-11-08_datafile_02';    % E1 spt char: Mineral oil
-%a_thisfile_name = '2023-11-08_datafile_03';    % E1 spt char: Ethyl tiglate
-%a_thisfile_name = '2023-11-08_datafile_04';    % E1 spt char: Mineral oil
-a_thisfile_name = '2023-11-08_datafile_05';
-%f.pid_lims = [0 2.5];
-%f.pid_lims = [0 3];
-f.pid_lims = [0 .5];
-
-%a_thisfile_name = '2023-11-09_datafile_00';
-%a_thisfile_name = '2023-11-09_datafile_17';
-%a_thisfile_name = '2023-11-10_datafile_09';
-%a_thisfile_name = '2023-11-10_datafile_10';
-%a_thisfile_name = '2023-11-10_datafile_11';
-%a_thisfile_name = '2023-11-10_datafile_12';
-%f.pid_lims = [0 8];
-
-%a_thisfile_name = '2023-11-16_datafile_00';
-%f.pid_lims = [0 7];
-%a_thisfile_name = '2023-11-16_datafile_01';
-%f.pid_lims = [0 .200];
-%a_thisfile_name = '2023-11-16_datafile_02';
-%a_thisfile_name = '2023-11-16_datafile_03';
-%a_thisfile_name = '2023-11-16_datafile_04';
-
-%a_thisfile_name = '2024-01-09_datafile_00';
-%a_thisfile_name = '2024-01-09_datafile_01';
-%f.pid_lims = [0 7];
-
-%a_thisfile_name = '2024-01-09_datafile_02';
-%a_thisfile_name = '2024-01-09_datafile_03';
-%f.pid_lims = [0 2.5];
-
-%a_thisfile_name = '2024-01-16_datafile_14';
-%a_thisfile_name = '2024-01-17_datafile_04';
-%a_thisfile_name = '2024-01-17_datafile_01';
-%f.pid_lims = [0 2];
-
-%a_thisfile_name = '2024-01-18_datafile_00';
-%a_thisfile_name = '2024-01-18_datafile_02'; % A3
-%a_thisfile_name = '2024-01-18_datafile_03'; % A4
-%plot_opts.flow_in_SCCM = 'no';
-
-%a_thisfile_name = '2024-01-18_datafile_13'; f.pid_lims = [0 .5];    % empty
-%a_thisfile_name = '2024-01-18_datafile_14'; f.pid_lims = [0 4];     % ethyl tiglate
-%a_thisfile_name = '2024-01-18_datafile_15'; f.pid_lims = [0 .5];    % empty
-%f.pid_lims = [0 8];
-
-
-%a_thisfile_name = '2024-08-28_2024-01-16_datafile_09';
-%a_thisfile_name = '2024-01-16_datafile_09';
-
-%f.time_to_cut = 1;
-f.olfa_lims_sccm = [0 105];
-%f.time_to_cut = 2;
 
 %% Load *.mat file
+
+% Full directory for .mat file
 dir_this_mat_file = strcat(a_dir_OlfaControlGUI,'\analysis\data (.mat files)\',a_thisfile_name,'.mat');
-%dir_this_mat_file = strcat(pwd,'\data (.mat files)\',a_thisfile_name,'.mat');
 
 try
     load(dir_this_mat_file);
     %{
-    %% get mean flow/pid for each event section - if they were to be cut shorter
+    %% get mean flow/pid for each event section - if they were to be cut shorter    % TODO make this a plot option?
     % for each vial
     for i=1:length(d_olfa_flow)
         this_vial_int_means = [];
@@ -202,7 +192,7 @@ try
             this_flow_int_data = d_olfa_flow(i).events.OV_keep(e).data.flow_int;
             this_flow_sccm_data = d_olfa_flow(i).events.OV_keep(e).data.flow_sccm;
             this_pid_data = d_olfa_flow(i).events.OV_keep(e).data.pid;
-            start_time = d_olfa_flow(i).events.OV_keep(e).t_event + f.time_to_cut;
+            start_time = d_olfa_flow(i).events.OV_keep(e).t_event + plot_opts.time_to_cut;
             end_time = this_pid_data(end,1);
             this_flow_int_data = get_section_data(this_flow_int_data,start_time,end_time);
             this_flow_sccm_data = get_section_data(this_flow_sccm_data,start_time,end_time);
@@ -263,7 +253,7 @@ try
                     if ~isempty(d_olfa_flow(i).flow.flow_sccm)
                         ylabel('Olfa flow (sccm)')
                         p = plot(d_olfa_flow(i).flow.flow_sccm(:,1),d_olfa_flow(i).flow.flow_sccm(:,2));
-                        if ~isempty(f.olfa_lims_sccm); ylim(f.olfa_lims_sccm)
+                        if ~isempty(plot_opts.olfa_lims_sccm); ylim(plot_opts.olfa_lims_sccm)
                         else; ylim([-5 150]); end
                     end
                 else
@@ -295,8 +285,8 @@ try
         if ~isempty(data_pid)
             yyaxis right;
             colororder('#77AC30');  f1_ax.YColor = '#77AC30';
-            if ~isempty(f.pid_lims)
-                f1_ax.YLim = f.pid_lims;
+            if ~isempty(plot_opts.pid_lims)
+                f1_ax.YLim = plot_opts.pid_lims;
             end
             ylabel('PID output (V)');
             p2 = plot(data_pid(:,1),data_pid(:,2),'DisplayName','PID');
@@ -305,7 +295,7 @@ try
     end
     
     
-    %% Plot: each section
+    %% Plot: each section individually
     if strcmp(plot_opts.plot_all,'yes')
         time_around_event = 3;
         % for each vial
@@ -344,15 +334,16 @@ try
                             this_flow_data_shifted(:,1) = this_flow_data(:,1) - t_beg_event;
                             this_flow_data_shifted(:,2) = this_flow_data(:,2);
                             
+                            % plot it
                             p = plot(this_flow_data_shifted(:,1),this_flow_data_shifted(:,2));
                             p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
                             p.Color = f.colors{i};
-                            ylim([f.olfa_lims_sccm]);
+                            ylim([plot_opts.olfa_lims_sccm]);
                             
                             this_flow_val_sccm = d_olfa_flow(i).sccm_means(e,1);
                             if strcmp(plot_opts.show_flow_mean,'yes')
                                 % plot line at the mean
-                                this_x_coord = [f.time_to_cut;d_olfa_flow(i).events.OV_keep(e).t_duration];
+                                this_x_coord = [plot_opts.time_to_cut;d_olfa_flow(i).events.OV_keep(e).t_duration];
                                 this_y_coord = [this_flow_val_sccm;this_flow_val_sccm];
                                 p_flow_mean = plot(this_x_coord,this_y_coord,'LineWidth',4);
                                 p_flow_mean.DisplayName = [d_olfa_flow.vial_num ' mean: ' num2str(round(this_flow_val_sccm,1)) ' sccm'];
@@ -360,7 +351,7 @@ try
                             end
                         end
                     else
-                        % Plot as integer
+                        % Plot as integer - pls don't do this I didn't finish the script
                         if ~isempty(d_olfa_flow(i).flow.flow_int)
                             ylabel('Olfa flow (integer values)')
                             p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
@@ -380,7 +371,7 @@ try
                 if ~isempty(data_pid)
                     yyaxis right; colororder('#77AC30');  f1_ax.YColor = '#77AC30';
                     ylabel('PID output (V)');
-                    if ~isempty(f.pid_lims);  ylim([f.pid_lims]); end
+                    if ~isempty(plot_opts.pid_lims);  ylim([plot_opts.pid_lims]); end
                     this_pid_data = get_section_data(data_pid,t_beg_plot,t_end_plot);
                     this_pid_data_shifted = [];
                     this_pid_data_shifted(:,1) = this_pid_data(:,1) - t_beg_event;
@@ -391,7 +382,7 @@ try
                     this_pid_val = d_olfa_flow(i).sccm_means(e,2);
                     % plot line at the mean
                     if strcmp(plot_opts.show_pid_mean,'yes')
-                        p_pid_mean = plot(this_x_coord,[this_pid_val;this_pid_val],'LineWidth',4);
+                        p_pid_mean = plot(this_x_coord,[this_pid_val;this_pid_val],'LineWidth',4);% TODO error if show_flow_mean is not selected
                         p_pid_mean.LineStyle = '-';
                         p_pid_mean.DisplayName = ['PID mean: ' num2str(round(this_pid_val,2)) ' V'];
                         p_pid_mean.Color = f1_ax.YColor;
@@ -403,13 +394,13 @@ try
     
                 % mark where we calculated the mean from
                 if strcmp(plot_opts.plot_x_lines,'yes')
-                    p_start_time = f.time_to_cut;
+                    p_start_time = plot_opts.time_to_cut;
                     p_end_time = d_olfa_flow(i).events.OV_keep(e).t_duration;
                     p_t_start = xline(p_start_time,'HandleVisibility','off');
                     p_t_end = xline(p_end_time,'HandleVisibility','off');
                 end
                 
-                figTitle = [num2str(round(this_flow_val_sccm,1)) ' sccm (calculated mean from ' num2str(f.time_to_cut) 's into event)'];
+                figTitle = [num2str(round(this_flow_val_sccm,1)) ' sccm (calculated mean from ' num2str(plot_opts.time_to_cut) 's into event)'];
                 title(a_thisfile_name); subtitle(figTitle);
                 %{
                 a = [num2str(round(this_flow_val_sccm,1)) ' sccm ' a_thisfile_name '.png'];
@@ -428,7 +419,7 @@ try
     legend('Location','northwest');
     f2_ax = gca;
     ylabel('PID (V)')
-    if ~isempty(f.pid_lims); ylim(f.pid_lims); end
+    if ~isempty(plot_opts.pid_lims); ylim(plot_opts.pid_lims); end
     
     % For each vial
     for i=1:length(d_olfa_flow)
@@ -442,7 +433,7 @@ try
             if strcmp(plot_opts.flow_in_SCCM,'yes')
                 p = scatter(d_olfa_flow(i).sccm_means(:,1),d_olfa_flow(i).sccm_means(:,2),f.dot_size,'filled');
                 xlabel('Olfa flow (sccm)');
-                if ~isempty(f.olfa_lims_sccm); f2_ax.XLim = f.olfa_lims_sccm; end
+                if ~isempty(plot_opts.olfa_lims_sccm); f2_ax.XLim = plot_opts.olfa_lims_sccm; end
             end
             p.DisplayName = d_olfa_flow(i).vial_num;
             p.MarkerFaceColor = f.colors{i};
@@ -508,7 +499,7 @@ try
                 e.Color = p.MarkerFaceColor;
 
             end
-        %}
+    %}
             %{
             % for each event
             for e=1:length(d_olfa_flow(i).events.OV_keep)
@@ -575,4 +566,6 @@ catch ME
         otherwise
             rethrow(ME)
     end
+end
+
 end
