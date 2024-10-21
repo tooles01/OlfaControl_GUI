@@ -223,7 +223,7 @@ try
     end
     clearvars this_*
 
-    %% Plot the whole thing over time
+    %% If selected: Plot the whole thing over time
     if strcmp(plot_opts.plot_over_time,'yes')
         figTitle_main = a_thisfile_name;
         if ~strcmp(a_this_note, ''); figTitle_main = append(figTitle_main, ': ',  a_this_note); end
@@ -295,7 +295,7 @@ try
     end
     
     
-    %% Plot: each section individually
+    %% If selected: Plot each section individually
     if strcmp(plot_opts.plot_all,'yes')
         time_around_event = 3;
         % for each vial
@@ -411,7 +411,7 @@ try
         
     end
     
-    %% Plot: flow v. pid
+    %% Plot Flow v. PID
     f2 = figure; f2.NumberTitle = 'off'; f2.Position = f.f2_position; hold on;
     f2.Name = ['FLOW v. PID: ',a_thisfile_name];
     title(['FLOW v. PID:     ', a_thisfile_name]);

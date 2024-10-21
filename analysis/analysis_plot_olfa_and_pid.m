@@ -90,22 +90,24 @@ f.pid_width = 1.5;
 dir_this_mat_file = strcat(a_dir_OlfaControlGUI,'\analysis\data (.mat files)\',a_thisfile_name,'.mat');
 
 try
-    load(dir_this_mat_file);
+    load(dir_this_mat_file);    % TODO only load necessary variables to save time
     clearvars mat_* dir_*
     %{
     %% Plot: in sections (9/21/2022)
     % this is for spt characterization plots
-    time_around_event = 3;
+    time_around_event = 3;  % time (sec) to show before & after the event
     for i=1:length(d_olfa_flow)
         this_vial = d_olfa_flow(i).vial_num;
     
         % Since i don't have setpoint data let's do it by OV events
         for e=1:length(d_olfa_flow(i).events.OV)
+            % Get start & end time of event
             t_beg_event = d_olfa_flow(i).events.OV(e).time;
             t_end_event = d_olfa_flow(i).events.OV(e).time + d_olfa_flow(i).events.OV(e).value;
             t_beg_plot = t_beg_event - time_around_event;
             t_end_plot = t_end_event + time_around_event;
-    
+
+            % Create figure
             f1 = figure; f1.NumberTitle = 'off'; hold on; legend('Location','northwest');
             f1.Position = f.position;
             f1.WindowState = 'maximized';
@@ -113,19 +115,22 @@ try
             f1_ax = gca;
             xlabel('Time (s)');
     
-            % Plot olfa
+            % Plot olfa flow
             if strcmp(plot_opts.flow_in_SCCM,'yes')
                 if ~isempty(d_olfa_flow(i).cal_table_name)
                     % Plot as SCCM
                     if ~isempty(d_olfa_flow(i).flow.flow_sccm)
                         ylabel('Olfa flow (SCCM)')
+                        
+                        % Shift so OV event happens at t=0
                         this_data_shifted = [];
                         this_data = d_olfa_flow(i).flow.flow_sccm;
                         this_data = get_section_data(this_data,t_beg_plot,t_end_plot);
                         this_data_shifted(:,1) = this_data(:,1) - t_beg_event;
                         this_data_shifted(:,2) = this_data(:,2);
+
+                        % Plot
                         p = plot(this_data_shifted(:,1),this_data_shifted(:,2));
-                        %p = plot(d_olfa_flow(i).flow.flow_sccm(:,1),d_olfa_flow(i).flow.flow_sccm(:,2));
                     end
                 else
                     % Plot as integer
@@ -143,16 +148,23 @@ try
             end
             p.LineWidth = f.flow_width;
             p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
+            ylim([0 100]);
     
             % Plot PID
             if strcmp(plot_opts.pid,'yes')
                 if ~isempty(data_pid)
                     yyaxis right; colororder('#77AC30');  f1_ax.YColor = '#77AC30';
                     ylabel('PID output (V)');
+                    
+                    % Get data for this section
                     this_pid_data = get_section_data(data_pid,t_beg_plot,t_end_plot);
+                    
+                    % Shift so OV event happens at t=0
                     this_pid_data_shifted = [];
                     this_pid_data_shifted(:,1) = this_pid_data(:,1) - t_beg_event;
                     this_pid_data_shifted(:,2) = this_pid_data(:,2);
+                    
+                    % Plot
                     p2 = plot(this_pid_data_shifted(:,1),this_pid_data_shifted(:,2),'DisplayName','PID');
                     p2.LineWidth = f.pid_width;
                 end
@@ -224,6 +236,9 @@ try
         % For each vial
         for i=1:length(d_olfa_flow)
             this_color = f.colors{i};   % Color to plot this vial as
+            d_olfa_flow_x = [];
+            d_olfa_flow_y = [];
+            
             % Plot as SCCM or integer values
             if strcmp(plot_opts.flow_in_SCCM,'yes')
                 % Plot as SCCM
@@ -232,7 +247,7 @@ try
                     d_olfa_flow_y = d_olfa_flow(i).flow.flow_sccm(:,2);
                     ylabel('Olfa flow (SCCM)')
                     if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
-                    else; ylim([-5 150]); end
+                    else; ylim([-5 120]); end
                 end
             else
                 % Plot as integer
@@ -258,10 +273,24 @@ try
             if strcmp(plot_opts.plot_in_minutes,'yes')
                 d_olfa_flow_x = d_olfa_flow_x/60;
             end
-            p = plot(d_olfa_flow_x,d_olfa_flow_y);
-            %p = scatter(d_olfa_flow_x,d_olfa_flow_y,'filled');
-            p.LineWidth = f.flow_width;
-            p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
+
+            % Plot
+            try
+                p = plot(d_olfa_flow_x,d_olfa_flow_y);
+                %p = scatter(d_olfa_flow_x,d_olfa_flow_y,'filled');
+                p.LineWidth = f.flow_width;
+                p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
+
+            % Error message in case no flow values available
+            catch ME
+                switch ME.identifier
+                    case 'MATLAB:emptyObjectDotAssignment'
+                        disp(['---> No flow values available to plot for ' d_olfa_flow(i).vial_num])
+                    otherwise
+                        rethrow(ME)
+                end
+            end
+
         end
     end
     
@@ -272,6 +301,7 @@ try
             d_ctrl_x = [];
             d_ctrl_y = [];
 
+            % Plot as voltage or integer
             if strcmp(plot_opts.ctrl_in_V,'yes')
                 % Plot as voltage
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_volt)
@@ -320,8 +350,7 @@ try
                 p2 = plot(d_ctrl_x,d_ctrl_y);
                 p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
                 %p2.HandleVisibility = 'off';
-                p2.LineStyle = '-';
-                %p2a = scatter(d_ctrl_x,d_ctrl_y,'filled','HandleVisibility','off');
+                p2.LineStyle = '--';
             % Error message in case no ctrl values available
             catch ME
                 switch ME.identifier
@@ -356,6 +385,8 @@ try
             p2 = plot(d_pid_x,d_pid_y,'DisplayName','PID');
             p2.LineWidth = f.pid_width;
             p2.Color = f.PID_color;
+        else
+            disp('---> No PID data available to plot')
         end
     end
     
@@ -366,6 +397,8 @@ try
             ylabel('Output flow sensor (integer values)')
             p2 = plot(data_fsens_raw(:,1),data_fsens_raw(:,2));
             p2.DisplayName = 'Flow sensor';
+        else
+            disp('---> No output flow sensor data available to plot')
         end
     end 
     
