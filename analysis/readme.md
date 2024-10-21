@@ -140,10 +140,8 @@ User will need to enter **data file name** (line 63).
 ### Data to plot:
 **olfa_flow - Plot olfa flow data**  
 &nbsp;&nbsp;&nbsp;&nbsp;"yes" (default) | "no"  
-
 **olfa_ctrl - Plot olfa ctrl data**  
 &nbsp;&nbsp;&nbsp;&nbsp;"no" (default) | "yes"  
-
 **pid - Plot PID data**  
 &nbsp;&nbsp;&nbsp;&nbsp;"yes" (default) | "no"  
 <br>
@@ -152,12 +150,10 @@ User will need to enter **data file name** (line 63).
 **flow_in_SCCM - Plot flow values in SCCM**  
 &nbsp;&nbsp;&nbsp;&nbsp;"yes" (default) | "no"  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Plot flow values in SCCM - if "no" is selected, integer values will be plotted.  
-
 **ctrl_in_V - Plot ctrl values in V**  
 &nbsp;&nbsp;&nbsp;&nbsp;"no" (default) | "yes"  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Plot ctrl values in V - if "no" is selected, integer values will be plotted.  
-
-**plot_in_minutes - Plot trial over minutes instead of seconds**
+**plot_in_minutes - Plot trial over minutes instead of seconds**  
 &nbsp;&nbsp;&nbsp;&nbsp;"no" (default) | "yes"  
 ^^^TODO can probably remove  
 <br>
@@ -165,7 +161,6 @@ User will need to enter **data file name** (line 63).
 ### Axis Limits  
 **pid_lims - Y-Limits for PID data**  
 &nbsp;&nbsp;&nbsp;&nbsp;[0 7] (default) | two-element vector  
-
 **olfa_lims_sccm - Y-Limits for Olfa flow data**  
 &nbsp;&nbsp;&nbsp;&nbsp;[0 105] (default) | two-element vector  
 <br>
@@ -175,7 +170,7 @@ User will need to enter **data file name** (line 63).
 &nbsp;&nbsp;&nbsp;&nbsp;"no" (default) | "yes"  
 **time_to_cut - Duration (seconds) to cut from beginning of each section**  
 &nbsp;&nbsp;&nbsp;&nbsp;0.0 (default) | positive value  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Duration (seconds) to cut from the beginning of each section before recalculating stats (mean, standard deviation). This is used to remove the first few seconds from the trial (the period when PID has not yet reached its peak/plateau value)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Duration (seconds) to cut from the beginning of each section before recalculating stats (mean, standard deviation). This is used to remove the first few seconds from the trial (the period when PID has not yet reached its peak/plateau value)  
 <br>
 
 ### Additional figures:
@@ -225,3 +220,37 @@ The following options only apply if `plot_all` is set to `"yes"`.
 - get_section_data
 </details>
 <br>
+
+## Plot file from standard olfactometer
+**analysis_plot_standard_olfa.m**
+
+--> different file type: (data starts at 4th row of file)
+- Column 1: vial number
+- Column 2: flow rate
+- Column 3 -> end: PID values
+
+1. Loads .csv file (from *OlfaControlGUI\results_files\standard olfa*)
+2. Calculates PID baseline value (minimum PID value recorded during first trial)
+3. For each trial:
+	- Adjust PID
+		- remove missing cells
+		- make array of time values
+		- shift PID up to zero
+	- Calculate mean PID
+		- only use specific section of data:
+			- beginning of dataset: cut off the # of seconds specified by user
+			- end of dataset: 0.1sec before PID drops below 0.1V
+	- Plot trial (if user selected to)
+	- Add mean (& std) to the data structure
+4. Create combined data structure
+5. Save it to *C:\..\data (.mat files)*
+6. Plot the spt char figure
+
+
+## Plot 8line vs. standard olf
+**plot_standard_vs_8line**
+
+
+
+## Plot a bunch of files on top of each other
+**plot_on_top_2023_10_31**
