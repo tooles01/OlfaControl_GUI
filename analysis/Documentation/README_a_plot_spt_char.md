@@ -36,7 +36,7 @@ Can add:
 
 <br>
 
-<details><summary>Plot Flow vs. PID for each event in the given file</summary>
+<details><summary>Create Flow vs. PID plot AND plot each event in the given file</summary>
 <br>
 
 `a_plot_spt_char('2024-10-16_datafile_00',plot_all='yes');`<p align="center">
@@ -45,6 +45,7 @@ Can add:
   <img src="images/examples/spt_char_plot_all_03.jpg" width="30%"></p>
 </details>
 
+<br>
 
 ## Input Arguments
 
