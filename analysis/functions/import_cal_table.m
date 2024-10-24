@@ -15,6 +15,7 @@
 
 %%
 function this_cal_file_data = import_cal_table(file_name, file_directory)
+    % Get path to this calibration table (analysis\cal tables (imported)\file_name.mat)
     dir_cal_tables_matlab = strcat(pwd,'\','cal tables (imported)');
     dir_this_cal_table_matlab = strcat(dir_cal_tables_matlab,'\',file_name,'.mat');
 

@@ -39,18 +39,20 @@ flow_inc = [];
 c_current_dir = pwd;
 c_str_to_find = 'OlfaControl_GUI';
 c_idx_of_str = strfind(c_current_dir,c_str_to_find);
-
-% If not, whole thing will fail (i don't feel like writing another try except statement rn)
-if isempty(c_idx_of_str); disp(['Could not find ''' c_str_to_find,''' directory.']); end
-
-% Get OlfaControl_GUI path
 c_len_of_strToFind = length(c_str_to_find);
+%if isempty(c_idx_of_str); disp(['Could not find ''' c_str_to_find,''' directory.']); end    % If not, whole thing will fail (i don't feel like writing another try except statement rn)
+if isempty(c_idx_of_str); disp([c_str_to_find ' is not within current directory.']); end
+
+% Get full path to 'OlfaControl_GUI' folder
 %a_dir_OlfaControlGUI = c_current_dir(1:c_idx_of_str+c_len_of_strToFind);
 a_dir_OlfaControlGUI = c_current_dir(1:c_idx_of_str+c_len_of_strToFind-1);
 
 % Make sure datafiles are on matlab path
 dir_data_files = [a_dir_OlfaControlGUI '\result_files\48-line olfa\'];
-addpath(genpath(dir_data_files));
+addpath(genpath(dir_data_files));   % genpath gets all the folders & subfolders from 48-line olfa, addpath adds them to the top of the search path for the current session
+% Make sure functions are on matlab path
+dir_functions = [a_dir_OlfaControlGUI '\analysis\functions'];
+addpath(genpath(dir_functions));
 
 clearvars c_*
 
@@ -68,8 +70,26 @@ clearvars c_*
 %a_thisfile_name = '2024-09-24_2021-01-07_exp01_08'; c.PID_in_V = 'yes'; %success
 %a_thisfile_name = '2024-09-24_2021-01-22_exp01_06'; c.PID_in_V = 'yes'; %success
 %a_thisfile_name = '2024-09-24_2021-01-29_exp01_08'; c.PID_in_V = 'yes'; %success
-a_thisfile_name = '2024-09-24_2021-01-22_exp01_06_Copy'; c.PID_in_V = 'yes';
+%a_thisfile_name = '2024-09-24_2021-01-22_exp01_06_Copy'; c.PID_in_V = 'yes';
 
+% 09/30/2024
+%a_thisfile_name = '2023-11-13_datafile_02';
+
+% 10/14/2024 setting up olfa E again
+%a_thisfile_name = '2024-10-14_datafile_02'; a_this_note = 'E1: Ethyl Tiglate spt char test, crazy Alicat MFC'; flow_inc = 10;
+%a_thisfile_name = '2024-10-14_datafile_03'; a_this_note = 'E1: Ethyl Tiglate spt char test, crazy Alicat MFC'; flow_inc = 10;
+%a_thisfile_name = '2024-10-14_datafile_04'; a_this_note = 'E1: Ethyl Tiglate spt char test, BH MFC=.91'; flow_inc = 10;
+%a_thisfile_name = '2024-10-14_datafile_05'; a_this_note = 'E1: Ethyl Tiglate spt char test, BH MFC=.92'; flow_inc = 10;
+%a_thisfile_name = '2024-10-14_datafile_06'; a_this_note = 'E1: Ethyl Tiglate spt char, AC 189085'; flow_inc = 10;
+%a_thisfile_name = '2024-10-14_datafile_07'; a_this_note = 'E1: Ethyl Tiglate spt char, AC 189085, 45psi'; flow_inc = 10;
+%a_thisfile_name = '2024-10-14_datafile_08'; a_this_note = 'E1: Ethyl Tiglate spt char, AC 189085, 52psi'; flow_inc = 10;
+
+% 10/16/2024: with long capillary tubing on output
+%a_thisfile_name = '2024-10-16_datafile_00'; a_this_note = 'E1: Ethyl Tiglate spt char, AC 189085, 52psi, suction low'; flow_inc = 10;
+%a_thisfile_name = '2024-10-16_datafile_01'; a_this_note = 'E1: Ethyl Tiglate spt char, AC 189085, 52psi, suction off'; flow_inc = 10;
+
+% 10/24/2024: test files for checking scripts
+a_thisfile_name = '2024-10-24_2024-10-16_datafile_00';
 %% Load file
 % Loads datafile (*.csv) and saves a separate copy as a *.mat file 
 %{
@@ -501,6 +521,7 @@ clearvars i e* these* this* next* *_pair
 
 % For each vial in d_olfa_flow
 for v=1:length(d_olfa_flow)
+    %% Create struct of that has each OV event | flow mean | pid mean | full data |
     sourceStructArray = d_olfa_flow(v).events.OV_keep;          % Source (OV_keep events for this vial)
     fieldsToCopy = {'flow_mean_sccm', 'pid_mean','data'};       % Specify the field(s) you want to copy
     
@@ -539,6 +560,7 @@ for v=1:length(d_olfa_flow)
     d_olfa_data_combined(1).data1 = [];
     d_olfa_data_combined(1).data2 = [];
     
+    % Fill in flow values
     if isempty(flow_inc); disp('WARNING no flow_inc entered: using 5'); flow_inc = 5; end
     flow_value = flow_inc;
     num_iterations = 100/flow_inc;
@@ -548,14 +570,17 @@ for v=1:length(d_olfa_flow)
     end
 
     %% Populate the combined data structure ('d_olfa_data_combined') & add to 'd_olfa_flow'
-    possible_values = [d_olfa_data_combined.flow_value];
+    possible_values = [d_olfa_data_combined.flow_value];    % list of flow values the data can match to
+    
     % For each event that happened
     for i=1:length(d_olfa_data_sorted)
         % Get the flow mean
         this_flow_value = d_olfa_data_sorted(i).flow_mean_sccm;
+        
         % Find which flow value that is closest to
         differences = abs(possible_values - this_flow_value);   % Absolute differences between possible values and this flow value
         [~,idx_to_use] = min(differences);                      % Index of closest value
+        
         % Put the data into d_olfa_data_combined
         if isempty(d_olfa_data_combined(idx_to_use).pid_mean1)
             d_olfa_data_combined(idx_to_use).pid_mean1 = d_olfa_data_sorted(i).pid_mean;
@@ -565,9 +590,15 @@ for v=1:length(d_olfa_flow)
             d_olfa_data_combined(idx_to_use).data2 = d_olfa_data_sorted(i).data;
         end
     end
+
+    % Add it to d_olfa_flow
     d_olfa_flow(v).d_olfa_data_combined = d_olfa_data_combined;
+
 end
 clearvars i* numElements *flow_value flow_inc r num_iterations starting_idx
+clearvars possible_values differences v
+%clearvars d_olfa_data_sorted d_olfa_data_combined
+% ^^ unclear if I need these in other files, prob not though -09/30/24
 
 
 %% Save data
