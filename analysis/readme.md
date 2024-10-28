@@ -73,4 +73,23 @@ Dependencies:</summary>
 </details><br>
 
 **More details [here](Documentation/README_a_plot_spt_char.md)**  
+<br>
 
+## analysis_plot_standard_olfa.m
+**Plot file from standard olfactometer**
+
+<details><summary>
+Description:</summary>
+
+- Loads \*.csv file (from *OlfaControl_GUI\results_files\standard olfa*)
+- Parses file & saves to *OlfaControl_GUI\analysis\data (.mat files)*
+- Plots the setpoint characterization figure
+</details>
+
+<details><summary>
+Dependencies:</summary>
+
+- get_section_data
+</details><br>
+
+**More details [here](Documentation/README_plot_standard_olfa.md)**  
