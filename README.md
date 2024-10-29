@@ -2,8 +2,7 @@
 
 Python GUI for using the new 8-line olfactometer and mixing chamber  
 
-([Hardware Setup](https://github.com/tooles01/OlfaControl_Electronics))
-
+([Hardware Setup](https://github.com/tooles01/OlfaControl_Electronics))  
 <br>
 
 ## Python versions
@@ -13,33 +12,28 @@ Update 4/29/2024: GUI is currently compatible with Python 3.9, 3.10, 3.12
 
 ## Setup
 
-1. Download/clone this folder
-    - It is recommended to do so via [Github Desktop](https://docs.github.com/en/desktop/installing-and-authenticating-to-github-desktop/installing-github-desktop) in order to pull new commits (bug fixes/updates) in real time.
-    - If not using GitHub Desktop, click the green "<>Code" button above, click "Download ZIP", and save the folder to a directory on your computer.
+1. Download/clone this folder.
+    - It is highly recommended to do so via [Github Desktop](https://docs.github.com/en/desktop/installing-and-authenticating-to-github-desktop/installing-github-desktop) in order to pull new commits (bug fixes/updates) in real time.
+    - If not using GitHub Desktop:
+        - Click the green "<>Code" button above
+        - Click "Download ZIP"
+        - Save the folder to a directory on your computer.
 2. Open the command prompt and navigate to the directory this folder is stored in.
 3. *Optional:* Create & activate a virtual environment (instructions below)
 4. Install the required packages by entering: ``` pip install -r requirements.txt ``` into the command prompt.
 5. Run the GUI: ```python olfa_driver_48line.py```  
-    
-    (Big Program for running automated stuff/adding PID: ```python main.py```)
-
+    (Big Program for running automated stuff/adding PID: ```python main.py```)  
 <br>
 
 ## Calibration tables & Config files
 
 ### Calibration tables
 
-To read from each flow sensor, the GUI uses a calibration table to convert the value from voltage to flow rate.
-
+To read from each flow sensor, the GUI uses a calibration table to convert the value from voltage to flow rate.  
 <p align="center"> <img src="images/Flow Sensor-GUI-Calibration table.png" width="50%"></p>
 
 Each flow sensor has a slightly different calibration, so it is recommended to use the calibration table for each specific miniMFC to ensure accurate flow control.  
-&nbsp;&nbsp;(Further information on calibrating flow sensors can be found [here](https://github.com/tooles01/OlfaControl_Electronics/blob/master/8-line%20Olfactometer/Flow_Sensor_Calibration_Protocol.md).)
-
-<!--
-*<p align="center"> *Example calibration table:* </p>*
-<p align="center"> <img src="images/setup_GUI_example_calibration_table.png" width="30%"> </p>
--->
+&nbsp;&nbsp;(Further information on calibrating flow sensors can be found [here](https://github.com/tooles01/OlfaControl_Electronics/blob/master/8-line%20Olfactometer/Flow_Sensor_Calibration_Protocol.md).)  
 
 ***Note:*** Calibration tables need to be in a folder called **calibration_tables** within the OlfaControl_GUI folder.  
 
@@ -48,7 +42,7 @@ Each flow sensor has a slightly different calibration, so it is recommended to u
 
 To load these calibration tables into the GUI, you can use a config file that lists the miniMFCs on your olfactometer and their corresponding calibration tables.  
 
-This allows for quickly loading all tables into the GUI all at once (instead of manually entering in the Vial Details box for each odor line).
+This allows for quickly loading all tables into the GUI all at once (instead of manually entering into the Vial Details box for each line).
 
 *<p align="center"> *Example config file:*  </p>*
 <p align="center"> <img src="images/setup_GUI_03_configFile.png" width="30%"> </p>
@@ -85,9 +79,9 @@ To confirm that the config file loaded correctly, open up one of the Vial Detail
 #
 ## To create a virtual environment:
 
-A virtual environment is a space separate from your main python install, where you can install just the packages needed for this project without affecting your global python packages.
+A virtual environment is a space separate from your main python install, where you can install just the packages needed for this project (without affecting your global python packages).  
 
-It's not necessary to create one in order to use this GUI, but if you choose to, don't forget to activate it **each time** before running the GUI.
+It's not necessary to create one in order to use this GUI, but if you choose to, don't forget to activate it **each time** before running the GUI, or it may not run properly.
 
 <br>
 
@@ -95,8 +89,8 @@ It's not necessary to create one in order to use this GUI, but if you choose to,
 
     <img src="images/setup_venv_01.png" width="60%">
 
-2. Create the environment:
-    
+2. Create the environment:  
+
     ``` python -m venv <name of environment>\ ```  
     
     *Note:* To create an environment using a specific python version:  
