@@ -47,12 +47,50 @@ Can add:
 
 <br>
 
-## Input Arguments
+## Function Details
 
+1. **Adds necessary folder to MATLAB path** (datafiles & functions)  
+	<details>
+
+	- Check if current directory contains 'OlfaControl_GUI' (If not, display error message)  
+	- Add datafiles to matlab path (*"result_files\48-line olfa"*)
+	- Add functions to matlab path (*"analysis\functions"*)
+	</details>
+
+2. **Loads \*.mat file** (from "*OlfaControlGUI\analysis\data (.mat files)*")  
+
+3. **Cuts additional time from beginning of each event section** (user specifies # of seconds)  
+    Recalculates means & standard deviations (adds them back into the structs)
+
+4. **If selected: Plots entire trial**  
+  (flow & PID over time)
+  
+5. **If selected: Plots each event section individually**  
+  <details>
+
+   For each vial:  
+      - For each OV event:  
+          - Create figure  
+          - Plot olfa flow
+              - Get flow data for this event section, plus 3 seconds before and after (before OV and after CV)  
+              - Shift data so OV happens at t=0 & plot the flow data  
+              - If selected, plot the flow mean on top
+          - Plot PID
+              - Get PID data for thie event section, plus 3 seconds before and after (before OV and after CV)
+              - Shift data so OV happens at t=0 and plot the PID data
+              - If selected, plot the PID mean on top
+          - If selected, plot the X-lines  
+  </details>
+
+6. **Plots flow v. PID** (mean value over duration of each event)  
+    If selected, plot error bars  
+
+
+## Input Arguments
 <br>
 
 **fileName - Name of file to be plotted**  
-&nbsp;&nbsp;File must have already been parsed using [analysis_get_and_parse_files](analysis_get_and_parse_files.md)
+&nbsp;&nbsp;File must have already been parsed using [analysis_get_and_parse_files](README_analysis_get_and_parse_files.md)
 
 <br>
 
@@ -134,28 +172,6 @@ The following options only apply if `plot_all` is set to `'yes'`.
 </p>
 
 
-
-## Function Details
-1. **Loads .mat file** (from *OlfaControlGUI\analysis\data (.mat files)*)
-2. **Cuts additional time from beginning of each event section** (user specifies how many seconds)
-    - Recalculates means & standard deviations (adds them back into the structs)
-2. If selected: **Plots entire trial** (flow & PID over time)
-3. If selected: **Plots each event section individually**
-    - For each vial:  
-        - For each OV event:  
-            - Create figure  
-            - Plot olfa flow
-                - Get flow data for this event section, plus 3 seconds before and after (before OV and after CV)  
-                - Shift data so OV happens at t=0 & plot the flow data  
-                - If selected, plot the flow mean on top
-            - Plot PID
-                - Get PID data for thie event section, plus 3 seconds before and after (before OV and after CV)
-                - Shift data so OV happens at t=0 and plot the PID data
-                - If selected, plot the PID mean on top
-            - If selected, plot the X-lines
-4. **Plots flow v. PID** (mean value over duration of each event)
-    - If selected, plot error bars  
-<br>
 
 ## Dependencies
 
