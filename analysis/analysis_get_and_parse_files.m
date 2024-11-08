@@ -89,7 +89,18 @@ clearvars c_*
 %a_thisfile_name = '2024-10-16_datafile_01'; a_this_note = 'E1: Ethyl Tiglate spt char, AC 189085, 52psi, suction off'; flow_inc = 10;
 
 % 10/24/2024: test files for checking scripts
-a_thisfile_name = '2024-10-24_2024-10-16_datafile_00';
+a_thisfile_name = '2024-10-24_2024-10-16_datafile_00'; flow_inc = 10;
+
+% 11/7/2024: E5 setpoint char
+a_thisfile_name = '2024-11-07_datafile_00'; a_this_note = 'E5: Ethyl Tiglate spt char, 54 psi, suction off'; flow_inc = 10;
+
+% 11/7 2024: diagnostic olfa
+a_thisfile_name = '2024-11-07_diagnostic_datafile_00'; a_this_note = '10% dilution, 1000cc total flow';
+a_thisfile_name = '2024-11-07_diagnostic_datafile_01'; a_this_note = '10% dilution, 1000cc total flow';
+a_thisfile_name = '2024-11-07_diagnostic_datafile_02'; a_this_note = '10% dilution, 500cc total flow';
+a_thisfile_name = '2024-11-07_diagnostic_datafile_03'; a_this_note = '10% dilution, 500cc total flow';
+a_thisfile_name = '2024-11-07_diagnostic_datafile_04'; a_this_note = '10% dilution, 250cc total flow';
+a_thisfile_name = '2024-11-07_diagnostic_datafile_05'; a_this_note = '10% dilution, 250cc total flow';
 %% Load file
 % Loads datafile (*.csv) and saves a separate copy as a *.mat file 
 %{
@@ -104,6 +115,7 @@ idx_underscore = strfind(a_thisfile_name,'_');
 a_thisfile_date = a_thisfile_name(1:idx_underscore(1)-1);
 
 % Get full directory for this file
+%dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\',a_thisfile_date,'\'); % 11/7/24 diagnostic olfa files
 dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\48-line olfa\',a_thisfile_date,'\');
 
 % Get the *.mat file
@@ -361,7 +373,6 @@ if ~isempty(data_pid)
     
     % Set baseline to zero
     if ~isempty(d_olfa_events.OV)
-        
         % PID data up until first OV event
         t_begin = data_time_raw(1);
         t_end = d_olfa_events.OV(1).t_start;
@@ -369,13 +380,16 @@ if ~isempty(data_pid)
         
         % Mean PID value during this period
         PID_baseline = mean(PID_sectionData(:,2));
-
-        % Adjust all PID values
-        data_pid(:,1) = data_pid(:,1);
-        data_pid(:,2) = data_pid(:,2)-PID_baseline;
-
-        clearvars t_* PID_*
+    else
+        % Just use the minimum PID value in this file
+        PID_baseline = min(data_pid(:,2));
     end
+
+    % Adjust all PID values
+    data_pid(:,1) = data_pid(:,1);
+    data_pid(:,2) = data_pid(:,2)-PID_baseline;
+
+    clearvars t_* PID_*
     
     % Convert from mV to V
     if strcmp(c.PID_in_V,'no')
@@ -525,11 +539,11 @@ for v=1:length(d_olfa_flow)
     sourceStructArray = d_olfa_flow(v).events.OV_keep;          % Source (OV_keep events for this vial)
     fieldsToCopy = {'flow_mean_sccm', 'pid_mean','data'};       % Specify the field(s) you want to copy
     
-    % Initialize the target struct array with the same structure as sourceStructArray
+    % Initialize the targetStructArrayy with the same structure as sourceStructArray
     numElements = numel(sourceStructArray);     % number of OV_keep events (rows)
     targetStructArray = repmat(struct('flow_mean_sccm', [], 'pid_mean', [],'data', []), 1, numElements);    % empty struct to copy everything into
     
-    % Loop through each struct (each event) in the source struct array
+    % Loop through each struct (event) in sourceStructArray and copy into targetStructArray
     for i = 1:numElements
         sourceStruct = sourceStructArray(i);
         targetStruct = struct();            % Initialize empty target struct for this iteration (event)
@@ -599,7 +613,6 @@ clearvars i* numElements *flow_value flow_inc r num_iterations starting_idx
 clearvars possible_values differences v
 %clearvars d_olfa_data_sorted d_olfa_data_combined
 % ^^ unclear if I need these in other files, prob not though -09/30/24
-
 
 %% Save data
 clearvars a_dir*
