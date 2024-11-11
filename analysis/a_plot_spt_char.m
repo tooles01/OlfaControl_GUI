@@ -94,14 +94,14 @@ c_current_dir = pwd;
 c_str_to_find = 'OlfaControl_GUI';
 c_idx_of_str = strfind(c_current_dir,c_str_to_find);
 c_len_of_strToFind = length(c_str_to_find);
-if isempty(c_idx_of_str); disp(['Could not find ''' c_str_to_find,''' directory.']); end    % If not, whole thing will fail (i don't feel like writing another try except statement rn)
+if isempty(c_idx_of_str); disp([c_str_to_find ' is not within current directory.']); end    % If not, whole thing will fail (i don't feel like writing another try except statement rn)
 
 % Get full path to 'OlfaControl_GUI' folder
 a_dir_OlfaControlGUI = c_current_dir(1:c_idx_of_str+c_len_of_strToFind-1);
 
 % Make sure datafiles are on matlab path
-dir_data_files = [a_dir_OlfaControlGUI '\result_files\48-line olfa\'];
-addpath(genpath(dir_data_files));
+dir_data_files = [a_dir_OlfaControlGUI '\analysis\data (.mat files)\'];
+addpath(genpath(dir_data_files));   % genpath gets all folders/subfolders from 48-line olfa, addpath adds them to the top of the search path for the current session
 % Make sure functions are on matlab path
 dir_functions = [a_dir_OlfaControlGUI '\analysis\functions'];
 addpath(genpath(dir_functions));

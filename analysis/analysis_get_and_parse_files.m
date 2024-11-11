@@ -40,16 +40,14 @@ c_current_dir = pwd;
 c_str_to_find = 'OlfaControl_GUI';
 c_idx_of_str = strfind(c_current_dir,c_str_to_find);
 c_len_of_strToFind = length(c_str_to_find);
-%if isempty(c_idx_of_str); disp(['Could not find ''' c_str_to_find,''' directory.']); end    % If not, whole thing will fail (i don't feel like writing another try except statement rn)
-if isempty(c_idx_of_str); disp([c_str_to_find ' is not within current directory.']); end
+if isempty(c_idx_of_str); disp([c_str_to_find ' is not within current directory.']); end    % If not, whole thing will fail (i don't feel like writing another try except statement rn)
 
 % Get full path to 'OlfaControl_GUI' folder
-%a_dir_OlfaControlGUI = c_current_dir(1:c_idx_of_str+c_len_of_strToFind);
 a_dir_OlfaControlGUI = c_current_dir(1:c_idx_of_str+c_len_of_strToFind-1);
 
 % Make sure datafiles are on matlab path
 dir_data_files = [a_dir_OlfaControlGUI '\result_files\48-line olfa\'];
-addpath(genpath(dir_data_files));   % genpath gets all the folders & subfolders from 48-line olfa, addpath adds them to the top of the search path for the current session
+addpath(genpath(dir_data_files));   % genpath gets all folders/subfolders from 48-line olfa, addpath adds them to the top of the search path for the current session
 % Make sure functions are on matlab path
 dir_functions = [a_dir_OlfaControlGUI '\analysis\functions'];
 addpath(genpath(dir_functions));
@@ -89,18 +87,27 @@ clearvars c_*
 %a_thisfile_name = '2024-10-16_datafile_01'; a_this_note = 'E1: Ethyl Tiglate spt char, AC 189085, 52psi, suction off'; flow_inc = 10;
 
 % 10/24/2024: test files for checking scripts
-a_thisfile_name = '2024-10-24_2024-10-16_datafile_00'; flow_inc = 10;
+%a_thisfile_name = '2024-10-24_2024-10-16_datafile_00'; flow_inc = 10;
 
 % 11/7/2024: E5 setpoint char
-a_thisfile_name = '2024-11-07_datafile_00'; a_this_note = 'E5: Ethyl Tiglate spt char, 54 psi, suction off'; flow_inc = 10;
+%a_thisfile_name = '2024-11-07_datafile_00'; a_this_note = 'E5: Ethyl Tiglate spt char, 54 psi, suction off'; flow_inc = 10;
 
-% 11/7 2024: diagnostic olfa
-a_thisfile_name = '2024-11-07_diagnostic_datafile_00'; a_this_note = '10% dilution, 1000cc total flow';
-a_thisfile_name = '2024-11-07_diagnostic_datafile_01'; a_this_note = '10% dilution, 1000cc total flow';
-a_thisfile_name = '2024-11-07_diagnostic_datafile_02'; a_this_note = '10% dilution, 500cc total flow';
-a_thisfile_name = '2024-11-07_diagnostic_datafile_03'; a_this_note = '10% dilution, 500cc total flow';
-a_thisfile_name = '2024-11-07_diagnostic_datafile_04'; a_this_note = '10% dilution, 250cc total flow';
-a_thisfile_name = '2024-11-07_diagnostic_datafile_05'; a_this_note = '10% dilution, 250cc total flow';
+% 11/7/2024: diagnostic olfa
+%a_thisfile_name = '2024-11-07_diagnostic_datafile_00'; a_this_note = '10% dilution, 1000cc total flow';
+%a_thisfile_name = '2024-11-07_diagnostic_datafile_01'; a_this_note = '10% dilution, 1000cc total flow';
+%a_thisfile_name = '2024-11-07_diagnostic_datafile_02'; a_this_note = '10% dilution, 500cc total flow';
+%a_thisfile_name = '2024-11-07_diagnostic_datafile_03'; a_this_note = '10% dilution, 500cc total flow';
+%a_thisfile_name = '2024-11-07_diagnostic_datafile_04'; a_this_note = '10% dilution, 250cc total flow';
+%a_thisfile_name = '2024-11-07_diagnostic_datafile_05'; a_this_note = '10% dilution, 250cc total flow';
+
+% 11/8/2024: diagnostic olfa
+a_thisfile_name = '2024-11-08_diagnostic_datafile_00'; a_this_note = '10% dilution, 1000cc total flow';
+a_thisfile_name = '2024-11-08_diagnostic_datafile_01'; a_this_note = '10% dilution, 500cc total flow';
+a_thisfile_name = '2024-11-08_diagnostic_datafile_02'; a_this_note = '10% dilution, 500cc total flow';
+a_thisfile_name = '2024-11-08_diagnostic_datafile_03'; a_this_note = '10% dilution, 250cc total flow';
+a_thisfile_name = '2024-11-08_diagnostic_datafile_04'; a_this_note = '10% dilution, 250cc total flow';
+a_thisfile_name = '2024-11-08_diagnostic_datafile_05'; a_this_note = '10% dilution, 1000cc total flow';
+
 %% Load file
 % Loads datafile (*.csv) and saves a separate copy as a *.mat file 
 %{
@@ -115,8 +122,8 @@ idx_underscore = strfind(a_thisfile_name,'_');
 a_thisfile_date = a_thisfile_name(1:idx_underscore(1)-1);
 
 % Get full directory for this file
-%dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\',a_thisfile_date,'\'); % 11/7/24 diagnostic olfa files
-dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\48-line olfa\',a_thisfile_date,'\');
+dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\',a_thisfile_date,'\'); % 11/7/24 diagnostic olfa files
+%dir_this_data_file = strcat(a_dir_OlfaControlGUI,'\result_files\48-line olfa\',a_thisfile_date,'\');
 
 % Get the *.mat file
 raw_wholeFile = import_datafile(a_thisfile_name,dir_this_data_file);

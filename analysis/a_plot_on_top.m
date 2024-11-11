@@ -80,22 +80,26 @@ f.f3_position = [1000 210 650 600];     % for PowerPoint (1/2 size)
 
 %% Make sure datafiles & functions are on matlab path
 
-% Check that current directory contains 'OlfaControl_GUI'
+%% Find OlfaControl_GUI directory (& add to path)
+
+% Check if current directory contains 'OlfaControl_GUI'
 c_current_dir = pwd;
 c_str_to_find = 'OlfaControl_GUI';
 c_idx_of_str = strfind(c_current_dir,c_str_to_find);
 c_len_of_strToFind = length(c_str_to_find);
-if isempty(c_idx_of_str); disp([c_str_to_find ' is not within current directory.']); end
+if isempty(c_idx_of_str); disp([c_str_to_find ' is not within current directory.']); end    % If not, whole thing will fail (i don't feel like writing another try except statement rn)
 
 % Get full path to 'OlfaControl_GUI' folder
 a_dir_OlfaControlGUI = c_current_dir(1:c_idx_of_str+c_len_of_strToFind-1);
 
 % Make sure datafiles are on matlab path
 dir_data_files = [a_dir_OlfaControlGUI '\analysis\data (.mat files)\'];
-addpath(genpath(dir_data_files));   % genpath gets all the folders & subfolders from 48-line olfa, addpath adds them to the top of the search path for the current session
+addpath(genpath(dir_data_files));   % genpath gets all folders/subfolders from 48-line olfa, addpath adds them to the top of the search path for the current session
 % Make sure functions are on matlab path
 dir_functions = [a_dir_OlfaControlGUI '\analysis\functions'];
 addpath(genpath(dir_functions));
+
+clearvars c_*
 
 %% Load files in
 
