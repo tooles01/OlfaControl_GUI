@@ -85,7 +85,7 @@ Can add:
 
 <details><summary>Plot entire trial over time</summary>
   <br>
-  
+
   `a_plot_spt_char('2024-01-09_datafile_01');`
   <p align="center"><img src="images/examples/spt_char_overtime.jpg" width="50%"></p>
 
@@ -203,6 +203,8 @@ The following options only apply if `plot_all` is set to `'yes'`.
 **show_x_lines - Plot X-lines marking the region where the mean was calculated from**  
 &nbsp;&nbsp;'no' (default) | 'yes'  
 
+<details><summary>More details on individual event plots</summary>
+
 <p align="center">Individual event plots without any overlays</p>
 <p align="center">
   <img src="images/examples/spt_char_plot_all_01.jpg" width="30%">
@@ -224,9 +226,7 @@ The following options only apply if `plot_all` is set to `'yes'`.
   <img src="images/examples/spt_char_plot_all_03_means_xlines.jpg" width="30%">
 </p>
 
-
+</details>
 
 ## Dependencies
-
 - get_section_data
-

@@ -22,15 +22,21 @@ function a_plot_olfa_and_pid(a_thisfile_name,plot_opts)
 
     arguments
         a_thisfile_name         (1,1) string = '-'
+
+        % Data to plot
         plot_opts.olfa_flow     (1,1) string = 'yes'
         plot_opts.olfa_ctrl     (1,1) string = 'no'
         plot_opts.pid           (1,1) string = 'yes'
         plot_opts.output_flow   (1,1) string = 'no'
+
+        % Units
         plot_opts.flow_in_SCCM  (1,1) string = 'yes'
         plot_opts.ctrl_in_V     (1,1) string = 'no'
         plot_opts.plot_in_minutes   (1,1) string = 'no'
-        plot_opts.ctrl_ylims    (1,:) double = [-5 260]
+
+        % Axis Limits
         plot_opts.pid_ylims     (1,:) double = [0 3]
+        plot_opts.ctrl_ylims    (1,:) double = [-5 260]
     end
 
 %%
@@ -229,12 +235,14 @@ try
     legend('Location','northwest');
     f1_ax = gca;
     
-    % Set X limits
+    % Set X axis label
     if strcmp(plot_opts.plot_in_minutes,'no')
         xlabel('Time (s)');
     else
         xlabel('Time (min)')
     end
+
+    % Set X limits
     if ~isempty(f.x_lim)
         xlim(f.x_lim);
     else
@@ -254,7 +262,7 @@ try
             d_olfa_flow_x = [];
             d_olfa_flow_y = [];
 
-            % Plot as SCCM or integer values
+            % Get olfa flow data (SCCM or integer values)
             if strcmp(plot_opts.flow_in_SCCM,'yes')
                 % Plot as SCCM
                 if ~isempty(d_olfa_flow(i).flow.flow_sccm)
@@ -275,7 +283,7 @@ try
                 end
             end
             
-            % Scale time
+            % If selected: Scale time
             if strcmp(f.scale_time,'yes')
                 if ~isempty(f.x_lim)
                     % scale time to zero
@@ -284,12 +292,13 @@ try
                     xlim([-.5 16]);                
                 end
             end
-            % Minutes or seconds
+            
+            % If selected: Plot in minutes
             if strcmp(plot_opts.plot_in_minutes,'yes')
                 d_olfa_flow_x = d_olfa_flow_x/60;
             end
 
-            % Plot
+            % Plot olfa flow data
             try
                 p = plot(d_olfa_flow_x,d_olfa_flow_y);
                 %p = scatter(d_olfa_flow_x,d_olfa_flow_y,'filled');
@@ -317,7 +326,7 @@ try
             d_ctrl_x = [];
             d_ctrl_y = [];
 
-            % Plot as voltage or integer
+            % Get olfa ctrl data (integer or voltage values)
             if strcmp(plot_opts.ctrl_in_V,'yes')
                 % Plot as voltage
                 if ~isempty(d_olfa_flow(i).ctrl.ctrl_volt)
@@ -348,19 +357,20 @@ try
                 end
             end
 
-            % Scale time
+            % If selected: Scale time
             if strcmp(f.scale_time,'yes')
                 % Scale time to zero
                 d_ctrl_x = d_ctrl_x - f.x_lim(1);
                 % Readjust x limits
                 xlim([-.5 16]);
             end
-            % Minutes or seconds
+            
+            % If selected: Plot in minutes
             if strcmp(plot_opts.plot_in_minutes,'yes')
                 d_ctrl_x = d_ctrl_x/60;
             end
             
-            % Plot
+            % Plot olfa ctrl data
             try
                 p2 = plot(d_ctrl_x,d_ctrl_y);
                 p2.DisplayName = [d_olfa_flow(i).vial_num ' ctrl'];
@@ -381,23 +391,30 @@ try
     
     %% Plot: PID
     if strcmp(plot_opts.pid,'yes')
+        
         if ~isempty(data_pid)
+            if ~(strcmp(plot_opts.olfa_ctrl,'no') && strcmp(plot_opts.olfa_flow,'no'))      % If either flow or ctrl are plotted, put PID on the right yaxis
+                yyaxis right;
+            end
             d_pid_x = data_pid(:,1);
             d_pid_y = data_pid(:,2);
-            yyaxis right;
             f1_ax.YColor = f.PID_color;
             ylabel('PID output (V)');
             f1_ax.YLim = plot_opts.pid_ylims;
 
+            % If selected: scale time
             if strcmp(f.scale_time,'yes')
                 if ~isempty(f.x_lim)
                     d_pid_x = data_pid(:,1) - f.x_lim(1);
                 end
             end
             
+            % If selected: Plot in minutes
             if strcmp(plot_opts.plot_in_minutes,'yes')
                 d_pid_x = d_pid_x/60;
             end
+
+            % Plot PID
             p2 = plot(d_pid_x,d_pid_y,'DisplayName','PID');
             p2.LineWidth = f.pid_width;
             p2.Color = f.PID_color;

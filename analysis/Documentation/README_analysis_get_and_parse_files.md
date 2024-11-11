@@ -2,8 +2,9 @@
 
 ### Get raw *.csv datafile and save as *.mat file
 
-## Description
 <!--** add where it gets the file from and where it saves it to-->
+
+## Function Details
 
 1. **Adds necessary folders to MATLAB path** (datafiles & functions)
 	<details>
@@ -13,7 +14,7 @@
 	- Add functions to matlab path (*"analysis\functions"*)
 	</details>
 
-2. **Loads selected datafile** (from *OlfaControlGUI\result_files\48-line olfa*)  
+2. **Loads selected datafile** (from "*OlfaControlGUI\result_files\48-line olfa*")  
 	*Note:* User must manually enter datafile name here (& PID units, if recorded in mV)
 	<details>
 	
@@ -83,7 +84,7 @@
 	- For each vial:
 		- If there are flow values (*d_olfa_flow.flow.flow_int*):
 			- Use the calibration table to convert to SCCM (**int_to_SCCM**)
-</details>
+	</details>
 
 8. **Converts ctrl values to voltage**  
 	(Probably unnecessary because we never use this)
@@ -92,7 +93,7 @@
 	- For each vial:
 		- If there are ctrl values (*d_olfa_flow.ctrl.ctrl_int*):
 			- Convert to voltage
-</details>
+	</details>
 
 9. **Smooths PID** (moving average over 50ms window)
 	<details>
@@ -100,7 +101,7 @@
 	- If there is PID data:
 		- Remove any data points with duplicate time values (**removeDuplicates_**)
 		- Do the moving average over 50ms window
-</details>
+	</details>
 
 10. **Splits into sections** (each open vial event)
 	<details>
@@ -128,9 +129,9 @@
 			- Get event data (*d_olfa_flow.events.OV*)
 				- For each event: copy all the information into *d_olfa_flow.events.OV_keep*
 				<p align="center"><img src="images/d_olfa_flow.events.OV_keep.png" width="70%"></p>
-</details>
+	</details>
 
-11. Creates sorted data structure of viable "open vial" events (*d_olfa_data_combined*)
+11. **Creates sorted data structure** of viable "open vial" events (*d_olfa_data_combined*)
 	<details>
 
 	- For each vial:
@@ -143,7 +144,7 @@
 
 		- Create *d_olfa_data_combined* (using *flow_inc* entered at beginning of file)
 		<p align="center"><img src="images/d_olfa_data_combined_2.png" width="35%"></p>
-</details>
+	</details>
 
 12. **Saves .mat file** to "*OlfaControl_GUI\analysis\data (.mat files)*"  
 <br>
