@@ -84,3 +84,5 @@ Plot olfactometer & PID data over time
 	- If selected: **Plot output flow sensor** (right yaxis)
 	- If selected: **Plot calibration value** (left yaxis) (f.calibration_value)
 
+## Dependencies
+- get_section_data

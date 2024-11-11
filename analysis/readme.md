@@ -26,6 +26,7 @@ Dependencies:</summary>
 - import_cal_table
 - import_datafile
 - int_to_SCCM
+- removeDuplicates_
 </details><br>
 
 **More details [here](Documentation/README_analysis_get_and_parse_files.md)**  
@@ -74,6 +75,22 @@ Dependencies:</summary>
 
 **More details [here](Documentation/README_a_plot_spt_char.md)**  
 <br>
+
+## a_plot_on_top
+**Plot a bunch of files on top of each other**
+
+**Syntax**  
+`a_plot_spt_char(file_names,a_title,a_subtitle)` plots the files in the array `file_names`  
+
+<details><summary>
+Dependencies:</summary>
+
+</details><br>
+
+### Example:
+
+
+### More details [here](Documentation/README_a_plot_on_top.md)
 
 ## analysis_plot_standard_olfa.m
 **Plot file from standard olfactometer**
