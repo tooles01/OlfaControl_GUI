@@ -147,6 +147,7 @@
 	</details>
 
 12. **Saves .mat file** to "*OlfaControl_GUI\analysis\data (.mat files)*"  
+<p align="center"><img src="images/file_saved.png" width="50%"></p>
 <br>
 
 **Note:**  
