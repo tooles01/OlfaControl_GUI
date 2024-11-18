@@ -1,7 +1,10 @@
-# When running functions, Matlab directory must be '**OlfaControlGUI\analysis'
+# analysis
 
-(*import_datafile.m* will not run otherwise)
+**MATLAB scripts for plotting/data anslysis**  
 
+
+*****Note**: When running functions, Matlab directory must be '**OlfaControlGUI\analysis'  
+-->*import_datafile.m* will not run otherwise  
 <br>
 
 # Load data files:
@@ -80,15 +83,13 @@ Dependencies:</summary>
 **Plot a bunch of files on top of each other**
 
 **Syntax**  
-`a_plot_spt_char(file_names,a_title,a_subtitle)` plots the files in the array `file_names`  
+`a_plot_on_top(file_names,a_title,a_subtitle)` plots the files in the array `file_names`  
 
 <details><summary>
 Dependencies:</summary>
 
+- get_section_data
 </details><br>
-
-### Example:
-
 
 ### More details [here](Documentation/README_a_plot_on_top.md)
 

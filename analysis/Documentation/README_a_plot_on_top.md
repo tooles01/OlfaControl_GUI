@@ -99,6 +99,7 @@ Plot a bunch of files on top of each other. can plot by flow value, can do flow 
 <br>
 
 ### Axis Limits  
+Note: highly recommend entering PID lims
 **pid_lims - Y-Limits for PID data**  
 &nbsp;&nbsp;[0 5] (default) | two-element vector  
 **flow_lims - Y-Limits for Olfa flow data**  
@@ -168,4 +169,4 @@ plot_error_bars - Show error bars on Flow v. PID
 
 
 ## Dependencies
-
+- get_section_data
