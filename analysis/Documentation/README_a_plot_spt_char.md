@@ -102,7 +102,7 @@ Can add:
 	- Add functions to path: *"analysis\functions"*
 	</details>
 
-2. **Loads \*.mat file** (from "*OlfaControlGUI\analysis\data (.mat files)*")  
+2. **Loads \*.mat file** from "*OlfaControlGUI\analysis\data (.mat files)*"  
 
 3. **Cuts additional time from beginning of each event section**  
     <details>
@@ -113,11 +113,17 @@ Can add:
 
 4. If selected: **Plots entire trial** (flow & PID over time)  
   `plot_opts.plot_over_time`
+  <p align="center"><img src="images/examples/spt_char_overtime.jpg" width="50%"></p>
+
 
 5. If selected: **Plots each event section individually**  
   `plot_opts.plot_all`
+    <p align="center">
+        <img src="images/examples/spt_char_plot_all_01.jpg" width="30%">
+        <img src="images/examples/spt_char_plot_all_02.jpg" width="30%">
+    </p>
     <details>
-    
+
     - For each vial:  
       - For each OV event:  
           - Create figure  
@@ -135,9 +141,12 @@ Can add:
   </details>
 
 6. **Plots flow v. PID** (mean value over duration of each event)  
-    If selected: **Plot error bars**  
-      `plot_opts.show_error_bars`
-
+  If selected: **Plots error bars**
+  `plot_opts.show_error_bars`
+  <p align="center">
+    <img src="images/examples/spt_char_default.jpg" width="30%">
+    <img src="images/examples/spt_char_default_errorbars.jpg" width="30%">
+  </p>
 
 ## Input Arguments
 <br>
@@ -209,21 +218,18 @@ The following options only apply if `plot_all` is set to `'yes'`.
 <p align="center">
   <img src="images/examples/spt_char_plot_all_01.jpg" width="30%">
   <img src="images/examples/spt_char_plot_all_02.jpg" width="30%">
-  <img src="images/examples/spt_char_plot_all_03.jpg" width="30%">
 </p>
 
 <p align="center">Individual event plots with flow mean and PID mean overlays</p>
 <p align="center">
-  <img src="images/examples/spt_char_plot_all_01_means.jpg" width="30%">
-  <img src="images/examples/spt_char_plot_all_02_means.jpg" width="30%">
-  <img src="images/examples/spt_char_plot_all_03_means.jpg" width="30%">
+  <img src="images/examples/spt_char_plot_all_means_01.jpg" width="30%">
+  <img src="images/examples/spt_char_plot_all_means_02.jpg" width="30%">
 </p>
 
 <p align="center">Individual event plots with flow mean, PID mean, and X-line overlays</p>
 <p align="center">
-  <img src="images/examples/spt_char_plot_all_01_means_xlines.jpg" width="30%">
-  <img src="images/examples/spt_char_plot_all_02_means_xlines.jpg" width="30%">
-  <img src="images/examples/spt_char_plot_all_03_means_xlines.jpg" width="30%">
+  <img src="images/examples/spt_char_plot_all_means_xlines_01.jpg" width="30%">
+  <img src="images/examples/spt_char_plot_all_means_xlines_02.jpg" width="30%">
 </p>
 
 </details>
