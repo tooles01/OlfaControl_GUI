@@ -8,9 +8,14 @@
 %   olfa_ctrl       - ctrl values on right yaxis
 %   pid             - pid data on right yaxis
 %   output_flow     - output flow sensor on right yaxis
+%
 %   flow_in_SCCM    - flow units in SCCM (default==yes) 
 %   ctrl_in_V       - ctrl units in V (default=integers)
 %   plot_in_minutes - timescale in minutes (default==seconds)
+%
+%   pid_ylims       - Axis limits for PID
+%   flow_ylims      - Axis limits for Olfa flow
+%   ctrl_ylims      - Axis limits for Olfa ctrl
 
 %%
 % --> this is a copy of the original file (last edited 09-23-2024),
@@ -36,6 +41,7 @@ function a_plot_olfa_and_pid(a_thisfile_name,plot_opts)
 
         % Axis Limits
         plot_opts.pid_ylims     (1,:) double = [0 3]
+        plot_opts.flow_ylims    (1,:) double = [ ]
         plot_opts.ctrl_ylims    (1,:) double = [-5 260]
     end
 
@@ -46,7 +52,6 @@ set(0,'DefaultTextInterpreter','none')
 %% Display variables
 f = struct();   % struct containing all figure variables
 f.position = [30 200 1700 700];
-f.flow_ylims = [];
 f.flow_width = 1;
 f.pid_width = 1;
 f.x_lim = [];
@@ -99,6 +104,7 @@ addpath(genpath(dir_functions));
 clearvars c_*
 
 %% Enter data file name (& additional plot options)
+% TODO get rid of this section
 
 %f.position = [549 166 1353 684];
 %f.position = [166 600 775 275];     % for OneNote
@@ -203,12 +209,13 @@ try
     %% Create figure
     figTitle = a_thisfile_name;
     if ~strcmp(a_this_note, ''); figTitle = append(figTitle, ': ',  a_this_note); end
-    
     f1 = figure; f1.NumberTitle = 'off'; f1.Position = f.position; hold on;
     f1.Name = a_thisfile_name;
     title(a_thisfile_name)
     subtitle(a_this_note)
-
+    legend('Location','northwest');
+    f1_ax = gca;
+    
     % sccm lines for 2023-09-21_datafile_05
     %{
     yline1 = line([1.5 7.5],[50 50]);
@@ -232,27 +239,17 @@ try
     set(get(get(yline3,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
     set(get(get(yline4,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
     %}
-
-    legend('Location','northwest');
-    f1_ax = gca;
     
     % Set X axis label
-    if strcmp(plot_opts.plot_in_minutes,'no')
-        xlabel('Time (s)');
-    else
-        xlabel('Time (min)')
-    end
-
+    if strcmp(plot_opts.plot_in_minutes,'no');  xlabel('Time (s)');
+    else;                                       xlabel('Time (min)'); end
     % Set X limits
     if ~isempty(f.x_lim)
         xlim(f.x_lim);
     else
         t_end = data_time_raw(end,1);
-        if strcmp(plot_opts.plot_in_minutes,'no')
-            xlim([0 t_end]);
-        else
-            xlim([0 t_end/60])
-        end
+        if strcmp(plot_opts.plot_in_minutes,'no');  xlim([0 t_end]);
+        else;                                       xlim([0 t_end/60]); end
     end
     
     %% Plot: Olfa flow
@@ -270,7 +267,7 @@ try
                     d_olfa_flow_x = d_olfa_flow(i).flow.flow_sccm(:,1);
                     d_olfa_flow_y = d_olfa_flow(i).flow.flow_sccm(:,2);
                     ylabel('Olfa flow (SCCM)')
-                    if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
+                    if ~isempty(plot_opts.flow_ylims); ylim(plot_opts.flow_ylims)
                     else; ylim([-5 120]); end
                 end
             else
@@ -279,7 +276,7 @@ try
                     d_olfa_flow_x = d_olfa_flow(i).flow.flow_int(:,1);
                     d_olfa_flow_y = d_olfa_flow(i).flow.flow_int(:,2);
                     ylabel('Olfa flow (integer values)')
-                    if ~isempty(f.flow_ylims); ylim(f.flow_ylims)
+                    if ~isempty(plot_opts.flow_ylims); ylim(plot_opts.flow_ylims)
                     else; ylim([0 1024]); end
                 end
             end
