@@ -1,7 +1,6 @@
 # analysis_get_and_parse_files
 
-### Get raw *.csv datafile and save as *.mat file
-
+**Get raw \*.csv datafile and save as \*.mat file**  
 <!--** add where it gets the file from and where it saves it to-->
 
 ## Function Details
@@ -117,10 +116,10 @@
 				- Calculate mean flow & PID, add to *int_means* and *sccm_means*
 				- Add other stats you just calculated to *e_new_event_struct*
 			- Add *e_new_event_struct* to *d_olfa_flow.events.OV*:
-			<p align="center"><img src="images/d_olfa_flow.events.OV_after_loop.png" width="70%"></p>
+			<p align="center"><img src="images/data structures/d_olfa_flow.events.OV_after_loop.png" width="70%"></p>
 			
 			- Add *int_means* and *sccm_means* to *d_olfa_flow*:  
-			<p align="center"><img src="images/int_sccm_means.png" width="40%"></p>
+			<p align="center"><img src="images/data structures/int_sccm_means.png" width="40%"></p>
 
 	**Copy legitimate events into OV_keep**
 	- Remove empty rows: events longer than 1sec go into OV_keep  
@@ -128,7 +127,7 @@
 		- For each vial:
 			- Get event data (*d_olfa_flow.events.OV*)
 				- For each event: copy all the information into *d_olfa_flow.events.OV_keep*
-				<p align="center"><img src="images/d_olfa_flow.events.OV_keep.png" width="70%"></p>
+				<p align="center"><img src="images/data structures/d_olfa_flow.events.OV_keep.png" width="70%"></p>
 	</details>
 
 11. **Creates sorted data structure** of viable "open vial" events (*d_olfa_data_combined*)
@@ -137,17 +136,17 @@
 	- For each vial:
 		- Put *OV_keep* events into *sourceStructArray*
 		- For each event, copy `flow_mean_sccm`, `pid_mean`, and `data` into *targetStructArray*  
-		<p align="center"><img src="images/targetStructArray.png" width="35%"></p>
+		<p align="center"><img src="images/data structures/targetStructArray.png" width="35%"></p>
 
 		- Sort events from lowest-->highest flow (*d_olfa_data_sorted*)
-		<p align="center"><img src="images/d_olfa_data_sorted_2.png" width="35%"></p>
+		<p align="center"><img src="images/data structures/d_olfa_data_sorted_2.png" width="35%"></p>
 
 		- Create *d_olfa_data_combined* (using *flow_inc* entered at beginning of file)
-		<p align="center"><img src="images/d_olfa_data_combined_2.png" width="35%"></p>
+		<p align="center"><img src="images/data structures/d_olfa_data_combined_2.png" width="35%"></p>
 	</details>
 
 12. **Saves .mat file** to "*OlfaControl_GUI\analysis\data (.mat files)*"  
-<p align="center"><img src="images/file_saved.png" width="50%"></p>
+<p align="center"><img src="images/data structures/file_saved.png" width="50%"></p>
 <br>
 
 **Note:**  

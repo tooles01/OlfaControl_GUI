@@ -77,16 +77,16 @@ It is recommended to enter values for:
 		- If selected: **Plot this trial by itself** (*plot_opts.individual_trials*)  
 			- If selected: **Plot x-lines** at beginning and end of where the mean was calculated from (*plot_opts.x_lines*)
 		- **Add to the data structure** (*d_olfa_data*)  
-			<img src="images/d_olfa_data.png" width="30%">
+			<img src="images/data structures/d_olfa_data.png" width="30%">
 	</details>
 
 6. **Creates data structures** (*d_olfa_data_sorted*, *d_olfa_data_combined*)  
 	<details>
 
 	- Sort `d_olfa_data` to create `d_olfa_data_sorted`  
-	<img src="images/d_olfa_data_sorted.png" width="30%">
+	<img src="images/data structures/d_olfa_data_sorted.png" width="30%">
 	- Add all of that data into `d_olfa_data_combined`  
-	<img src="images/d_olfa_data_combined.png" width="30%">
+	<img src="images/data structures/d_olfa_data_combined.png" width="30%">
 	</details>
 
 7. **Saves .mat file** to "*OlfaControl_GUI\analysis\data (.mat files)*"  
