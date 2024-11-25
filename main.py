@@ -1,4 +1,4 @@
-import sys, os, logging, csv, copy, time, random
+import sys, os, logging, csv, copy, time, random, zmq
 import numpy.matlib as np
 from PyQt5 import sip
 from PyQt5.QtWidgets import *
@@ -15,7 +15,7 @@ programs_48line = ['setpoint characterization','additive']
 programs_orig = ['the program']
 
 current_date = utils.currentDate
-
+ZMQ_address = "tcp://127.0.0.1:5556"
 
 ##############################
 # CREATE LOGGER
@@ -223,11 +223,43 @@ class worker_additive(QObject):
         self.finished.emit()
         self.threadON = False
 
+class worker_zmq_thread(QThread):
+    finished = pyqtSignal()     # Signal to communicate with the main thread
+    w_send_something = pyqtSignal(str)
+
+    def __init__(self):
+        super().__init__()
+        self.thread_on = False
+
+        # Initialize ZMQ context and subscriber socket
+        self.zmq_context = zmq.Context()
+        self.zmq_socket = self.zmq_context.socket(zmq.SUB)      # Create Subscriber socket
+        self.zmq_socket.connect(ZMQ_address)                    # Connect socket to the publisher's address
+        self.zmq_socket.setsockopt_string(zmq.SUBSCRIBE, "")    # Subscribe to all messages
+        
+        # Set up ZMQ poller
+        self.zmq_poller = zmq.Poller()
+        self.zmq_poller.register(self.zmq_socket, zmq.POLLIN)
+    
+    def run(self):
+        while True:
+            if self.thread_on == True:
+                # Wait for new data with a timeout
+                sockets = dict(self.zmq_poller.poll(1000))  # 1000 ms timeout
+                if self.zmq_socket in sockets:
+                    # Receive data if available
+                    try:
+                        data = self.zmq_socket.recv_pyobj()
+                        logger.info("Received data from ZMQ: " + data)
+                        self.w_send_something.emit(data)        # Send received data to the main thread
+                    except Exception as e:
+                        logger.info(f"Error processing message: {e}")
 
 class mainWindow(QMainWindow):
     
     def __init__(self):
         super().__init__()
+        self.zmq_enabled = False
         
         self.generate_ui()
         self.set_up_threads_sptchar()
@@ -285,13 +317,38 @@ class mainWindow(QMainWindow):
         if self.log_file_dir == '': logger.warning('not logging to any file')
         self.log_file_dir_label = QLineEdit(text=self.log_file_dir,readOnly=True)
         self.log_file_dir_label.setToolTip('edit in config_main.py (if you need to change this)')
+
+        # ZMQ checkbox
+        self.zmq_checkbox = QCheckBox("Enable ZMQ Connection")
+        self.zmq_checkbox.stateChanged.connect(self.toggle_zmq_connection)
         
         layout = QVBoxLayout()
         layout.addWidget(QLabel('Log file location:'))
         layout.addWidget(self.log_file_dir_label)
+        layout.addWidget(self.zmq_checkbox)
         self.general_settings_box.setLayout(layout)
         max_height = self.general_settings_box.sizeHint().height()
         self.general_settings_box.setMaximumHeight(max_height)
+    
+    ##############################
+    # ZMQ stuff        
+    def send_to_olfa(self,message_to_send):
+        logger.info("received data to emit: %s", message_to_send)
+        self.olfactometer.send_to_master(message_to_send)
+    
+    def toggle_zmq_connection(self, state):
+        """Enables or disables the ZMQ server based on checkbox state."""
+        if state == 2:   # if checked
+            logger.info("Starting ZMQ server...")
+            self.thread_zmq_worker = worker_zmq_thread()
+            self.thread_zmq_worker.w_send_something.connect(self.send_to_olfa)
+            self.thread_zmq_worker.thread_on = True
+            self.thread_zmq_worker.start()
+        else:
+            logger.info("Stopping ZMQ server...")
+            self.thread_zmq_worker.thread_on = False
+            self.thread_zmq_worker.quit()
+    ##############################
     
     def create_datafile_box(self):
         self.datafile_groupbox = QGroupBox('Data file')
