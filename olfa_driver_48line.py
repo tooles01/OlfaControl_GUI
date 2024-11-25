@@ -1,6 +1,6 @@
-import sys, os, logging, csv, copy, json
+import sys, os, logging, csv, copy, json, zmq
 from PyQt5 import QtCore, QtSerialPort
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, QThread, pyqtSignal
 from PyQt5.QtWidgets import *
 from serial.tools import list_ports
 from datetime import datetime, timedelta
@@ -26,7 +26,39 @@ logger.addHandler(file_handler)
 
 default_olfa_config_file = 'olfa_config__default.json'
 max_calibration_table_value_sccm = '1000'   # TODO change this to mfc capacity
+ZMQ_default_address = "tcp://127.0.0.1:5556"
 
+class worker_zmq_thread(QThread):
+    finished = pyqtSignal()
+    w_send_message = pyqtSignal(str)
+
+    def __init__(self):
+        super().__init__()
+        self.thread_on = False
+
+        # Initialize ZMQ context and subscriber socket
+        self.zmq_context = zmq.Context()
+        self.zmq_socket = self.zmq_context.socket(zmq.SUB)      # Create Subscriber socket
+        self.zmq_socket.connect(ZMQ_default_address)            # Connect socket to the publisher's address
+        self.zmq_socket.setsockopt_string(zmq.SUBSCRIBE, "")    # Subscribe to all messages
+        
+        # Set up ZMQ poller
+        self.zmq_poller = zmq.Poller()
+        self.zmq_poller.register(self.zmq_socket, zmq.POLLIN)
+    
+    def run(self):
+        while True:
+            if self.thread_on == True:
+                # Wait for new data with a timeout
+                sockets = dict(self.zmq_poller.poll(1000))  # 1000 ms timeout
+                if self.zmq_socket in sockets:
+                    # Receive data if available
+                    try:
+                        data = self.zmq_socket.recv_pyobj()
+                        logger.info("Received data from ZMQ: " + data)
+                        self.w_send_message.emit(data)        # Send received data to the main thread
+                    except Exception as e:
+                        logger.info(f"Error processing message: {e}")
 
 class Vial(QGroupBox):
 
@@ -89,7 +121,7 @@ class Vial(QGroupBox):
         self.setpoint_read_widget = QLCDNumber()
         self.setpoint_read_widget.setMinimumSize(50,50)
         self.setpoint_read_widget.setDigitCount(5)
-        self.setpoint_read_widget.setToolTip('Current flow reading')
+        self.setpoint_read_widget.setToolTip('Current flow reading\n(Or last flow reading acquired, if not currently reading from this line)')
         
         self.setpoint_slider_layout = QGridLayout()
         self.setpoint_slider_layout.addWidget(self.setpoint_slider,0,0,2,1)
@@ -381,7 +413,6 @@ class Vial(QGroupBox):
     def valve_open_dur_changed(self):
         self.valve_open_btn.setToolTip("Open " + self.full_vialNum + " for " + str(self.valve_dur_spinbox.value()) + " seconds")
 
-
 class slave_8vials(QGroupBox):
 
     def __init__(self, parent, name):
@@ -422,7 +453,6 @@ class slave_8vials(QGroupBox):
         for v in range(config_olfa.vialsPerSlave):
             self.vials_layout.addWidget(self.vials[v])
 
-
 class olfactometer_window(QGroupBox):
     
     def __init__(self):
@@ -432,6 +462,7 @@ class olfactometer_window(QGroupBox):
         self.active_slaves = []
         self.def_timebt = config_olfa.def_timebt
         self.vialsPerSlave = config_olfa.vialsPerSlave
+        self.zmq_enabled = False
         
         # look for calibration table directory
         self.flow_cal_dir = utils.find_calibration_table_directory()
@@ -455,12 +486,14 @@ class olfactometer_window(QGroupBox):
         self.create_slave_groupbox()
         self.create_settings_groupbox()
         self.create_raw_comm_groupbox()
+        self.create_zmq_groupbox()
         
         mainLayout = QGridLayout()
         self.setLayout(mainLayout)
         mainLayout.addWidget(self.connect_box,          0,0,1,1)      # row, column, rowSpan, columnSpan
         mainLayout.addWidget(self.master_groupbox,      1,0,1,1)
-        mainLayout.addWidget(self.settings_groupbox,    0,1,2,1)
+        mainLayout.addWidget(self.zmq_groupbox,         0,1)#,2,1)
+        mainLayout.addWidget(self.settings_groupbox,    1,1)#,2,1)
         mainLayout.addWidget(self.raw_comm_box,         0,2,2,1)
         mainLayout.addWidget(self.slave_groupbox,       2,0,1,3)
         
@@ -537,6 +570,16 @@ class olfactometer_window(QGroupBox):
         layout.addLayout(manualcmd_layout)
         self.master_groupbox.setLayout(layout)
         
+    def create_zmq_groupbox(self):
+        self.zmq_groupbox = QGroupBox('ZMQ Settings')
+
+        self.zmq_checkbox = QCheckBox('Enable ZMQ Connection')
+        self.zmq_checkbox.stateChanged.connect(self.toggle_zmq_connection)
+
+        layout = QHBoxLayout()
+        layout.addWidget(self.zmq_checkbox)
+        self.zmq_groupbox.setLayout(layout)
+
     def create_settings_groupbox(self):
         self.settings_groupbox = QGroupBox('Other Settings')
         
@@ -840,6 +883,20 @@ class olfactometer_window(QGroupBox):
             self.refresh_btn.setEnabled(True)
             self.port_widget.setEnabled(True)
     
+    # ZMQ STUFF
+    def toggle_zmq_connection(self,state):
+        """Enables or disables the ZMQ server based on checkbox state."""
+        if state == 2:   # if checked
+            logger.info("Starting ZMQ server...")
+            self.thread_zmq_worker = worker_zmq_thread()
+            self.thread_zmq_worker.w_send_message.connect(self.send_to_master)
+            self.thread_zmq_worker.thread_on = True
+            self.thread_zmq_worker.start()
+        else:
+            logger.info("Stopping ZMQ server...")
+            self.thread_zmq_worker.thread_on = False
+            self.thread_zmq_worker.quit()
+
     # COMMUNICATION
     def get_slave_addresses(self):
         self.prev_active_slaves = copy.copy(self.active_slaves)
