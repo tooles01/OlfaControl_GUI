@@ -1,5 +1,6 @@
-pyqt5==5.15.9
-pyserial==3.5
-numpy==1.26.2
-nidaqmx==0.8.0
+pyqt5
+pyserial
+numpy
+nidaqmx
 pyqtgraph
+zmq
