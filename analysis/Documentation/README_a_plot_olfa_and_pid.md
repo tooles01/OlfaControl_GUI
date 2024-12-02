@@ -79,17 +79,20 @@ Plot olfactometer & PID data over time
 <br>
 
 ### Axis Limits  
-**pid_ylims - Y-Limits for PID data**  
+**pid_lims - Y-Limits for PID data**  
 &nbsp;&nbsp;[0 3] (default) | two-element vector  
-**flow_ylims - Y-Limits for Olfa flow data**  
+**flow_lims - Y-Limits for Olfa flow data**  
 &nbsp;&nbsp;two-element vector  
-**ctrl_ylims - Y-Limits for Olfa ctrl data**  
+**ctrl_lims - Y-Limits for Olfa ctrl data**  
 &nbsp;&nbsp;[-5 260] (default) | two-element vector  
 <br>
 
 ** need to finish shifting stuff over to input arguments probably
 <br>
 
+### Other
+**fig_position - Location and size of figure**  
+&nbsp;&nbsp;[ left bottom width height]  
 
 ## Dependencies
 - get_section_data

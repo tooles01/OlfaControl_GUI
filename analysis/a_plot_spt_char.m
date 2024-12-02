@@ -59,7 +59,8 @@ arguments
         plot_opts.show_pid_mean     (1,1) string = 'no'     % Overlay mean PID value on plot
         plot_opts.show_flow_mean    (1,1) string = 'no'     % Overlay mean flow value on plot
         plot_opts.show_x_lines      (1,1) string = 'no'     % Overlay x-lines of where the mean was calculated from
-        
+
+        plot_opts.fig_position          (1,:) double = [1050 230 812 709]        
     end
 
 %%
@@ -345,9 +346,9 @@ try
     %% Plot: Flow v. PID
     
     % Create figure
-    f2 = figure; f2.NumberTitle = 'off'; f2.Position = f.f2_position; hold on;
+    f2 = figure; f2.NumberTitle = 'off'; f2.Position = plot_opts.fig_position; hold on;
     %f2.Name = ['FLOW v. PID: ',a_thisfile_name];
-    f2.Name = 'FLOW v. PID:';
+    f2.Name = 'FLOW v. PID';
     title(['FLOW v. PID:     ', a_thisfile_name]);
     subtitle(a_this_note);
     legend('Location','northwest');

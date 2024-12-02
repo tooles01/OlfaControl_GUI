@@ -187,6 +187,8 @@ Can add:
 ### Other
 **show_error_bars - Display error bars on Flow vs. PID plot**  
 &nbsp;&nbsp;'no' (default) | 'yes'  
+**fig_position - Location and size of figure**  
+&nbsp;&nbsp;[ left bottom width height]  
 <br>
 
 ### Data manipulation

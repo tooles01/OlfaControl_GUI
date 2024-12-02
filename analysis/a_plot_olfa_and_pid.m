@@ -40,9 +40,11 @@ function a_plot_olfa_and_pid(a_thisfile_name,plot_opts)
         plot_opts.plot_in_minutes   (1,1) string = 'no'
 
         % Axis Limits
-        plot_opts.pid_ylims     (1,:) double = [0 3]
-        plot_opts.flow_ylims    (1,:) double = [ ]
-        plot_opts.ctrl_ylims    (1,:) double = [-5 260]
+        plot_opts.pid_lims      (1,:) double = [0 3]
+        plot_opts.flow_lims     (1,:) double = [ ]
+        plot_opts.ctrl_lims     (1,:) double = [-5 260]
+
+        plot_opts.fig_position  (1,:) double = [166 210 1300 600]    % for PowerPoint
     end
 
 %%
@@ -209,7 +211,7 @@ try
     %% Create figure
     figTitle = a_thisfile_name;
     if ~strcmp(a_this_note, ''); figTitle = append(figTitle, ': ',  a_this_note); end
-    f1 = figure; f1.NumberTitle = 'off'; f1.Position = f.position; hold on;
+    f1 = figure; f1.NumberTitle = 'off'; f1.Position = plot_opts.fig_position; hold on;
     f1.Name = a_thisfile_name;
     title(a_thisfile_name)
     subtitle(a_this_note)
@@ -267,7 +269,7 @@ try
                     d_olfa_flow_x = d_olfa_flow(i).flow.flow_sccm(:,1);
                     d_olfa_flow_y = d_olfa_flow(i).flow.flow_sccm(:,2);
                     ylabel('Olfa flow (SCCM)')
-                    if ~isempty(plot_opts.flow_ylims); ylim(plot_opts.flow_ylims)
+                    if ~isempty(plot_opts.flow_lims); ylim(plot_opts.flow_lims)
                     else; ylim([-5 120]); end
                 end
             else
@@ -276,7 +278,7 @@ try
                     d_olfa_flow_x = d_olfa_flow(i).flow.flow_int(:,1);
                     d_olfa_flow_y = d_olfa_flow(i).flow.flow_int(:,2);
                     ylabel('Olfa flow (integer values)')
-                    if ~isempty(plot_opts.flow_ylims); ylim(plot_opts.flow_ylims)
+                    if ~isempty(plot_opts.flow_lims); ylim(plot_opts.flow_lims)
                     else; ylim([0 1024]); end
                 end
             end
@@ -351,7 +353,7 @@ try
                         yyaxis right;
                     end
                     ylabel('Prop valve value (int)')
-                    ylim(plot_opts.ctrl_ylims);
+                    ylim(plot_opts.ctrl_lims);
                 end
             end
 
@@ -398,7 +400,7 @@ try
             d_pid_y = data_pid(:,2);
             f1_ax.YColor = f.PID_color;
             ylabel('PID output (V)');
-            f1_ax.YLim = plot_opts.pid_ylims;
+            f1_ax.YLim = plot_opts.pid_lims;
 
             % If selected: scale time
             if strcmp(f.scale_time,'yes')
