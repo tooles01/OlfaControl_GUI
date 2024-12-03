@@ -30,7 +30,6 @@ logger.addHandler(console_handler)
 logger.addHandler(file_handler)
 logger.debug('log file located at: %s', main_datafile_directory)
 ##############################
-# test
 
 
 class worker_sptChar(QObject):
@@ -309,7 +308,7 @@ class mainWindow(QMainWindow):
     def create_general_settings_box(self):
         self.general_settings_box = QGroupBox('General Settings')
 
-        # get location of log file (from logger)
+        # Get location of log file (from logger)
         self.log_file_dir = ''
         for r in logger.handlers:
             this_handler_type = type(r).__name__
@@ -351,9 +350,9 @@ class mainWindow(QMainWindow):
     ##############################
     
     def create_datafile_box(self):
-        self.datafile_groupbox = QGroupBox('Data file')
+        self.datafile_groupbox = QGroupBox('Data File')
 
-        # get today's file directory
+        # Determine today's file directory
         self.today_resultfiles_dir = main_datafile_directory + '\\' + current_date
         '''
         # TODO does this need to be here? or should these be when we start recording to a file
@@ -385,7 +384,7 @@ class mainWindow(QMainWindow):
         else:
             self.last_datafile_number = -1
         
-        # create data file name
+        # Create datafile name
         self.this_datafile_number = self.last_datafile_number + 1
         self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2) # zero pad
         data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
@@ -394,17 +393,16 @@ class mainWindow(QMainWindow):
         self.data_file_name_lineEdit = QLineEdit(text=data_file_name)
         self.data_file_textedit = QTextEdit(readOnly=True)
         self.data_file_dir_lineEdit = QLineEdit(text=self.today_resultfiles_dir,readOnly=True)
-
-        # things for header
-        self.data_file_pid_gain_lbl = QLabel('PID gain: ')
         self.data_file_pid_gain = QLineEdit(text=config_main.default_pid_gain)
-        self.data_file_notes_lbl = QLabel('Notes:')
         self.data_file_notes_wid = QLineEdit()
         
         # BUTTONS
-        self.begin_record_btn = QPushButton(text='Create File && Begin Recording',checkable=True,clicked=self.begin_record_btn_clicked)
-        self.end_record_btn = QPushButton(text='End Recording',checkable=True,clicked=self.end_recording)
+        self.begin_record_btn = QPushButton(text='Create File && Begin Recording',checkable=True)
+        self.begin_record_btn.clicked.connect(self.begin_record_btn_clicked)
+        self.end_record_btn = QPushButton(text='End Recording',checkable=True)
+        self.end_record_btn.clicked.connect(self.end_recording)
         self.end_record_btn.setEnabled(False)
+        
         record_layout = QHBoxLayout()
         record_layout.addWidget(self.begin_record_btn)
         record_layout.addWidget(self.end_record_btn)
@@ -415,8 +413,8 @@ class mainWindow(QMainWindow):
         layout.addRow(QLabel('File Name:'),self.data_file_name_lineEdit)
         layout.addRow(QLabel('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'))
         layout.addRow(QLabel('Things for file header:'))
-        layout.addRow(self.data_file_pid_gain_lbl,self.data_file_pid_gain)
-        layout.addRow(self.data_file_notes_lbl,self.data_file_notes_wid)
+        layout.addRow(QLabel('PID Gain:'),self.data_file_pid_gain)
+        layout.addRow(QLabel('Notes:'),self.data_file_notes_wid)
         layout.addRow(QLabel('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'))
         layout.addRow(record_layout)
         layout.addRow(self.data_file_textedit)
@@ -1075,6 +1073,9 @@ class mainWindow(QMainWindow):
     def sendThisSetpoint(self, vial_name:str, ard_val:int):
         strToSend = 'S_Sp_' + str(ard_val) + '_' + vial_name
         self.olfactometer.send_to_master(strToSend)
+
+        # write to datafile
+        self.receive_data_from_device('olfactometer ' + vial_name,'Sp',str(ard_val))
         
     def send_OpenValve(self, vial_name:str, dur:float):
         strToSend = 'S_OV_' + str(dur) + '_' + vial_name
@@ -1137,7 +1138,7 @@ class mainWindow(QMainWindow):
                         logger.warning('last datafile in this folder is %s',last_datafile)
             if not os.path.exists(self.today_olfa_48line_resultfiles_dir):
                 os.mkdir(self.today_olfa_48line_resultfiles_dir)
-                logger.debug('created today folder at %s',self.today_olfa_48line_resultfiles_dir)   # TODO don't make this folder until it's time to start recording
+                logger.debug('created today folder at %s',self.today_olfa_48line_resultfiles_dir)   # TODO don't make this folder until it's time to start recording!!!!!!! -11/22/24
                 self.last_datafile_number = -1
             self.data_file_dir_lineEdit.setText(self.today_olfa_48line_resultfiles_dir)
             # update datafile number
