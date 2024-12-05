@@ -93,6 +93,10 @@ Plot olfactometer & PID data over time
 ### Other
 **fig_position - Location and size of figure**  
 &nbsp;&nbsp;[ left bottom width height]  
+**flow_width - LineWidth for flow data**  
+&nbsp;&nbsp;1 (default) | positive value  
+**pid_width - LineWidth for PID data**  
+&nbsp;&nbsp;1.5 (default) | positive value  
 
 ## Dependencies
 - get_section_data

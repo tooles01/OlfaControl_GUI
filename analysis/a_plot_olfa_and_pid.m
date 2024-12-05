@@ -44,18 +44,17 @@ function a_plot_olfa_and_pid(a_thisfile_name,plot_opts)
         plot_opts.flow_lims     (1,:) double = [ ]
         plot_opts.ctrl_lims     (1,:) double = [-5 260]
 
-        plot_opts.fig_position  (1,:) double = [166 210 1300 600]    % for PowerPoint
+        % Other
+        plot_opts.fig_position  (1,:) double = [166 210 1300 600]
+        plot_opts.flow_width    (1,:) double = 1
+        plot_opts.pid_width     (1,:) double = 1.5
     end
 
-%%
-%close all
 set(0,'DefaultTextInterpreter','none')
 
-%% Display variables
+%% Display Variables
 f = struct();   % struct containing all figure variables
 f.position = [30 200 1700 700];
-f.flow_width = 1;
-f.pid_width = 1;
 f.x_lim = [];
 f.calibration_value = [];
 f.PID_color = '#77AC30';
@@ -82,7 +81,6 @@ f.c_colors{6} = f.colors{1};    % blue
 f.c_colors{7} = f.colors{2};    % purple
 f.c_colors{8} = f.colors{3};    % dark red
 f.c_colors{9} = f.colors{4};    % orange
-
 
 %% Find OlfaControl_GUI directory (& add to path)
 
@@ -112,7 +110,6 @@ clearvars c_*
 %f.position = [166 600 775 275];     % for OneNote
 f.position = [166 210 1300 600];    % for PowerPoint
 %f.position = [166 210 650 600];    % for PowerPoint (1/2 size)
-f.pid_width = 1.5;
 
 %% Load *.mat file
 
@@ -176,7 +173,7 @@ try
                     p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
                 end
             end
-            p.LineWidth = f.flow_width;
+            p.LineWidth = plot_opts.flow_width;
             p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
             ylim([0 100]);
     
@@ -196,7 +193,7 @@ try
 
                     % Plot
                     p2 = plot(this_pid_data_shifted(:,1),this_pid_data_shifted(:,2),'DisplayName','PID');
-                    p2.LineWidth = f.pid_width;
+                    p2.LineWidth = plot_opts.pid_width;
                 end
             end
     
@@ -243,7 +240,7 @@ try
     %}
     
     % Set X axis label
-    if strcmp(plot_opts.plot_in_minutes,'no');  xlabel('Time (s)');
+    if strcmp(plot_opts.plot_in_minutes,'no');  xlabel('Time (sec)');
     else;                                       xlabel('Time (min)'); end
     % Set X limits
     if ~isempty(f.x_lim)
@@ -289,7 +286,7 @@ try
                     % scale time to zero
                     d_olfa_flow_x = d_olfa_flow_x - f.x_lim(1);
                     % readjust x limits
-                    xlim([-.5 16]);                
+                    xlim([-.5 16]);
                 end
             end
             
@@ -302,7 +299,7 @@ try
             try
                 p = plot(d_olfa_flow_x,d_olfa_flow_y);
                 %p = scatter(d_olfa_flow_x,d_olfa_flow_y,'filled');
-                p.LineWidth = f.flow_width;
+                p.LineWidth = plot_opts.flow_width;
                 p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
                 p.Color = this_color;
             % Error message in case no flow values available
@@ -416,7 +413,7 @@ try
 
             % Plot PID
             p2 = plot(d_pid_x,d_pid_y,'DisplayName','PID');
-            p2.LineWidth = f.pid_width;
+            p2.LineWidth = plot_opts.pid_width;
             p2.Color = f.PID_color;
         else
             disp('---> No PID data available to plot')
