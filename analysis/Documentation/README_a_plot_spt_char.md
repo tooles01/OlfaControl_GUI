@@ -48,47 +48,37 @@ Can add:
 
 <br>
 
-### Other plot options:
+### Additional plots:
 
 <details><summary>Plot each event individually</summary>
-  <br>
+<br>
 
-  `a_plot_spt_char('2024-10-16_datafile_00',plot_all='yes');`  
-  <p align="center">
-    <img src="images/examples/spt_char_plot_all_01.jpg" width="30%">
-    <img src="images/examples/spt_char_plot_all_02.jpg" width="30%">
-  </p>
-  <br><br>
+`a_plot_spt_char('2024-10-16_datafile_00',pid_lims=[-.01 .5],plot_all='yes');`  
+<img src="images/examples/spt_char_plot_all_01.jpg" width="30%">
+<img src="images/examples/spt_char_plot_all_02.jpg" width="30%">
+<br><br>
 
-  **Overlay flow/PID mean values:**  
-  Show calculated flow/PID mean on top of individual plots  
-  
-  `a_plot_spt_char('2024-01-09_datafile_01',plot_all='yes',show_flow_mean='yes',show_pid_mean='yes');`
-  <p align="center">
-    <img src="images/examples/spt_char_plot_all_01_means.jpg" width="30%">
-    <img src="images/examples/spt_char_plot_all_02_means.jpg" width="30%">
-  </p>
-  <br><br>
+**Show calculated flow mean & PID mean**  
+`a_plot_spt_char('2024-10-16_datafile_00',pid_lims=[-.01 .5],plot_all='yes',show_flow_mean='yes',show_pid_mean='yes');`  
+<img src="images/examples/spt_char_plot_all_flow_pid_mean_01.jpg" width="30%">
+<img src="images/examples/spt_char_plot_all_flow_pid_mean_02.jpg" width="30%">
+<br><br>
 
-  **Overlay flow/PID mean values *AND* X-lines**  
-  X-lines show the timeframe where the mean was calculated from (usually relevant when time has been cut from the beginning of the trial)  
+**Show calculated flow mean, PID mean, *AND* X-lines**  
+X-lines show the timeframe where the mean was calculated from (usually relevant when time has been cut from the beginning of the trial)  
 
-  `a_plot_spt_char('2024-01-09_datafile_01',plot_all='yes',show_flow_mean='yes',show_pid_mean='yes',show_x_lines='yes');`
-  <p align="center">
-    <img src="images/examples/spt_char_plot_all_01_means_xlines.jpg" width="30%">
-    <img src="images/examples/spt_char_plot_all_02_means_xlines.jpg" width="30%">
-  </p>
-  <br><br>
-
+`a_plot_spt_char('2024-10-16_datafile_00',pid_lims=[-.01 .5],plot_all='yes',show_flow_mean='yes',show_pid_mean='yes',show_x_lines='yes',time_to_cut=2);`  
+<img src="images/examples/spt_char_plot_all_means_xlines_01.jpg" width="30%">
+<img src="images/examples/spt_char_plot_all_means_xlines_02.jpg" width="30%">
+<br><br>
 </details>
 
 
 <details><summary>Plot entire trial over time</summary>
-  <br>
+<br>
 
-  `a_plot_spt_char('2024-01-09_datafile_01');`
-  <p align="center"><img src="images/examples/spt_char_overtime.jpg" width="50%"></p>
-
+`a_plot_spt_char('2024-01-09_datafile_01');`  
+<img src="images/examples/spt_char_overtime.jpg" width="50%">
 </details>
 <br>
 
@@ -107,7 +97,7 @@ Can add:
 3. **Cuts additional time from beginning of each event section**  
     <details>
     
-    - User specifies # of seconds in `c.time_to_cut`
+    - User specifies # of seconds in `plot_opts.time_to_cut`
     - Recalculates means & standard deviations (adds them back into the structs)
     </details>
 
@@ -149,11 +139,9 @@ Can add:
   </p>
 
 ## Input Arguments
-<br>
 
 **fileName - Name of file to be plotted**  
-&nbsp;&nbsp;File must have already been parsed using [analysis_get_and_parse_files](README_analysis_get_and_parse_files.md)
-
+&nbsp;&nbsp;File must have already been parsed using [analysis_get_and_parse_files](README_analysis_get_and_parse_files.md)  
 <br>
 
 ### Data to plot:
@@ -179,9 +167,9 @@ Can add:
 
 ### Axis Limits  
 **pid_lims - Y-Limits for PID data**  
-&nbsp;&nbsp;[0 7] (default) | two-element vector  
-**olfa_lims_sccm - Y-Limits for Olfa flow data**  
-&nbsp;&nbsp;[0 105] (default) | two-element vector  
+&nbsp;&nbsp;[0 3] (default) | two-element vector  
+**flow_lims_sccm - Y-Limits for Olfa flow data**  
+&nbsp;&nbsp;[0 120] (default) | two-element vector  
 <br>
 
 ### Other
@@ -214,27 +202,23 @@ The following options only apply if `plot_all` is set to `'yes'`.
 **show_x_lines - Plot X-lines marking the region where the mean was calculated from**  
 &nbsp;&nbsp;'no' (default) | 'yes'  
 
+<!--
 <details><summary>More details on individual event plots</summary>
 
-<p align="center">Individual event plots without any overlays</p>
-<p align="center">
-  <img src="images/examples/spt_char_plot_all_01.jpg" width="30%">
-  <img src="images/examples/spt_char_plot_all_02.jpg" width="30%">
-</p>
+#### Default:
+<img src="images/examples/spt_char_plot_all_01.jpg" width="30%">
 
-<p align="center">Individual event plots with flow mean and PID mean overlays</p>
-<p align="center">
-  <img src="images/examples/spt_char_plot_all_means_01.jpg" width="30%">
-  <img src="images/examples/spt_char_plot_all_means_02.jpg" width="30%">
-</p>
+#### Flow/PID mean:
+<img src="images/examples/spt_char_plot_all_flow_mean.jpg" width="30%">
+<img src="images/examples/spt_char_plot_all_pid_mean.jpg" width="30%">
 
-<p align="center">Individual event plots with flow mean, PID mean, and X-line overlays</p>
-<p align="center">
-  <img src="images/examples/spt_char_plot_all_means_xlines_01.jpg" width="30%">
-  <img src="images/examples/spt_char_plot_all_means_xlines_02.jpg" width="30%">
-</p>
+#### X-lines:
+<img src="images/examples/spt_char_plot_all_x_lines_01.jpg" width="30%">
+<img src="images/examples/spt_char_plot_all_x_lines_02.jpg" width="30%">
 
 </details>
+<br>
+-->
 
 ## Dependencies
 - get_section_data

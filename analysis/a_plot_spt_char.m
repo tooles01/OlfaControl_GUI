@@ -44,23 +44,23 @@ arguments
         plot_opts.plot_in_minutes   (1,1) string = 'no'
 
         % Axis Limits
-        plot_opts.pid_lims          (1,:) double = [0 7]
-        plot_opts.olfa_lims_sccm    (1,:) double = [0 105]
-        
-        % Other
-        plot_opts.show_error_bars   (1,1) string = 'no'
-        plot_opts.time_to_cut       (1,:) double = 0        % time to cut off beginning of each section
+        plot_opts.pid_lims          (1,:) double = [0 3]
+        plot_opts.flow_lims_sccm    (1,:) double = [0 120]
         
         % Additional Figures
         plot_opts.plot_over_time    (1,1) string = 'no'     % plot the entire trial over time
         plot_opts.plot_all          (1,1) string = 'no'     % plot each event individually
         
+        % Other
+        plot_opts.show_error_bars   (1,1) string = 'no'
+        plot_opts.time_to_cut       (1,:) double = 0        % time to cut off beginning of each section
+        plot_opts.fig_position      (1,:) double = [1050 230 812 709]
+        plot_opts.x_lim             (1,:) double = []
+        
         % For individual event plots
         plot_opts.show_pid_mean     (1,1) string = 'no'     % Overlay mean PID value on plot
         plot_opts.show_flow_mean    (1,1) string = 'no'     % Overlay mean flow value on plot
         plot_opts.show_x_lines      (1,1) string = 'no'     % Overlay x-lines of where the mean was calculated from
-
-        plot_opts.fig_position          (1,:) double = [1050 230 812 709]        
     end
 
 %%
@@ -69,8 +69,8 @@ set(0,'DefaultTextInterpreter','none')
 
 %% Display variables
 f = struct();   % struct containing all figure variables
-f.x_lim = [];
-f.olfa_lims_int = [];
+%f.x_lim = [];
+f.flow_lims_int = [];
 f.flow_width = 1;
 f.pid_width = 1.5;
 f.dot_size = 60;
@@ -81,11 +81,13 @@ f.colors{2} = '#A2142F';
 f.colors{3} = '#D95319';
 f.colors{4} = '#7E2F8E';
 
+% For plot over time
 f0.position = [140 230 1355 686];   % wide - for over time
-%f.position = [166 230 650 600];    % for PowerPoint (1/2 size)
-%f.position = [960 230 780 686];    % not that small
-f.position = [175 230 812 709];
-f.f2_position = [1050 230 812 709];
+
+% For individual plots
+%f.position = [175 230 650 600];    % for PowerPoint (1/2 size)
+%f.position = [175 230 812 709];     % standard
+f.position = [175 230 412 350];     % small - for individual event plot documentation
 
 
 %% Find OlfaControl_GUI directory (& add to path)
@@ -171,8 +173,8 @@ try
         
         % Set X-limits
         xlabel('Time (s)');
-        if ~isempty(f.x_lim)
-            xlim(f.x_lim);
+        if ~isempty(plot_opts.x_lim)
+            xlim(plot_opts.x_lim);
         else
             t_end = data_time_raw(end,1);
             xlim([0 t_end]);
@@ -189,7 +191,7 @@ try
                     if ~isempty(d_olfa_flow(i).flow.flow_sccm)
                         ylabel('Olfa flow (SCCM)')
                         p = plot(d_olfa_flow(i).flow.flow_sccm(:,1),d_olfa_flow(i).flow.flow_sccm(:,2));
-                        if ~isempty(plot_opts.olfa_lims_sccm); ylim(plot_opts.olfa_lims_sccm)
+                        if ~isempty(plot_opts.flow_lims_sccm); ylim(plot_opts.flow_lims_sccm)
                         else; ylim([-5 150]); end
                     end
                 else
@@ -197,7 +199,7 @@ try
                     if ~isempty(d_olfa_flow(i).flow.flow_int)
                         ylabel('Olfa flow (integer values)')
                         p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
-                        if ~isempty(f.olfa_lims_int); ylim(f.olfa_lims_int)
+                        if ~isempty(f.flow_lims_int); ylim(f.flow_lims_int)
                         else; ylim([0 1024]); end
                     end
                 end
@@ -211,7 +213,7 @@ try
                     p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
                     p.LineWidth = f.flow_width;
                     p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
-                    if ~isempty(f.olfa_lims_int); ylim(f.olfa_lims_int)
+                    if ~isempty(f.flow_lims_int); ylim(f.flow_lims_int)
                     else; ylim([0 1024]); end
                 end
             end
@@ -254,7 +256,7 @@ try
                 %figTitle = ['calculated mean from ' num2str(how_much_to_cut) 's into event'];
                 %title(figTitle);
                 
-                % Plot: Olfa flow
+                %% Plot: Olfa flow
                 if strcmp(plot_opts.flow_in_SCCM,'yes')
                     if ~isempty(d_olfa_flow(i).cal_table_name)
                         % Plot as SCCM
@@ -274,7 +276,7 @@ try
                             p = plot(this_flow_data_shifted(:,1),this_flow_data_shifted(:,2));
                             p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
                             p.Color = f.colors{i};
-                            ylim([plot_opts.olfa_lims_sccm]);
+                            ylim([plot_opts.flow_lims_sccm]);
                             
                             this_flow_val_sccm = d_olfa_flow(i).sccm_means(e,1);
                             if strcmp(plot_opts.show_flow_mean,'yes')
@@ -303,7 +305,7 @@ try
                 p.LineWidth = f.flow_width;
                 p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
         
-                % Plot: PID
+                %% Plot: PID
                 if ~isempty(data_pid)
                     yyaxis right; colororder('#77AC30');  f1_ax.YColor = '#77AC30';
                     ylabel('PID output (V)');
@@ -316,8 +318,9 @@ try
                     p2.LineWidth = f.pid_width;
                     
                     this_pid_val = d_olfa_flow(i).sccm_means(e,2);
-                    % plot line at the mean
+                    % Plot line at the mean
                     if strcmp(plot_opts.show_pid_mean,'yes')
+                        this_x_coord = [plot_opts.time_to_cut;d_olfa_flow(i).events.OV_keep(e).t_duration];
                         p_pid_mean = plot(this_x_coord,[this_pid_val;this_pid_val],'LineWidth',4);% TODO error if show_flow_mean is not selected
                         p_pid_mean.LineStyle = '-';
                         p_pid_mean.DisplayName = ['PID mean: ' num2str(round(this_pid_val,2)) ' V'];
@@ -363,12 +366,12 @@ try
             if strcmp(plot_opts.flow_in_SCCM,'no')
                 p = scatter(d_olfa_flow(i).int_means(:,1),d_olfa_flow(i).int_means(:,2),f.dot_size,'filled');
                 xlabel('Olfa flow (int)');
-                if ~isempty(f.olfa_lims_int); f2_ax.XLim = f.olfa_lims_int; end
+                if ~isempty(f.flow_lims_int); f2_ax.XLim = f.flow_lims_int; end
             end
             if strcmp(plot_opts.flow_in_SCCM,'yes')
                 p = scatter(d_olfa_flow(i).sccm_means(:,1),d_olfa_flow(i).sccm_means(:,2),f.dot_size,'filled');
                 xlabel('Olfa flow (SCCM)');
-                if ~isempty(plot_opts.olfa_lims_sccm); f2_ax.XLim = plot_opts.olfa_lims_sccm; end
+                if ~isempty(plot_opts.flow_lims_sccm); f2_ax.XLim = plot_opts.flow_lims_sccm; end
             end
             p.DisplayName = d_olfa_flow(i).vial_num;
             p.MarkerFaceColor = f.colors{i};
