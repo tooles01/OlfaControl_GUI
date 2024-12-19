@@ -8,9 +8,11 @@
 `a_plot_spt_char(filename)` plots the setpoint characterization figure (flow vs. PID) of the given file.  
 `a_plot_spt_char(filename,plot_opts)` plots the setpoint characterization figure (flow vs. PID) of the given file using the additional plot options specified.  
 <br>
+<!--
 `a_plot_spt_char(filename,over_time,plot_opts)` # tentative
 <br>
 <br>
+-->
 
 <!--
 Options that always apply:
@@ -38,14 +40,16 @@ Can add:
   `a_plot_spt_char('2024-01-09_datafile_01');`
   - Loads .mat file
   - Calculates mean flow/PID for each event (Cuts 0 seconds from beginning/end)
-  - Plots flow v. PID
-  <p align="center"><img src="images/examples/spt_char_default.jpg" width="40%"></p>
+  - Plots flow v. PID  
+
+<img src="images/examples/spt_char_default.jpg" width="40%">
+<br><br>
 
   **Show error bars:**  
-  `a_plot_spt_char('2024-01-09_datafile_01');`
-  <p align="center"><img src="images/examples/spt_char_default_errorbars.jpg" width="40%"></p>
+  `a_plot_spt_char('2024-01-09_datafile_01');`  
+  
+  <img src="images/examples/spt_char_default_errorbars.jpg" width="40%">
 </details>
-
 <br>
 
 ### Additional plots:
@@ -53,20 +57,20 @@ Can add:
 <details><summary>Plot each event individually</summary>
 <br>
 
+**Default:**  
 `a_plot_spt_char('2024-10-16_datafile_00',pid_lims=[-.01 .5],plot_all='yes');`  
 <img src="images/examples/spt_char_plot_all_01.jpg" width="30%">
 <img src="images/examples/spt_char_plot_all_02.jpg" width="30%">
 <br><br>
 
-**Show calculated flow mean & PID mean**  
+**Show calculated flow mean & PID mean:**  
 `a_plot_spt_char('2024-10-16_datafile_00',pid_lims=[-.01 .5],plot_all='yes',show_flow_mean='yes',show_pid_mean='yes');`  
 <img src="images/examples/spt_char_plot_all_flow_pid_mean_01.jpg" width="30%">
 <img src="images/examples/spt_char_plot_all_flow_pid_mean_02.jpg" width="30%">
 <br><br>
 
-**Show calculated flow mean, PID mean, *AND* X-lines**  
+**Show calculated flow mean, PID mean, *AND* X-lines:**  
 X-lines show the timeframe where the mean was calculated from (usually relevant when time has been cut from the beginning of the trial)  
-
 `a_plot_spt_char('2024-10-16_datafile_00',pid_lims=[-.01 .5],plot_all='yes',show_flow_mean='yes',show_pid_mean='yes',show_x_lines='yes',time_to_cut=2);`  
 <img src="images/examples/spt_char_plot_all_means_xlines_01.jpg" width="30%">
 <img src="images/examples/spt_char_plot_all_means_xlines_02.jpg" width="30%">
@@ -133,10 +137,7 @@ X-lines show the timeframe where the mean was calculated from (usually relevant 
 6. **Plots flow v. PID** (mean value over duration of each event)  
   If selected: **Plots error bars**
   `plot_opts.show_error_bars`
-  <p align="center">
-    <img src="images/examples/spt_char_default.jpg" width="30%">
-    <img src="images/examples/spt_char_default_errorbars.jpg" width="30%">
-  </p>
+  <p align="center"><img src="images/examples/spt_char_default.jpg" width="30%"></p>
 
 ## Input Arguments
 
@@ -162,7 +163,7 @@ X-lines show the timeframe where the mean was calculated from (usually relevant 
 &nbsp;&nbsp;&nbsp;&nbsp;Plot ctrl values in V - if 'no' is selected, integer values will be plotted.  
 **plot_in_minutes - Plot trial over minutes instead of seconds**  
 &nbsp;&nbsp;'no' (default) | 'yes'  
-^^^TODO can probably remove  
+<!--^^^TODO can probably remove-->
 <br>
 
 ### Axis Limits  
