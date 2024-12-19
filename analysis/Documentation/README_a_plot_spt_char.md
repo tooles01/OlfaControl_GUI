@@ -46,7 +46,7 @@ Can add:
 <br><br>
 
   **Show error bars:**  
-  `a_plot_spt_char('2024-01-09_datafile_01');`  
+  `a_plot_spt_char('2024-01-09_datafile_01',show_error_bars='yes');`  
   
   <img src="images/examples/spt_char_default_errorbars.jpg" width="40%">
 </details>
