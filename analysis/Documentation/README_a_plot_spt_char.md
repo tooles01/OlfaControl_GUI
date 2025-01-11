@@ -178,6 +178,8 @@ X-lines show the timeframe where the mean was calculated from (usually relevant 
 &nbsp;&nbsp;'no' (default) | 'yes'  
 **fig_position - Location and size of figure**  
 &nbsp;&nbsp;[ left bottom width height]  
+**legend_on - Display legend on figure**  
+&nbsp;&nbsp;'yes' (default) | 'no'  
 <br>
 
 ### Data manipulation

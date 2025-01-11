@@ -56,6 +56,7 @@ arguments
         plot_opts.time_to_cut       (1,:) double = 0        % time to cut off beginning of each section
         plot_opts.fig_position      (1,:) double = [1050 230 812 709]
         plot_opts.x_lim             (1,:) double = []
+        plot_opts.legend_on         (1,:) string = 'yes'
         
         % For individual event plots
         plot_opts.show_pid_mean     (1,1) string = 'no'     % Overlay mean PID value on plot
@@ -168,7 +169,7 @@ try
         if ~strcmp(a_this_note, ''); figTitle_main = append(figTitle_main, ': ',  a_this_note); end
         f1 = figure; f1.NumberTitle = 'off'; f1.Position = f0.position; hold on;
         f1.Name = a_thisfile_name; title(figTitle_main)
-        legend('Location','northwest');
+        if strcmp(plot_opts.legend_on,'yes'); legend('Location','northwest'); end
         f1_ax = gca;
         
         % Set X-limits
@@ -189,7 +190,7 @@ try
                 if ~isempty(d_olfa_flow(i).cal_table_name)
                     % Plot as SCCM
                     if ~isempty(d_olfa_flow(i).flow.flow_sccm)
-                        ylabel('Olfa flow (SCCM)')
+                        ylabel('Odor flow rate (SCCM)')
                         p = plot(d_olfa_flow(i).flow.flow_sccm(:,1),d_olfa_flow(i).flow.flow_sccm(:,2));
                         if ~isempty(plot_opts.flow_lims_sccm); ylim(plot_opts.flow_lims_sccm)
                         else; ylim([-5 150]); end
@@ -197,7 +198,7 @@ try
                 else
                     % Plot as integer
                     if ~isempty(d_olfa_flow(i).flow.flow_int)
-                        ylabel('Olfa flow (integer values)')
+                        ylabel('Odor flow rate (integer values)')
                         p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
                         if ~isempty(f.flow_lims_int); ylim(f.flow_lims_int)
                         else; ylim([0 1024]); end
@@ -209,7 +210,7 @@ try
             else
                 % Plot as integer
                 if ~isempty(d_olfa_flow(i).flow.flow_int)
-                    ylabel('Olfa flow (integer values)')
+                    ylabel('Odor flow (integer values)')
                     p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
                     p.LineWidth = f.flow_width;
                     p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
@@ -250,7 +251,7 @@ try
         
                 f1 = figure; f1.NumberTitle = 'off'; f1.Position = f.position; hold on;
                 f1.Name = a_thisfile_name;
-                legend('Location','northeast');
+                if strcmp(plot_opts.legend_on,'yes'); legend('Location','northeast'); end
                 f1_ax = gca;
                 xlabel('Time (s)');
                 %figTitle = ['calculated mean from ' num2str(how_much_to_cut) 's into event'];
@@ -261,7 +262,7 @@ try
                     if ~isempty(d_olfa_flow(i).cal_table_name)
                         % Plot as SCCM
                         if ~isempty(d_olfa_flow(i).flow.flow_sccm)
-                            ylabel('Olfa flow (SCCM)')
+                            ylabel('Odor flow rate (SCCM)')
     
                             % Get data for this section
                             this_flow_data_shifted = [];
@@ -291,14 +292,14 @@ try
                     else
                         % Plot as integer - pls don't do this I didn't finish the script
                         if ~isempty(d_olfa_flow(i).flow.flow_int)
-                            ylabel('Olfa flow (integer values)')
+                            ylabel('Odor flow rate (integer values)')
                             p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
                         end
                     end
                 else
                     % Plot as integer
                     if ~isempty(d_olfa_flow(i).flow.flow_int)
-                        ylabel('Olfa flow (integer values)')
+                        ylabel('Odor flow rate (integer values)')
                         p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
                     end
                 end
@@ -352,11 +353,11 @@ try
     f2 = figure; f2.NumberTitle = 'off'; f2.Position = plot_opts.fig_position; hold on;
     %f2.Name = ['FLOW v. PID: ',a_thisfile_name];
     f2.Name = 'FLOW v. PID';
-    title(['FLOW v. PID:     ', a_thisfile_name]);
+    title(a_thisfile_name);
     subtitle(a_this_note);
-    legend('Location','northwest');
+    if strcmp(plot_opts.legend_on,'yes'); legend('Location','northwest'); end
     f2_ax = gca;
-    ylabel('PID (V)')
+    ylabel('PID reading (V)')
     if ~isempty(plot_opts.pid_lims); ylim(plot_opts.pid_lims); end
     
     % For each vial
@@ -365,12 +366,12 @@ try
             % Plot the values for this vial
             if strcmp(plot_opts.flow_in_SCCM,'no')
                 p = scatter(d_olfa_flow(i).int_means(:,1),d_olfa_flow(i).int_means(:,2),f.dot_size,'filled');
-                xlabel('Olfa flow (int)');
+                xlabel('Odor flow rate (int)');
                 if ~isempty(f.flow_lims_int); f2_ax.XLim = f.flow_lims_int; end
             end
             if strcmp(plot_opts.flow_in_SCCM,'yes')
                 p = scatter(d_olfa_flow(i).sccm_means(:,1),d_olfa_flow(i).sccm_means(:,2),f.dot_size,'filled');
-                xlabel('Olfa flow (SCCM)');
+                xlabel('Odor flow rate (SCCM)');
                 if ~isempty(plot_opts.flow_lims_sccm); f2_ax.XLim = plot_opts.flow_lims_sccm; end
             end
             p.DisplayName = d_olfa_flow(i).vial_num;
