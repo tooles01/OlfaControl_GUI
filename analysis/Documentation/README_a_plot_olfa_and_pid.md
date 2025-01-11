@@ -32,18 +32,20 @@ Plot olfactometer & PID data over time
 	- **Plot olfa flow**
 		- For each vial:
 			- Get data to plot (SCCM or int) (`plot_opts.flow_in_SCCM`)
+				- Set Y-Limits (`plot_opts.flow_lims`)
 			- If selected: Scale time (`f.scale_time`)
 			- If selected: Change timescale to minutes (`plot_opts.plot_in_minutes`)
 			- **Plot olfa flow**
-	- If selected: **Plot olfa ctrl** (right yaxis, left if flow data is plotted) (`plot_opts.olfa_ctrl`)
+	- If selected: **Plot olfa ctrl** (`plot_opts.olfa_ctrl`) (right yaxis, left if flow data is plotted)
 		- For each vial:
 			- Get data to plot (int or voltage) (`plot_opts.ctrl_in_V`)
-			- If olfa flow is not plotted: put ctrl on left yaxis (`plot_opts.olfa_flow`)
-				- If olfa flow is plotted, put ctrl on right yaxis
+				- If plotting as integer, set Y-Limits (`plot_opts.ctrl_lims`)
+			- If olfa flow is not plotted: plot ctrl on left yaxis (else, plot on right yaxis) (`plot_opts.olfa_flow`) 
 			- If selected: Scale time (`f.scale_time`)
 			- If selected: Change timescale to minutes (`plot_opts.plot_in_minutes`)
 			- **Plot olfa ctrl**
-	- If selected: **Plot PID** (right yaxis) (`plot_opts.pid`)
+	- If selected: **Plot PID** (`plot_opts.pid`) (right yaxis, left if no flow/ctrl plotted)
+		- Set Y-Limits (`plot_opts.pid_lims`)
 		- If selected: Scale time (`f.scale_time`)
 		- If selected: Change timescale to minutes (`plot_opts.plot_in_minutes`)
 		- **Plot PID**
@@ -97,6 +99,8 @@ Plot olfactometer & PID data over time
 &nbsp;&nbsp;1 (default) | positive value  
 **pid_width - LineWidth for PID data**  
 &nbsp;&nbsp;1.5 (default) | positive value  
+**legend_on - Display legend on figure**
+&nbsp;&nbsp;'yes' (default) | 'no'
 
 ## Dependencies
 - get_section_data
