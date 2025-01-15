@@ -31,6 +31,7 @@ ZMQ_default_address = "tcp://127.0.0.1:5556"
 class worker_zmq_thread(QThread):
     finished = pyqtSignal()
     w_send_message = pyqtSignal(str)
+    w_new_setpoint = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -55,8 +56,11 @@ class worker_zmq_thread(QThread):
                     # Receive data if available
                     try:
                         data = self.zmq_socket.recv_pyobj()
-                        logger.info("Received data from ZMQ: " + data)
-                        self.w_send_message.emit(data)        # Send received data to the main thread
+                        logger.debug("Received data from ZMQ: " + data)
+                        if "S_Sp_" in data:
+                            self.w_new_setpoint.emit(data)      # If new data is a setpoint
+                        else:
+                            self.w_send_message.emit(data)      # Send received data to the main thread
                     except Exception as e:
                         logger.info(f"Error processing message: {e}")
 
@@ -487,7 +491,7 @@ class olfactometer_window(QGroupBox):
         self.create_settings_groupbox()
         self.create_raw_comm_groupbox()
         self.create_zmq_groupbox()
-        
+
         mainLayout = QGridLayout()
         self.setLayout(mainLayout)
         mainLayout.addWidget(self.connect_box,          0,0,1,1)      # row, column, rowSpan, columnSpan
@@ -496,7 +500,7 @@ class olfactometer_window(QGroupBox):
         mainLayout.addWidget(self.settings_groupbox,    1,1)#,2,1)
         mainLayout.addWidget(self.raw_comm_box,         0,2,2,1)
         mainLayout.addWidget(self.slave_groupbox,       2,0,1,3)
-        
+
         col1_max_width = self.connect_box.sizeHint().width()
         self.connect_box.setMaximumWidth(col1_max_width)
         self.master_groupbox.setMaximumWidth(col1_max_width)
@@ -569,13 +573,13 @@ class olfactometer_window(QGroupBox):
         layout.addLayout(timebt_layout)
         layout.addLayout(manualcmd_layout)
         self.master_groupbox.setLayout(layout)
-        
+    
     def create_zmq_groupbox(self):
         self.zmq_groupbox = QGroupBox('ZMQ Settings')
-
+        
         self.zmq_checkbox = QCheckBox('Enable ZMQ Connection')
         self.zmq_checkbox.stateChanged.connect(self.toggle_zmq_connection)
-
+        
         layout = QHBoxLayout()
         layout.addWidget(self.zmq_checkbox)
         self.zmq_groupbox.setLayout(layout)
@@ -672,7 +676,7 @@ class olfactometer_window(QGroupBox):
                 self.flow_cal_dir = directory_selected[0]
                 self.get_calibration_tables()
                 self.flow_cal_dir_btn.setChecked(False)
-
+        
         else:
             pass
     
@@ -801,7 +805,7 @@ class olfactometer_window(QGroupBox):
                         v.mfc_capacity = self.config_mfc_capacity.get(vial_name)
                         v.vial_details_window.setpoint_slider.setMaximum(int(v.mfc_capacity))
                         logger.debug('%s capacity set to %s', vial_name, v.mfc_capacity)
-        
+            
         except KeyError as err:
             logger.warning('Selected config file does not include Flow Sensor Capacities')
     
@@ -890,12 +894,33 @@ class olfactometer_window(QGroupBox):
             logger.info("Starting ZMQ server...")
             self.thread_zmq_worker = worker_zmq_thread()
             self.thread_zmq_worker.w_send_message.connect(self.send_to_master)
+            self.thread_zmq_worker.w_new_setpoint.connect(self.new_setpoint)
             self.thread_zmq_worker.thread_on = True
             self.thread_zmq_worker.start()
         else:
             logger.info("Stopping ZMQ server...")
             self.thread_zmq_worker.thread_on = False
             self.thread_zmq_worker.quit()
+        
+    def new_setpoint(self, str_received):
+        # Get vial number
+        idx_underscore = str_received.rfind('_')         # find last underscore
+        this_vialnum = str_received[idx_underscore+1:]   # find vial number
+
+        # Get setpoint  NOTE: this is dependent on setpoint command "S_Sp_" being 5 chars long
+        idx_Sp = 5
+        this_setpoint = str_received[idx_Sp:idx_underscore]
+
+        # Set the flowrate for this vial
+        flag = 0
+        for s in self.slave_objects:    # find out which vial this is
+            for v in s.vials:
+                if v.full_vialNum == this_vialnum:
+                    v.set_flowrate(int(this_setpoint))  # Set the flowrate
+                    flag = 1
+        
+        if flag == 0:
+            logger.warning('Cannot set setpoint: vial number not recognized')
 
     # COMMUNICATION
     def get_slave_addresses(self):
@@ -965,7 +990,7 @@ class olfactometer_window(QGroupBox):
                     except AttributeError:  # if no main window
                         pass
 
-                        
+
                 # IF FLOW UPDATE WAS SENT: Send to main GUI window (to write to datafile)
                 if len(text) == 17:
                     text = text[3:]     # Remove arduino logging info
