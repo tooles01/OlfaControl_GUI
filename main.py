@@ -15,7 +15,7 @@ programs_48line = ['setpoint characterization','additive']
 programs_orig = ['the program']
 
 current_date = utils.currentDate
-ZMQ_address = "tcp://127.0.0.1:5556"
+ZMQ_default_address = "tcp://127.0.0.1:5556"
 
 ##############################
 # CREATE LOGGER
@@ -224,7 +224,7 @@ class worker_additive(QObject):
 
 class worker_zmq_thread(QThread):
     finished = pyqtSignal()     # Signal to communicate with the main thread
-    w_send_something = pyqtSignal(str)
+    w_send_from_ZMQ = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -233,7 +233,7 @@ class worker_zmq_thread(QThread):
         # Initialize ZMQ context and subscriber socket
         self.zmq_context = zmq.Context()
         self.zmq_socket = self.zmq_context.socket(zmq.SUB)      # Create Subscriber socket
-        self.zmq_socket.connect(ZMQ_address)                    # Connect socket to the publisher's address
+        self.zmq_socket.connect(ZMQ_default_address)            # Connect socket to the publisher's address
         self.zmq_socket.setsockopt_string(zmq.SUBSCRIBE, "")    # Subscribe to all messages
         
         # Set up ZMQ poller
@@ -249,8 +249,8 @@ class worker_zmq_thread(QThread):
                     # Receive data if available
                     try:
                         data = self.zmq_socket.recv_pyobj()
-                        logger.info("Received data from ZMQ: " + data)
-                        self.w_send_something.emit(data)        # Send received data to the main thread
+                        logger.debug("Received data from ZMQ: " + data)
+                        self.w_send_from_ZMQ.emit(data)        # Send received data to the main thread
                     except Exception as e:
                         logger.info(f"Error processing message: {e}")
 
@@ -332,7 +332,7 @@ class mainWindow(QMainWindow):
     ##############################
     # ZMQ stuff        
     def send_to_olfa(self,message_to_send):
-        logger.info("received data to emit: %s", message_to_send)
+        logger.debug("sending to olfactometer: %s", message_to_send)
         self.olfactometer.send_to_master(message_to_send)
     
     def toggle_zmq_connection(self, state):
@@ -340,7 +340,7 @@ class mainWindow(QMainWindow):
         if state == 2:   # if checked
             logger.info("Starting ZMQ server...")
             self.thread_zmq_worker = worker_zmq_thread()
-            self.thread_zmq_worker.w_send_something.connect(self.send_to_olfa)
+            self.thread_zmq_worker.w_send_from_ZMQ.connect(self.send_to_olfa)
             self.thread_zmq_worker.thread_on = True
             self.thread_zmq_worker.start()
         else:

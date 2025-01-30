@@ -29,8 +29,8 @@ max_calibration_table_value_sccm = '1000'   # TODO change this to mfc capacity
 ZMQ_default_address = "tcp://127.0.0.1:5556"
 
 class worker_zmq_thread(QThread):
-    finished = pyqtSignal()
-    w_send_message = pyqtSignal(str)
+    finished = pyqtSignal()     # Signal to communicate with the main thread
+    w_send_from_ZMQ = pyqtSignal(str)
     w_new_setpoint = pyqtSignal(str)
 
     def __init__(self):
@@ -60,7 +60,7 @@ class worker_zmq_thread(QThread):
                         if "S_Sp_" in data:
                             self.w_new_setpoint.emit(data)      # If new data is a setpoint
                         else:
-                            self.w_send_message.emit(data)      # Send received data to the main thread
+                            self.w_send_from_ZMQ.emit(data)      # Send received data to the main thread
                     except Exception as e:
                         logger.info(f"Error processing message: {e}")
 
@@ -303,7 +303,7 @@ class Vial(QGroupBox):
                 # Convert from sccm to integer
                 setpoint_sccm = value
                 setpoint_integer = utils_olfa_48line.convertToInt(setpoint_sccm, self.sccmToInt_dict)
-                logger.info('set ' + self.full_vialNum + ' to ' + str(setpoint_sccm) + ' sccm')
+                logger.info('Set ' + self.full_vialNum + ' to ' + str(setpoint_sccm) + ' sccm')
                 self.setpoint = setpoint_sccm
                 
                 # Send to olfactometer_window (to send to Arduino)
@@ -579,7 +579,7 @@ class olfactometer_window(QGroupBox):
         
         self.zmq_checkbox = QCheckBox('Enable ZMQ Connection')
         self.zmq_checkbox.stateChanged.connect(self.toggle_zmq_connection)
-        
+
         layout = QHBoxLayout()
         layout.addWidget(self.zmq_checkbox)
         self.zmq_groupbox.setLayout(layout)
@@ -693,7 +693,7 @@ class olfactometer_window(QGroupBox):
     
     # OTHER
     def get_calibration_tables(self):
-        logger.debug('Loading all flow sensor calibration tables at (%s)', self.flow_cal_dir)
+        logger.debug('Loading all flow sensor calibration tables from (%s)', self.flow_cal_dir)
         
         # Get names of all .txt files in flow cal directory # TODO change to .csv
         cal_file_names = os.listdir(self.flow_cal_dir)
@@ -893,7 +893,7 @@ class olfactometer_window(QGroupBox):
         if state == 2:   # if checked
             logger.info("Starting ZMQ server...")
             self.thread_zmq_worker = worker_zmq_thread()
-            self.thread_zmq_worker.w_send_message.connect(self.send_to_master)
+            self.thread_zmq_worker.w_send_from_ZMQ.connect(self.send_to_master)
             self.thread_zmq_worker.w_new_setpoint.connect(self.new_setpoint)
             self.thread_zmq_worker.thread_on = True
             self.thread_zmq_worker.start()
@@ -967,7 +967,7 @@ class olfactometer_window(QGroupBox):
                     beginning_idx = text.find(strToFind)
                     charsToRemove = len(strToFind) + beginning_idx
                     slave_address = text[charsToRemove:]
-                    
+
                     '''
                     for s in self.slave_objects:
                         if s.name == slave_name_received:
@@ -990,7 +990,7 @@ class olfactometer_window(QGroupBox):
                     except AttributeError:  # if no main window
                         pass
 
-
+                
                 # IF FLOW UPDATE WAS SENT: Send to main GUI window (to write to datafile)
                 if len(text) == 17:
                     text = text[3:]     # Remove arduino logging info
@@ -1053,9 +1053,10 @@ class olfactometer_window(QGroupBox):
                                     v.ctrl_value_int = ctrlVal
                                 
                                 else:
-                                    # stop reading flow
+                                    # Stop reading flow
                                     logger.debug('no longer reading flow from %s', v.full_vialNum)
-                                    if v.read_flow_vals_btn.isChecked(): v.read_flow_vals_btn.setChecked(False)
+                                    if v.read_flow_vals_btn.isChecked():
+                                        v.read_flow_vals_btn.setChecked(False)
                                     
                                     msg_box = QMessageBox()
                                     msg_box.setWindowTitle(v.full_vialNum)
@@ -1078,6 +1079,8 @@ class olfactometer_window(QGroupBox):
         except AttributeError as err:
             logger.warning('(Attribute Error) Serial port not open, cannot send parameter: %s', strToSend)
 
+    def closeEvent(self,event):
+        logger.debug('olfactometer window closed')
 
 if __name__ == "__main__":
     app1 = QApplication(sys.argv)
