@@ -32,6 +32,7 @@ class worker_zmq_thread(QThread):
     finished = pyqtSignal()     # Signal to communicate with the main thread
     w_send_from_ZMQ = pyqtSignal(str)
     w_new_setpoint = pyqtSignal(str)
+    w_open_vial = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -57,10 +58,12 @@ class worker_zmq_thread(QThread):
                     try:
                         data = self.zmq_socket.recv_pyobj()
                         logger.debug("Received data from ZMQ: " + data)
-                        if "S_Sp_" in data:
-                            self.w_new_setpoint.emit(data)      # If new data is a setpoint
-                        else:
-                            self.w_send_from_ZMQ.emit(data)      # Send received data to the main thread
+                        
+                        # Send received data to the main thread
+                        if "S_Sp_" in data: self.w_new_setpoint.emit(data)      # If new data is a setpoint
+                        elif "OV" in data:  self.w_open_vial.emit(data)         # If new data is open vial
+                        else:               self.w_send_from_ZMQ.emit(data)     # Send received data to the main thread
+                    
                     except Exception as e:
                         logger.info(f"Error processing message: {e}")
 
@@ -911,6 +914,7 @@ class olfactometer_window(QGroupBox):
             self.thread_zmq_worker = worker_zmq_thread()
             self.thread_zmq_worker.w_send_from_ZMQ.connect(self.send_to_master)
             self.thread_zmq_worker.w_new_setpoint.connect(self.new_setpoint)
+            self.thread_zmq_worker.w_open_vial.connect(self.open_vial)
             self.thread_zmq_worker.thread_on = True
             self.thread_zmq_worker.start()
         else:
@@ -920,8 +924,8 @@ class olfactometer_window(QGroupBox):
         
     def new_setpoint(self, str_received):
         # Get vial number
-        idx_underscore = str_received.rfind('_')         # find last underscore
-        this_vialnum = str_received[idx_underscore+1:]   # find vial number
+        idx_underscore = str_received.rfind('_')            # find last underscore
+        vialnum_string = str_received[idx_underscore+1:]    # find vial number
 
         # Get setpoint  NOTE: this is dependent on setpoint command "S_Sp_" being 5 chars long
         idx_Sp = 5
@@ -931,13 +935,62 @@ class olfactometer_window(QGroupBox):
         flag = 0
         for s in self.slave_objects:    # find out which vial this is
             for v in s.vials:
-                if v.full_vialNum == this_vialnum:
+                if v.full_vialNum == vialnum_string:
                     v.set_flowrate(int(this_setpoint))  # Set the flowrate
                     flag = 1
-        
-        if flag == 0:
-            logger.warning('Cannot set setpoint: vial number not recognized')
+        if flag == 0:   logger.warning('Cannot set setpoint: vial number not recognized')
 
+    def open_vial(self, str_received):
+        # Get vial number
+        idx_underscore = str_received.rfind('_')            # find last underscore
+        vialnum_string = str_received[idx_underscore+1:]    # find vial number
+
+        # Get duration
+        idx_OV = 5
+        this_duration = str_received[idx_OV:idx_underscore]
+        if len(this_duration) == 0:
+            logger.info('No duration entered, opening vials for 15 seconds')
+            this_duration = '15'
+
+        # Open this vial
+        # Single vial number entered:
+        if len(vialnum_string) == 2:
+            flag = 0
+            for s in self.slave_objects:    # Find out which vial this is
+                for v in s.vials:
+                    if v.full_vialNum == vialnum_string:
+                        v.valve_dur_spinbox.setValue(int(this_duration))    # Set spinbox to this duration
+                        if v.valve_open_btn.isChecked() == False:
+                            v.valve_open_btn.setChecked(True)               # Toggle the button (to activate the rest of everything)
+                        else:
+                            logger.warning("Cannot open %s, this line is already open", v.full_vialNum)
+                        flag = 1
+            if flag == 0: logger.warning('Cannot open %s: vial number not recognized', vialnum_string)
+
+        # Multiple vial numbers entered
+        if len(vialnum_string) > 2:
+            # Iterate through and get all vials listed
+            all_vialnums = []
+            this_letter = vialnum_string[0]
+            for char in vialnum_string:
+                if char.isdigit():      # If the next char is a number, add to vialnums
+                    this_actual_vialnum = this_letter + char
+                    all_vialnums.append(this_actual_vialnum)
+                elif char.isalpha():    # If the next char is a letter, update this_letter
+                    this_letter = char
+                else:
+                    logger.warning('Unknown character received: %s', char)
+            # Now open all vials listed
+            for this_vialnum in all_vialnums:
+                for s in self.slave_objects:
+                    for v in s.vials:
+                        if v.full_vialNum == this_vialnum:
+                            v.valve_dur_spinbox.setValue(int(this_duration))    # Set spinbox to this duration
+                            if v.valve_open_btn.isChecked() == False:
+                                v.valve_open_btn.setChecked(True)               # Toggle the button (to activate the rest of everything)
+                            else:
+                                logger.warning("Cannot open %s, this line is already open", v.full_vialNum)
+    
     # COMMUNICATION
     def get_slave_addresses(self):
         self.prev_active_slaves = copy.copy(self.active_slaves)
