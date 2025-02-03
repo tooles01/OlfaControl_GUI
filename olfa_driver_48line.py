@@ -446,7 +446,7 @@ class slave_8vials(QGroupBox):
         self.slaveInfo_layout = QVBoxLayout()
         #self.slaveInfo_layout.addWidget(self.slave_address_label)
         self.slaveInfo_layout.addWidget(self.temp_label)
-    
+
     def create_vials_box(self):
         # Create vial object for # of vials listed in vialsPerSlave
         self.vials = []
@@ -923,6 +923,7 @@ class olfactometer_window(QGroupBox):
             self.thread_zmq_worker.quit()
         
     def new_setpoint(self, str_received):
+        """Receives setpoint from ZMQ worker & sends to vial object"""
         # Get vial number
         idx_underscore = str_received.rfind('_')            # find last underscore
         vialnum_string = str_received[idx_underscore+1:]    # find vial number
@@ -936,7 +937,9 @@ class olfactometer_window(QGroupBox):
         for s in self.slave_objects:    # find out which vial this is
             for v in s.vials:
                 if v.full_vialNum == vialnum_string:
-                    v.set_flowrate(int(this_setpoint))  # Set the flowrate
+                    v.setpoint_set_lineedit.setText(this_setpoint)  # Update UI
+                    v.vial_details_window.setpoint_set_lineedit.setText(this_setpoint)  # Update Vial Details Box UI
+                    v.set_flowrate(int(this_setpoint))              # Set flowrate
                     flag = 1
         if flag == 0:   logger.warning('Cannot set setpoint: vial number not recognized')
 
