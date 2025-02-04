@@ -75,9 +75,9 @@ class Vial(QGroupBox):
         self.vialNum = vialNum
         self.full_vialNum = self.slaveName + self.vialNum
         self.olfactometer_parent_object = parent.parent
-        self.mfc_capacity = config_olfa.mfc_capacity
         
         # Default Values
+        self.mfc_capacity = config_olfa.mfc_capacity
         self.flow_value_int = '0'
         self.flow_value_sccm = '0'
         self.ctrl_value_int = '0'
@@ -94,10 +94,12 @@ class Vial(QGroupBox):
         self.plot_flow_btn = QPushButton(self.full_vialNum, checkable=True)
         self.plot_flow_btn.toggled.connect(self.plot_flow_btn_toggled)
 
+        # Generate all other UI features
         self.generate_stuff()
         
         self.vial_details_window.db_valve_open_wid.returnPressed.connect(lambda: self.vial_details_window.db_valve_open_btn.setChecked(True))        
         
+        # Layout
         self.setLayout(self.layout)
         max_width = self.sizeHint().width()
         #self.setMaximumWidth(max_width - 10)
@@ -183,10 +185,10 @@ class Vial(QGroupBox):
         #self.setpoint_slider.setFixedWidth(32)
     
     # SETPOINT SLIDER
-    # Slider changed --> Update setpoint set widget
+    # Slider changed --> Update setpoint set lineedit
     def slider_changed(self,value,spt_set_wid):
         spt_set_wid.setText(str(value))
-        self.vial_details_window.setpoint_set_lineedit.setText(str(value))  # update vial details set widget
+        self.vial_details_window.setpoint_set_lineedit.setText(str(value))  # update vial details set lineedit
         self.vial_details_window.setpoint_slider.setValue(value)            # update vial details slider
     
     # Send new setpoint to MFC
@@ -195,6 +197,7 @@ class Vial(QGroupBox):
         self.set_flowrate(val)          # set the flowrate
     
     def text_changed(self):
+        """New setpoint entered in widget"""
         try:
             value = int(self.setpoint_set_lineedit.text())
             self.set_flowrate(value)
@@ -231,7 +234,6 @@ class Vial(QGroupBox):
             self.set_flowrate(self.setpoint)    # update setpoint
     
     def open_vial(self, duration):
-        
         # Send to olfactometer_window (to send to Arduino)
         strToSend = 'S_OV_' + str(duration) + '_' + self.full_vialNum
         self.olfactometer_parent_object.send_to_master(strToSend)
@@ -300,6 +302,7 @@ class Vial(QGroupBox):
         logger.info('K parameters updated for %s: %s', self.full_vialNum, strToSend)
     
     def set_flowrate(self, value):
+        """Update setpoint"""
         # Check if out of range
         if (value >= 0) and (value <= int(self.mfc_capacity)):
             if self.sccmToInt_dict != None:
@@ -418,6 +421,7 @@ class Vial(QGroupBox):
     
     # ~ just for user experience ~
     def valve_open_dur_changed(self):
+        """Update tooltip on valve open button"""
         self.valve_open_btn.setToolTip("Open " + self.full_vialNum + " for " + str(self.valve_dur_spinbox.value()) + " seconds")
 
 class slave_8vials(QGroupBox):
@@ -448,7 +452,7 @@ class slave_8vials(QGroupBox):
         self.slaveInfo_layout.addWidget(self.temp_label)
 
     def create_vials_box(self):
-        # Create vial object for # of vials listed in vialsPerSlave
+        # Create vial objects for # of vials listed in config_olfa.vialsPerSlave
         self.vials = []
         for v in range(config_olfa.vialsPerSlave):
             v_vialNum = str(v+1)
@@ -536,6 +540,7 @@ class olfactometer_window(QGroupBox):
 
         # Check slave addresses
         self.m_check_addr_btn = QPushButton(text="Get Slave Addresses")
+        self.m_check_addr_btn.setToolTip('Get addresses of all currently active/connected slave devices (olfactometers)')
         self.m_check_addr_btn.clicked.connect(self.get_slave_addresses)
 
         # Logging mode settings
@@ -546,6 +551,7 @@ class olfactometer_window(QGroupBox):
         self.m_mode_btn = QPushButton(text="Send")
         self.m_mode_lbl.setToolTip("Master Arduino logging level")
         self.m_mode_wid.setToolTip("Master Arduino logging level")
+        self.m_mode_btn.setToolTip("Update master Arduino logging level")
         self.m_mode_btn.clicked.connect(lambda: self.send_master_mode(self.m_mode_wid.currentText()))
         m_mode_layout = QHBoxLayout()
         m_mode_layout.addWidget(self.m_check_addr_btn)
@@ -559,6 +565,7 @@ class olfactometer_window(QGroupBox):
         self.m_timebtreqs_btn = QPushButton(text="Send")
         self.m_timebtreqs_lbl.setToolTip("Duration between requests to slave Arduinos \n(i.e. how frequently to ask for flow values)")
         self.m_timebtreqs_wid.setToolTip("Duration between requests to slave Arduinos \n(i.e. how frequently to ask for flow values)")
+        self.m_timebtreqs_btn.setToolTip("Update duration between requests to slave Arduinos \n(i.e. how frequently to ask for flow values)")
         self.m_timebtreqs_wid.returnPressed.connect(lambda: self.send_to_master('MM_timebt_' + self.m_timebtreqs_wid.text()))
         self.m_timebtreqs_btn.clicked.connect(lambda: self.send_to_master('MM_timebt_' + self.m_timebtreqs_wid.text()))
         timebt_layout = QHBoxLayout()
@@ -567,11 +574,12 @@ class olfactometer_window(QGroupBox):
         timebt_layout.addWidget(self.m_timebtreqs_btn)
 
         # Manual command settings
-        self.m_manualcmd_lbl = QLabel("Manual:")
+        self.m_manualcmd_lbl = QLabel("Manual command:")
         self.m_manualcmd_wid = QLineEdit(text=config_olfa.def_manual_cmd)
         self.m_manualcmd_btn = QPushButton(text="Send")
         self.m_manualcmd_lbl.setToolTip("Manually send command to master Arduino")
         self.m_manualcmd_wid.setToolTip("Manually send command to master Arduino")
+        self.m_manualcmd_btn.setToolTip("Manually send command to master Arduino")
         self.m_manualcmd_wid.returnPressed.connect(lambda: self.send_to_master(self.m_manualcmd_wid.text()))
         self.m_manualcmd_btn.clicked.connect(lambda: self.send_to_master(self.m_manualcmd_wid.text()))
         manualcmd_layout = QHBoxLayout()
@@ -604,16 +612,17 @@ class olfactometer_window(QGroupBox):
         
         # Select config file
         self.load_config_btn = QPushButton('Load config file (*.json)')
-        self.load_config_btn.setToolTip('Load olfa config file (*.json file)\nContains calibration tables and MFC capacity for each odor vial line')
+        self.load_config_btn.setToolTip('Load olfa config file (*.json file)\n(Contains calibration tables and MFC capacity for each odor vial line)')
         self.load_config_btn.clicked.connect(self.load_config_btn_clicked)
         
         # Select directory where flow calibration tables are stored
         self.flow_cal_dir_btn = QPushButton('Select Calibration Table Directory',checkable=True)
-        self.flow_cal_dir_btn.setToolTip('Select directory for flow calibration tables')
+        self.flow_cal_dir_btn.setToolTip('Select directory where flow sensor calibration tables are located')
         self.flow_cal_dir_btn.toggled.connect(self.flow_cal_dir_btn_toggled)
         
         # Show flow plot
         self.show_flow_plot_btn = QPushButton('Show flow plot', checkable=True)
+        self.show_flow_plot_btn.setToolTip('Open flow plot window\nDisplays flow rates of selected vials in real time\n\n(Warning: flow plot window not entirely debugged)')
         self.show_flow_plot_btn.toggled.connect(self.show_flow_plot_toggled)
         self.flow_plot_window = plot_widget.plot_window_all(self)
         self.flow_plot_window.hide()
@@ -651,13 +660,13 @@ class olfactometer_window(QGroupBox):
     def create_slave_groupbox(self):
         self.slave_groupbox = QGroupBox('Slaves')
         
-        # Create slave objects for each item listed in slave_names
+        # Create a slave object for each name listed in config_olfa.slave_names
         self.slave_objects = []
         for s in config_olfa.slave_names:
             new_slave_object = slave_8vials(parent=self,name=s)
             self.slave_objects.append(new_slave_object)
         
-        # Add slave objects to layout
+        # Add slave objects to layout and disable them initially
         self.slave_layout = QVBoxLayout()
         for s in self.slave_objects:
             self.slave_layout.addWidget(s)
@@ -708,7 +717,7 @@ class olfactometer_window(QGroupBox):
             file_selected = file_selected[0]
             self.load_config_file(file_selected)
     
-    # OTHER
+    # LOAD CONFIG FILES
     def get_calibration_tables(self):
         logger.debug('Loading all flow sensor calibration tables from (%s)', self.flow_cal_dir)
         
@@ -944,6 +953,7 @@ class olfactometer_window(QGroupBox):
         if flag == 0:   logger.warning('Cannot set setpoint: vial number not recognized')
 
     def open_vial(self, str_received):
+        """Receives "open vial" command from ZMQ worker & sends to vial object"""
         # Get vial number
         idx_underscore = str_received.rfind('_')            # find last underscore
         vialnum_string = str_received[idx_underscore+1:]    # find vial number

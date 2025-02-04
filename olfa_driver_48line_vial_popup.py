@@ -276,26 +276,32 @@ class VialDetailsPopup(QWidget):
 
         # File name
         cal_file_name = self.full_vialNum + '_' + utils.currentDate
-        self.cal_file_name_lbl = QLabel('File Name')
+        self.cal_file_name_lbl = QLabel('File Name:')
         self.cal_file_name_wid = QLineEdit(text=cal_file_name)
+        self.cal_file_dir_lbl = QLabel('Directory:')
         self.cal_file_dir_wid = QLineEdit(text=self.parent.olfactometer_parent_object.flow_cal_dir)
+        self.cal_file_dir_lbl.setToolTip('Directory where new calibration file is to be saved')
+        self.cal_file_dir_wid.setToolTip('Directory where new calibration file is to be saved')
         self.create_new_cal_file_btn = QPushButton(text='Create file',checkable=True)
+        self.create_new_cal_file_btn.setToolTip('Create new calibration file')
         self.create_new_cal_file_btn.toggled.connect(self.create_new_cal_file_toggled)
         self.cal_file_name_wid.returnPressed.connect(lambda: self.create_new_cal_file_btn.setChecked(True))
         
         # MFC value (SCCM value)
         self.mfc_value_lbl = QLabel('MFC value (sccm):')
         self.mfc_value_lineedit = QLineEdit(text=config_olfa.def_mfc_cal_value)
+        self.mfc_value_lbl.setToolTip('Flow value to calibrate at')
+        self.mfc_value_lineedit.setToolTip('Flow value to calibrate at')
         self.start_calibration_btn = QPushButton(text='Start',checkable=True)
-        self.start_calibration_btn.setToolTip('Collect flow values for x seconds')
+        self.start_calibration_btn.setToolTip('Start collecting flow values for x seconds')
         #self.mfc_value_lineedit.returnPressed.connect(self.start_calibration)   # TODO fix
         self.start_calibration_btn.toggled.connect(self.start_calibration)
         
         # Widget for duration of calibration (& timer for visual)
         self.calibration_duration_lbl = QLabel('Duration (s):')
-        self.calibration_duration_lbl.setToolTip('Max 99 seconds')
         self.calibration_duration_lineedit = QLineEdit(text=config_olfa.def_calibration_duration)
-        self.calibration_duration_lineedit.setToolTip('Max 99 seconds')
+        self.calibration_duration_lbl.setToolTip('Duration of calibration (Max 99 seconds)')
+        self.calibration_duration_lineedit.setToolTip('Duration of calibration (Max 99 seconds)')
         self.calibration_duration_lineedit.returnPressed.connect(lambda: self.start_calibration_btn.setChecked(True))
         self.calibration_duration_timer = QTimer()
         self.calibration_duration_timer.setTimerType(0)     # set to millisecond accuracy
@@ -350,7 +356,7 @@ class VialDetailsPopup(QWidget):
         
         # Layout
         layout_directory = QFormLayout()
-        layout_directory.addRow(QLabel('Directory:'),self.cal_file_dir_wid)
+        layout_directory.addRow(self.cal_file_dir_lbl,self.cal_file_dir_wid)
         layout_entered_vals = QFormLayout()
         layout_entered_vals.addRow(self.cal_file_name_lbl,self.cal_file_name_wid)
         layout_entered_vals.addRow(self.mfc_value_lbl,self.mfc_value_lineedit)
@@ -698,7 +704,7 @@ class VialDetailsPopup(QWidget):
         
         else:
             self.start_calibration_btn.setText('Start')
-            self.start_calibration_btn.setToolTip('Collect flow values for x seconds')
+            self.start_calibration_btn.setToolTip('Start collecting flow values for x seconds')
             self.create_new_cal_file_btn.setEnabled(True)
             
             # Stop the timer
