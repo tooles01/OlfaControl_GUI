@@ -430,6 +430,7 @@ class slave_8vials(QGroupBox):
         super().__init__()
         self.parent = parent
         self.name = name
+        self.currently_active = False
         
         self.create_slaveInfo_box()
         self.create_vials_box()
@@ -676,14 +677,17 @@ class olfactometer_window(QGroupBox):
         
         # Add slave objects to layout and disable them initially
         self.slave_layout = QVBoxLayout()
+        '''
         for slave_object in self.slave_objects:
             self.slave_layout.addWidget(slave_object)
             slave_object.setEnabled(False)      # Initially disable all slaves
+        '''
         
         # Create a scrollable widget for the slave layout
         self.slave_widget = QWidget()                       # Widget to put into QScrollArea
         self.slave_widget.setLayout(self.slave_layout)
         self.slave_scrollArea = QScrollArea()
+        self.slave_scrollArea.setWidgetResizable(True)
         self.slave_scrollArea.setWidget(self.slave_widget)
         # Add the scroll area to the groupbox layout
         self.nothing_layout = QHBoxLayout()                 # Layout for putting QScrollArea into self.slave_groupbox
@@ -1063,6 +1067,20 @@ class olfactometer_window(QGroupBox):
                     beginning_idx = text.find(strToFind)
                     charsToRemove = len(strToFind) + beginning_idx
                     slave_address = text[charsToRemove:]
+
+                    for s in self.slave_objects:
+                        if s.name == slave_name_received:
+                            s.currently_active = True
+                            #logger.debug('this slave active now')
+                            self.slave_layout.addWidget(s)
+                    
+                    # Adjust scroll area maximum height
+                    '''
+                    self.slave_widget.adjustSize()
+                    content_height = self.slave_widget.sizeHint().height()
+                    self.slave_scrollArea.setMaximumHeight(content_height)
+                    '''
+                    
                     '''
                     for s in self.slave_objects:
                         if s.name == slave_name_received:
