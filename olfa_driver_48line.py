@@ -461,8 +461,8 @@ class slave_8vials(QGroupBox):
         
         # Add vial objects to layout
         self.vials_layout = QHBoxLayout()
-        for v in range(config_olfa.vialsPerSlave):
-            self.vials_layout.addWidget(self.vials[v])
+        for v in self.vials:
+            self.vials_layout.addWidget(v)
 
 class olfactometer_window(QGroupBox):
     
@@ -492,6 +492,7 @@ class olfactometer_window(QGroupBox):
         self.setTitle('Olfactometer')
     
     def generate_ui(self):
+        # Create groupboxes
         self.create_connect_box()
         self.create_master_groupbox()
         self.create_slave_groupbox()
@@ -521,12 +522,15 @@ class olfactometer_window(QGroupBox):
     
     # CREATE WIDGETS
     def create_connect_box(self):
+        """Create a groupbox for connecting to the master Arduino."""
         self.connect_box = QGroupBox("Connect to master Arduino")
         self.port_widget = QComboBox(currentIndexChanged=self.port_changed)             # Port selection dropdown
         self.connect_btn = QPushButton(checkable=True,toggled=self.toggled_connect)     # Connect button
-        self.refresh_btn = QPushButton(text="Refresh",clicked=self.get_ports,toolTip='Refresh the list of available COM ports')
+        self.refresh_btn = QPushButton(text="Refresh",clicked=self.get_ports,toolTip='Refresh the list of available COM ports.')
         
         self.get_ports()    # Populate the port dropdown
+        
+        # Layout
         connect_box_layout = QHBoxLayout()
         connect_box_layout.addWidget(QLabel(text='Select Port:',toolTip='Select the COM port for the master Arduino'))
         connect_box_layout.addWidget(self.port_widget)
@@ -544,14 +548,14 @@ class olfactometer_window(QGroupBox):
         self.m_check_addr_btn.clicked.connect(self.get_slave_addresses)
 
         # Logging mode settings
-        self.m_mode_lbl = QLabel("Logging:")
+        self.m_mode_lbl = QLabel("Arduino Logging:")
         self.m_mode_wid = QComboBox()
         self.m_mode_wid.addItems(config_olfa.master_modes)
-        self.m_mode_wid.setCurrentIndex(2)  # matches master Arduino default level (4: notice)
+        self.m_mode_wid.setCurrentIndex(2)  # Default logging level --> matches master Arduino default level (4: notice)
         self.m_mode_btn = QPushButton(text="Send")
-        self.m_mode_lbl.setToolTip("Master Arduino logging level")
-        self.m_mode_wid.setToolTip("Master Arduino logging level")
-        self.m_mode_btn.setToolTip("Update master Arduino logging level")
+        self.m_mode_lbl.setToolTip("Logging level for the master Arduino")
+        self.m_mode_wid.setToolTip("Select the logging level for the master Arduino")
+        self.m_mode_btn.setToolTip("Update the logging level for the master Arduino")
         self.m_mode_btn.clicked.connect(lambda: self.send_master_mode(self.m_mode_wid.currentText()))
         m_mode_layout = QHBoxLayout()
         m_mode_layout.addWidget(self.m_check_addr_btn)
@@ -563,9 +567,9 @@ class olfactometer_window(QGroupBox):
         self.m_timebtreqs_lbl = QLabel("Time b/t reqs (ms):")
         self.m_timebtreqs_wid = QLineEdit(text=self.def_timebt)
         self.m_timebtreqs_btn = QPushButton(text="Send")
-        self.m_timebtreqs_lbl.setToolTip("Duration between requests to slave Arduinos \n(i.e. how frequently to ask for flow values)")
-        self.m_timebtreqs_wid.setToolTip("Duration between requests to slave Arduinos \n(i.e. how frequently to ask for flow values)")
-        self.m_timebtreqs_btn.setToolTip("Update duration between requests to slave Arduinos \n(i.e. how frequently to ask for flow values)")
+        self.m_timebtreqs_lbl.setToolTip("Time between requests to slave Arduinos (in ms).\n(i.e. how frequently to ask for flow values)")
+        self.m_timebtreqs_wid.setToolTip("Set time between requests to slave Arduinos (in ms).\n(i.e. how frequently to ask for flow values)")
+        self.m_timebtreqs_btn.setToolTip("Update time between requests to slave Arduinos (in ms.)\n(i.e. how frequently to ask for flow values)")
         self.m_timebtreqs_wid.returnPressed.connect(lambda: self.send_to_master('MM_timebt_' + self.m_timebtreqs_wid.text()))
         self.m_timebtreqs_btn.clicked.connect(lambda: self.send_to_master('MM_timebt_' + self.m_timebtreqs_wid.text()))
         timebt_layout = QHBoxLayout()
@@ -577,9 +581,9 @@ class olfactometer_window(QGroupBox):
         self.m_manualcmd_lbl = QLabel("Manual command:")
         self.m_manualcmd_wid = QLineEdit(text=config_olfa.def_manual_cmd)
         self.m_manualcmd_btn = QPushButton(text="Send")
-        self.m_manualcmd_lbl.setToolTip("Manually send command to master Arduino")
-        self.m_manualcmd_wid.setToolTip("Manually send command to master Arduino")
-        self.m_manualcmd_btn.setToolTip("Manually send command to master Arduino")
+        self.m_manualcmd_lbl.setToolTip("Manually send a command to the master Arduino")
+        self.m_manualcmd_wid.setToolTip("Enter a command to manually send to the master Arduino")
+        self.m_manualcmd_btn.setToolTip("Manually send a command to the master Arduino")
         self.m_manualcmd_wid.returnPressed.connect(lambda: self.send_to_master(self.m_manualcmd_wid.text()))
         self.m_manualcmd_btn.clicked.connect(lambda: self.send_to_master(self.m_manualcmd_wid.text()))
         manualcmd_layout = QHBoxLayout()
@@ -587,6 +591,7 @@ class olfactometer_window(QGroupBox):
         manualcmd_layout.addWidget(self.m_manualcmd_wid)
         manualcmd_layout.addWidget(self.m_manualcmd_btn)
         
+        # Layout
         layout = QVBoxLayout()
         layout.addLayout(m_mode_layout)
         layout.addLayout(timebt_layout)
@@ -600,6 +605,7 @@ class olfactometer_window(QGroupBox):
         # Checkbox for enabling/disabling ZMQ connection
         self.zmq_checkbox = QCheckBox('Enable ZMQ Connection')
         self.zmq_checkbox.stateChanged.connect(self.toggle_zmq_connection)
+        self.zmq_checkbox.setToolTip("Enable ZMQ subscriber at\n\t" + ZMQ_default_address + "\n\n(Address can be changed in header of olfa_driver_48line.py)")
 
         # Layout
         layout = QHBoxLayout()
@@ -610,7 +616,7 @@ class olfactometer_window(QGroupBox):
         """Creates settings groupbox for loading config files/other misc actions."""
         self.settings_groupbox = QGroupBox('Other Settings')
         
-        # Select config file
+        # Load config file
         self.load_config_btn = QPushButton('Load config file (*.json)')
         self.load_config_btn.setToolTip('Load olfa config file (*.json file)\n(Contains calibration tables and MFC capacity for each odor vial line)')
         self.load_config_btn.clicked.connect(self.load_config_btn_clicked)
@@ -644,33 +650,35 @@ class olfactometer_window(QGroupBox):
         
         # Layout
         raw_write_layout = QVBoxLayout()
-        raw_write_layout.addWidget(QLabel('written to serial port:'))
+        raw_write_layout.addWidget(QLabel('Written to serial port:'))
         raw_write_layout.addWidget(self.raw_write_display)
         raw_read_layout = QVBoxLayout()
-        raw_read_layout.addWidget(QLabel('received from serial port:'))
+        raw_read_layout.addWidget(QLabel('Received from serial port:'))
         raw_read_layout.addWidget(self.raw_read_display)
         raw_comm_layout = QHBoxLayout()
         raw_comm_layout.addLayout(raw_read_layout)
         raw_comm_layout.addLayout(raw_write_layout)
         self.raw_comm_box.setLayout(raw_comm_layout)
 
+        # Sizing
         self.raw_write_display.setMinimumWidth(230)
         self.raw_read_display.setMinimumWidth(230)
         
     def create_slave_groupbox(self):
+        """Creates a groupbox for slave devices."""
         self.slave_groupbox = QGroupBox('Slaves')
         
         # Create a slave object for each name listed in config_olfa.slave_names
         self.slave_objects = []
-        for s in config_olfa.slave_names:
-            new_slave_object = slave_8vials(parent=self,name=s)
+        for slave_name in config_olfa.slave_names:
+            new_slave_object = slave_8vials(parent=self,name=slave_name)
             self.slave_objects.append(new_slave_object)
         
         # Add slave objects to layout and disable them initially
         self.slave_layout = QVBoxLayout()
-        for s in self.slave_objects:
-            self.slave_layout.addWidget(s)
-            s.setEnabled(False)     # Initially disable all slaves
+        for slave_object in self.slave_objects:
+            self.slave_layout.addWidget(slave_object)
+            slave_object.setEnabled(False)      # Initially disable all slaves
         
         # Create a scrollable widget for the slave layout
         self.slave_widget = QWidget()                       # Widget to put into QScrollArea
@@ -707,12 +715,15 @@ class olfactometer_window(QGroupBox):
             pass
     
     def load_config_btn_clicked(self):
+        """Open file select dialog & load config file"""
+        
         # Open file select dialog
         dlg = QFileDialog()
         dlg.setFileMode(QFileDialog.ExistingFile)   # The name of a single existing file
         dlg.setNameFilter("JSON Files (*.json)")    # Set file filter to .json
+        
+        # Load the config file
         if dlg.exec_():
-            # Load the config file
             file_selected = dlg.selectedFiles()
             file_selected = file_selected[0]
             self.load_config_file(file_selected)
@@ -788,7 +799,7 @@ class olfactometer_window(QGroupBox):
                 self.sccm2Ard_dicts = new_sccm2Ard_dicts
                 self.ard2Sccm_dicts = new_ard2Sccm_dicts
             else:
-                logger.warning('no calibration files found in this directory')
+                logger.warning('No calibration files found in this directory')
         
         else:
             # If flow cal directory does not exist: print warning --> this is big issue if none found
@@ -796,6 +807,8 @@ class olfactometer_window(QGroupBox):
             logger.warning('no .txt files found in this directory :/')
 
     def load_config_file(self, file_selected):
+        """Load config file, update calibration tables"""
+        
         # Load the config file
         self.config_file_dir = file_selected
         with open(self.config_file_dir) as f:
@@ -818,7 +831,6 @@ class olfactometer_window(QGroupBox):
                             v.vial_details_window.db_cal_table_combobox.setCurrentText(v.cal_table)
                         else:
                             logger.warning('config file has an invalid cal table: %s', cal_table)
-            
         except KeyError as err:
             logger.warning('Invalid config file selected - try again')
         
@@ -832,12 +844,12 @@ class olfactometer_window(QGroupBox):
                         v.mfc_capacity = self.config_mfc_capacity.get(vial_name)
                         v.vial_details_window.setpoint_slider.setMaximum(int(v.mfc_capacity))
                         logger.debug('%s capacity set to %s', vial_name, v.mfc_capacity)
-            
         except KeyError as err:
             logger.warning('Selected config file does not include Flow Sensor Capacities')
     
     # CONNECT FUNCTIONS
     def get_ports(self):
+        """Get list of currently available ports, update port widget selection options."""
         self.port_widget.clear()
         ports = list_ports.comports()
         if ports:
@@ -865,6 +877,7 @@ class olfactometer_window(QGroupBox):
                 break
     
     def port_changed(self):
+        """Update UI when port_widget current index is changed"""
         if self.port_widget.count() != 0:
             self.port = self.port_widget.currentText()
             if self.port == config_olfa.noPort_msg:
