@@ -99,8 +99,8 @@ Plot olfactometer & PID data over time
 &nbsp;&nbsp;1 (default) | positive value  
 **pid_width - LineWidth for PID data**  
 &nbsp;&nbsp;1.5 (default) | positive value  
-**legend_on - Display legend on figure**
-&nbsp;&nbsp;'yes' (default) | 'no'
+**legend_on - Display legend on figure**  
+&nbsp;&nbsp;'yes' (default) | 'no'  
 
 ## Dependencies
 - get_section_data

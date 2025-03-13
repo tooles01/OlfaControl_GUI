@@ -27,13 +27,13 @@ Plot a bunch of files on top of each other. can plot by flow value, can do flow 
         - Sort the list and remove duplicates, now you have every value in these files
     </details>
 
-3. If selected: **Plots each flow value separately**  
+3. If selected: **Plots data at each flow rate separately**  
     `c.plot_by_flow`
     <p align="center">
-        <img src="images/examples/plot_on_top_plot_all_01.jpg" width="30%">
-        <img src="images/examples/plot_on_top_plot_all_02.jpg" width="30%">
+        <img src="images/examples/plot_on_top_plot_all_01.jpg" width="45 %">
+        <img src="images/examples/plot_on_top_plot_all_02.jpg" width="45%">
     </p>
-    
+
     <details>
     
     - For each flow value:
