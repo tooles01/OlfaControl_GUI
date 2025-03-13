@@ -51,6 +51,8 @@ function a_plot_olfa_and_pid(a_thisfile_name,plot_opts)
         plot_opts.flow_width    (1,:) double = 1
         plot_opts.pid_width     (1,:) double = 1.5
         plot_opts.legend_on     (1,1) string = 'yes'
+
+        plot_opts.plot_setpoint (1,1) string = 'no'
     end
 
 set(0,'DefaultTextInterpreter','none')
@@ -268,7 +270,7 @@ try
                     d_olfa_flow_y = d_olfa_flow(i).flow.flow_sccm(:,2);
                     ylabel('Odor flow rate (SCCM)')
                     if ~isempty(plot_opts.flow_lims); ylim(plot_opts.flow_lims)
-                    else; ylim([-5 120]); end
+                    else; ylim([-1 120]); end
                 end
             else
                 % Plot as integer
@@ -316,6 +318,28 @@ try
     yyaxis left
     ax_color = p.Color;
     f1_ax.YColor = ax_color;
+
+    %% If selected: plot setpoints
+    if strcmp(plot_opts.plot_setpoint,'yes')
+        % for each vial
+        for i=1:length(d_olfa_flow)
+            % for each event
+            for e=1:length(d_olfa_flow(i).events.OV)
+                % get the setpoint
+                this_event_setpoint_int = d_olfa_flow(i).events.Sp(e).value;
+                % convert to SCCM
+                this_event_setpoint_sccm = int_to_SCCM([0,this_event_setpoint_int],d_olfa_flow(i).cal_table);
+                this_event_setpoint_sccm = this_event_setpoint_sccm(2);
+                % get the time of the OV event
+                this_event_OV_t_start = d_olfa_flow(i).events.OV(e).t_start;
+                this_event_OV_t_end = d_olfa_flow(i).events.OV(e).t_end;
+                % draw a line on the plot for that shit
+                yline1 = line([this_event_OV_t_start this_event_OV_t_end],[this_event_setpoint_sccm this_event_setpoint_sccm]);
+                set(get(get(yline1,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
+            end
+        end
+    end
+
     
     %% Plot: Olfa ctrl
     if strcmp(plot_opts.olfa_ctrl,'yes')

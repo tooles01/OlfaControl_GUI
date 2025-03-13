@@ -101,6 +101,8 @@ Plot olfactometer & PID data over time
 &nbsp;&nbsp;1.5 (default) | positive value  
 **legend_on - Display legend on figure**  
 &nbsp;&nbsp;'yes' (default) | 'no'  
+**plot_setpoint - Draw a line at the setpoint for the duration of each OV event**  
+&nbsp;&nbsp;'no' (default) | 'yes'  
 
 ## Dependencies
 - get_section_data
