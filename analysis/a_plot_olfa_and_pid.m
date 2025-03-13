@@ -46,6 +46,8 @@ function a_plot_olfa_and_pid(a_thisfile_name,plot_opts)
 
         % Other
         plot_opts.fig_position  (1,:) double = [166 210 1300 600]
+        plot_opts.x_lim         (1,:) double = [ ]
+        plot_opts.scale_time    (1,1) string = 'no'
         plot_opts.flow_width    (1,:) double = 1
         plot_opts.pid_width     (1,:) double = 1.5
         plot_opts.legend_on     (1,1) string = 'yes'
@@ -56,10 +58,8 @@ set(0,'DefaultTextInterpreter','none')
 %% Display Variables
 f = struct();   % struct containing all figure variables
 f.position = [30 200 1700 700];
-f.x_lim = [];
 f.calibration_value = [];
 f.PID_color = '#77AC30';
-f.scale_time = 'no';
 
 % Vial colors
 f.colors{1} = '#0072BD';    % blue
@@ -244,8 +244,8 @@ try
     if strcmp(plot_opts.plot_in_minutes,'no');  xlabel('Time (sec)');
     else;                                       xlabel('Time (min)'); end
     % Set X limits
-    if ~isempty(f.x_lim)
-        xlim(f.x_lim);
+    if ~isempty(plot_opts.x_lim)
+        xlim(plot_opts.x_lim);
     else
         t_end = data_time_raw(end,1);
         if strcmp(plot_opts.plot_in_minutes,'no');  xlim([0 t_end]);
@@ -282,10 +282,11 @@ try
             end
             
             %% If selected: Scale time
-            if strcmp(f.scale_time,'yes')
-                if ~isempty(f.x_lim)
-                    d_olfa_flow_x = d_olfa_flow_x - f.x_lim(1); % Scale time to zero
-                    xlim([-.5 16]);                             % Readjust x limits
+            if strcmp(plot_opts.scale_time,'yes')
+                if ~isempty(plot_opts.x_lim)
+                    d_olfa_flow_x = d_olfa_flow_x - plot_opts.x_lim(1); % Scale time to zero
+                    xlim2 = plot_opts.x_lim(2) - plot_opts.x_lim(1);    % Readjust x limits
+                    xlim([0 xlim2]);
                 end
             end
             
@@ -356,9 +357,9 @@ try
             end
 
             %% If selected: Scale time
-            if strcmp(f.scale_time,'yes')
-                d_ctrl_x = d_ctrl_x - f.x_lim(1);   % Scale time to zero
-                xlim([-.5 16]);                     % Readjust x limits
+            if strcmp(plot_opts.scale_time,'yes')
+                d_ctrl_x = d_ctrl_x - plot_opts.x_lim(1);   % Scale time to zero
+                xlim([-.5 16]);                             % Readjust x limits
             end
             
             %% If selected: Plot in minutes
@@ -402,9 +403,9 @@ try
             f1_ax.YLim = plot_opts.pid_lims;
             
             %% If selected: Scale time
-            if strcmp(f.scale_time,'yes')
-                if ~isempty(f.x_lim)
-                    d_pid_x = data_pid(:,1) - f.x_lim(1);
+            if strcmp(plot_opts.scale_time,'yes')
+                if ~isempty(plot_opts.x_lim)
+                    d_pid_x = data_pid(:,1) - plot_opts.x_lim(1);
                 end
             end
             
