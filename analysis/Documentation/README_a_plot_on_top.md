@@ -106,14 +106,8 @@ Plot a bunch of files on top of each other. can plot by flow value, can do flow 
 **a_subtitle - Figure subtitle**  
 <br>
 
-### Plot Options
-**plot_by_flow - Plot each flow value individually**  
-**plot_flow - Plot flow values on left yaxis** (8-line olfa)  
-**plot_ctrl - Plot ctrl values on left yaxis** (8-line olfa)  
-<br>
-
 ### Axis Limits  
-Note: highly recommend entering PID lims  
+*Note: highly recommend entering PID lims  
 **pid_lims - Y-Limits for PID data**  
 &nbsp;&nbsp;[0 5] (default) | two-element vector  
 **flow_lims - Y-Limits for Olfa flow data**  
@@ -128,34 +122,33 @@ Note: highly recommend entering PID lims
 &nbsp;&nbsp;&nbsp;&nbsp;->When plotting each flow rate, this is used to determine the flow values that will be plotted. (If round_to = 5, the flow values plotted will be 5,10,15,....100. If round_to = 10, the flow values plotted will be 10,20,30,...100.) (Just don't fuck with this for now, leave it at 5.)  
 
 **time_to_cut - Duration (seconds) to cut from beginning of each section**  
-&nbsp;&nbsp;6 (default) | positive value  
+&nbsp;&nbsp;0 (default) | positive value  
 &nbsp;&nbsp;&nbsp;&nbsp;->Duration (seconds) to cut from the beginning of each section before recalculating stats (mean, standard deviation). This is used to remove the first few seconds from the trial (the period when PID has not yet reached its peak/plateau value)  
 <br>
 
-### Other
-**plot_error_bars -**  
+### Plot Options
+**plot_error_bars - Show error bars on Flow v. PID and Flow v. Ctrl plots**  
 &nbsp;&nbsp;'yes' (default) | 'no'  
-**plot_by_vial - Colors based on vial number**  
-&nbsp;&nbsp;'yes' (default) | 'no'  
-<br>
-
-### Data to show on plot
+**plot_by_vial - Plot color determined by vial #**  
+&nbsp;&nbsp;"yes" (default) | "no"  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;->Generally, setting this to "no" will only be used when comparing multiple trials of the same vial. Otherwise, you'll want all trials from the same vial to be the same color.
 **shorten_file_name - shorten file name in legend**  
 &nbsp;&nbsp;'no' (default) | 'yes'  
-
-
-## Plot Options:
+**fig_position - position of Flow v. PID plot (f2)**  
+&nbsp;&nbsp;[260 230 812 709] (default) | four-element vector  
+**dot_size - Size of points on scatter plots**  
+&nbsp;&nbsp;60 (default) | positive integer  
 <br>
 
-#### Plot Options
+### Additional Figures
 **plot_by_flow - Plot each flow value individually**  
 &nbsp;&nbsp;"yes" (default) | "no"  
 
-**plot_flow - Show flow data on individual flow rate plots**  
-&nbsp;&nbsp;"yes" (default) | "no"  
-
-**plot_ctrl - Show ctrl data on individual flow rate plots & Show Flow v. Ctrl plot**  
+**plot_flow - Plot flow values on left yaxis** (8-line olfa)  
+&nbsp;&nbsp;'no' (default) | 'yes'  
+**plot_ctrl - Plot ctrl values on left yaxis, Display Flow v. Ctrl plot (f3)** (8-line olfa)  
 &nbsp;&nbsp;"no" (default) | "yes"  
+<br>
 
 <p align="center">1. no ctrl (default) 2. ctrl, no flow 3. no flow, no ctrl</p>
 <p align="center">
@@ -165,22 +158,6 @@ Note: highly recommend entering PID lims
 </p>
 
 <br>
-
-
-plot_error_bars - Show error bars on Flow v. PID
-
-**plot_by_vial - Plot color determined by vial #**  
-&nbsp;&nbsp;"yes" (default) | "no"  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Generally, setting this to "no" will only be used when comparing multiple trials of the same vial. Otherwise, you'll want all trials from the same vial to be the same color.
-
-<p align="center">1. no ctrl (default) 2. ctrl, no flow 3. no flow, no ctrl</p>
-<p align="center">
-  <img src="images/examples/plot_by_flow_flow_noctrl.jpg" width="30%">
-  <img src="images/examples/plot_by_flow_noflow_ctrl.jpg" width="30%">
-  <img src="images/examples/plot_by_flow_noflow_noctrl.jpg" width="30%">
-</p>
-
-
 
 ## Dependencies
 - get_section_data
