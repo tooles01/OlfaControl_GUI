@@ -1,23 +1,40 @@
 %Plot each sccm value , overlay all vials
+%
+%Required Input:
+%   file_names  - cell array of file names to plot
+%   a_title
+%   a_subtitle
+%
+%Plot Options:
+%   pid_lims            - Axis limits for PID
+%   flow_lims           - Axis limits for Olfa flow
+%   ctrl_lims           - Axis limits for Olfa ctrl
+%
+%   round_to
+%   time_to_cut
+%
+%   plot_error_bars
+%   plot_by_vial
+%   shorten_file_name   -
+%
+%   plot_by_flow
+%
+%   plot_flow
+%   plot_ctrl
 
-%#ok<*NASGU>
-%#ok<*AGROW>
 
 %%
+%#ok<*NASGU>
+%#ok<*AGROW>
  
 function a_plot_on_top(file_names,a_title,a_subtitle,c)
 
 arguments
     file_names  (:,1) cell
-
-    a_title     (1,1) string = ' '
-    %a_title     (1,1) char = ''
+    
+    a_title     (1,1) string = ''
+    %a_title     (1,:) char = ''
     a_subtitle  (1,1) string = ''
-
-    % Plot options
-    c.plot_by_flow  (1,1) string = 'yes'    % Plot each flow rate individually
-    c.plot_flow     (1,1) string = 'yes'    % Show flow data on individual flow rate plots
-    c.plot_ctrl     (1,1) string = 'no'     % Show ctrl data on individual flow rate plots; Show Flow v. Ctrl plot
 
     % Axis Limits
     c.pid_lims      (1,:) double = [0 5]
@@ -26,14 +43,22 @@ arguments
 
     % Data Manipulation
     c.round_to      (1,:) double = 5    % When getting flow means from file, round to the nearest (for plotting by individual flow rates)
-    c.time_to_cut   (1,:) double = 6
+    c.time_to_cut   (1,:) double = 0
 
-    % Other
+    % Plot options
     c.plot_error_bars   (1,1) string = 'yes'
     c.plot_by_vial      (1,1) string = 'yes'    % colors based on vial #
-
-    % Data to show on plot
-    c.shorten_file_name (1,1) string = 'no'
+    c.shorten_file_name (1,1) string = 'yes'
+    c.fig_position      (1,:) double = [260 230 812 709]    % position for flow v. PID plot
+    c.dot_size          (1,:) double = 60
+    
+    % Additional Figures
+    c.plot_by_flow  (1,1) string = 'no'     % Plot each flow rate individually
+    % change to "plot all" bc this is confusing
+    
+    % For individual event plots
+    c.plot_flow     (1,1) string = 'no'     % Show flow data on individual flow rate plots
+    c.plot_ctrl     (1,1) string = 'no'     % Show ctrl data on individual flow rate plots; Show Flow v. Ctrl plot
 
 end
 
@@ -67,18 +92,20 @@ c.nidaq_freq = 0.01;    % collection frequency etc etc
 % Figure positions
 
 % F1: Individual flow plots
+
 %f.f1_position = [166 210 1300 600];    % for PowerPoint
 f.f1_position = [28 210 1300 600];
 
 % F2: Flow v. PID
 %f.f2_position = [260 210 650 600];      % for PowerPoint (1/2 size)
 f.f2_position = [260 230 812 709];      % for PowerPoint (spt char)
+f.f2_position = c.fig_position;
 
 % F3: Flow v. Ctrl
-%f.f3_position = [1000 224 812 709];     % for PowerPoint (spt char)
-f.f3_position = [1000 210 650 600];     % for PowerPoint (1/2 size)
+f.f3_position = [1000 224 812 709];     % for PowerPoint (spt char)
+%f.f3_position = [1000 210 650 600];     % for PowerPoint (1/2 size)
 
-%% Make sure datafiles & functions are on matlab path
+f.dot_size = c.dot_size;
 
 %% Find OlfaControl_GUI directory (& add to path)
 
@@ -246,7 +273,7 @@ if strcmp(c.plot_by_flow,'yes')
                         end
                         %% Plot flow
                         if strcmp(c.plot_flow,'yes')
-                            yyaxis left; ylabel('Flow (SCCM)')
+                            yyaxis left; ylabel('Odor flow rate (SCCM)')
                             ylim([c.flow_lims])
                             p_flow = plot(this_flow_data(:,1),this_flow_data(:,2));
                             p_flow.HandleVisibility = 'off';
@@ -260,8 +287,9 @@ if strcmp(c.plot_by_flow,'yes')
                         if ~(strcmp(c.plot_ctrl,'no') && strcmp(c.plot_flow,'no'))      % If either flow or ctrl are plotted, put PID on the right yaxis
                             yyaxis right;
                         end
-                        ylabel('PID (V)')
-                        ylim([c.pid_lims]);
+                        ylabel('PID reading (V)')
+                        if ~isempty(c.pid_lims); ylim(c.pid_lims); end
+                        %ylim([c.pid_lims]);
                         r_ax = gca; r_ax.YColor = 'k';
                         p_pid = plot(this_pid_data(:,1),this_pid_data(:,2));
                         if strcmp(c.shorten_file_name,'yes')
@@ -344,10 +372,11 @@ f2.Name = 'FLOW v. PID';
 f2.Position = f.f2_position;
 ax2 = gca;
 legend('Location','northwest','Interpreter','none');
-xlabel('Flow (SCCM)')
+xlabel('Odor flow rate (SCCM)')
 xlim(c.flow_lims)
-ylabel('PID (V)')
-ylim(c.pid_lims)
+ylabel('Mean PID reading (V)')
+if ~isempty(c.pid_lims); ylim(c.pid_lims); end
+%ylim(c.pid_lims)
 title(a_title);
 if ~isempty(a_subtitle); subtitle(a_subtitle); end
 
@@ -358,7 +387,7 @@ if strcmp(c.plot_ctrl,'yes')
     f3.Name = 'FLOW v. CTRL: ';
     ax3 = gca;
     legend('Location','northwest','Interpreter','none');
-    xlabel('Flow (SCCM)')
+    xlabel('Odor flow rate (SCCM)')
     xlim(c.flow_lims)
     ylabel('Ctrl (int)')
     if ~isempty(c.ctrl_lims); ylim(c.ctrl_lims); end
@@ -366,7 +395,7 @@ if strcmp(c.plot_ctrl,'yes')
     if ~isempty(a_subtitle); subtitle(a_subtitle); end
 end
 
-%% Plot flow v. PID for each file
+%% Plot Flow v. PID for each file
 % For each file
 for r=1:length(data)
     a_this_file_name = data(r).file_name;
@@ -437,12 +466,9 @@ for r=1:length(data)
             if ~isempty(this_file_new_means)
                 x_flow = this_file_new_means(:,1);
                 y_pid = this_file_new_means(:,2);
-                s = scatter(ax2,x_flow,y_pid,'filled');
-                if strcmp(c.shorten_file_name,'yes')
-                    s.DisplayName = this_vial_num + " " + shortened_file_name;
-                else
-                    s.DisplayName = this_vial_num + " " + a_this_file_name;
-                end
+                s = scatter(ax2,x_flow,y_pid,f.dot_size,'filled');
+                if strcmp(c.shorten_file_name,'yes'); s.DisplayName = this_vial_num + " " + shortened_file_name;
+                else; s.DisplayName = this_vial_num + " " + a_this_file_name; end
                 if strcmp(c.plot_by_vial,'yes')
                     vial_num = str2double(this_vial_num(2));    % figure out which color
                     s.MarkerFaceColor = c.colors{vial_num};
@@ -453,12 +479,9 @@ for r=1:length(data)
             if ~isempty(this_file_ctrl_means)
                 if strcmp(c.plot_ctrl,'yes')
                     y_ctrl = this_file_ctrl_means;
-                    s2 = scatter(ax3,x_flow,y_ctrl,'filled');
-                    if strcmp(c.shorten_file_name,'yes')
-                        s2.DisplayName = this_vial_num + " " + shortened_file_name;
-                    else
-                        s2.DisplayName = this_vial_num + " " + a_this_file_name;
-                    end
+                    s2 = scatter(ax3,x_flow,y_ctrl,f.dot_size,'filled');
+                    if strcmp(c.shorten_file_name,'yes'); s2.DisplayName = this_vial_num + " " + shortened_file_name;
+                    else; s2.DisplayName = this_vial_num + " " + a_this_file_name; end
                     if strcmp(c.plot_by_vial,'yes')
                         vial_num = str2double(this_vial_num(2));    % figure out which color
                         s2.MarkerFaceColor = c.colors{vial_num};
@@ -577,7 +600,7 @@ for r=1:length(data)
         if ~isempty(this_file_new_means)
             x_flow = this_file_new_means(:,1);
             y_pid = this_file_new_means(:,2);
-            s = scatter(ax2,x_flow,y_pid,'filled');
+            s = scatter(ax2,x_flow,y_pid,f.dot_size,'filled');
             if strcmp(c.shorten_file_name,'yes')
                 s.DisplayName =  "standard olfa: " + shortened_file_name;
             else
@@ -611,4 +634,5 @@ for r=1:length(data)
     
     end
 end
+
 clearvars -except a_* c f data
