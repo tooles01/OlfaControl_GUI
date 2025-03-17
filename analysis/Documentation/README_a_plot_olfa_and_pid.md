@@ -11,6 +11,10 @@ Plot olfactometer & PID data over time
 
 ## Examples
 
+**Default:**  
+Plots olfa flow (SCCM) and PID over time  
+`a_plot_olfa_and_pid('2023-11-02_datafile_04',pid_lims=[0 3.5]);`  
+<p align="center"><img src="images/examples/plot_olfapid_default.jpg" width="50%"></p>
 
 ## Function Details
 ** need to finish  
