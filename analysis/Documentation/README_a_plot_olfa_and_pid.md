@@ -36,6 +36,11 @@ Plot olfactometer & PID data over time
 			- If selected: Scale time (`f.scale_time`)
 			- If selected: Change timescale to minutes (`plot_opts.plot_in_minutes`)
 			- **Plot olfa flow**
+		- If selected: **Plot setpoints** (`plot_opts.plot_setpoint`)
+			- For each vial:
+				- For each event:
+					- Get the setpoint & the start/end times of the OV event.
+					- Plot horizontal line at the setpoint.
 	- If selected: **Plot olfa ctrl** (`plot_opts.olfa_ctrl`) (right yaxis, left if flow data is plotted)
 		- For each vial:
 			- Get data to plot (int or voltage) (`plot_opts.ctrl_in_V`)

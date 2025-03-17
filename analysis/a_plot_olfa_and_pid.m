@@ -319,27 +319,31 @@ try
     ax_color = p.Color;
     f1_ax.YColor = ax_color;
 
-    %% If selected: plot setpoints
+    %% If selected: Plot setpoints
     if strcmp(plot_opts.plot_setpoint,'yes')
-        % for each vial
+        % For each vial
         for i=1:length(d_olfa_flow)
-            % for each event
+            % For each event
             for e=1:length(d_olfa_flow(i).events.OV)
-                % get the setpoint
+                % Get the setpoint (integer value)
                 this_event_setpoint_int = d_olfa_flow(i).events.Sp(e).value;
-                % convert to SCCM
-                this_event_setpoint_sccm = int_to_SCCM([0,this_event_setpoint_int],d_olfa_flow(i).cal_table);
-                this_event_setpoint_sccm = this_event_setpoint_sccm(2);
-                % get the time of the OV event
+                if strcmp(plot_opts.flow_in_SCCM,'yes')
+                    % Convert to SCCM
+                    this_event_setpoint_sccm = int_to_SCCM([0,this_event_setpoint_int],d_olfa_flow(i).cal_table);
+                    this_event_setpoint_sccm = this_event_setpoint_sccm(2);
+                    this_event_setpoint = this_event_setpoint_sccm;
+                else
+                    this_event_setpoint = this_event_setpoint_int;
+                end
+                % Get the time of the OV event
                 this_event_OV_t_start = d_olfa_flow(i).events.OV(e).t_start;
                 this_event_OV_t_end = d_olfa_flow(i).events.OV(e).t_end;
-                % draw a line on the plot for that shit
-                yline1 = line([this_event_OV_t_start this_event_OV_t_end],[this_event_setpoint_sccm this_event_setpoint_sccm]);
+                % Draw a line on the plot for that shit
+                yline1 = line([this_event_OV_t_start this_event_OV_t_end],[this_event_setpoint this_event_setpoint]);
                 set(get(get(yline1,'Annotation'),'LegendInformation'),'IconDisplayStyle','off');
             end
         end
     end
-
     
     %% Plot: Olfa ctrl
     if strcmp(plot_opts.olfa_ctrl,'yes')
@@ -395,7 +399,6 @@ try
             try
                 p2 = plot(d_ctrl_x,d_ctrl_y);
                 p2.DisplayName = [d_olfa_flow(i).vial_num ' Ctrl'];
-                %p2.HandleVisibility = 'off';
                 p2.LineStyle = '--';
                 p2.Color = this_color;
             % Error message in case no ctrl values available
@@ -444,7 +447,7 @@ try
             p2.Color = f.PID_color;
             
         else
-            disp('---> No PID data available to plot')
+            disp('---> No PID data available to plot') % If PID is selected to be plotted but there is none
         end
     end
     
@@ -464,6 +467,22 @@ try
     if ~isempty(f.calibration_value)
         yyaxis left;
         yline(f.calibration_value,'r','LineWidth',2);
+    end
+
+    %% If nothing plotted on right Yaxis, set it to blank
+    % Get the children (plot objects) of the right yaxis
+    yyaxis right;
+    ax = gca;
+    rightAxisChildren = ax.Children;
+    
+    % Check if any line objects exist
+    rightAxisLines = rightAxisChildren(arrayfun(@(x) isa(x, 'matlab.graphics.chart.primitive.Line'), rightAxisChildren));
+    
+    % If the array is empty, nothing is plotted on the right y-axis
+    if isempty(rightAxisLines)
+        set(gca, 'YTick', []); % Remove tick marks on the right y-axis
+        ax = gca;              % Get the current axis handle
+        ax.YAxis(2).Color = 'w'; % Set the right y-axis color to white
     end
 
 catch ME
