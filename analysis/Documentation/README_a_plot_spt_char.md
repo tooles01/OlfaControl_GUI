@@ -105,17 +105,22 @@ X-lines show the timeframe where the mean was calculated from (usually relevant 
     - Recalculates means & standard deviations (adds them back into the structs)
     </details>
 
-4. If selected: **Plots entire trial** (flow & PID over time)  
-  `plot_opts.plot_over_time`
+4. If selected: **Plots entire trial** (flow & PID over time) (`plot_opts.plot_over_time`)  
+    <details>
+    
+    - Create/set up figure
+      - If selected: Set X limits (`plot_opts.x_lim`)
+    - **Plot olfa flow**
+      - For each vial:
+        - Plot data (SCCM or int) (`plot_opts.flow_in_SCCM`)
+        - Set Y-Limits (`plot_opts.flow_lims`)
+    - **Plot PID**
+      - Set Y-Limits (`plot_opts.pid_lims`)
+    </details>
+  
   <p align="center"><img src="images/examples/spt_char_overtime.jpg" width="50%"></p>
 
-
-5. If selected: **Plots each event section individually**  
-  `plot_opts.plot_all`
-    <p align="center">
-        <img src="images/examples/spt_char_plot_all_01.jpg" width="30%">
-        <img src="images/examples/spt_char_plot_all_02.jpg" width="30%">
-    </p>
+5. If selected: **Plots each event section individually** (`plot_opts.plot_all`)  
     <details>
 
     - For each vial:  
@@ -132,12 +137,27 @@ X-lines show the timeframe where the mean was calculated from (usually relevant 
               - **Plot PID data**
               - If selected: **Plot PID mean on top** (`plot_opts.show_pid_mean`)
           - If selected: **Plot X-lines** showing where the mean values were calculated from (`plot_opts.show_x_lines`)
-  </details>
+    </details>
+
+      <p align="center">
+          <img src="images/examples/spt_char_plot_all_01.jpg" width="30%">
+          <img src="images/examples/spt_char_plot_all_02.jpg" width="30%">
+      </p>
 
 6. **Plots flow v. PID** (mean value over duration of each event)  
-  If selected: **Plots error bars**
-  `plot_opts.show_error_bars`
+  If selected: **Plots error bars** (`plot_opts.show_error_bars`)
+    <details>
+
+    - Create/set up figure
+    - For each vial:
+      - Plot mean flow v. mean PID (flow as integer or SCCM, `plot_opts.flow_in_SCCM`)
+        - Set Y-Limits (`plot_opts.flow_lims_sccm`, `f.flow_lims_int`)
+        - Set Marker Color********
+        - If selected: **Plot error bars** (`plot_opts.show_error_bars`)
+    </details>
+
   <p align="center"><img src="images/examples/spt_char_default.jpg" width="30%"></p>
+
 
 ## Input Arguments
 
@@ -170,7 +190,7 @@ X-lines show the timeframe where the mean was calculated from (usually relevant 
 **pid_lims - Y-Limits for PID data**  
 &nbsp;&nbsp;[0 3] (default) | two-element vector  
 **flow_lims_sccm - Y-Limits for Olfa flow data**  
-&nbsp;&nbsp;[0 120] (default) | two-element vector  
+&nbsp;&nbsp;[0 105] (default) | two-element vector  
 <br>
 
 ### Other

@@ -45,7 +45,7 @@ arguments
 
         % Axis Limits
         plot_opts.pid_lims          (1,:) double = [0 3]
-        plot_opts.flow_lims_sccm    (1,:) double = [0 120]
+        plot_opts.flow_lims_sccm    (1,:) double = [0 105]
         
         % Additional Figures
         plot_opts.plot_over_time    (1,1) string = 'no'     % plot the entire trial over time
@@ -75,6 +75,7 @@ f.flow_lims_int = [];
 f.flow_width = 1;
 f.pid_width = 1.5;
 f.dot_size = 60;
+f.PID_color = '#77AC30';
 
 % Vial colors
 f.colors{1} = '#0072BD';
@@ -118,7 +119,6 @@ clearvars c_*
 dir_this_mat_file = strcat(a_dir_OlfaControlGUI,'\analysis\data (.mat files)\',a_thisfile_name,'.mat');
 
 try
-    %load(dir_this_mat_file);
     load(dir_this_mat_file,'d_olfa_flow','a_this_note','data_time_raw','data_pid');
 
     %% Cut additional time off (& recalculate stats)
@@ -161,14 +161,15 @@ try
     end
     clearvars this_*
 
-    %% Plot the whole thing over time
+    %% If selected: Plot the whole thing over time
     if strcmp(plot_opts.plot_over_time,'yes')
         
         % Create figure
         figTitle_main = a_thisfile_name;
         if ~strcmp(a_this_note, ''); figTitle_main = append(figTitle_main, ': ',  a_this_note); end
         f1 = figure; f1.NumberTitle = 'off'; f1.Position = f0.position; hold on;
-        f1.Name = a_thisfile_name; title(figTitle_main)
+        f1.Name = a_thisfile_name;
+        title(figTitle_main)
         if strcmp(plot_opts.legend_on,'yes'); legend('Location','northwest'); end
         f1_ax = gca;
         
@@ -184,40 +185,23 @@ try
         %% Plot: Olfa flow
         % For each vial
         for i=1:length(d_olfa_flow)
-            % Plot as SCCM or integer values
             if strcmp(plot_opts.flow_in_SCCM,'yes')
-                % if this vial has a calibration table
-                if ~isempty(d_olfa_flow(i).cal_table_name)
-                    % Plot as SCCM
-                    if ~isempty(d_olfa_flow(i).flow.flow_sccm)
-                        ylabel('Odor flow rate (SCCM)')
-                        p = plot(d_olfa_flow(i).flow.flow_sccm(:,1),d_olfa_flow(i).flow.flow_sccm(:,2));
-                        if ~isempty(plot_opts.flow_lims_sccm); ylim(plot_opts.flow_lims_sccm)
-                        else; ylim([-5 150]); end
-                    end
-                else
-                    % Plot as integer
-                    if ~isempty(d_olfa_flow(i).flow.flow_int)
-                        ylabel('Odor flow rate (integer values)')
-                        p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
-                        if ~isempty(f.flow_lims_int); ylim(f.flow_lims_int)
-                        else; ylim([0 1024]); end
-                    end
+                % Plot as SCCM
+                if ~isempty(d_olfa_flow(i).flow.flow_sccm)
+                    ylabel('Odor flow rate (SCCM)')
+                    p = plot(d_olfa_flow(i).flow.flow_sccm(:,1),d_olfa_flow(i).flow.flow_sccm(:,2));
+                    ylim(plot_opts.flow_lims_sccm);
                 end
-                p.LineWidth = f.flow_width;
-                p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
-                
             else
                 % Plot as integer
                 if ~isempty(d_olfa_flow(i).flow.flow_int)
                     ylabel('Odor flow (integer values)')
                     p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
-                    p.LineWidth = f.flow_width;
-                    p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
-                    if ~isempty(f.flow_lims_int); ylim(f.flow_lims_int)
-                    else; ylim([0 1024]); end
+                    ylim(f.flow_lims_int);
                 end
             end
+            p.LineWidth = f.flow_width;
+            p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
         end
         
         %% Plot: PID
@@ -233,16 +217,15 @@ try
         end
     end
     
-    
     %% Plot: each section individually
     if strcmp(plot_opts.plot_all,'yes')
         time_around_event = 3;
-        % for each vial
+        % For each vial
         for i=1:length(d_olfa_flow)
             this_vial = d_olfa_flow(i).vial_num;
         
             % since i don't have setpoint data let's do it by OV events
-            % for each OV event
+            % For each OV event
             for e=1:length(d_olfa_flow(i).events.OV_keep)
                 t_beg_event = d_olfa_flow(i).events.OV_keep(e).t_event;  % actual time of OV
                 t_end_event = d_olfa_flow(i).events.OV_keep(e).t_end;
@@ -351,8 +334,7 @@ try
     
     % Create figure
     f2 = figure; f2.NumberTitle = 'off'; f2.Position = plot_opts.fig_position; hold on;
-    %f2.Name = ['FLOW v. PID: ',a_thisfile_name];
-    f2.Name = 'FLOW v. PID';
+    f2.Name = 'FLOW v. PID: '+ a_thisfile_name;
     title(a_thisfile_name);
     subtitle(a_this_note);
     if strcmp(plot_opts.legend_on,'yes'); legend('Location','northwest'); end
@@ -360,57 +342,61 @@ try
     ylabel('PID reading (V)')
     if ~isempty(plot_opts.pid_lims); ylim(plot_opts.pid_lims); end
     
+    % Plot the mean values for this vial
     % For each vial
     for i=1:length(d_olfa_flow)
-        if ~isempty(d_olfa_flow(i).int_means)
-            % Plot the values for this vial
-            if strcmp(plot_opts.flow_in_SCCM,'no')
-                p = scatter(d_olfa_flow(i).int_means(:,1),d_olfa_flow(i).int_means(:,2),f.dot_size,'filled');
-                xlabel('Odor flow rate (int)');
-                if ~isempty(f.flow_lims_int); f2_ax.XLim = f.flow_lims_int; end
-            end
-            if strcmp(plot_opts.flow_in_SCCM,'yes')
+        if strcmp(plot_opts.flow_in_SCCM,'yes')
+            % Plot as SCCM
+            if ~isempty(d_olfa_flow(i).sccm_means)
                 p = scatter(d_olfa_flow(i).sccm_means(:,1),d_olfa_flow(i).sccm_means(:,2),f.dot_size,'filled');
                 xlabel('Odor flow rate (SCCM)');
                 if ~isempty(plot_opts.flow_lims_sccm); f2_ax.XLim = plot_opts.flow_lims_sccm; end
             end
-            p.DisplayName = d_olfa_flow(i).vial_num;
-            p.MarkerFaceColor = f.colors{i};
+        else
+            % Plot as integer
+            if ~isempty(d_olfa_flow(i).int_means)
+                p = scatter(d_olfa_flow(i).int_means(:,1),d_olfa_flow(i).int_means(:,2),f.dot_size,'filled');
+                xlabel('Odor flow rate (int)');
+                if ~isempty(f.flow_lims_int); f2_ax.XLim = f.flow_lims_int; end
+            end
+        end
+        p.DisplayName = d_olfa_flow(i).vial_num;
+        %p.MarkerFaceColor = f.colors{i};
+        p.MarkerFaceColor = f.PID_color;
 
-            %% Plot: Error bars
-            if strcmp(plot_opts.show_error_bars,'yes')
+        %% Plot: Error bars
+        if strcmp(plot_opts.show_error_bars,'yes')
 
-                % Mean values
-                if strcmp(plot_opts.flow_in_SCCM,'no')
-                    x = d_olfa_flow(i).int_means(:,1);
-                    y = d_olfa_flow(i).int_means(:,2);
-                else
-                    x = d_olfa_flow(i).sccm_means(:,1);
-                    y = d_olfa_flow(i).sccm_means(:,2);
-                end
-
-                % Standard deviations
-                for e=1:length(d_olfa_flow(i).sccm_means)
-                    % Flow
-                    if strcmp(plot_opts.flow_in_SCCM,'no'); flow_std = d_olfa_flow(i).events.OV_keep(e).flow_std_int;
-                    else;                                   flow_std = d_olfa_flow(i).events.OV_keep(e).flow_std_sccm; end
-                    % PID
-                    pid_std = d_olfa_flow(i).events.OV_keep(e).pid_std;
-                    
-                    xneg(e,1) = flow_std/2;
-                    xpos(e,1) = flow_std/2;
-                    yneg(e,1) = pid_std/2;
-                    ypos(e,1) = pid_std/2;
-
-                end
-
-                % Plot error bars
-                e = errorbar(x,y,yneg,ypos,xneg,xpos,'o');
-                e.HandleVisibility = 'off';
-                e.Color = p.MarkerFaceColor;
+            % Mean values
+            if strcmp(plot_opts.flow_in_SCCM,'no')
+                x = d_olfa_flow(i).int_means(:,1);
+                y = d_olfa_flow(i).int_means(:,2);
+            else
+                x = d_olfa_flow(i).sccm_means(:,1);
+                y = d_olfa_flow(i).sccm_means(:,2);
             end
 
+            % Standard deviations
+            for e=1:length(d_olfa_flow(i).sccm_means)
+                % Flow
+                if strcmp(plot_opts.flow_in_SCCM,'no'); flow_std = d_olfa_flow(i).events.OV_keep(e).flow_std_int;
+                else;                                   flow_std = d_olfa_flow(i).events.OV_keep(e).flow_std_sccm; end
+                % PID
+                pid_std = d_olfa_flow(i).events.OV_keep(e).pid_std;
+                
+                xneg(e,1) = flow_std/2;
+                xpos(e,1) = flow_std/2;
+                yneg(e,1) = pid_std/2;
+                ypos(e,1) = pid_std/2;
+
+            end
+
+            % Plot error bars
+            e = errorbar(x,y,yneg,ypos,xneg,xpos,'o');
+            e.HandleVisibility = 'off';
+            e.Color = p.MarkerFaceColor;
         end
+
     end
     clearvars x xneg xpos y yneg ypos    
 
