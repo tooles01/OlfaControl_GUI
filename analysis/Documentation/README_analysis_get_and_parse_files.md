@@ -144,10 +144,10 @@ User will need to enter **data file name** (line 57).
 		<p align="center"><img src="images/data structures/targetStructArray.png" width="35%"></p>
 
 		- Sort events from lowest-->highest flow (`d_olfa_data_sorted`)
-		<p align="center"><img src="images/data structures/d_olfa_data_sorted_2.png" width="35%"></p>
+		<p align="center"><img src="images/data structures/d_olfa_data_sorted.png" width="35%"></p>
 
 		- Create `d_olfa_data_combined` (using `flow_inc` entered at beginning of file)
-		<p align="center"><img src="images/data structures/d_olfa_data_combined_2.png" width="35%"></p>
+		<p align="center"><img src="images/data structures/d_olfa_data_combined.png" width="35%"></p>
 	</details>
 
 12. **Saves .mat file** to "*OlfaControl_GUI\analysis\data (.mat files)*"  

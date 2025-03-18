@@ -84,9 +84,9 @@ It is recommended to enter values for:
 	<details>
 
 	- Sort `d_olfa_data` to create `d_olfa_data_sorted`  
-	<img src="images/data structures/d_olfa_data_sorted.png" width="30%">
+	<img src="images/data structures/d_olfa_data_sorted_standardOlf.png" width="30%">
 	- Add all of that data into `d_olfa_data_combined`  
-	<img src="images/data structures/d_olfa_data_combined.png" width="30%">
+	<img src="images/data structures/d_olfa_data_combined_standardOlf.png" width="30%">
 	</details>
 
 7. **Saves .mat file** to "*OlfaControl_GUI\analysis\data (.mat files)*"  
