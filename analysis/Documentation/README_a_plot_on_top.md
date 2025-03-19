@@ -3,15 +3,33 @@
 
 Plot a bunch of files on top of each other. can plot by flow value, can do flow v. PID spt char, flow v. ctrl spt char, can handle standard olfa files.  
 
-## Syntax:
+## Syntax
 `a_plot_on_top(file_names,a_title,a_subtitle)` plots the files in the array `file_names`  
 <br>
 
-<!--## Examples-->
+## Examples
+
+### Default:
+**Creates Flow vs. PID plot (for multiple files)**  
+(with error bars) (plot color for each file is based on vial number)
+
+```
+file_names = {'2024-01-09_datafile_02';'2024-01-09_datafile_03';'2024-01-09_datafile_04';'2024-01-09_datafile_05'};
+a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3]);
+```
+<br>
+<p align="center"><img src="images/examples/plot_on_top_default.jpg" width="40%"></p>
+<br>
 
 ## Function Details
 
 1. **Adds necessary folders to MATLAB path** (datafiles & functions)  
+	<details>
+
+	- Check if current directory contains 'OlfaControl_GUI' (If not, display error message)  
+	- Add datafiles to path: *"result_files\48-line olfa"*
+	- Add functions to path: *"analysis\functions"*
+	</details>
 
 2. **Loads files in**  
     <details>
@@ -19,82 +37,110 @@ Plot a bunch of files on top of each other. can plot by flow value, can do flow 
     - Preallocate struct array `data`
     - Load the list of files into the array
         - Variables loaded: `d_olfa_data_combined`, `d_olfa_flow`,`data_pid`,`d_olfa_data_sorted`
-    - Get list of flow values recorded in these files
-        - For each file:
-            - For each vial: (shouldn't there only be one?)
-                - Get all of the mean flow values (from d_olfa_data_sorted)... and round them to the nearest 5???
-            - For standard olf, same shit except variable name for "flow value" is different
-        - Sort the list and remove duplicates, now you have every value in these files
     </details>
 
-3. If selected: **Plots data at each flow rate separately**  
-    `c.plot_by_flow`
-    <p align="center">
-        <img src="images/examples/plot_on_top_plot_all_01.jpg" width="45 %">
-        <img src="images/examples/plot_on_top_plot_all_02.jpg" width="45%">
-    </p>
+3. **Get list of flow values recorded in these files**  
+    <details>
 
+    - For each file:
+        - Get list of flow means from each event in this file (from `d_olfa_data_sorted`)
+        - Round these values to the nearest 5 & shape into an array
+        - Append to the list of `flow_values` from each file
+    - Sort the cumulative list of `flow_values`, remove duplicates, now you have every value in these files
+    </details>    
+
+4. If selected: **Plots data at each flow rate separately** (`c.plot_by_flow`)  
     <details>
     
     - For each flow value:
         - Create figure
         - For each file:
             - If **8line olfa**:
-                - Get the rows of the trials at this flow value
-                - For each row (trial/event):
-                    - Get the data (flow, ctrl, pid)
-                    - Shift it all to t=0
-                    - Plots data
-                        - If selected: **Plots ctrl values** on left yaxis (`c.plot_ctrl`)
-                        - If selected: **Plots flow values** on left yaxis (`c.plot_flow`)
-                        - **Plots PID** on right yaxis
-                            - If neither flow nor ctrl are selected to be plotted, put PID on left yaxis
+                - For each vial:
+                    - Get all of the flow values we ran trials at
+                    - For each trial/event (row in struct):
+                        - Get the data (flow, ctrl, pid)
+                        - Shift it all to t=0
+                        - Plots data
+                            - If selected: **Plots ctrl values** on left yaxis (`c.plot_ctrl`)
+                            - If selected: **Plots flow values** on left yaxis (`c.plot_flow`)
+                            - **Plots PID** on right yaxis
+                                - If neither flow nor ctrl are plotted, plot on left yaxis
             - If **Standard olfa**:
-                - Get the rows of the trials at this flow value
-                - For each row (trial):
-                    - Get the PID data & plot it on right yaxis
+                - Get all of the flow values we ran trials at
+                - For each trial/event (row in struct):
+                    - Get the PID data
+                    - **Plots PID** on right yaxis
     </details>
-
-4. **Flow v. PID plot**  
-    and if selected, **Flow v. Ctrl plot** (`c.plot_ctrl`)  
-    <p align="center">
-        <img src="images/examples/plot_on_top_flowVpid.jpg" width="30%">
-        <img src="images/examples/plot_on_top_flowVctrl.jpg" width="30%">
-    </p>
     
+    <p align="center">
+        <img src="images/examples/plot_on_top_plot_all_01.jpg" width="45%">
+        <img src="images/examples/plot_on_top_plot_all_02.jpg" width="45%">
+    </p>
+
+5. **Flow v. PID plot**  
+    and if selected, **Flow v. Ctrl plot** (`c.plot_ctrl`)  
     <details>
 
-        - Create/set up both plots (title, legend, labels, etc)
-        - For each file:
-            - If **8-line olfa**:
-                - For each vial:
-                    - Initialize empty structures & get data from *d_olfa_flow.events.OV_keep*
-                    - For each event: **Cut data & calculate mean/std**
-                        - Get data from this event (flow, ctrl, pid)
-                        - Cut off the first *c.time_to_cut* seconds
-                        - Calculate mean & standard deviation (from cut data) & add to new data structures
-                    - Put the stats into data(r).new_means
-                        - (-->It doesn't seem data(r).new means is ever used, we only use this_file_new_means within this loop, can maybe remove this)
-                    - **Plot Flow v. PID means** (figure 2)
-                        - Add this file's data to the plot
-                        - If selected:
-                            - Shorten file name (`c.shorten_file_name`)
-                            - Plot by vial number (`c.plot_by_vial`)
-                    - If selected: **Plot Flow v. Ctrl means** (figure 3)
-                        - Add this file's data to the plot
-                        - If selected:
-                            - Shorten file name (`c.shorten_file_name`)
-                            - Plot by vial number (`c.plot_by_vial`)
-                    - If selected: **Plot error bars** (`c.plot_error_bars`)
-                        - Initialize empty structures (for creating error bars)
-                        - For each event:
-                            - Get flow, PID, ctrl standard deviations from the structures you just made before (this_file_new_stds, this_file_ctrl_stds)
-                            - Divide by two and add to (xneg, xpos, etc) (divide by 2 so that entire length of the error bar = 1 standard deviation)
-                        - Plot Flow & PID error bars on ax2
-                        - If selected: Plot ctrl error bars on ax3 (`c.plot_ctrl`)
-            - If **Standard olfa**:
-                - not today
+    - Create/set up both plots (title, legend, labels, etc)
+    - For each file:
+        - If **8-line olfa**:
+            - For each vial:
+                - Get data from `d_olfa_flow.events.OV_keep`
+                - For each event: **Cut data & calculate mean/std**
+                    - Get (flow, ctrl, PID) data from this event
+                    - Cut off the first `c.time_to_cut` seconds
+                    - Calculate mean & standard deviation
+                    - Add to data structure
+                        - `this_file_new_means`     % Array of Flow mean, PID mean (for all trials)
+                        - `this_file_new_stds`      % Array of Flow std, PID std (for all trials)
+                        - `this_file_ctrl_means`    % Array of Ctrl mean (for all trials)
+                        - `this_file_ctrl_stds`     % Array of Ctrl std (for all trials)
+                - Put Flow/PID means (`this_file_new_means`) into `data(r).new_means`
+                    - (-->It doesn't seem `data(r).new means` is ever used, we only use `this_file_new_means` within this loop, can probably remove this)
+                - **Plot Flow v. PID means** (f2)
+                    - Add this file's Flow/PID means to f2 (`this_file_new_means`)
+                    - If selected:
+                        - Shorten file name (`c.shorten_file_name`)
+                        - Plot by vial number (`c.plot_by_vial`)
+                - If selected: **Plot Flow v. Ctrl means** (f3)
+                    - Add this file's Flow/Ctrl means to f3 (`this_file_ctrl_means`)
+                    - If selected:
+                        - Shorten file name (`c.shorten_file_name`)
+                        - Plot by vial number (`c.plot_by_vial`)
+                - If selected: **Plot error bars** (`c.plot_error_bars`) *****on by default
+                    - For each event:
+                        - Get (flow, ctrl, PID) standard deviations from `this_file_new_stds`, `this_file_ctrl_stds`
+                        - Divide by 2; Append to `xneg`, `xpos`, `yneg`, `ypos` (divide by 2 so that entire length of the error bar = 1 standard deviation)
+                    - **Plot Flow/PID error bars** on ax2
+                    - If selected: **Plot Flow/Ctrl error bars** on ax3 (`c.plot_ctrl`)
+        - If **Standard olfa**:
+            - For each event:
+                - Get the flow value (No std here because it comes from the Alicat)
+                - Get the PID data:
+                    - Cut off the first `c.time_to_cut` seconds
+                    - Figure out the end time of the trial:
+                        - Find the first time the PID drops below 0.1V: the end time of the trial is 0.1s before that. (If PID was below 0.1V the whole time, make it a 4 second trial)
+                    - Get PID data just for this trial
+                - Calculate mean & standard deviation (from cut data)
+                - Add to data structure
+                    - `this_file_new_means`     % Array of Flow mean, PID mean (for all trials)
+                    - `this_file_new_stds`      % Array of Flow std, PID std (for all trials)
+            - Put Flow/PID means (`this_file_new_means`) into `data(r).new_means`
+                - --> same as w/ 8-line olfa, can probably remove this part
+            - **Plot Flow v. PID means** (f2)
+                - Add this file's Flow/PID means to f2 (`this_file_new_means`)
+                - If selected: Shorten file name (`c.shorten_file_name`)
+            - If selected: **Plot error bars** (`c.plot_error_bars`) *****on by default
+                - Get (flow, PID) standard deviations from `this_file_new_stds`
+                - Divide by 2; Append to `xneg`, `xpos`, `yneg`, `ypos` (divide by 2 so that entire length of the error bar = 1 standard deviation)
+                - **Plot Flow/PID error bars** on ax2
     </details>
+
+    <p align="center">
+        <img src="images/examples/plot_on_top_default.jpg" width="30%">
+        <img src="images/examples/plot_on_top_flowVctrl.jpg" width="30%">
+    </p>
 
 ## Input Arguments
 
