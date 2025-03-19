@@ -12,14 +12,60 @@ Plot a bunch of files on top of each other. can plot by flow value, can do flow 
 ### Default:
 **Creates Flow vs. PID plot (for multiple files)**  
 (with error bars) (plot color for each file is based on vial number)
-
 ```
 file_names = {'2024-01-09_datafile_02';'2024-01-09_datafile_03';'2024-01-09_datafile_04';'2024-01-09_datafile_05'};
 a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3]);
 ```
+<img src="images/examples/plot_on_top_default.jpg" width="50%">
+
+### Additional plots:
+<details><summary>Create Flow v. Ctrl plot</summary>
 <br>
-<p align="center"><img src="images/examples/plot_on_top_default.jpg" width="40%"></p>
+
+Set `plot_ctrl` to 'yes'
+```
+a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_ctrl='yes');
+```
+<img src="images/examples/plot_on_top_flowVctrl.jpg" width="40%">
+</details>
 <br>
+
+<details><summary>Plot each flow rate separately</summary>
+<br>
+
+**Plot each flow rate separately:**  
+Set `plot_by_flow` to 'yes'
+```
+a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow='yes');
+```
+<img src="images/examples/plot_on_top_plot_all_01.jpg" width="30%">
+<img src="images/examples/plot_on_top_plot_all_02.jpg" width="30%">
+<img src="images/examples/plot_on_top_plot_all_03.jpg" width="30%">
+
+By default, only PID data is shown on individual plots.  
+Flow/Ctrl data can be displayed by setting `plot_flow` or `plot_ctrl` to 'yes'. (If both are set to 'yes', they will both be plotted, but ctrl axis is wrong --> need to fix this)
+<br><br>
+
+**Show Flow data on individual plots:**  
+Set `plot_flow` to 'yes'
+```
+a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow='yes',plot_flow='yes');
+```
+<img src="images/examples/plot_on_top_plot_all_flow_01.jpg" width="30%">
+<img src="images/examples/plot_on_top_plot_all_flow_02.jpg" width="30%">
+<img src="images/examples/plot_on_top_plot_all_flow_03.jpg" width="30%">
+<br><br>
+
+**Show Ctrl data on individual plots:**  
+Set `plot_ctrl` to 'yes'
+```
+a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow='yes',plot_ctrl='yes');
+```
+<img src="images/examples/plot_on_top_plot_all_ctrl_01.jpg" width="30%">
+<img src="images/examples/plot_on_top_plot_all_ctrl_02.jpg" width="30%">
+<img src="images/examples/plot_on_top_plot_all_ctrl_03.jpg" width="30%">
+<br>
+</details>
 
 ## Function Details
 
@@ -72,13 +118,8 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3]);
                     - Get the PID data
                     - **Plots PID** on right yaxis
     </details>
-    
-    <p align="center">
-        <img src="images/examples/plot_on_top_plot_all_01.jpg" width="45%">
-        <img src="images/examples/plot_on_top_plot_all_02.jpg" width="45%">
-    </p>
 
-5. **Flow v. PID plot**  
+5. **Plots Flow v. PID**  
     and if selected, **Flow v. Ctrl plot** (`c.plot_ctrl`)  
     <details>
 
@@ -137,11 +178,6 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3]);
                 - **Plot Flow/PID error bars** on ax2
     </details>
 
-    <p align="center">
-        <img src="images/examples/plot_on_top_default.jpg" width="30%">
-        <img src="images/examples/plot_on_top_flowVctrl.jpg" width="30%">
-    </p>
-
 ## Input Arguments
 
 ### Required:
@@ -194,15 +230,6 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3]);
 &nbsp;&nbsp;'no' (default) | 'yes'  
 **plot_ctrl - Plot ctrl values on left yaxis, Display Flow v. Ctrl plot (f3)** (8-line olfa)  
 &nbsp;&nbsp;"no" (default) | "yes"  
-<br>
-
-<p align="center">1. no ctrl (default) 2. ctrl, no flow 3. no flow, no ctrl</p>
-<p align="center">
-  <img src="images/examples/plot_by_flow_flow_noctrl.jpg" width="30%">
-  <img src="images/examples/plot_by_flow_noflow_ctrl.jpg" width="30%">
-  <img src="images/examples/plot_by_flow_noflow_noctrl.jpg" width="30%">
-</p>
-
 <br>
 
 ## Dependencies
