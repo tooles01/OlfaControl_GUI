@@ -3,12 +3,27 @@ import numpy as np
 from PyQt5.QtWidgets import *
 from PyQt5 import sip
 import pyqtgraph as pg
+import os, logging, utils
 
+##############################
+# CREATE LOGGER
+logger = logging.getLogger(name='plot widget')
+logger.setLevel(logging.DEBUG)
+if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
+console_handler = utils.create_console_handler()
+logger.addHandler(console_handler)
+
+# add file handler
+main_datafile_directory = utils.find_log_directory()
+if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory)   # if folder doesn't exist, make it
+file_handler = utils.create_file_handler(main_datafile_directory)
+logger.addHandler(file_handler)
+##############################
 
 timer_interval_ms = 100         # interval for updating plot # TODO change ms to s
 
 # Plot Display Variables
-max_time_displayed_s = 360       # time frame to display # TODO remove
+max_time_displayed_s = 30
 max_time_displayed_ms = max_time_displayed_s * 1000
 flow_min = -5       # Min & Max flow values (Y-axis)
 flow_max = 150
@@ -21,6 +36,8 @@ class plot_window_all(QMainWindow):
         self.parent = parent    # olfactometer_window
         self.vials_to_plot = ['-','-','-','-']          # List of vials being plotted (List items are Vial objects)
         self.vials_to_plot_names = ['-','-','-','-']
+        self.max_time_displayed_s = max_time_displayed_s
+        self.max_time_displayed_ms = self.max_time_displayed_s * 1000
         
         # Create Plot Widget & Pushbuttons
         self.generate_ui() 
@@ -49,9 +66,22 @@ class plot_window_all(QMainWindow):
         self.y_data3 = np.array([])
         self.new_x = 0
 
+        # create x limits widget
+        self.x_lim_box = QGroupBox()
+        self.x_lim_widget = QLineEdit()
+        self.x_lim_widget.returnPressed.connect(self.update_x_lims)
+        x_lim_layout = QHBoxLayout()
+        x_lim_layout.addWidget(QLabel('Display Xrange (s)'))
+        x_lim_layout.addWidget(self.x_lim_widget)
+        self.x_lim_box.setLayout(x_lim_layout)
+
         # Layout
+        layout1 = QVBoxLayout()
+        layout1.addWidget(self.x_lim_box)
+        layout1.addWidget(self.vial_select_groupbox)
         self.main_layout = QHBoxLayout()
-        self.main_layout.addWidget(self.vial_select_groupbox)
+        self.main_layout.addLayout(layout1)
+        #self.main_layout.addWidget(self.vial_select_groupbox)
         self.main_layout.addWidget(self.plot_widget)
 
     def create_vial_select_groupbox(self):
@@ -67,8 +97,7 @@ class plot_window_all(QMainWindow):
                 this_slave_layout = QVBoxLayout()
                 for v in s.vials:
                     this_slave_layout.addWidget(v.plot_flow_btn)    
-                # Add this slave's buttons to the layout
-                vial_btn_layout.addLayout(this_slave_layout)
+                vial_btn_layout.addLayout(this_slave_layout)    # Add this slave's buttons to the layout
 
         self.vial_select_groupbox.setLayout(vial_btn_layout)
     
@@ -89,7 +118,7 @@ class plot_window_all(QMainWindow):
         self.y_data3 = np.append(self.y_data3, self.new_ydata3)
         
         # Keep only the last x data points to avoid excessive memory usage
-        num_data_points_displayed = int(max_time_displayed_ms/timer_interval_ms)
+        num_data_points_displayed = int(self.max_time_displayed_ms/timer_interval_ms)
         self.x_data = self.x_data[-num_data_points_displayed:]
         self.y_data0 = self.y_data0[-num_data_points_displayed:]
         self.y_data1 = self.y_data1[-num_data_points_displayed:]
@@ -120,6 +149,15 @@ class plot_window_all(QMainWindow):
         # Called from olfa window, creates & starts timer 
         self.timer = self.startTimer(timer_interval_ms)
 
+    def update_x_lims(self):
+        new_x_lims = self.x_lim_widget.text()
+        try:
+            self.max_time_displayed_s = int(new_x_lims)
+            self.max_time_displayed_ms = self.max_time_displayed_s * 1000
+            logger.debug("Updated x limit display to %s seconds", self.max_time_displayed_s)
+        except ValueError:
+            logger.error("Must enter an integer value for x limit display range")
+    
     def closeEvent(self, event):
         # Untoggle button in olfa GUI
         self.parent.show_flow_plot_btn.setChecked(False)
