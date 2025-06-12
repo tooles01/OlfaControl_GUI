@@ -629,10 +629,11 @@ class olfactometer_window(QGroupBox):
         
         # Show flow plot
         self.show_flow_plot_btn = QPushButton('Show flow plot', checkable=True)
-        self.show_flow_plot_btn.setToolTip('Open flow plot window\nDisplays flow rates of selected vials in real time\n\n(Warning: flow plot window not entirely debugged)')
+        self.show_flow_plot_btn.setToolTip('Displays flow rates of selected vials in real time' \
+            '\n\n(Warning: flow plot window not entirely debugged)')
         self.show_flow_plot_btn.toggled.connect(self.show_flow_plot_toggled)
-        self.flow_plot_window = plot_widget.plot_window_all(self)
-        self.flow_plot_window.hide()
+        self.flow_plot_window = plot_widget.plot_window_all(self)   # Create plot widget
+        self.flow_plot_window.hide()                                # Hide plot widget
 
         # Layout
         layout = QVBoxLayout()
@@ -699,11 +700,12 @@ class olfactometer_window(QGroupBox):
         if checked:
             self.show_flow_plot_btn.setText('Hide flow plot')
             self.flow_plot_window.update_vial_select_groupbox()
-            self.flow_plot_window.show()
-            self.flow_plot_window.timer_start()
+            self.flow_plot_window.show()                        # Show plot widget
+            self.flow_plot_window.timer_start()                 # Create & start timer
         else:
             self.show_flow_plot_btn.setText('Show flow plot')
-            self.flow_plot_window.hide()
+            self.flow_plot_window.hide()                        # Hide plot widget
+            self.flow_plot_window.timer_stop()                  # Stop timer
 
     def flow_cal_dir_btn_toggled(self,checked): # TODO finish debugging/cleaning this up
         if checked:
@@ -1193,6 +1195,7 @@ class olfactometer_window(QGroupBox):
 
     def closeEvent(self,event):
         logger.debug('olfactometer window closed')
+        self.flow_plot_window.hide()    # Close plot widget
 
 if __name__ == "__main__":
     app1 = QApplication(sys.argv)

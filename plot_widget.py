@@ -68,7 +68,7 @@ class plot_window_all(QMainWindow):
 
         # create x limits widget
         self.x_lim_box = QGroupBox()
-        self.x_lim_widget = QLineEdit()
+        self.x_lim_widget = QLineEdit(str(self.max_time_displayed_s))
         self.x_lim_widget.returnPressed.connect(self.update_x_lims)
         x_lim_layout = QHBoxLayout()
         x_lim_layout.addWidget(QLabel('Display Xrange (s)'))
@@ -146,8 +146,12 @@ class plot_window_all(QMainWindow):
             self.main_layout.insertWidget(0, self.vial_select_groupbox) # add it back into the layout
 
     def timer_start(self):
-        # Called from olfa window, creates & starts timer 
+        # Called from olfa window, creates & starts timer --> type is integer (???)
         self.timer = self.startTimer(timer_interval_ms)
+
+    def timer_stop(self):
+        #print("TS Killing timer with ID:", self.timer)
+        self.killTimer(self.timer)
 
     def update_x_lims(self):
         new_x_lims = self.x_lim_widget.text()
@@ -160,7 +164,8 @@ class plot_window_all(QMainWindow):
     
     def closeEvent(self, event):
         # Untoggle button in olfa GUI
-        self.parent.show_flow_plot_btn.setChecked(False)
+        self.parent.show_flow_plot_btn.setChecked(False)        
+        #event.accept()
 
 # Single vial plot in vial details popup
 class plot_window_single_vial(QMainWindow):
