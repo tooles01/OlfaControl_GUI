@@ -315,9 +315,13 @@ try
         end
     end
     % Set axis color
-    yyaxis left
-    ax_color = p.Color;
-    f1_ax.YColor = ax_color;
+    try
+        yyaxis left
+        ax_color = p.Color;
+        f1_ax.YColor = ax_color;
+    catch ME    % in case olfa flow was not plotted
+        %disp(ME.identifier);
+    end
 
     %% If selected: Plot setpoints
     if strcmp(plot_opts.plot_setpoint,'yes')
@@ -360,10 +364,10 @@ try
                     d_ctrl_x = d_olfa_flow(i).ctrl.ctrl_volt(:,1);
                     d_ctrl_y = d_olfa_flow(i).ctrl.ctrl_volt(:,2);
                     % If olfa flow is not plotted, put ctrl on left axis
-                    if strcmp(plot_opts.olfa_flow,'no')
-                        yyaxis left;
-                    else
+                    if strcmp(plot_opts.olfa_flow,'yes')
                         yyaxis right;
+                    else
+                        yyaxis left;
                     end
                     ylabel('Ctrl value (V)');
                     ylim([-0.1 5.1])
@@ -374,10 +378,10 @@ try
                     d_ctrl_x = d_olfa_flow(i).ctrl.ctrl_int(:,1);
                     d_ctrl_y = d_olfa_flow(i).ctrl.ctrl_int(:,2);
                     % If olfa flow is not plotted, put ctrl on left axis
-                    if strcmp(plot_opts.olfa_flow,'no')
-                        yyaxis left;
-                    else
+                    if strcmp(plot_opts.olfa_flow,'yes')
                         yyaxis right;
+                    else
+                        yyaxis left;
                     end
                     ylabel('Ctrl value (int)')
                     ylim(plot_opts.ctrl_lims);

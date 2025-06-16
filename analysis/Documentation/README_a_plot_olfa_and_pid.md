@@ -33,31 +33,57 @@ Plots olfa flow (SCCM) and PID over time
 3. **Plots selected data over time**
 	- Create/set up figure
 		- If selected: Set X limits (`f.x_lim`)
-	- **Plot olfa flow**
+	
+	- If selected: **Plot olfa flow** (`plot_opts.olfa_flow`)  
+		(default=yes)
+		<!--Vial color based on `f.colors` variable, hard coded in header -->
+		<details>
+		
 		- For each vial:
 			- Get data to plot (SCCM or int) (`plot_opts.flow_in_SCCM`)
+			- Set axis options:
 				- Set Y-Limits (`plot_opts.flow_lims`)
-			- If selected: Scale time (`f.scale_time`)
-			- If selected: Change timescale to minutes (`plot_opts.plot_in_minutes`)
+				- If selected: Scale time (`f.scale_time`)
+				- If selected: Change timescale to minutes (`plot_opts.plot_in_minutes`)
 			- **Plot olfa flow**
-		- If selected: **Plot setpoints** (`plot_opts.plot_setpoint`)
-			- For each vial:
-				- For each event:
-					- Get the setpoint & the start/end times of the OV event.
-					- Plot horizontal line at the setpoint.
-	- If selected: **Plot olfa ctrl** (`plot_opts.olfa_ctrl`) (right yaxis, left if flow data is plotted)
+		</details>
+	
+	- If selected: **Plot horizontal line at flow setpoints** (`plot_opts.plot_setpoint`)
+		<details>
+
+		- For each vial:
+			- For each event:
+				- Get the setpoint & the start/end times of the OV event.
+				- Plot horizontal line at the setpoint.
+				
+		</details>
+		
+	- If selected: **Plot olfa ctrl** (`plot_opts.olfa_ctrl`)  
+		(default=right yaxis, left yaxis if flow is plotted)
+		<!--Vial color based on `f.c_colors` variable, hard coded in header -->
+		<details>
+
 		- For each vial:
 			- Get data to plot (int or voltage) (`plot_opts.ctrl_in_V`)
+			- Set axis options:
 				- If plotting as integer, set Y-Limits (`plot_opts.ctrl_lims`)
-			- If olfa flow is not plotted: plot ctrl on left yaxis (else, plot on right yaxis) (`plot_opts.olfa_flow`) 
+				- If olfa flow is plotted: plot ctrl on right yaxis (else, plot on left yaxis) (`plot_opts.olfa_flow`) 
+				- If selected: Scale time (`f.scale_time`)
+				- If selected: Change timescale to minutes (`plot_opts.plot_in_minutes`)
+			- **Plot olfa ctrl**
+		</details>
+	
+	- If selected: **Plot PID** (`plot_opts.pid`)  
+		(default=right yaxis, left yaxis if no flow/ctrl plotted)
+		<details>
+
+		- Set axis options:
+			- Set Y-Limits (`plot_opts.pid_lims`)
 			- If selected: Scale time (`f.scale_time`)
 			- If selected: Change timescale to minutes (`plot_opts.plot_in_minutes`)
-			- **Plot olfa ctrl**
-	- If selected: **Plot PID** (`plot_opts.pid`) (right yaxis, left if no flow/ctrl plotted)
-		- Set Y-Limits (`plot_opts.pid_lims`)
-		- If selected: Scale time (`f.scale_time`)
-		- If selected: Change timescale to minutes (`plot_opts.plot_in_minutes`)
 		- **Plot PID**
+		</details>
+	
 	- If selected: **Plot output flow sensor** (right yaxis) (`plot_opts.output_flow`)
 	- If selected: **Plot calibration value** (left yaxis) (`f.calibration_value`)
 
