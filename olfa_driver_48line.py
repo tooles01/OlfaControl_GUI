@@ -587,6 +587,8 @@ class olfactometer_window(QGroupBox):
         self.m_manualcmd_btn.setToolTip("Manually send a command to the master Arduino")
         self.m_manualcmd_wid.returnPressed.connect(lambda: self.send_to_master(self.m_manualcmd_wid.text()))
         self.m_manualcmd_btn.clicked.connect(lambda: self.send_to_master(self.m_manualcmd_wid.text()))
+        self.m_manualcmd_wid.returnPressed.connect(lambda: logger.info('Sent manual command: %s', self.m_manualcmd_wid.text()))
+        self.m_manualcmd_btn.clicked.connect(lambda: logger.info('Sent manual command: %s', self.m_manualcmd_wid.text()))
         manualcmd_layout = QHBoxLayout()
         manualcmd_layout.addWidget(self.m_manualcmd_lbl)
         manualcmd_layout.addWidget(self.m_manualcmd_wid)
@@ -634,7 +636,7 @@ class olfactometer_window(QGroupBox):
         self.show_flow_plot_btn.toggled.connect(self.show_flow_plot_toggled)
         self.flow_plot_window = plot_widget.plot_window_all(self)   # Create plot widget
         self.flow_plot_window.hide()                                # Hide plot widget
-
+        
         # Layout
         layout = QVBoxLayout()
         layout.addWidget(self.load_config_btn)
@@ -992,16 +994,17 @@ class olfactometer_window(QGroupBox):
                 for v in s.vials:
                     if v.full_vialNum == vialnum_string:
                         v.valve_dur_spinbox.setValue(int(this_duration))    # Set spinbox to this duration
-                        if v.valve_open_btn.isChecked() == False:
-                            v.valve_open_btn.setChecked(True)               # Toggle the button (to activate the rest of everything)
-                        else:
-                            logger.warning("Cannot open %s, this line is already open", v.full_vialNum)
+                        # TEMPORARY 6/26/2025
+                        #if v.valve_open_btn.isChecked() == False:
+                        v.valve_open_btn.setChecked(True)               # Toggle the button (to activate the rest of everything)
+                        #else:
+                        #    logger.warning("Cannot open %s, this line is already open", v.full_vialNum)
                         flag = 1
             if flag == 0: logger.warning('Cannot open %s: vial number not recognized', vialnum_string)
 
         # Multiple vial numbers entered
         if len(vialnum_string) > 2:
-            # Iterate through and get all vials listed
+            # Get the numbers of all vials listed
             all_vialnums = []
             this_letter = vialnum_string[0]
             for char in vialnum_string:
@@ -1012,16 +1015,15 @@ class olfactometer_window(QGroupBox):
                     this_letter = char
                 else:
                     logger.warning('Unknown character received: %s', char)
-            # Now open all vials listed
+            
+            # Set the spinbox value for each vial
             for this_vialnum in all_vialnums:
                 for s in self.slave_objects:
                     for v in s.vials:
-                        if v.full_vialNum == this_vialnum:
-                            v.valve_dur_spinbox.setValue(int(this_duration))    # Set spinbox to this duration
-                            if v.valve_open_btn.isChecked() == False:
-                                v.valve_open_btn.setChecked(True)               # Toggle the button (to activate the rest of everything)
-                            else:
-                                logger.warning("Cannot open %s, this line is already open", v.full_vialNum)
+                        if v.full_vialNum == this_vialnum:  v.valve_dur_spinbox.setValue(int(this_duration))
+            
+            # Send command to open all of those vials
+            self.send_to_master(str_received)
     
     # COMMUNICATION
     def get_slave_addresses(self):
