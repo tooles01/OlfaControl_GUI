@@ -146,12 +146,14 @@ class plot_window_all(QMainWindow):
             self.main_layout.insertWidget(0, self.vial_select_groupbox) # add it back into the layout
 
     def timer_start(self):
-        # Called from olfa window, creates & starts timer --> type is integer (???)
-        self.timer = self.startTimer(timer_interval_ms)
+        """Called from olfa window, creates & starts timer"""
+        self.timer_id = self.startTimer(timer_interval_ms)
 
     def timer_stop(self):
-        #print("TS Killing timer with ID:", self.timer)
-        self.killTimer(self.timer)
+        if isinstance(self.timer_id, int):
+            #print("TS Killing timer with ID:", self.timer_id)
+            self.killTimer(self.timer_id)
+            self.timer_id = None    # Mark as killed
 
     def update_x_lims(self):
         new_x_lims = self.x_lim_widget.text()
@@ -163,9 +165,9 @@ class plot_window_all(QMainWindow):
             logger.error("Must enter an integer value for x limit display range")
     
     def closeEvent(self, event):
-        # Untoggle button in olfa GUI
-        self.parent.show_flow_plot_btn.setChecked(False)        
-        #event.accept()
+        """Untoggle button in olfa GUI"""
+        self.parent.show_flow_plot_btn.setChecked(False)
+
 
 # Single vial plot in vial details popup
 class plot_window_single_vial(QMainWindow):
@@ -252,9 +254,14 @@ class plot_window_single_vial(QMainWindow):
         self.legend.scene().invalidate()
 
     def timer_start(self):
-        # Called from vial popup, creates & starts timer
-        self.timer = self.startTimer(timer_interval_ms)
+        """Called from vial popup, creates & starts timer"""
+        self.timer_id = self.startTimer(timer_interval_ms)
 
+    def timer_stop(self):
+        if isinstance(self.timer_id, int):
+            self.killTimer(self.timer_id)
+            self.timer_id = None    # Mark as killed
+    
     def closeEvent(self, event):
-        # Untoggle button in vial details window
+        """Untoggle button in vial details window"""
         self.parent.show_plot_btn.setChecked(False)

@@ -160,13 +160,13 @@ class VialDetailsPopup(QWidget):
     def show_plot_toggled(self, checked):
         if checked:
             self.show_plot_btn.setText('Hide flow/ctrl plot')
-            self.plot_window = plot_widget.plot_window_single_vial(self)
-            self.plot_window.show()
-            self.plot_window.timer_start()
-
+            self.plot_window = plot_widget.plot_window_single_vial(self)    # Create plot widget
+            self.plot_window.show()                                         # Show plot widget
+            self.plot_window.timer_start()                                  # Create & start timer
         else:
             self.show_plot_btn.setText('Show flow/ctrl plot')
-            self.plot_window.hide()
+            self.plot_window.hide()         # Hide plot widget
+            self.plot_window.timer_stop()   # Kill timer
     
     def create_setpoint_box(self):
         self.db_setpoint_groupbox = QGroupBox('Setpoint')
@@ -785,3 +785,7 @@ class VialDetailsPopup(QWidget):
     def closeEvent(self, event):
         # Untoggle button in olfa GUI
         self.parent.vial_details_btn.setChecked(False)
+        
+        # Close plot window
+        try: self.plot_window.hide()
+        except: pass
