@@ -997,11 +997,10 @@ class olfactometer_window(QGroupBox):
                 for v in s.vials:
                     if v.full_vialNum == vialnum_string:
                         v.valve_dur_spinbox.setValue(int(this_duration))    # Set spinbox to this duration
-                        # TEMPORARY 6/27/2025
-                        #if v.valve_open_btn.isChecked() == False:
-                        v.valve_open_btn.setChecked(True)               # Toggle the button (to activate the rest of everything)
-                        #else:
-                        #    logger.warning("Cannot open %s, this line is already open", v.full_vialNum)
+                        if v.valve_open_btn.isChecked() == False:
+                            v.valve_open_btn.setChecked(True)               # Toggle the button (to activate the rest of everything)
+                        else:
+                            logger.warning("Cannot open %s, this line is already open", v.full_vialNum)
                         flag = 1
             if flag == 0: logger.warning('Cannot open %s: vial number not recognized', vialnum_string)
 
