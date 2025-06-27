@@ -33,6 +33,7 @@ class worker_zmq_thread(QThread):
     w_send_from_ZMQ = pyqtSignal(str)
     w_new_setpoint = pyqtSignal(str)
     w_open_vial = pyqtSignal(str)
+    w_close_vial = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -62,6 +63,7 @@ class worker_zmq_thread(QThread):
                         # Send received data to the main thread
                         if "S_Sp_" in data: self.w_new_setpoint.emit(data)      # If new data is a setpoint
                         elif "OV" in data:  self.w_open_vial.emit(data)         # If new data is open vial
+                        elif "CV" in data:  self.w_close_vial.emit(data)        # If new data is close vial
                         else:               self.w_send_from_ZMQ.emit(data)     # Send received data to the main thread
                     
                     except Exception as e:
@@ -651,7 +653,7 @@ class olfactometer_window(QGroupBox):
         # Displays for written and received data
         self.raw_write_display = QTextEdit(readOnly=True)
         self.raw_read_display = QTextEdit(readOnly=True)
-
+        
         # Layout
         raw_write_layout = QVBoxLayout()
         raw_write_layout.addWidget(QLabel('Written to serial port:'))
@@ -945,6 +947,7 @@ class olfactometer_window(QGroupBox):
             self.thread_zmq_worker.w_send_from_ZMQ.connect(self.send_to_master)
             self.thread_zmq_worker.w_new_setpoint.connect(self.new_setpoint)
             self.thread_zmq_worker.w_open_vial.connect(self.open_vial)
+            self.thread_zmq_worker.w_close_vial.connect(self.close_vial)
             self.thread_zmq_worker.thread_on = True
             self.thread_zmq_worker.start()
         else:
@@ -1025,6 +1028,23 @@ class olfactometer_window(QGroupBox):
             # Send command to open all of those vials
             self.send_to_master(str_received)
     
+    def close_vial(self, str_received):
+        # Get vial number
+        idx_underscore = str_received.rfind('_')            # find last underscore
+        vialnum_string = str_received[idx_underscore+1:]    # find vial number
+
+        # Single vial number entered:
+        if len(vialnum_string) == 2:
+            for s in self.slave_objects:
+                for v in s.vials:
+                    if v.full_vialNum == vialnum_string:
+                        if v.valve_open_btn.isChecked() == True:
+                            v.valve_open_btn.setChecked(False)  # Toggle the button
+        
+        # Multiple vial numbers entered
+        if len(vialnum_string) > 2:
+            self.send_to_master(str_received)
+
     # COMMUNICATION
     def get_slave_addresses(self):
         self.prev_active_slaves = copy.copy(self.active_slaves)
@@ -1180,7 +1200,7 @@ class olfactometer_window(QGroupBox):
                                                     'Please load calibration tables in order to read flow value')
                                     msg_box.setStandardButtons(QMessageBox.Ok)
                                     msg_box.exec()
-            
+
             except UnicodeDecodeError:
                 logger.warning("Serial read error")
 
