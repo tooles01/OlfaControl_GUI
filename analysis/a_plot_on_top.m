@@ -68,7 +68,7 @@ set(0,'DefaultTextInterpreter','none')
 %% Display variables
 f = struct();   % struct containing all figure variables
 
-f.x_lim = [-2 30];  % for individual plots
+f.x_lim = [-2 30];  % timescale for individual plots
 f.x_lim = [-2 10];
 
 %c = struct();
@@ -82,7 +82,7 @@ c.colors{7} = [0.3010   0.7450  0.9330];    % light blue
 c.colors{8} = [0.4940   0.1840  0.5560];    % purple
 
 c.flow_color = [0 .447 .741];
-c.flow_width = 0.1;
+c.flow_width = 1.5;
 c.pid_width = 2;
 c.blue = [0 .447 .741];
 c.yellow = [.929 .694 .125];
@@ -94,7 +94,7 @@ c.nidaq_freq = 0.01;    % collection frequency etc etc
 % F1: Individual flow plots
 
 %f.f1_position = [166 210 1300 600];    % for PowerPoint
-f.f1_position = [28 210 1300 600];
+f.f1_position = [28 210 881 600];
 
 % F2: Flow v. PID
 %f.f2_position = [260 210 650 600];      % for PowerPoint (1/2 size)
@@ -126,7 +126,7 @@ addpath(genpath(dir_data_files));   % genpath gets all folders/subfolders from 4
 dir_functions = [a_dir_OlfaControlGUI '\analysis\functions'];
 addpath(genpath(dir_functions));
 
-clearvars c_*
+clearvars c_* dir_functions
 
 %% Load files in
 
@@ -159,10 +159,10 @@ for i=1:length(file_names)
         end
     end
 end
-
-flow_values = [];
+clearvars x
 
 %% Get list of flow values recorded in these files
+flow_values = [];
 
 % For each file
 for r=1:length(data)
@@ -172,7 +172,7 @@ for r=1:length(data)
     shortened_file_name = erase(shortened_file_name,'.mat');
     %}
     
-    % For each vial
+    % For each vial % --> fix this later, there should only be one vial in each file (and also this loop doesn't even account for multiple vials) - ST 3/18/25
     for j=1:length(data(r).d_olfa_flow)
         % Get the data from d_olfa_data_sorted
         this_file_flow_values = [data(r).d_olfa_data_sorted.flow_mean_sccm];
@@ -195,7 +195,7 @@ end
 flow_values = sort(flow_values);        % sort the list
 flow_values = unique(flow_values);      % remove duplicate values
 
-
+clearvars r
 %% Plot each flow value separately
 if strcmp(c.plot_by_flow,'yes')
     
@@ -258,7 +258,7 @@ if strcmp(c.plot_by_flow,'yes')
                         
                         %% Plot ctrl
                         if strcmp(c.plot_ctrl,'yes')    % TODO: if plot_flow = yes, don't plot ctrl values
-                            yyaxis left; ylabel('Ctrl (int)');
+                            yyaxis left; ylabel('Ctrl (integer)');
                             ylim([c.ctrl_lims]);
                             p_ctrl = plot(this_ctrl_data(:,1),this_ctrl_data(:,2));
                             p_ctrl.HandleVisibility = 'off';
@@ -277,7 +277,12 @@ if strcmp(c.plot_by_flow,'yes')
                             ylim([c.flow_lims])
                             p_flow = plot(this_flow_data(:,1),this_flow_data(:,2));
                             p_flow.HandleVisibility = 'off';
-                            p_flow.Color = c.flow_color;
+                            if strcmp(c.plot_by_vial,'yes')
+                                vial_num = str2double(this_vial_num(2));
+                                p_flow.Color = c.colors{vial_num};
+                            else
+                                p_flow.Color = c.colors{r};
+                            end
                             p_flow.LineWidth = c.flow_width;
                             p_flow.LineStyle = '-';
                             p_flow.Marker = 'none';
@@ -288,8 +293,7 @@ if strcmp(c.plot_by_flow,'yes')
                             yyaxis right;
                         end
                         ylabel('PID reading (V)')
-                        if ~isempty(c.pid_lims); ylim(c.pid_lims); end
-                        %ylim([c.pid_lims]);
+                        ylim([c.pid_lims]);
                         r_ax = gca; r_ax.YColor = 'k';
                         p_pid = plot(this_pid_data(:,1),this_pid_data(:,2));
                         if strcmp(c.shorten_file_name,'yes')
@@ -389,7 +393,7 @@ if strcmp(c.plot_ctrl,'yes')
     legend('Location','northwest','Interpreter','none');
     xlabel('Odor flow rate (SCCM)')
     xlim(c.flow_lims)
-    ylabel('Ctrl (int)')
+    ylabel('Ctrl (integer)')
     if ~isempty(c.ctrl_lims); ylim(c.ctrl_lims); end
     title(a_title);
     if ~isempty(a_subtitle); subtitle(a_subtitle); end
@@ -412,13 +416,13 @@ for r=1:length(data)
             this_vial_num = data(r).d_olfa_flow(i).vial_num;
             this_file_events = data(r).d_olfa_flow(i).events.OV_keep;
             
-            % Initialize empty structures
+            % Initialize empty data structures
             this_file_new_means = [];
             this_file_new_stds = [];
             this_file_ctrl_means = [];
             this_file_ctrl_stds = [];
 
-            %% For each trial: Cut data & calculate stats, add into main data structure: data(r).new_means
+            %% For each event: Cut data & calculate stats, add into main data structure: data(r).new_means
             for e=1:length(this_file_events)
                 this_event_start_time = this_file_events(e).t_event;
                 this_event_end_time = this_file_events(e).t_end;
@@ -445,7 +449,7 @@ for r=1:length(data)
                 this_event_pid_std = std(this_event_cut_pid_data(:,2));
                 this_event_ctrl_std = std(this_event_cut_ctrl_data(:,2));
 
-                % Add to new structure
+                % Add to data structure (all means/stds for this file)
                 if this_event_flow_mean > .1
                 %if this_event_flow_mean ~= 0    % JUST FOR THIS ONE TIME 11/1/2023 SINCE GUI BEING DUMB % IF YOU'RE DOING ZERO FLOW TRIALS THEN GET RID OF THIS
                     this_event_mean_pair = [this_event_flow_mean this_event_pid_mean];      % Flow mean, PID mean
@@ -472,6 +476,8 @@ for r=1:length(data)
                 if strcmp(c.plot_by_vial,'yes')
                     vial_num = str2double(this_vial_num(2));    % figure out which color
                     s.MarkerFaceColor = c.colors{vial_num};
+                else
+                    s.MarkerFaceColor = c.colors{r};
                 end
             end
         
@@ -492,6 +498,7 @@ for r=1:length(data)
             %% Plot error bars
             if ~isempty(x_flow)
                 if strcmp(c.plot_error_bars,'yes')
+                    
                     % Initialize empty data structures
                     xneg = zeros(length(this_file_new_stds),1);
                     xpos = zeros(length(this_file_new_stds),1);
@@ -499,6 +506,7 @@ for r=1:length(data)
                     ypos = zeros(length(this_file_new_stds),1);
                     yneg_ctrl = zeros(length(this_file_new_stds),1);
                     ypos_ctrl = zeros(length(this_file_new_stds),1);
+                    
                     % For each event
                     for e=1:length(this_file_new_stds)
                         % Create array of values to plot as the error bars
@@ -556,6 +564,7 @@ for r=1:length(data)
             idx_of_start_time = (c.time_to_cut/c.nidaq_freq) + 1;
             new_pid_data = this_event_pid_data(idx_of_start_time:end,:);
             
+            %% Find the end time of the event (0.1s before the PID drops below 0.1V)
             % Give it 2 seconds to get up there a little bit
             c.time_to_get_up_there = 2;
             if (c.time_to_cut < c.time_to_get_up_there)
@@ -564,21 +573,22 @@ for r=1:length(data)
                 new_pid_data_1 = new_pid_data;
             end
             
-            idx_below_threshold = find(new_pid_data_1(:,2) < 0.1,1);   % find where PID drops below 0.1
+            % (from the cut data) find the first time the PID drops below 0.1V
+            idx_below_threshold = find(new_pid_data_1(:,2) < 0.1,1);
             time_below_threshold = new_pid_data_1(idx_below_threshold,1);
             if ~(idx_below_threshold == 1)
-                % end time is 0.1s before PID drops below 0.1
+                % If it's a valid time, end time of this trial is 0.1s before PID drops below 0.1V
                 end_time = time_below_threshold - .1;
                 end_idx = find(new_pid_data(:,1) <= end_time,1,'last');
             else
-                % if PID started below 0.1 (aka this was a 0 sccm trial), just make it a 4 second trial
+                % if PID started below 0.1V (aka this was a 0 sccm trial), just make it a 4 second trial
                 end_time = 4;
                 end_idx = find(new_pid_data(:,1) <= end_time,1,'last');
                 str = ['this was a 0 sccm trial (', num2str(this_event_flow_mean),' sccm, i=', num2str(i), ')'];
                 disp(str)
             end
 
-            % Get all the data for this period
+            % Get all the data for this period (calculated time of the event)
             this_event_cut_pid_data = new_pid_data(1:end_idx,:);
             
             % Calculate the mean value
