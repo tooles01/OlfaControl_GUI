@@ -36,7 +36,7 @@ class worker_sptChar(QObject):
     finished = pyqtSignal()
     w_sendThisSp = pyqtSignal(str,int)
     w_send_OpenValve = pyqtSignal(str,float)
-    w_incProgBar = pyqtSignal(int)
+    w_incProgBar = pyqtSignal(int,int)
 
     def __init__(self):
         super().__init__()
@@ -71,53 +71,40 @@ class worker_sptChar(QObject):
                 # convert it to arduino integer
                 this_setpoint_int = utils_olfa_48line.convertToInt(this_setpoint_sccm,self.sccm2Ard_dict)
                 
-                # send the setpoint
+                # Send the setpoint
                 logger.info('%s set to %s sccm',full_vial_name,this_setpoint_sccm)
                 self.w_sendThisSp.emit(full_vial_name,this_setpoint_int)
                 time.sleep(config_main.waitBtSpAndOV)
-
-                # update progress bar
-                current_time = datetime.now()
-                time_elapsed = (current_time - self.trial_start_time).total_seconds()
-                ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
-                self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
+                self.update_progress_bar()
                 
-                # open the vial
+                # Open vial
                 logger.info('Opening %s (%s seconds)',full_vial_name,self.duration_on)
                 self.w_send_OpenValve.emit(full_vial_name,self.duration_on)
                 
-                # wait until the vial closes
+                # Wait until vial closes
                 time.sleep(self.duration_on)
+                self.update_progress_bar()
 
-                # update progress bar
-                current_time = datetime.now()
-                time_elapsed = (current_time - self.trial_start_time).total_seconds()
-                ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
-                self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
-
-                # wait for the time between trials
+                # Wait for the time between trials
                 time.sleep(self.duration_off-config_main.waitBtSpAndOV)
-                
-                # update progress bar
-                current_time = datetime.now()
-                time_elapsed = (current_time - self.trial_start_time).total_seconds()
-                ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
-                self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
+                self.update_progress_bar()
         
-        # update progress bar
+        self.update_progress_bar()        
+        self.finished.emit()
+    
+    def update_progress_bar(self):
         current_time = datetime.now()
         time_elapsed = (current_time - self.trial_start_time).total_seconds()
         ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
-        self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
-        
-        self.finished.emit()
+        time_remaining = self.full_trial_duration_sec - time_elapsed
+        self.w_incProgBar.emit(int(ratio_of_entire_duration*100),round(time_remaining))
 
 class worker_additive(QObject):
     finished = pyqtSignal()
     w_sendThisSp = pyqtSignal(str,int)
     w_send_OpenValve = pyqtSignal(str,float)
     w_send_Command = pyqtSignal(str)
-    w_incProgBar = pyqtSignal(int)
+    w_incProgBar = pyqtSignal(int,int)
 
     def __init__(self):
         super().__init__()
@@ -153,12 +140,7 @@ class worker_additive(QObject):
         # iterate through stimulus list
         for stimulus in self.complete_stimulus_list:
             if self.threadON == True:
-                
-                # update progress bar
-                current_time = datetime.now()
-                time_elapsed = (current_time - self.trial_start_time).total_seconds()
-                ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
-                self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
+                self.update_progress_bar()
                 
                 # for each vial: send setpoint
                 for v in range(len(self.vials_to_run)):
@@ -181,34 +163,19 @@ class worker_additive(QObject):
                 for v in self.vials_to_run:
                     vial_string = vial_string + v[1:]
                 
-                # open the vials
+                # Open vials
                 logger.debug('Opening %s for %s seconds',vial_string,self.duration_on)
                 self.w_send_OpenValve.emit(vial_string,self.duration_on)
+                self.update_progress_bar()
                 
-                # update progress bar
-                current_time = datetime.now()
-                time_elapsed = (current_time - self.trial_start_time).total_seconds()
-                ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
-                self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
-                
-                # wait until the vials have closed
+                # Wait until vials have closed
                 time.sleep(self.duration_on)
-
-                # update progress bar
-                current_time = datetime.now()
-                time_elapsed = (current_time - self.trial_start_time).total_seconds()
-                ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
-                self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
+                self.update_progress_bar()
                 
-                # wait for the rest duration
+                # Wait for the time between trials
                 # TODO calculate what this actually should be
                 time.sleep(self.duration_off - config_main.waitBtSpAndOV)
-                
-                # update progress bar
-                current_time = datetime.now()
-                time_elapsed = (current_time - self.trial_start_time).total_seconds()
-                ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
-                self.w_incProgBar.emit(int(ratio_of_entire_duration*100))
+                self.update_progress_bar()
             
             if self.threadON == False:
                 break
@@ -221,6 +188,13 @@ class worker_additive(QObject):
         
         self.finished.emit()
         self.threadON = False
+    
+    def update_progress_bar(self):
+        current_time = datetime.now()
+        time_elapsed = (current_time - self.trial_start_time).total_seconds()
+        ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
+        time_remaining = self.full_trial_duration_sec - time_elapsed
+        self.w_incProgBar.emit(int(ratio_of_entire_duration*100),round(time_remaining))
 
 class worker_zmq_thread(QThread):
     finished = pyqtSignal()     # Signal to communicate with the main thread
@@ -329,26 +303,6 @@ class mainWindow(QMainWindow):
         max_height = self.general_settings_box.sizeHint().height()
         self.general_settings_box.setMaximumHeight(max_height)
     
-    ##############################
-    # ZMQ stuff        
-    def send_to_olfa(self,message_to_send):
-        logger.debug("sending to olfactometer: %s", message_to_send)
-        self.olfactometer.send_to_master(message_to_send)
-    
-    def toggle_zmq_connection(self, state):
-        """Enables or disables the ZMQ server based on checkbox state."""
-        if state == 2:   # if checked
-            logger.info("Starting ZMQ server...")
-            self.thread_zmq_worker = worker_zmq_thread()
-            self.thread_zmq_worker.w_send_from_ZMQ.connect(self.send_to_olfa)
-            self.thread_zmq_worker.thread_on = True
-            self.thread_zmq_worker.start()
-        else:
-            logger.info("Stopping ZMQ server...")
-            self.thread_zmq_worker.thread_on = False
-            self.thread_zmq_worker.quit()
-    ##############################
-    
     def create_datafile_box(self):
         self.datafile_groupbox = QGroupBox('Data File')
 
@@ -435,6 +389,27 @@ class mainWindow(QMainWindow):
         layout.addWidget(self.add_olfa_orig_btn)
         self.add_devices_groupbox.setLayout(layout)
     
+
+    ##############################
+    # ZMQ stuff        
+    def send_to_olfa(self,message_to_send):
+        logger.debug("sending to olfactometer: %s", message_to_send)
+        self.olfactometer.send_to_master(message_to_send)
+    
+    def toggle_zmq_connection(self, state):
+        """Enables or disables the ZMQ server based on checkbox state."""
+        if state == 2:   # if checked
+            logger.info("Starting ZMQ server...")
+            self.thread_zmq_worker = worker_zmq_thread()
+            self.thread_zmq_worker.w_send_from_ZMQ.connect(self.send_to_olfa)
+            self.thread_zmq_worker.thread_on = True
+            self.thread_zmq_worker.start()
+        else:
+            logger.info("Stopping ZMQ server...")
+            self.thread_zmq_worker.thread_on = False
+            self.thread_zmq_worker.quit()
+    ##############################
+
     
     ##############################
     # PROGRAM WIDGETS
@@ -442,6 +417,7 @@ class mainWindow(QMainWindow):
         if self.program_selection_btn.isChecked():
             self.program_selection_btn.setText("Deselect")
             self.program_parameters_box.setEnabled(True)
+            self.program_selection_combo.setEnabled(False)
             self.program_to_run = self.program_selection_combo.currentText()
             
             if self.program_to_run == "the program":
@@ -465,6 +441,7 @@ class mainWindow(QMainWindow):
             logger.debug('program selection unchecked')
             
             self.program_parameters_box.setEnabled(False)
+            self.program_selection_combo.setEnabled(True)
             
             # remove the program parameters groupbox ** this is the only way I've been able to delete these stupid widgets
             sip.delete(self.program_parameters_box)
@@ -504,24 +481,15 @@ class mainWindow(QMainWindow):
         self.program_start_btn = QPushButton(text='Start Program',checkable=True,toggled=self.program_start_clicked)
         self.program_progress_bar = QProgressBar()
         self.program_timer_label = QLabel()
-        self.program_timer = QTimer()
-        self.program_timer.timeout.connect(self.update_program_timer)
         layout_second_row = QHBoxLayout()
         layout_second_row.addWidget(self.program_start_btn)
         layout_second_row.addWidget(self.program_timer_label)
-        layout_second_row.addWidget(QLabel('remaining'))
+        layout_second_row.addWidget(QLabel(' seconds remaining'))
         
         self.program_start_box_layout = QVBoxLayout()
         self.program_start_box_layout.addWidget(self.program_progress_bar)
         self.program_start_box_layout.addLayout(layout_second_row)
         self.program_start_box.setLayout(self.program_start_box_layout)
-    
-    def increment_progress_bar(self, val):
-        self.program_progress_bar.setValue(val)
-    
-    def update_program_timer(self):
-        # TODO finish this
-        pass
     
     def change_parameters_btn_toggled(self,checked):
         if checked:
@@ -543,7 +511,7 @@ class mainWindow(QMainWindow):
                 if self.program_to_run == 'setpoint characterization':
                     self.run_setpoint_characterization()
                 if self.program_to_run == 'additive':
-                    self.run_additive_program()
+                    self.run_additive_program()            
             except AttributeError as err:
                 logger.error('No program selected')
                 self.program_start_btn.setChecked(False)
@@ -670,113 +638,110 @@ class mainWindow(QMainWindow):
     ##############################
     # PROGRAM WIDGETS FOR 48-LINE OLFA
     def create_48line_program_widgets(self):
-        if self.program_to_run == "setpoint characterization":
-            
-            ##############################
-            ## CREATE WIDGETS            
-            self.p_slave_lbl = QLabel('Slave:')
-            self.p_slave_lbl.setToolTip('Slave to run program on')
-            self.p_slave_select_wid = QComboBox()
-            self.p_slave_select_wid.setToolTip('Only active slaves displayed')
-            if self.olfactometer.active_slaves == []:
-                self.p_slave_select_wid.addItem(config_main.no_active_slaves_warning)
-            else:
-                self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
-            self.p_slave_select_refresh = QPushButton(text="Check Slave")
-            self.p_slave_select_refresh.setToolTip('Request current slave addresses')
-            self.p_slave_select_refresh.clicked.connect(self.active_slave_refresh)
-            self.p_vial_lbl = QLabel('vial:')
-            self.p_vial_lbl.setToolTip('Vial to run program on')
-            self.p_vial_wid = QComboBox()
-            vial_nums_int = list(range(1,self.olfactometer.vialsPerSlave+1))   # list of vial numbers
-            vial_nums_str = []
-            for item in vial_nums_int: vial_nums_str.append(str(item))
-            self.p_vial_wid.addItems(vial_nums_str)
-            self.p_vial_wid.setToolTip('Vial to run program on')
-            
-            self.p_vial_select_layout = QHBoxLayout()
-            self.p_vial_select_layout.addWidget(self.p_slave_select_refresh)
-            self.p_vial_select_layout.addWidget(self.p_slave_lbl)
-            self.p_vial_select_layout.addWidget(self.p_slave_select_wid)
-            self.p_vial_select_layout.addWidget(self.p_vial_lbl)
-            self.p_vial_select_layout.addWidget(self.p_vial_wid)            
-            
-            self.p_setpoints_wid = QLineEdit(toolTip='Enter setpoints separated by commas')
-            self.p_setpoints_wid.setPlaceholderText('Setpoints to run (sccm)')
-            self.p_setpoints_wid.setText(config_main.default_setpoint)
-            self.p_sp_order_wid = QComboBox()
-            self.p_sp_order_wid.addItems(['Random','Sequential'])
-            
-            self.p_spt_layout = QHBoxLayout()
-            self.p_spt_layout.addWidget(QLabel('Setpoints (sccm):'))
-            self.p_spt_layout.addWidget(self.p_setpoints_wid)
-            self.p_spt_layout.addWidget(self.p_sp_order_wid)
-            
-            self.p_dur_on_lbl = QLabel('Dur. on (s):',toolTip='Duration of valve opening (in seconds)')
-            self.p_dur_off_lbl = QLabel('Dur. off (s):',toolTip="Rest duration between valve openings (in seconds)")
-            self.p_dur_on_wid = QSpinBox(value=config_main.default_dur_ON,toolTip="Duration of valve opening (in seconds)")
-            self.p_dur_off_wid = QSpinBox(value=config_main.default_dur_OFF,toolTip="Rest duration between valve openings (in seconds)")
-            self.p_numTrials_wid = QLineEdit(text=str(config_main.default_numTrials))
-            self.p_numTrials_wid.setPlaceholderText('# of Trials at each setpoint')
-            self.p_numTrials_wid.setToolTip('# of Trials at each setpoint')
-            # setpoints will be run in the order entered
-            
-            self.p_dur_layout = QHBoxLayout()
-            self.p_dur_layout.addWidget(self.p_dur_on_lbl)
-            self.p_dur_layout.addWidget(self.p_dur_on_wid)
-            self.p_dur_layout.addWidget(self.p_dur_off_lbl)
-            self.p_dur_layout.addWidget(self.p_dur_off_wid)
-            self.p_dur_layout.addWidget(QLabel('# trials:'))
-            self.p_dur_layout.addWidget(self.p_numTrials_wid)
-            '''
-            self.p_fake_open_lbl = QLabel('Fake open:')
-            self.p_fake_open_wid = QComboBox()
-            self.p_fake_open_wid.addItems(['On','Off'])
-            
-            p_btm_row_layout = QHBoxLayout()
-            p_btm_row_layout.addWidget(self.p_fake_open_lbl)
-            p_btm_row_layout.addWidget(self.p_fake_open_wid)
-            '''
-            
-            self.program_parameters_layout.addRow(self.p_vial_select_layout)
-            self.program_parameters_layout.addRow(self.p_spt_layout)
-            self.program_parameters_layout.addRow(self.p_dur_layout)
-            
-            
-            ##############################
-            ## UPDATE DATAFILE STUFF            
-            
-            # change datafile name
-            olfa_48line_results_dir = main_datafile_directory + '\\48-line olfa' + '\\' + current_date
-            if not os.path.exists(olfa_48line_results_dir): os.mkdir(olfa_48line_results_dir); self.logger.debug('created folder at %s', olfa_48line_results_dir)
+        """Create widgets for setpoint characterization program"""
 
-            # check what files are in this folder
-            list_of_files = os.listdir(olfa_48line_results_dir)
-            list_of_files = [x for x in list_of_files if '.csv' in x]   # only csv files
-            if not list_of_files: self.last_datafile_number = -1
-            else:
-                # find the number of the last data file
-                last_datafile = list_of_files[len(list_of_files)-1]
-                idx_fileExt = last_datafile.rfind('.')
-                last_datafile = last_datafile[:idx_fileExt] # remove file extension
-                idx_underscore = last_datafile.rfind('_')   # find last underscore
-                last_datafile_num = last_datafile[idx_underscore+1:]
-                if last_datafile_num.isnumeric():   # if what's after the underscore is a number
-                    self.last_datafile_number = int(last_datafile_num)
-                else:
-                    self.last_datafile_number = 99
-                    logger.debug('last datafile in this folder does not have a number (%s), setting default datafile number to 00', last_datafile)
-
-            # get data file number
-            self.this_datafile_number = self.last_datafile_number + 1
-            self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2) # zero pad
-            
-            # create data file name
-            data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
-            self.data_file_name_lineEdit.setText(data_file_name)
-
+        ##############################
+        ## CREATE WIDGETS
+        self.p_slave_lbl = QLabel('Slave:')
+        self.p_slave_lbl.setToolTip('Slave to run program on')
+        self.p_slave_select_wid = QComboBox()
+        self.p_slave_select_wid.setToolTip('Only active slaves displayed')
+        if self.olfactometer.active_slaves == []:
+            self.p_slave_select_wid.addItem(config_main.no_active_slaves_warning)
         else:
-            logger.warning('program selected is not set up')
+            self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
+        self.p_slave_select_refresh = QPushButton(text="Check Slave")
+        self.p_slave_select_refresh.setToolTip('Request current slave addresses')
+        self.p_slave_select_refresh.clicked.connect(self.active_slave_refresh)
+        self.p_vial_lbl = QLabel('vial:')
+        self.p_vial_lbl.setToolTip('Vial to run program on')
+        self.p_vial_wid = QComboBox()
+        vial_nums_int = list(range(1,self.olfactometer.vialsPerSlave+1))   # list of vial numbers
+        vial_nums_str = []
+        for item in vial_nums_int: vial_nums_str.append(str(item))
+        self.p_vial_wid.addItems(vial_nums_str)
+        self.p_vial_wid.setToolTip('Vial to run program on')
+        
+        self.p_vial_select_layout = QHBoxLayout()
+        self.p_vial_select_layout.addWidget(self.p_slave_select_refresh)
+        self.p_vial_select_layout.addWidget(self.p_slave_lbl)
+        self.p_vial_select_layout.addWidget(self.p_slave_select_wid)
+        self.p_vial_select_layout.addWidget(self.p_vial_lbl)
+        self.p_vial_select_layout.addWidget(self.p_vial_wid)            
+        
+        self.p_setpoints_wid = QLineEdit(toolTip='Enter setpoints separated by commas')
+        self.p_setpoints_wid.setPlaceholderText('Setpoints to run (sccm)')
+        self.p_setpoints_wid.setText(config_main.default_setpoint)
+        self.p_sp_order_wid = QComboBox()
+        self.p_sp_order_wid.addItems(['Random','Sequential'])
+        
+        self.p_spt_layout = QHBoxLayout()
+        self.p_spt_layout.addWidget(QLabel('Setpoints (sccm):'))
+        self.p_spt_layout.addWidget(self.p_setpoints_wid)
+        self.p_spt_layout.addWidget(self.p_sp_order_wid)
+        
+        self.p_dur_on_lbl = QLabel('Dur. on (s):',toolTip='Duration of valve opening (in seconds)')
+        self.p_dur_off_lbl = QLabel('Dur. off (s):',toolTip="Rest duration between valve openings (in seconds)")
+        self.p_dur_on_wid = QSpinBox(value=config_main.default_dur_ON,toolTip="Duration of valve opening (in seconds)")
+        self.p_dur_off_wid = QSpinBox(value=config_main.default_dur_OFF,toolTip="Rest duration between valve openings (in seconds)")
+        self.p_numTrials_wid = QLineEdit(text=str(config_main.default_numTrials))
+        self.p_numTrials_wid.setPlaceholderText('# of Trials at each setpoint')
+        self.p_numTrials_wid.setToolTip('# of Trials at each setpoint')
+        # setpoints will be run in the order entered
+        
+        self.p_dur_layout = QHBoxLayout()
+        self.p_dur_layout.addWidget(self.p_dur_on_lbl)
+        self.p_dur_layout.addWidget(self.p_dur_on_wid)
+        self.p_dur_layout.addWidget(self.p_dur_off_lbl)
+        self.p_dur_layout.addWidget(self.p_dur_off_wid)
+        self.p_dur_layout.addWidget(QLabel('# trials:'))
+        self.p_dur_layout.addWidget(self.p_numTrials_wid)
+        '''
+        self.p_fake_open_lbl = QLabel('Fake open:')
+        self.p_fake_open_wid = QComboBox()
+        self.p_fake_open_wid.addItems(['On','Off'])
+        
+        p_btm_row_layout = QHBoxLayout()
+        p_btm_row_layout.addWidget(self.p_fake_open_lbl)
+        p_btm_row_layout.addWidget(self.p_fake_open_wid)
+        '''
+        
+        self.program_parameters_layout.addRow(self.p_vial_select_layout)
+        self.program_parameters_layout.addRow(self.p_spt_layout)
+        self.program_parameters_layout.addRow(self.p_dur_layout)
+        
+        
+        ##############################
+        ## UPDATE DATAFILE STUFF            
+        
+        # change datafile name
+        olfa_48line_results_dir = main_datafile_directory + '\\48-line olfa' + '\\' + current_date
+        if not os.path.exists(olfa_48line_results_dir): os.mkdir(olfa_48line_results_dir); logger.debug('created folder at %s', olfa_48line_results_dir)
+
+        # check what files are in this folder
+        list_of_files = os.listdir(olfa_48line_results_dir)
+        list_of_files = [x for x in list_of_files if '.csv' in x]   # only csv files
+        if not list_of_files: self.last_datafile_number = -1
+        else:
+            # find the number of the last data file
+            last_datafile = list_of_files[len(list_of_files)-1]
+            idx_fileExt = last_datafile.rfind('.')
+            last_datafile = last_datafile[:idx_fileExt] # remove file extension
+            idx_underscore = last_datafile.rfind('_')   # find last underscore
+            last_datafile_num = last_datafile[idx_underscore+1:]
+            if last_datafile_num.isnumeric():   # if what's after the underscore is a number
+                self.last_datafile_number = int(last_datafile_num)
+            else:
+                self.last_datafile_number = 99
+                logger.debug('last datafile in this folder does not have a number (%s), setting default datafile number to 00', last_datafile)
+
+        # get data file number
+        self.this_datafile_number = self.last_datafile_number + 1
+        self.this_datafile_number_padded = str(self.this_datafile_number).zfill(2) # zero pad
+        
+        # create data file name
+        data_file_name = current_date + '_datafile_' + self.this_datafile_number_padded
+        self.data_file_name_lineEdit.setText(data_file_name)
     
     def create_additive_widgets(self):
         # SHOW ADDITIVE POPUP WINDOW
@@ -795,7 +760,7 @@ class mainWindow(QMainWindow):
         # DISABLE CHANGE PARAMETERS/START PROGRAM BUTTONS
         self.change_parameters_btn.setEnabled(False)
         self.program_start_btn.setEnabled(False)
-    
+
     def additive_parameters_display(self):
         ## function is called from the popup window
         
@@ -890,7 +855,7 @@ class mainWindow(QMainWindow):
         except RuntimeError as err:
             logger.debug('no pid')
         
-        # CHECK THAT OLFACTOMETER IS CONNECTED
+        # CHECK THAT OLFACTOMETER IS CONNECTED (probably redundant)
         try:
             if self.olfactometer.connect_btn.isChecked() == False:
                 logger.warning('Olfactometer not connected, attempting to connect')
@@ -943,7 +908,7 @@ class mainWindow(QMainWindow):
                         else:
                             logger.warning('%s is set to debug mode', v.full_vialNum)
             
-            # START RECORDING # TODO don't do this until it's READY to go
+            # START RECORDING
             if self.begin_record_btn.isChecked() == False:
                 self.begin_record_btn.click()
             
@@ -1009,7 +974,7 @@ class mainWindow(QMainWindow):
             self.thread_additive.start()
         else:
             logger.info('No vials selected - cannot run program')
-    
+
     def set_up_threads_sptchar(self):
         self.obj_sptchar = worker_sptChar()
         self.thread_olfa = QThread()
@@ -1032,18 +997,23 @@ class mainWindow(QMainWindow):
         self.obj_additive.w_incProgBar.connect(self.increment_progress_bar)
         self.obj_additive.finished.connect(self.threadIsFinished)
         self.thread_additive.started.connect(self.obj_additive.exp)
-    
+
     def threadIsFinished(self):
         if self.obj_sptchar.threadON == True:
             self.obj_sptchar.threadON = False
             self.thread_olfa.exit()
-            logger.debug('spt char program finished')
+            self.thread_olfa.wait()
+            if self.thread_olfa.isRunning() == False:
+                logger.debug('spt char program finished')
         if self.obj_additive.threadON == True:
             self.obj_additive.threadON = False
             self.thread_additive.exit()
-            logger.debug('additive program finished')
+            self.thread_additive.wait()
+            if self.thread_additive.isRunning() == False:
+                logger.debug('additive program finished')
         
-        self.program_start_btn.setChecked(False)
+        if self.program_start_btn.isChecked() == True:
+            self.program_start_btn.setChecked(False)
         self.program_start_btn.setText('Start Program')
         self.program_progress_bar.setValue(0)
         logger.info('Finished program')
@@ -1087,6 +1057,10 @@ class mainWindow(QMainWindow):
     def send_Command(self, stringToSend:str):
         strToSend = stringToSend
         self.olfactometer.send_to_master(strToSend)
+    
+    def increment_progress_bar(self, ratio:int, time_left_sec:int):
+        self.program_progress_bar.setValue(ratio)
+        self.program_timer_label.setText(str(time_left_sec))
     ##############################
     
     
