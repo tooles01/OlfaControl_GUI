@@ -1,4 +1,4 @@
-import logging, os, glob
+import logging, os
 from datetime import datetime
 import config_main
 
@@ -56,16 +56,29 @@ def create_console_handler():   # TODO: user sends log level to this function
 #################################
 # FIND DIRECTORIES
 def find_olfaControl_directory():
-    str_to_find = '/**/*OlfaControl_GUI*'
+    """Find "OlfaControl_GUI" directory"""
     
-    # Search C:\\GIT for paths containing OlfaControl_GUI
-    c_drive_git_path = os.path.expanduser('C:\\GIT\\')
-    path_list = glob.glob(c_drive_git_path + '/**/*' + str_to_find,recursive=True)
+    str_to_find = 'OlfaControl_GUI'
+    path_list = []
+
+    # Check if we are already in the folder
+    current_dir = os.getcwd()
+    parent_dir = os.path.dirname(current_dir)
+    for root, dirs, files in os.walk(parent_dir):
+        if str_to_find in dirs:
+            path_list.append(os.path.join(root, str_to_find))
     
+    # If not found: search C:\\GIT
+    if not path_list:
+        dir_to_search = 'C:\\GIT\\'
+        for root, dirs, files in os.walk(dir_to_search):
+            if str_to_find in dirs: path_list.append(os.path.join(root, str_to_find))
+
     # If not found: search Dropbox
     if not path_list:
-        c_drive_git_path = os.path.expanduser('~\\Dropbox*')
-        path_list = glob.glob(c_drive_git_path + str_to_find, recursive=True)
+        dir_to_search = os.path.expanduser('~\\Dropbox*')    # idk if this will work
+        for root, dirs, files in os.walk(dir_to_search):
+            if str_to_find in dirs: path_list.append(os.path.join(root, str_to_find))
     
     # If not found: print warning
     if not path_list:
@@ -90,19 +103,23 @@ def find_olfaControl_directory():
     return gui_directory    # type is string
 
 def find_log_directory():
-    # Check for OlfaControl_GUI directory
-    olfacontrolgui_directory = find_olfaControl_directory()
+    """
+    Returns directory where log file will be stored
+        result_file_directory = directory_to_save_to + "\\result_files"
+            directory_to_save_to = either OlfaControl_GUI or current directory
+    """
 
-    # If not found: use the directory we are currently in
+    """Get directory_to_save_to"""
+    # If "\OlfaControl_GUI" not found: use the directory we are currently in
+    olfacontrolgui_directory = find_olfaControl_directory()
     if not olfacontrolgui_directory:
         directory_to_save_to = os.getcwd()
     else:
         directory_to_save_to = olfacontrolgui_directory
     
-    # check if there is a folder called result files
+    """Get result_file_directory"""
     result_file_directory = directory_to_save_to + '\\' + config_main.result_file_folder_name
-    
-    # If folder does not exist, create it
+    # If 'result_files' folder does not exist, create it
     if not os.path.exists(result_file_directory):
         logger.info('creating result file directory at %s', result_file_directory)
         os.mkdir(result_file_directory)
