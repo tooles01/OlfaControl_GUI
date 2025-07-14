@@ -2,13 +2,16 @@
 **Plot standard olfactometer datafile**
 
 ## Description
-**Note for me: seems like a combination of analysis_get_and_parse and a_plot_spt_char  
+<!--**Note for me: seems like a combination of analysis_get_and_parse and a_plot_spt_char  -->
 
 -> different file type: (data starts at 4th row of file)  
 - Column 1: vial number
 - Column 2: flow rate
 - Column 3 -> end: PID values (at each time) for that trial
-<br><br>
+
+<p align="center"><img src="images/standardolf_datafile.png" width="100%"></p>
+<!--![image](images/standardolf_datafile.png)-->
+<br>
 
 ## Input Arguments:
 

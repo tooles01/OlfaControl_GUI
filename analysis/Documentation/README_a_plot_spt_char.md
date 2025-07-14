@@ -59,19 +59,22 @@ Can add:
 
 **Default:**  
 `a_plot_spt_char('2024-10-16_datafile_00',pid_lims=[-.01 .5],plot_all='yes');`  
+<br>
 <img src="images/examples/spt_char_plot_all_01.jpg" width="30%">
 <img src="images/examples/spt_char_plot_all_02.jpg" width="30%">
 <br><br>
 
-**Show calculated flow mean & PID mean:**  
+**Show calculated flow mean & PID mean on individual plots:**  
 `a_plot_spt_char('2024-10-16_datafile_00',pid_lims=[-.01 .5],plot_all='yes',show_flow_mean='yes',show_pid_mean='yes');`  
+<br>
 <img src="images/examples/spt_char_plot_all_flow_pid_mean_01.jpg" width="30%">
 <img src="images/examples/spt_char_plot_all_flow_pid_mean_02.jpg" width="30%">
 <br><br>
 
-**Show calculated flow mean, PID mean, *AND* X-lines:**  
+**Show calculated flow mean, PID mean, *AND* X-lines on individual plots:**  
 X-lines show the timeframe where the mean was calculated from (usually relevant when time has been cut from the beginning of the trial)  
 `a_plot_spt_char('2024-10-16_datafile_00',pid_lims=[-.01 .5],plot_all='yes',show_flow_mean='yes',show_pid_mean='yes',show_x_lines='yes',time_to_cut=2);`  
+<br>
 <img src="images/examples/spt_char_plot_all_means_xlines_01.jpg" width="30%">
 <img src="images/examples/spt_char_plot_all_means_xlines_02.jpg" width="30%">
 <br><br>
@@ -82,6 +85,7 @@ X-lines show the timeframe where the mean was calculated from (usually relevant 
 <br>
 
 `a_plot_spt_char('2024-01-09_datafile_01');`  
+<br>
 <img src="images/examples/spt_char_overtime.jpg" width="50%">
 </details>
 <br>

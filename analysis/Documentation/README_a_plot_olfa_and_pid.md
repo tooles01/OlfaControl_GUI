@@ -16,6 +16,11 @@ Plots olfa flow (SCCM) and PID over time
 `a_plot_olfa_and_pid('2023-11-02_datafile_04',pid_lims=[0 3.5]);`  
 <p align="center"><img src="images/examples/plot_olfapid_default.jpg" width="50%"></p>
 
+**Other Options:**
+- Plot any combination of 2: flow, ctrl, pid, output flow
+- Plot horizontal line at setpoint
+- X-lims/scale time
+
 ## Function Details
 ** need to finish  
 ** need to do something about which can be on which axis  

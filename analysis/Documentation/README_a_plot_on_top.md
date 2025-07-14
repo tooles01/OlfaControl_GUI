@@ -28,7 +28,6 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_ctrl='y
 ```
 <img src="images/examples/plot_on_top_flowVctrl.jpg" width="40%">
 </details>
-<br>
 
 <details><summary>Plot each flow rate separately</summary>
 <br>
@@ -43,21 +42,23 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow
 <img src="images/examples/plot_on_top_plot_all_03.jpg" width="30%">
 
 By default, only PID data is shown on individual plots.  
-Flow/Ctrl data can be displayed by setting `plot_flow` or `plot_ctrl` to 'yes'. (If both are set to 'yes', they will both be plotted, but ctrl axis is wrong --> need to fix this)
-<br><br>
+Flow/Ctrl data can be displayed as well by setting `plot_flow` or `plot_ctrl` to 'yes'. (If both are set to 'yes', they will both be plotted, but ctrl axis is wrong --> need to fix this)
+<br><br><br>
 
 **Show Flow data on individual plots:**  
-Set `plot_flow` to 'yes'
+Set `plot_flow` to 'yes'  
+Flow data for all lines is shown in blue.
 ```
 a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow='yes',plot_flow='yes');
 ```
 <img src="images/examples/plot_on_top_plot_all_flow_01.jpg" width="30%">
 <img src="images/examples/plot_on_top_plot_all_flow_02.jpg" width="30%">
 <img src="images/examples/plot_on_top_plot_all_flow_03.jpg" width="30%">
-<br><br>
+<br><br><br>
 
 **Show Ctrl data on individual plots:**  
-Set `plot_ctrl` to 'yes'
+Set `plot_ctrl` to 'yes'  
+Ctrl data is shown in the same color as the PID data for that line.
 ```
 a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow='yes',plot_ctrl='yes');
 ```
