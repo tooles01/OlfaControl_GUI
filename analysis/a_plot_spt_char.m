@@ -3,24 +3,35 @@
 %Required Input:
 %   a_thisfile_name - file name
 %
-%Plot Options:
+%Data to plot:
 %   olfa_flow       - flow values on left yaxis
 %   olfa_ctrl       - ctrl values on right yaxis
 %   pid             - pid data on right yaxis
 %
+%Units:
 %   flow_in_SCCM    - flow units in SCCM (default==yes) 
 %   ctrl_in_V       - ctrl units in V (default=integers)
 %   plot_in_minutes - timescale in minutes (default==seconds)
 %
-%   pid_lims
-%   olfa_lims_sccm
+%Axis Limits:
+%   pid_lims        - Axis limits for PID
+%   flow_lims       - Axis limits for Olfa flow (SCCM)
+%   flow_lims_int   - Axis limits for Olfa flow (integer)
 %
-%   show_error_bars
+%Data Manipulation:
 %   time_to_cut
 %
+%Additional Figures:
 %   plot_over_time
 %   plot_all
 %
+%Plot Options:
+%   fig_position
+%   legend_on
+%   show_error_bars
+%   x_lim
+%
+%For individual event plots:
 %   plot_x_lines
 %   show_pid_mean
 %   show_flow_mean
@@ -45,18 +56,21 @@ arguments
 
         % Axis Limits
         plot_opts.pid_lims          (1,:) double = [0 3]
-        plot_opts.flow_lims_sccm    (1,:) double = [0 105]
+        plot_opts.flow_lims         (1,:) double = [0 105]
+        plot_opts.flow_lims_int     (1,:) double = [0 1024]
+        
+        % Data Manipulation
+        plot_opts.time_to_cut       (1,:) double = 0        % time to cut off beginning of each section
         
         % Additional Figures
         plot_opts.plot_over_time    (1,1) string = 'no'     % plot the entire trial over time
         plot_opts.plot_all          (1,1) string = 'no'     % plot each event individually
         
-        % Other
-        plot_opts.show_error_bars   (1,1) string = 'no'
-        plot_opts.time_to_cut       (1,:) double = 0        % time to cut off beginning of each section
-        plot_opts.fig_position      (1,:) double = [1050 230 812 709]
-        plot_opts.x_lim             (1,:) double = []
+        % Plot options:
+        plot_opts.fig_position      (1,:) double = [1050 230 812 709]   % flow v. PID plot
         plot_opts.legend_on         (1,:) string = 'yes'
+        plot_opts.show_error_bars   (1,1) string = 'yes'
+        plot_opts.x_lim             (1,:) double = []
         
         % For individual event plots
         plot_opts.show_pid_mean     (1,1) string = 'no'     % Overlay mean PID value on plot
@@ -65,13 +79,10 @@ arguments
     end
 
 %%
-%close all
 set(0,'DefaultTextInterpreter','none')
 
-%% Display variables
+%% Display Variables
 f = struct();   % struct containing all figure variables
-%f.x_lim = [];
-f.flow_lims_int = [];
 f.flow_width = 1;
 f.pid_width = 1.5;
 f.dot_size = 60;
@@ -84,14 +95,8 @@ f.colors{3} = '#D95319';
 f.colors{4} = '#7E2F8E';
 
 % For plot over time
-f0.position = [140 230 1355 686];   % wide - for over time
-
-% For individual plots
-%f.position = [175 230 650 600];    % for PowerPoint (1/2 size)
-%f.position = [175 230 812 709];     % standard
-f.position = [175 230 412 350];     % small - for individual event plot documentation
-
-
+f0.position = [166 210 1300 600];   % wide - for over time
+f.position = [175 230 412 350];     % small - for individual event plots
 %% Find OlfaControl_GUI directory (& add to path)
 
 % Check if current directory contains 'OlfaControl_GUI'
@@ -164,17 +169,18 @@ try
     %% If selected: Plot the whole thing over time
     if strcmp(plot_opts.plot_over_time,'yes')
         
-        % Create figure
-        figTitle_main = a_thisfile_name;
-        if ~strcmp(a_this_note, ''); figTitle_main = append(figTitle_main, ': ',  a_this_note); end
+        %% Create figure
+        figTitle = a_thisfile_name;
+        if ~strcmp(a_this_note, ''); figTitle = append(figTitle, ': ',  a_this_note); end
         f1 = figure; f1.NumberTitle = 'off'; f1.Position = f0.position; hold on;
         f1.Name = a_thisfile_name;
-        title(figTitle_main)
+        title(figTitle)
+        subtitle(a_this_note)
         if strcmp(plot_opts.legend_on,'yes'); legend('Location','northwest'); end
         f1_ax = gca;
         
         % Set X-limits
-        xlabel('Time (s)');
+        xlabel('Time (sec)');
         if ~isempty(plot_opts.x_lim)
             xlim(plot_opts.x_lim);
         else
@@ -185,25 +191,51 @@ try
         %% Plot: Olfa flow
         % For each vial
         for i=1:length(d_olfa_flow)
+            d_olfa_flow_x = [];
+            d_olfa_flow_y = [];
+            
+            %% Get olfa flow data
             if strcmp(plot_opts.flow_in_SCCM,'yes')
                 % Plot as SCCM
                 if ~isempty(d_olfa_flow(i).flow.flow_sccm)
+                    d_olfa_flow_x = d_olfa_flow(i).flow.flow_sccm(:,1);
+                    d_olfa_flow_y = d_olfa_flow(i).flow.flow_sccm(:,2);
                     ylabel('Odor flow rate (SCCM)')
-                    p = plot(d_olfa_flow(i).flow.flow_sccm(:,1),d_olfa_flow(i).flow.flow_sccm(:,2));
-                    ylim(plot_opts.flow_lims_sccm);
+                    ylim(plot_opts.flow_lims);
                 end
             else
                 % Plot as integer
                 if ~isempty(d_olfa_flow(i).flow.flow_int)
-                    ylabel('Odor flow (integer values)')
-                    p = plot(d_olfa_flow(i).flow.flow_int(:,1),d_olfa_flow(i).flow.flow_int(:,2));
-                    ylim(f.flow_lims_int);
+                    d_olfa_flow_x = d_olfa_flow(i).flow.flow_int(:,1);
+                    d_olfa_flow_y = d_olfa_flow(i).flow.flow_int(:,2);
+                    ylabel('Odor flow rate (integer values)')
+                    ylim(plot_opts.flow_lims_int);
                 end
             end
-            p.LineWidth = f.flow_width;
-            p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
         end
         
+        %% Plot olfa flow data
+        try
+            p = plot(d_olfa_flow_x,d_olfa_flow_y);
+            p.LineWidth = f.flow_width;
+            p.DisplayName = [d_olfa_flow(i).vial_num ' Flow'];
+        % Error message in case no flow values available
+        catch ME
+            switch ME.identifier
+                case 'MATLAB:emptyObjectDotAssignment'
+                    disp(['---> No flow values available to plot for ' d_olfa_flow(i).vial_num])
+                otherwise
+                    rethrow(ME)
+            end
+        end
+        %% Set axis color : unclear if this does anything (8/7/2025)
+        try
+            yyaxis left
+            f1_ax.YColor = ax_color;
+        catch ME    % in case olfa flow was not plotted
+            disp(ME.identifier);
+        end
+
         %% Plot: PID
         if ~isempty(data_pid)
             yyaxis right;
@@ -221,9 +253,7 @@ try
     if strcmp(plot_opts.plot_all,'yes')
         time_around_event = 3;
         % For each vial
-        for i=1:length(d_olfa_flow)
-            this_vial = d_olfa_flow(i).vial_num;
-        
+        for i=1:length(d_olfa_flow)        
             % since i don't have setpoint data let's do it by OV events
             % For each OV event
             for e=1:length(d_olfa_flow(i).events.OV_keep)
@@ -236,7 +266,7 @@ try
                 f1.Name = a_thisfile_name;
                 if strcmp(plot_opts.legend_on,'yes'); legend('Location','northeast'); end
                 f1_ax = gca;
-                xlabel('Time (s)');
+                xlabel('Time (sec)');
                 %figTitle = ['calculated mean from ' num2str(how_much_to_cut) 's into event'];
                 %title(figTitle);
                 
@@ -258,9 +288,9 @@ try
                             
                             % Plot flow data
                             p = plot(this_flow_data_shifted(:,1),this_flow_data_shifted(:,2));
-                            p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
+                            p.DisplayName = [d_olfa_flow(i).vial_num ' Flow'];
                             p.Color = f.colors{i};
-                            ylim([plot_opts.flow_lims_sccm]);
+                            ylim([plot_opts.flow_lims]);
                             
                             this_flow_val_sccm = d_olfa_flow(i).sccm_means(e,1);
                             if strcmp(plot_opts.show_flow_mean,'yes')
@@ -287,7 +317,7 @@ try
                     end
                 end
                 p.LineWidth = f.flow_width;
-                p.DisplayName = [d_olfa_flow(i).vial_num ' flow'];
+                p.DisplayName = [d_olfa_flow(i).vial_num ' Flow'];
         
                 %% Plot: PID
                 if ~isempty(data_pid)
@@ -314,7 +344,7 @@ try
                 
                 % Set x lims
                 xlim([-time_around_event this_flow_data_shifted(end,1)])
-    
+                
                 % Mark where we calculated the mean from
                 if strcmp(plot_opts.show_x_lines,'yes')
                     p_start_time = plot_opts.time_to_cut;
@@ -350,14 +380,14 @@ try
             if ~isempty(d_olfa_flow(i).sccm_means)
                 p = scatter(d_olfa_flow(i).sccm_means(:,1),d_olfa_flow(i).sccm_means(:,2),f.dot_size,'filled');
                 xlabel('Odor flow rate (SCCM)');
-                if ~isempty(plot_opts.flow_lims_sccm); f2_ax.XLim = plot_opts.flow_lims_sccm; end
+                f2_ax.XLim = plot_opts.flow_lims;
             end
         else
             % Plot as integer
             if ~isempty(d_olfa_flow(i).int_means)
                 p = scatter(d_olfa_flow(i).int_means(:,1),d_olfa_flow(i).int_means(:,2),f.dot_size,'filled');
                 xlabel('Odor flow rate (int)');
-                if ~isempty(f.flow_lims_int); f2_ax.XLim = f.flow_lims_int; end
+                f2_ax.XLim = plot_opts.flow_lims_int;
             end
         end
         p.DisplayName = d_olfa_flow(i).vial_num;

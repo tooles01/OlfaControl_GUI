@@ -3,63 +3,75 @@
 %Required Input:
 %   a_thisfile_name - file name
 %
-%Plot Options:
+%Data to plot:
 %   olfa_flow       - flow values on left yaxis
 %   olfa_ctrl       - ctrl values on right yaxis
 %   pid             - pid data on right yaxis
 %   output_flow     - output flow sensor on right yaxis
 %
+%Units:
 %   flow_in_SCCM    - flow units in SCCM (default==yes) 
 %   ctrl_in_V       - ctrl units in V (default=integers)
 %   plot_in_minutes - timescale in minutes (default==seconds)
 %
-%   pid_lims       - Axis limits for PID
-%   flow_lims      - Axis limits for Olfa flow
-%   ctrl_lims      - Axis limits for Olfa ctrl
-
-%%
-% --> this is a copy of the original file (last edited 09-23-2024),
-% turning it into a function that I can call from the command line
+%Axis Limits:
+%   pid_lims        - Axis limits for PID
+%   flow_lims       - Axis limits for Olfa flow (SCCM)
+%   flow_lims_int   - Axis limits for Olfa flow (integer)
+%   ctrl_lims       - Axis limits for Olfa ctrl
+%
+%Plot Options:
+%   fig_position
+%   legend_on
+%   flow_width
+%   pid_width
+%
+%Other:
+%   x_lim
+%   scale_time
+%   plot_setpoint
 
 %%
 
 function a_plot_olfa_and_pid(a_thisfile_name,plot_opts)
 
     arguments
-        a_thisfile_name         (1,1) string = '-'
+        a_thisfile_name             (1,1) string = '-'
 
         % Data to plot
-        plot_opts.olfa_flow     (1,1) string = 'yes'
-        plot_opts.olfa_ctrl     (1,1) string = 'no'
-        plot_opts.pid           (1,1) string = 'yes'
-        plot_opts.output_flow   (1,1) string = 'no'
+        plot_opts.olfa_flow         (1,1) string = 'yes'
+        plot_opts.olfa_ctrl         (1,1) string = 'no'
+        plot_opts.pid               (1,1) string = 'yes'
+        plot_opts.output_flow       (1,1) string = 'no'
 
         % Units
-        plot_opts.flow_in_SCCM      (1,1) string = 'yes'
-        plot_opts.ctrl_in_V         (1,1) string = 'no'
+        plot_opts.flow_in_SCCM      (1,1) string = 'yes'    % plot olfa as sccm or int
+        plot_opts.ctrl_in_V         (1,1) string = 'no'     % plot ctrl as int or voltage
         plot_opts.plot_in_minutes   (1,1) string = 'no'
 
         % Axis Limits
-        plot_opts.pid_lims      (1,:) double = [0 3]
-        plot_opts.flow_lims     (1,:) double = [ ]
-        plot_opts.ctrl_lims     (1,:) double = [-5 260]
+        plot_opts.pid_lims          (1,:) double = [0 3]
+        plot_opts.flow_lims         (1,:) double = [0 105]
+        plot_opts.flow_lims_int     (1,:) double = [0 1024]
+        plot_opts.ctrl_lims         (1,:) double = [-5 260]
 
+        % Plot options
+        plot_opts.fig_position      (1,:) double = [166 210 1300 600]
+        plot_opts.legend_on         (1,1) string = 'yes'
+        plot_opts.flow_width        (1,:) double = 1
+        plot_opts.pid_width         (1,:) double = 1.5
+        
         % Other
-        plot_opts.fig_position  (1,:) double = [166 210 1300 600]
-        plot_opts.x_lim         (1,:) double = [ ]
-        plot_opts.scale_time    (1,1) string = 'no'
-        plot_opts.flow_width    (1,:) double = 1
-        plot_opts.pid_width     (1,:) double = 1.5
-        plot_opts.legend_on     (1,1) string = 'yes'
-
-        plot_opts.plot_setpoint (1,1) string = 'no'
+        plot_opts.x_lim             (1,:) double = [ ]
+        plot_opts.scale_time        (1,1) string = 'no'
+        plot_opts.plot_setpoint     (1,1) string = 'no'
     end
 
+%%
 set(0,'DefaultTextInterpreter','none')
 
 %% Display Variables
 f = struct();   % struct containing all figure variables
-f.position = [30 200 1700 700];
 f.calibration_value = [];
 f.PID_color = '#77AC30';
 
@@ -68,22 +80,22 @@ f.colors{1} = '#0072BD';    % blue
 f.colors{2} = '#7E2F8E';    % purple
 f.colors{3} = '#A2142F';    % dark red
 f.colors{4} = '#D95319';    % orange
-f.colors{5} = '#0072BD';    % blue
-f.colors{6} = '#A2142F';    % dark red
-f.colors{7} = '#D95319';    % orange
-f.colors{8} = '#7E2F8E';    % purple
-f.colors{9} = '#7E2F8E';    % purple
+f.colors{5} = '#4DBEEE';    % light blue
+f.colors{6} = '#EDB120';    % yellow
+f.colors{7} = '#A25319';    % orange
+f.colors{8} = '#2E2F8E';    % dark blue
+f.colors{9} = '#A2142F';    % dark red
 this_color = [];
 % Ctrl colors
-f.c_colors{1} = f.colors{7};    % orange
-f.c_colors{2} = f.colors{6};    % dark red
-f.c_colors{3} = f.colors{7};    % orange
-f.c_colors{4} = f.colors{8};    % purple
-f.c_colors{5} = f.colors{9};    % purple
-f.c_colors{6} = f.colors{1};    % blue
-f.c_colors{7} = f.colors{2};    % purple
-f.c_colors{8} = f.colors{3};    % dark red
-f.c_colors{9} = f.colors{4};    % orange
+f.c_colors{1} = f.colors{1};    % blue
+f.c_colors{2} = f.colors{2};    % purple
+f.c_colors{3} = f.colors{3};    % dark red
+f.c_colors{4} = f.colors{4};    % orange
+f.c_colors{5} = f.colors{5};    % light blue
+f.c_colors{6} = f.colors{6};    % yellow
+f.c_colors{7} = f.colors{7};    % orange
+f.c_colors{8} = f.colors{8};    % dark blue
+f.c_colors{9} = f.colors{9};    % dark red
 
 %% Find OlfaControl_GUI directory (& add to path)
 
@@ -105,14 +117,6 @@ dir_functions = [a_dir_OlfaControlGUI '\analysis\functions'];
 addpath(genpath(dir_functions));
 
 clearvars c_*
-
-%% Enter data file name (& additional plot options)
-% TODO get rid of this section
-
-%f.position = [549 166 1353 684];
-%f.position = [166 600 775 275];     % for OneNote
-f.position = [166 210 1300 600];    % for PowerPoint
-%f.position = [166 210 650 600];    % for PowerPoint (1/2 size)
 
 %% Load *.mat file
 
@@ -184,7 +188,7 @@ try
             if strcmp(plot_opts.pid,'yes')
                 if ~isempty(data_pid)
                     yyaxis right; colororder('#77AC30');  f1_ax.YColor = '#77AC30';
-                    ylabel('PID reading (V)');
+                    ylabel('PID output (V)');
 
                     % Get data for this section
                     this_pid_data = get_section_data(data_pid,t_beg_plot,t_end_plot);
@@ -269,8 +273,7 @@ try
                     d_olfa_flow_x = d_olfa_flow(i).flow.flow_sccm(:,1);
                     d_olfa_flow_y = d_olfa_flow(i).flow.flow_sccm(:,2);
                     ylabel('Odor flow rate (SCCM)')
-                    if ~isempty(plot_opts.flow_lims); ylim(plot_opts.flow_lims)
-                    else; ylim([-1 120]); end
+                    ylim(plot_opts.flow_lims);
                 end
             else
                 % Plot as integer
@@ -278,8 +281,7 @@ try
                     d_olfa_flow_x = d_olfa_flow(i).flow.flow_int(:,1);
                     d_olfa_flow_y = d_olfa_flow(i).flow.flow_int(:,2);
                     ylabel('Odor flow rate (integer values)')
-                    if ~isempty(plot_opts.flow_lims); ylim(plot_opts.flow_lims)
-                    else; ylim([0 1024]); end
+                    ylim(plot_opts.flow_lims_int);
                 end
             end
             
@@ -314,7 +316,7 @@ try
             end
         end
     end
-    % Set axis color
+    %% Set axis color
     try
         yyaxis left
         ax_color = p.Color;
@@ -404,6 +406,7 @@ try
                 p2 = plot(d_ctrl_x,d_ctrl_y);
                 p2.DisplayName = [d_olfa_flow(i).vial_num ' Ctrl'];
                 p2.LineStyle = '--';
+                p2.Marker = 'none';
                 p2.Color = this_color;
             % Error message in case no ctrl values available
             catch ME
@@ -430,7 +433,7 @@ try
                 yyaxis right;
             end
             f1_ax.YColor = f.PID_color;
-            ylabel('PID reading (V)');  % TODO check datafile for PID units to use in label
+            ylabel('PID output (V)');  % TODO check datafile for PID units to use in label
             f1_ax.YLim = plot_opts.pid_lims;
             
             %% If selected: Scale time
