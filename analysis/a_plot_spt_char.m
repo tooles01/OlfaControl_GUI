@@ -29,9 +29,9 @@
 %   fig_position
 %   legend_on
 %   show_error_bars
-%   x_lim
 %
 %For individual event plots:
+%   x_lim
 %   plot_x_lines
 %   show_pid_mean
 %   show_flow_mean
@@ -70,9 +70,9 @@ arguments
         plot_opts.fig_position      (1,:) double = [1050 230 812 709]   % flow v. PID plot
         plot_opts.legend_on         (1,:) string = 'yes'
         plot_opts.show_error_bars   (1,1) string = 'yes'
-        plot_opts.x_lim             (1,:) double = []
         
         % For individual event plots
+        plot_opts.x_lim             (1,:) double = []
         plot_opts.show_pid_mean     (1,1) string = 'no'     % Overlay mean PID value on plot
         plot_opts.show_flow_mean    (1,1) string = 'no'     % Overlay mean flow value on plot
         plot_opts.show_x_lines      (1,1) string = 'no'     % Overlay x-lines of where the mean was calculated from
@@ -171,7 +171,6 @@ try
         
         %% Create figure
         figTitle = a_thisfile_name;
-        if ~strcmp(a_this_note, ''); figTitle = append(figTitle, ': ',  a_this_note); end
         f1 = figure; f1.NumberTitle = 'off'; f1.Position = f0.position; hold on;
         f1.Name = a_thisfile_name;
         title(figTitle)

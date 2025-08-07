@@ -37,18 +37,18 @@ Plots olfa flow (SCCM) and PID over time
 
 3. **Plots selected data over time**
 	- Create/set up figure
-		- If selected: Set X limits (`f.x_lim`)
+		- If selected: Set X limits (`plot_opts.x_lim`)
 	
 	- If selected: **Plot olfa flow** (`plot_opts.olfa_flow`)  
 		(default=yes)
-		<!--Vial color based on `f.colors` variable, hard coded in header -->
+		<!--Vial color based on `plot_opts.colors` variable, hard coded in header -->
 		<details>
 		
 		- For each vial:
 			- Get data to plot (SCCM or int) (`plot_opts.flow_in_SCCM`)
 			- Set axis options:
 				- Set Y-Limits (`plot_opts.flow_lims`)
-				- If selected: Scale time (`f.scale_time`)
+				- If selected: Scale time (`plot_opts.scale_time`)
 				- If selected: Change timescale to minutes (`plot_opts.plot_in_minutes`)
 			- **Plot olfa flow**
 		</details>
@@ -65,7 +65,7 @@ Plots olfa flow (SCCM) and PID over time
 		
 	- If selected: **Plot olfa ctrl** (`plot_opts.olfa_ctrl`)  
 		(default=right yaxis, left yaxis if flow is plotted)
-		<!--Vial color based on `f.c_colors` variable, hard coded in header -->
+		<!--Vial color based on `plot_opts.c_colors` variable, hard coded in header -->
 		<details>
 
 		- For each vial:
@@ -73,7 +73,7 @@ Plots olfa flow (SCCM) and PID over time
 			- Set axis options:
 				- If plotting as integer, set Y-Limits (`plot_opts.ctrl_lims`)
 				- If olfa flow is plotted: plot ctrl on right yaxis (else, plot on left yaxis) (`plot_opts.olfa_flow`) 
-				- If selected: Scale time (`f.scale_time`)
+				- If selected: Scale time (`plot_opts.scale_time`)
 				- If selected: Change timescale to minutes (`plot_opts.plot_in_minutes`)
 			- **Plot olfa ctrl**
 		</details>
@@ -84,7 +84,7 @@ Plots olfa flow (SCCM) and PID over time
 
 		- Set axis options:
 			- Set Y-Limits (`plot_opts.pid_lims`)
-			- If selected: Scale time (`f.scale_time`)
+			- If selected: Scale time (`plot_opts.scale_time`)
 			- If selected: Change timescale to minutes (`plot_opts.plot_in_minutes`)
 		- **Plot PID**
 		</details>
@@ -123,8 +123,10 @@ Plots olfa flow (SCCM) and PID over time
 ### Axis Limits  
 **pid_lims - Y-Limits for PID data**  
 &nbsp;&nbsp;[0 3] (default) | two-element vector  
-**flow_lims - Y-Limits for Olfa flow data**  
-&nbsp;&nbsp;two-element vector  
+**flow_lims - Y-Limits for Olfa flow data (SCCM)**  
+&nbsp;&nbsp;[0 105] (default) | two-element vector  
+**flow_lims_int - Y-Limits for Olfa flow data (integer)**  
+&nbsp;&nbsp;[0 1024] (default) | two-element vector  
 **ctrl_lims - Y-Limits for Olfa ctrl data**  
 &nbsp;&nbsp;[-5 260] (default) | two-element vector  
 <br>
@@ -132,15 +134,22 @@ Plots olfa flow (SCCM) and PID over time
 ** need to finish shifting stuff over to input arguments probably
 <br>
 
-### Other
+### Plot options:
 **fig_position - Location and size of figure**  
-&nbsp;&nbsp;[ left bottom width height]  
+&nbsp;&nbsp;[166 210 1300 600] (default) | [left bottom width height]  
+**legend_on - Display legend on figure**  
+&nbsp;&nbsp;'yes' (default) | 'no'  
 **flow_width - LineWidth for flow data**  
 &nbsp;&nbsp;1 (default) | positive value  
 **pid_width - LineWidth for PID data**  
 &nbsp;&nbsp;1.5 (default) | positive value  
-**legend_on - Display legend on figure**  
-&nbsp;&nbsp;'yes' (default) | 'no'  
+<br>
+
+### Other
+**x_lim - X-Limits for figure (in seconds)**  
+&nbsp;&nbsp;two-element vector  
+**scale_time - Shift the data so t=0 at the beginning of the entered x_lims**  
+&nbsp;&nbsp;'no' (default) | 'yes'  
 **plot_setpoint - Draw a line at the setpoint for the duration of each OV event**  
 &nbsp;&nbsp;'no' (default) | 'yes'  
 

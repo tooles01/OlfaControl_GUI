@@ -31,25 +31,14 @@ Can add:
 
 ## Examples
 
-### Default:
-
-<details><summary>Create Flow vs. PID plot for the given file</summary>
-  <br>
-
-  **Default plot:**  
-  `a_plot_spt_char('2024-01-09_datafile_01');`
+**Default:**  
+Creates Flow vs. PID plot for the given file  
+`a_plot_spt_char('2024-01-09_datafile_01',pid_lims=[0 7]);`
   - Loads .mat file
-  - Calculates mean flow/PID for each event (Cuts 0 seconds from beginning/end)
+  - Calculates mean flow/PID for each event
   - Plots flow v. PID  
 
-<img src="images/examples/spt_char_default.jpg" width="40%">
-<br><br>
-
-  **Show error bars:**  
-  `a_plot_spt_char('2024-01-09_datafile_01',show_error_bars='yes');`  
-  
-  <img src="images/examples/spt_char_default_errorbars.jpg" width="40%">
-</details>
+<p align="center"><img src="images/examples/spt_char_default.jpg" width="35%"></p>
 <br>
 
 ### Additional plots:
@@ -193,17 +182,10 @@ X-lines show the timeframe where the mean was calculated from (usually relevant 
 ### Axis Limits  
 **pid_lims - Y-Limits for PID data**  
 &nbsp;&nbsp;[0 3] (default) | two-element vector  
-**flow_lims_sccm - Y-Limits for Olfa flow data**  
+**flow_lims - Y-Limits for Olfa flow data (SCCM)**  
 &nbsp;&nbsp;[0 105] (default) | two-element vector  
-<br>
-
-### Other
-**show_error_bars - Display error bars on Flow vs. PID plot**  
-&nbsp;&nbsp;'no' (default) | 'yes'  
-**fig_position - Location and size of figure**  
-&nbsp;&nbsp;[ left bottom width height]  
-**legend_on - Display legend on figure**  
-&nbsp;&nbsp;'yes' (default) | 'no'  
+**flow_lims_int - Y-Limits for Olfa flow data (integer)**  
+&nbsp;&nbsp;[0 1024] (default) | two-element vector  
 <br>
 
 ### Data manipulation
@@ -219,9 +201,20 @@ X-lines show the timeframe where the mean was calculated from (usually relevant 
 &nbsp;&nbsp;'no' (default) | 'yes'  
 <br>
 
+### Plot options:
+**fig_position - Location and size of Flow v. PID figure**  
+&nbsp;&nbsp;[1050 230 812 709] (default) | [left bottom width height]  
+**legend_on - Display legend on figure**  
+&nbsp;&nbsp;'yes' (default) | 'no'  
+**show_error_bars - Display error bars on Flow vs. PID plot**  
+&nbsp;&nbsp;'yes' (default) | 'no'  
+<br>
+
 ### For individual event plots:  
 The following options only apply if `plot_all` is set to `'yes'`.  
 
+**x_lim - X-Limits for individual event plots (in seconds)**  
+&nbsp;&nbsp;two-element vector  
 **show_pid_mean - Overlay mean PID value on plot**  
 &nbsp;&nbsp;'no' (default) | 'yes'  
 **show_flow_mean - Overlay mean flow value on plot**  
