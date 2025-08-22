@@ -13,11 +13,12 @@
 %   round_to
 %   time_to_cut
 %
+%   plot_by_flow
+%
+%   fig_position
 %   plot_error_bars
 %   plot_by_vial
 %   shorten_file_name   -
-%
-%   plot_by_flow
 %
 %   plot_flow
 %   plot_ctrl
@@ -27,7 +28,7 @@
 %#ok<*NASGU>
 %#ok<*AGROW>
  
-function a_plot_on_top(file_names,a_title,a_subtitle,c)
+function a_plot_on_top(file_names,a_title,a_subtitle,plot_opts)
 
 arguments
     file_names  (:,1) cell
@@ -37,39 +38,39 @@ arguments
     a_subtitle  (1,1) string = ''
 
     % Axis Limits
-    c.pid_lims      (1,:) double = [0 5]
-    c.flow_lims     (1,:) double = [0 105]
-    c.ctrl_lims     (1,:) double = [0 260]
+    plot_opts.pid_lims          (1,:) double = [0 3]
+    plot_opts.flow_lims         (1,:) double = [0 105]
+    plot_opts.ctrl_lims         (1,:) double = [0 260]
 
     % Data Manipulation
-    c.round_to      (1,:) double = 5    % When getting flow means from file, round to the nearest (for plotting by individual flow rates)
-    c.time_to_cut   (1,:) double = 0
-
-    % Plot options
-    c.plot_error_bars   (1,1) string = 'yes'
-    c.plot_by_vial      (1,1) string = 'yes'    % colors based on vial #
-    c.shorten_file_name (1,1) string = 'yes'
-    c.fig_position      (1,:) double = [260 230 812 709]    % position for flow v. PID plot
-    c.dot_size          (1,:) double = 60
+    plot_opts.round_to          (1,:) double = 5    % When getting flow means from file, round to the nearest (for plotting by individual flow rates)
+    plot_opts.time_to_cut       (1,:) double = 0
     
     % Additional Figures
-    c.plot_by_flow  (1,1) string = 'no'     % Plot each flow rate individually
+    plot_opts.plot_by_flow      (1,1) string = 'no'     % Plot each flow rate individually
     % change to "plot all" bc this is confusing
+
+    % Plot options
+    plot_opts.fig_position      (1,:) double = [925 230 812 709]    % position for flow v. PID plot
+    plot_opts.plot_error_bars   (1,1) string = 'yes'
+    plot_opts.plot_by_vial      (1,1) string = 'yes'    % colors based on vial #
+    plot_opts.shorten_file_name (1,1) string = 'yes'
     
     % For individual event plots
-    c.plot_flow     (1,1) string = 'no'     % Show flow data on individual flow rate plots
-    c.plot_ctrl     (1,1) string = 'no'     % Show ctrl data on individual flow rate plots; Show Flow v. Ctrl plot
+    plot_opts.plot_flow         (1,1) string = 'no'     % Show flow data on individual flow rate plots
+    plot_opts.plot_ctrl         (1,1) string = 'no'     % Show ctrl data on individual flow rate plots; Show Flow v. Ctrl plot
 
 end
 
 %%
 set(0,'DefaultTextInterpreter','none')
 
-%% Display variables
+%% Display Variables
 f = struct();   % struct containing all figure variables
 
 f.x_lim = [-2 30];  % timescale for individual plots
 f.x_lim = [-2 10];
+f.dot_size = 60;
 
 %c = struct();
 c.colors{1} = [0.6353   0.0784  0.1843];    % dark red
@@ -98,14 +99,11 @@ f.f1_position = [28 210 881 600];
 
 % F2: Flow v. PID
 %f.f2_position = [260 210 650 600];      % for PowerPoint (1/2 size)
-f.f2_position = [260 230 812 709];      % for PowerPoint (spt char)
-f.f2_position = c.fig_position;
+f.f2_position = plot_opts.fig_position;
 
 % F3: Flow v. Ctrl
 f.f3_position = [1000 224 812 709];     % for PowerPoint (spt char)
 %f.f3_position = [1000 210 650 600];     % for PowerPoint (1/2 size)
-
-f.dot_size = c.dot_size;
 
 %% Find OlfaControl_GUI directory (& add to path)
 
@@ -128,7 +126,7 @@ addpath(genpath(dir_functions));
 
 clearvars c_* dir_functions
 
-%% Load files in
+%% Load *.mat files
 
 % Preallocate array
 d = struct('file_name','', ...
@@ -176,7 +174,7 @@ for r=1:length(data)
     for j=1:length(data(r).d_olfa_flow)
         % Get the data from d_olfa_data_sorted
         this_file_flow_values = [data(r).d_olfa_data_sorted.flow_mean_sccm];
-        this_file_flow_values = round(this_file_flow_values/c.round_to)*c.round_to;   % round to the nearest five
+        this_file_flow_values = round(this_file_flow_values/plot_opts.round_to)*plot_opts.round_to;   % round to the nearest five
         this_file_flow_values = reshape(this_file_flow_values,length(this_file_flow_values),1);
         
         flow_values = [flow_values;this_file_flow_values];
@@ -185,7 +183,7 @@ for r=1:length(data)
     % If it was a standard olfa file
     if isempty(data(r).d_olfa_flow)
         this_file_flow_values = [data(r).d_olfa_data_sorted.flow_value];
-        this_file_flow_values = round(this_file_flow_values/c.round_to)*c.round_to;   % round to the nearest five
+        this_file_flow_values = round(this_file_flow_values/plot_opts.round_to)*plot_opts.round_to;   % round to the nearest five
         this_file_flow_values = reshape(this_file_flow_values,length(this_file_flow_values),1);
         
         flow_values = [flow_values;this_file_flow_values];
@@ -196,8 +194,9 @@ flow_values = sort(flow_values);        % sort the list
 flow_values = unique(flow_values);      % remove duplicate values
 
 clearvars r
+
 %% Plot each flow value separately
-if strcmp(c.plot_by_flow,'yes')
+if strcmp(plot_opts.plot_by_flow,'yes')
     
     % For each flow value
     for i=1:length(flow_values)
@@ -225,7 +224,7 @@ if strcmp(c.plot_by_flow,'yes')
                 
                 % Get all of the flow values we ran trials at
                 this_file_flow_values = [data(r).d_olfa_data_sorted.flow_mean_sccm];
-                this_file_flow_values = round(this_file_flow_values/c.round_to)*c.round_to;   % round to the nearest five
+                this_file_flow_values = round(this_file_flow_values/plot_opts.round_to)*plot_opts.round_to;   % round to the nearest five
                 this_file_flow_values = reshape(this_file_flow_values,length(this_file_flow_values),1);
 
                 % Get indices of where this flow value is
@@ -244,75 +243,80 @@ if strcmp(c.plot_by_flow,'yes')
                         this_pid_data = data(r).data_pid;
 
                         %% Shift all of this data to t=0
-                        % find the event that's closest to the first flow time
-                        t_event_start_times = [data(r).d_olfa_flow(j).events.OV_keep.t_event];      % all event start times
-                        t_flow_start = data(r).d_olfa_data_sorted(this_idx).data.flow_sccm(1,1);    % time of first value recorded (in this event)
-                        % find the actual start time of this event
-                        [val,idx] = min(abs(t_event_start_times-t_flow_start));                     % idx of the event closest to this time
-                        this_t_event = data(r).d_olfa_flow(j).events.OV_keep(idx).t_event;          % actual event start time
-
-                        % Shift the data to t=0
-                        this_flow_data(:,1) = this_flow_data(:,1) - this_t_event;
-                        this_ctrl_data(:,1) = this_ctrl_data(:,1) - this_t_event;
-                        this_pid_data(:,1) = this_pid_data(:,1) - this_t_event;
-                        
-                        %% Plot ctrl
-                        if strcmp(c.plot_ctrl,'yes')    % TODO: if plot_flow = yes, don't plot ctrl values
-                            yyaxis left; ylabel('Ctrl (integer)');
-                            ylim([c.ctrl_lims]);
-                            p_ctrl = plot(this_ctrl_data(:,1),this_ctrl_data(:,2));
-                            p_ctrl.HandleVisibility = 'off';
-                            if strcmp(c.plot_by_vial,'yes')
-                                vial_num = str2double(this_vial_num(2));
-                                p_ctrl.Color = c.colors{vial_num};
-                            else
-                                p_ctrl.Color = c.colors{r};
+                        % if there are events for this vial
+                        if ~isempty(data(r).d_olfa_flow(j).events.OV_keep)
+                            % find the event that's closest to the first flow time
+                            t_event_start_times = [data(r).d_olfa_flow(j).events.OV_keep.t_event];      % all event start times
+                            t_flow_start = data(r).d_olfa_data_sorted(this_idx).data.flow_sccm(1,1);    % time of first value recorded (in this event)
+                            % find the actual start time of this event
+                            [val,idx] = min(abs(t_event_start_times-t_flow_start));                     % idx of the event closest to this time
+                            this_t_event = data(r).d_olfa_flow(j).events.OV_keep(idx).t_event;          % actual event start time
+    
+                            % Shift the data to t=0
+                            this_flow_data(:,1) = this_flow_data(:,1) - this_t_event;
+                            this_ctrl_data(:,1) = this_ctrl_data(:,1) - this_t_event;
+                            this_pid_data(:,1) = this_pid_data(:,1) - this_t_event;
+                            
+                            %% Plot ctrl
+                            if strcmp(plot_opts.plot_ctrl,'yes')    % TODO: if plot_flow = yes, don't plot ctrl values
+                                yyaxis left; ylabel('Ctrl (integer)');
+                                ylim([plot_opts.ctrl_lims]);
+                                p_ctrl = plot(this_ctrl_data(:,1),this_ctrl_data(:,2));
+                                p_ctrl.HandleVisibility = 'off';
+                                if strcmp(plot_opts.plot_by_vial,'yes')
+                                    vial_num = str2double(this_vial_num(2));
+                                    p_ctrl.Color = c.colors{vial_num};
+                                else
+                                    p_ctrl.Color = c.colors{r};
+                                end
+                                p_ctrl.LineStyle = '-';
+                                p_ctrl.Marker = 'none';
                             end
-                            p_ctrl.LineStyle = '-';
-                            p_ctrl.Marker = 'none';
-                        end
-                        %% Plot flow
-                        if strcmp(c.plot_flow,'yes')
-                            yyaxis left; ylabel('Odor flow rate (SCCM)')
-                            ylim([c.flow_lims])
-                            p_flow = plot(this_flow_data(:,1),this_flow_data(:,2));
-                            p_flow.HandleVisibility = 'off';
-                            if strcmp(c.plot_by_vial,'yes')
-                                vial_num = str2double(this_vial_num(2));
-                                p_flow.Color = c.colors{vial_num};
-                            else
-                                p_flow.Color = c.colors{r};
+                            %% Plot flow
+                            if strcmp(plot_opts.plot_flow,'yes')
+                                yyaxis left; ylabel('Odor flow rate (SCCM)')
+                                ylim([plot_opts.flow_lims])
+                                p_flow = plot(this_flow_data(:,1),this_flow_data(:,2));
+                                p_flow.HandleVisibility = 'off';
+                                if strcmp(plot_opts.plot_by_vial,'yes')
+                                    vial_num = str2double(this_vial_num(2));
+                                    p_flow.Color = c.colors{vial_num};
+                                else
+                                    p_flow.Color = c.colors{r};
+                                end
+                                p_flow.LineWidth = c.flow_width;
+                                p_flow.LineStyle = '-';
+                                p_flow.Marker = 'none';
                             end
-                            p_flow.LineWidth = c.flow_width;
-                            p_flow.LineStyle = '-';
-                            p_flow.Marker = 'none';
-                        end
-
-                        %% Plot PID
-                        if ~(strcmp(c.plot_ctrl,'no') && strcmp(c.plot_flow,'no'))      % If either flow or ctrl are plotted, put PID on the right yaxis
-                            yyaxis right;
-                        end
-                        ylabel('PID reading (V)')
-                        ylim([c.pid_lims]);
-                        r_ax = gca; r_ax.YColor = 'k';
-                        p_pid = plot(this_pid_data(:,1),this_pid_data(:,2));
-                        if strcmp(c.shorten_file_name,'yes')
-                            p_pid.DisplayName = this_vial_num + " " + shortened_file_name;
+    
+                            %% Plot PID
+                            if ~(strcmp(plot_opts.plot_ctrl,'no') && strcmp(plot_opts.plot_flow,'no'))      % If either flow or ctrl are plotted, put PID on the right yaxis
+                                yyaxis right;
+                            end
+                            ylabel('PID reading (V)')
+                            ylim([plot_opts.pid_lims]);
+                            r_ax = gca; r_ax.YColor = 'k';
+                            p_pid = plot(this_pid_data(:,1),this_pid_data(:,2));
+                            if strcmp(plot_opts.shorten_file_name,'yes')
+                                p_pid.DisplayName = this_vial_num + " " + shortened_file_name;
+                            else
+                                p_pid.DisplayName = this_vial_num + " " + a_this_file_name;
+                            end
+                            if (k>1); p_pid.HandleVisibility = 'off'; end
+                            if strcmp(plot_opts.plot_by_vial,'yes')
+                                vial_num = str2double(this_vial_num(2));    % figure out which color
+                                p_pid.Color = c.colors{vial_num};
+                            else
+                                p_pid.Color = c.colors{r};
+                            end
+                            p_pid.LineWidth = c.pid_width;
+                            p_pid.LineStyle = '-';
+                            p_pid.Marker = 'none';
+                            
+                            xlim(f.x_lim);
                         else
-                            p_pid.DisplayName = this_vial_num + " " + a_this_file_name;
+                            disp('no events for this vial')
                         end
-                        if (k>1); p_pid.HandleVisibility = 'off'; end
-                        if strcmp(c.plot_by_vial,'yes')
-                            vial_num = str2double(this_vial_num(2));    % figure out which color
-                            p_pid.Color = c.colors{vial_num};
-                        else
-                            p_pid.Color = c.colors{r};
-                        end
-                        p_pid.LineWidth = c.pid_width;
-                        p_pid.LineStyle = '-';
-                        p_pid.Marker = 'none';
-                        
-                        xlim(f.x_lim);
                     end
                 end
             end
@@ -337,12 +341,12 @@ if strcmp(c.plot_by_flow,'yes')
                         this_pid_data = data(r).d_olfa_data_sorted(this_idx).data;
 
                         %% Plot PID
-                        if ~(strcmp(c.plot_ctrl,'no') && strcmp(c.plot_flow,'no'))
+                        if ~(strcmp(plot_opts.plot_ctrl,'no') && strcmp(plot_opts.plot_flow,'no'))
                             yyaxis right;
                         end
                         r_ax = gca; r_ax.YColor = 'k';
                         p_pid = plot(this_pid_data(:,1),this_pid_data(:,2));
-                        if strcmp(c.shorten_file_name,'yes')
+                        if strcmp(plot_opts.shorten_file_name,'yes')
                             p_pid.DisplayName = shortened_file_name;
                         else
                             p_pid.DisplayName = a_this_file_name;
@@ -367,7 +371,7 @@ if strcmp(c.plot_by_flow,'yes')
         end
     end
 end
-clearvars -except a_* c f data
+clearvars -except a_* c plot_opts f data
 
 %% Set up plots
 % F2: Flow v. PID
@@ -377,24 +381,24 @@ f2.Position = f.f2_position;
 ax2 = gca;
 legend('Location','northwest','Interpreter','none');
 xlabel('Odor flow rate (SCCM)')
-xlim(c.flow_lims)
+xlim(plot_opts.flow_lims)
 ylabel('Mean PID reading (V)')
-if ~isempty(c.pid_lims); ylim(c.pid_lims); end
-%ylim(c.pid_lims)
+if ~isempty(plot_opts.pid_lims); ylim(plot_opts.pid_lims); end
+%ylim(plot_opts.pid_lims)
 title(a_title);
 if ~isempty(a_subtitle); subtitle(a_subtitle); end
 
 % F3: Flow v. ctrl
-if strcmp(c.plot_ctrl,'yes')
+if strcmp(plot_opts.plot_ctrl,'yes')
     f3 = figure; hold on;
     f3.Position = f.f3_position;
     f3.Name = 'FLOW v. CTRL: ';
     ax3 = gca;
     legend('Location','northwest','Interpreter','none');
     xlabel('Odor flow rate (SCCM)')
-    xlim(c.flow_lims)
+    xlim(plot_opts.flow_lims)
     ylabel('Ctrl (integer)')
-    if ~isempty(c.ctrl_lims); ylim(c.ctrl_lims); end
+    if ~isempty(plot_opts.ctrl_lims); ylim(plot_opts.ctrl_lims); end
     title(a_title);
     if ~isempty(a_subtitle); subtitle(a_subtitle); end
 end
@@ -411,7 +415,7 @@ for r=1:length(data)
         % For each vial
         for i=1:length(data(r).d_olfa_flow)
             
-            % Get the mean flow & PID, after cutting c.time_to_cut
+            % Get the mean flow & PID, after cutting plot_opts.time_to_cut
 
             this_vial_num = data(r).d_olfa_flow(i).vial_num;
             this_file_events = data(r).d_olfa_flow(i).events.OV_keep;
@@ -426,7 +430,7 @@ for r=1:length(data)
             for e=1:length(this_file_events)
                 this_event_start_time = this_file_events(e).t_event;
                 this_event_end_time = this_file_events(e).t_end;
-                this_event_cut_t_start = this_event_start_time + c.time_to_cut;
+                this_event_cut_t_start = this_event_start_time + plot_opts.time_to_cut;
                 this_event_cut_t_end = this_event_end_time;
                 
                 % Get data from this event
@@ -434,7 +438,7 @@ for r=1:length(data)
                 this_event_pid_data = this_file_events(e).data.pid;
                 this_event_ctrl_data = data(r).d_olfa_flow(i).ctrl.ctrl_int;
                 
-                % Cut off the first c.time_to_cut seconds
+                % Cut off the first plot_opts.time_to_cut seconds
                 this_event_cut_flow_data = get_section_data(this_event_flow_data,this_event_cut_t_start,this_event_cut_t_end);
                 this_event_cut_pid_data = get_section_data(this_event_pid_data,this_event_cut_t_start,this_event_cut_t_end);
                 this_event_cut_ctrl_data = get_section_data(this_event_ctrl_data,this_event_cut_t_start,this_event_cut_t_end);
@@ -471,9 +475,9 @@ for r=1:length(data)
                 x_flow = this_file_new_means(:,1);
                 y_pid = this_file_new_means(:,2);
                 s = scatter(ax2,x_flow,y_pid,f.dot_size,'filled');
-                if strcmp(c.shorten_file_name,'yes'); s.DisplayName = this_vial_num + " " + shortened_file_name;
+                if strcmp(plot_opts.shorten_file_name,'yes'); s.DisplayName = this_vial_num + " " + shortened_file_name;
                 else; s.DisplayName = this_vial_num + " " + a_this_file_name; end
-                if strcmp(c.plot_by_vial,'yes')
+                if strcmp(plot_opts.plot_by_vial,'yes')
                     vial_num = str2double(this_vial_num(2));    % figure out which color
                     s.MarkerFaceColor = c.colors{vial_num};
                 else
@@ -483,12 +487,12 @@ for r=1:length(data)
         
             %% Plot Flow v. Ctrl means (f3)
             if ~isempty(this_file_ctrl_means)
-                if strcmp(c.plot_ctrl,'yes')
+                if strcmp(plot_opts.plot_ctrl,'yes')
                     y_ctrl = this_file_ctrl_means;
                     s2 = scatter(ax3,x_flow,y_ctrl,f.dot_size,'filled');
-                    if strcmp(c.shorten_file_name,'yes'); s2.DisplayName = this_vial_num + " " + shortened_file_name;
+                    if strcmp(plot_opts.shorten_file_name,'yes'); s2.DisplayName = this_vial_num + " " + shortened_file_name;
                     else; s2.DisplayName = this_vial_num + " " + a_this_file_name; end
-                    if strcmp(c.plot_by_vial,'yes')
+                    if strcmp(plot_opts.plot_by_vial,'yes')
                         vial_num = str2double(this_vial_num(2));    % figure out which color
                         s2.MarkerFaceColor = c.colors{vial_num};
                     end
@@ -497,7 +501,7 @@ for r=1:length(data)
             
             %% Plot error bars
             if ~isempty(x_flow)
-                if strcmp(c.plot_error_bars,'yes')
+                if strcmp(plot_opts.plot_error_bars,'yes')
                     
                     % Initialize empty data structures
                     xneg = zeros(length(this_file_new_stds),1);
@@ -529,7 +533,7 @@ for r=1:length(data)
                     catch ME; e.Color = s.CData; end
                     
                     % Plot Flow v. Ctrl error bars
-                    if strcmp(c.plot_ctrl,'yes')
+                    if strcmp(plot_opts.plot_ctrl,'yes')
                         e_ctrl = errorbar(ax3,x_flow,y_ctrl,yneg_ctrl,ypos_ctrl,xneg,xpos,'o');
                         e_ctrl.HandleVisibility = 'off';
                         try e_ctrl.Color = s2.MarkerFaceColor;
@@ -551,23 +555,23 @@ for r=1:length(data)
             this_event_flow_mean = this_file_events(e).flow_value;
             this_event_flow_std = 0;
             
-            % Get the mean PID, after cutting c.time_to_cut
+            % Get the mean PID, after cutting plot_opts.time_to_cut
             this_event_start_time = this_file_events(e).data(1,1);
             this_event_end_time = this_file_events(e).data(end,1);
-            this_event_cut_t_start = this_event_start_time + c.time_to_cut;
+            this_event_cut_t_start = this_event_start_time + plot_opts.time_to_cut;
             
             this_event_pid_data = this_file_events(e).data;
             
             %% Calculate mean PID value
 
-            % Start at c.time_to_cut seconds into the trial
-            idx_of_start_time = (c.time_to_cut/c.nidaq_freq) + 1;
+            % Start at plot_opts.time_to_cut seconds into the trial
+            idx_of_start_time = (plot_opts.time_to_cut/c.nidaq_freq) + 1;
             new_pid_data = this_event_pid_data(idx_of_start_time:end,:);
             
             %% Find the end time of the event (0.1s before the PID drops below 0.1V)
             % Give it 2 seconds to get up there a little bit
             c.time_to_get_up_there = 2;
-            if (c.time_to_cut < c.time_to_get_up_there)
+            if (plot_opts.time_to_cut < c.time_to_get_up_there)
                 new_pid_data_1 = get_section_data(new_pid_data,c.time_to_get_up_there,new_pid_data(end,1));
             else
                 new_pid_data_1 = new_pid_data;
@@ -611,7 +615,7 @@ for r=1:length(data)
             x_flow = this_file_new_means(:,1);
             y_pid = this_file_new_means(:,2);
             s = scatter(ax2,x_flow,y_pid,f.dot_size,'filled');
-            if strcmp(c.shorten_file_name,'yes')
+            if strcmp(plot_opts.shorten_file_name,'yes')
                 s.DisplayName =  "standard olfa: " + shortened_file_name;
             else
                 s.DisplayName =  "standard olfa: " + a_this_file_name;
@@ -620,7 +624,7 @@ for r=1:length(data)
 
         %% Plot error bars
         if ~isempty(x_flow)
-            if strcmp(c.plot_error_bars,'yes')
+            if strcmp(plot_opts.plot_error_bars,'yes')
                 xneg = zeros(length(this_file_new_stds),1);
                 xpos = zeros(length(this_file_new_stds),1);
                 yneg = zeros(length(this_file_new_stds),1);
