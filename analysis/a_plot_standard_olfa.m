@@ -2,55 +2,48 @@
 
 % get standard olfa datafile, plot & save
 
-%clear variables
-%close all
 %#ok<*AGROW>
 %#ok<*NASGU>
 %#ok<*SAGROW>
 
-function a_plot_standard_olfa(a_thisfile_name,plot_opts)
+function a_plot_standard_olfa_1(a_thisfile_name,plot_opts)
 
 arguments
     a_thisfile_name     (1,1) string = '-'
 
-    plot_opts.dot_size              (1,1) double = 60
-    plot_opts.time_to_cut           (1,1) double = 2.00     % don't look at any data before this time
+    % Units
+    plot_opts.nidaq_freq            (1,1) double = 0.01     % collection frequency etc etc      % NOTE: only used here and in plot_on_top ; why do we use this
+
+    % Axis Limits
     plot_opts.pid_lims              (1,:) double = []
+
+    % Data Manipulation
+    plot_opts.time_to_cut           (1,1) double = 2.00     % don't look at any data before this time
+
+    % Additional Figures
     plot_opts.individual_trials     (1,1) string = 'no'     % plot each trial by itself
+
+    % Other
     plot_opts.x_lines               (1,1) string = 'yes'    % x lines of where the mean was calculated from
+    plot_opts.dot_size              (1,1) double = 60
 
 end
 
 %%
 set(0,'DefaultTextInterpreter','none')
 
-%% Display variables
+%% Display Variables
 a_this_note = '';
 flow_inc = [];
 
-%plot_opts = struct();
-%plot_opts.individual_trials = 'no';  % plot each trial by itself
-%plot_opts.x_lines = 'yes';           % x lines of where the mean was calculated from
-
 f = struct();   % struct containing all figure variables
-f.dot_size = 60;
-f.dot_size = plot_opts.dot_size;
 f.PID_color = [.4667 .6745 .1882];
-f.pid_lims = [];
-f.pid_lims = plot_opts.pid_lims;
 
-%f.f_position = [166 210 1300 600];      % for PowerPoint
-f.f_position = [166 210 650 600];       % for PowerPoint (1/2 size)
-%f.f_position = [-1895 575 650 600];     % left side display
+% Individual trial figures
+f.f_position = [166 210 650 600];
 
-%f.f2_position = [260 230 812 709];
-f.f2_position = [925 230 812 709];  % 8/26/2025: this matches the other scripts
-
-c = struct();           % struct containing all config variables
-c.nidaq_freq = 0.01;    % collection frequency etc etc      % NOTE: only used here and in plot_on_top ; why do we use this
-%c.time_to_cut = 2.00;   % don't look at any data before this time
-c.time_to_cut = plot_opts.time_to_cut;
-
+% Spt char figure
+f.f2_position = [925 230 812 709];
 
 %% Find OlfaControl_GUI directory (& add to path)
 
@@ -72,50 +65,6 @@ dir_functions = [a_dir_OlfaControlGUI '\analysis\functions'];
 addpath(genpath(dir_functions));
 
 clearvars c_*
-%% Enter data file name
-
-%{
-%a_thisfile_name= '2023-11-06_datafile_00_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
-%a_thisfile_name= '2023-11-06_datafile_01_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off';
-a_thisfile_name = '2023-11-06_datafile_02_ethyltiglate.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off'; flow_inc = 10;
-%a_thisfile_name = '2023-11-07_datafile_00_ethyltiglate_B.csv'; a_this_note = 'Ethyl Tiglate vial 9 - 10s on, 30s off';
-%f.pid_lims = [0 3];
-f.pid_lims = [0 8];
-%}
-%c.time_to_cut = 0;
-
-% 10/28/24
-%{
-a_thisfile_name = '2023-11-06_datafile_02_ethyltiglate_copy.csv'; a_this_note = 'Ethyl Tiglate vial 10 - 10s on, 30s off'; flow_inc = 10;
-c.time_to_cut = 1;
-%plot_opts.individual_trials = 'yes';
-plot_opts.x_lines = 'yes';
-f.pid_lims = [0 3];
-%a_thisfile_name = '2023-11-13_datafile_03_v12_B_copy'; a_this_note = 'Pinene vial 12 - 8s on, 20s off (suction off)'; flow_inc = 20;
-%}
-
-% 6/25/2025
-%{
-a_thisfile_name = '2025-06-25_datafile_00_vial10'; a_this_note = 'Acetophenone vial 10, 10s on 20s off';
-a_thisfile_name = '2025-06-25_datafile_01_vial11'; a_this_note = 'Acetophenone vial 11, 10s on 20s off';
-a_thisfile_name = '2025-06-25_datafile_02_vial10_nosuction'; a_this_note = 'Acetophenone vial 10, no suction';
-a_thisfile_name = '2025-06-25_datafile_03_vial11_nosuction'; a_this_note = 'Acetophenone vial 11, no suction';
-%}
-
-% 8/22/2025
-%{
-a_thisfile_name = '2025-08-22_datafile_00_v11'; a_this_note = 'ET vial 11';
-a_thisfile_name = '2025-08-22_datafile_01_v12'; a_this_note = 'ET vial 12';
-%a_thisfile_name = '2025-08-22_datafile_02_v11'; a_this_note = 'ET vial 11';
-%a_thisfile_name = '2025-08-22_datafile_03_v12'; a_this_note = 'ET vial 12';
-%a_thisfile_name = '2025-08-22_datafile_04_v11'; a_this_note = 'ET vial 11';
-%a_thisfile_name = '2025-08-22_datafile_05_v12'; a_this_note = 'ET vial 12';
-%a_thisfile_name = '2025-08-22_datafile_06_v11'; a_this_note = 'ET vial 11';
-%a_thisfile_name = '2025-08-22_datafile_07_v12'; a_this_note = 'ET vial 12';
-plot_opts.individual_trials = 'yes';
-plot_opts.x_lines = 'no';
-f.pid_lims = [0 12];
-%}
 
 %% Load file
 % TODO change this so we don't have to include .csv
@@ -189,9 +138,9 @@ for i=1:height(a_raw_file)
 
     % Create array of time values
     number_of_data = length(pid_values);
-    last_time_value = number_of_data * c.nidaq_freq;
-    last_time_value = last_time_value - c.nidaq_freq;
-    time_data = 0:c.nidaq_freq:last_time_value;
+    last_time_value = number_of_data * plot_opts.nidaq_freq;
+    last_time_value = last_time_value - plot_opts.nidaq_freq;
+    time_data = 0:plot_opts.nidaq_freq:last_time_value;
     
     % Shift the pid values up to 0
     pid_values = cell2mat(pid_values);
@@ -205,12 +154,12 @@ for i=1:height(a_raw_file)
 
     % Cut from the beginning of the trial
     
-    % Get data starting at c.time_to_cut seconds into the trial
-    idx_of_start_time = (c.time_to_cut/c.nidaq_freq) + 1;   % Index of c.time_to_cut seconds
+    % Get data starting at plot_opts.time_to_cut seconds into the trial
+    idx_of_start_time = (plot_opts.time_to_cut/plot_opts.nidaq_freq) + 1;   % Index of plot_opts.time_to_cut seconds
     new_pid_data = pid_data(idx_of_start_time:end,:);
     
     % Cut off 2 seconds anyways (to let it get up there a little bit)
-    if (c.time_to_cut < 2)
+    if (plot_opts.time_to_cut < 2)
         new_pid_data_1 = get_section_data(new_pid_data,2,new_pid_data(end,1));
     else
         new_pid_data_1 = new_pid_data;
@@ -252,7 +201,7 @@ for i=1:height(a_raw_file)
         xlabel('Time (s)');
         ylabel('PID (V)');
         xlim([-.5 last_time_value])
-        if ~isempty(f.pid_lims); ylim(f.pid_lims); end
+        if ~isempty(plot_opts.pid_lims); ylim(plot_opts.pid_lims); end
         p = plot(time_data,pid_values);
         p.DisplayName = ['PID mean: ' num2str(round(mean_pid,2)) ' V'];
         p.LineWidth = 2;
@@ -277,7 +226,7 @@ for i=1:height(a_raw_file)
     d_olfa_data(i).data = [d_time_data d_pid_data];
     
 end
-clearvars -except a_* c d_olfa_data dir_* f flow_inc pid_adjustment_value plot_opts
+clearvars -except a_* d_olfa_data dir_* f flow_inc pid_adjustment_value plot_opts
 
 %% Sort the data structure (create d_olfa_data_sorted)
 fieldName = 'flow_value';
@@ -316,7 +265,7 @@ for i=1:length(d_olfa_data_sorted)
     end
 end
 
-clearvars -except a_* c d* f pid_adjustment_value plot_opts
+clearvars -except a_* d* f pid_adjustment_value plot_opts
 
 %% Save the data structure
 mat_file_dir = strcat(pwd,'\','data (.mat files)\',a_thisfile_name,'.mat');
@@ -343,7 +292,7 @@ if ~strcmp(a_this_note,''); subtitle(a_this_note); end
 xlabel('Flow (SCCM)')
 ylabel("PID (V)");
 xlim([0 100]);
-if ~isempty(f.pid_lims); ylim(f.pid_lims); end
+if ~isempty(plot_opts.pid_lims); ylim(plot_opts.pid_lims); end
 
 blue_color = [0 .4470 .7410];
 
