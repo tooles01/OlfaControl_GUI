@@ -16,7 +16,7 @@
 ## Input Arguments:
 
 User **must** enter `a_thisfile_name`.  
-It is HIGHLY recommended to also enter a value for `c.nidaq_freq` so that file will be correctly parsed.  
+It is HIGHLY recommended to also enter a value for `plot_opts.nidaq_freq` so that file will be correctly parsed.  
 It is recommended to enter values for:
 - a_this_note
 - flow_inc
@@ -24,28 +24,22 @@ It is recommended to enter values for:
 
 ## Function Details
 
-1. **Adds necessary folders to MATLAB path** (datafiles & functions)  
+1. **Sets up display variables**
+	<details>
+	
+	- a_this_note
+	- flow_inc
+	- f.PID_color
+	- f.f_position (Individual trial plots)
+	- f.f2_position (spt char plot)
+	</details>
+
+2. **Adds necessary folders to MATLAB path** (datafiles & functions)  
 	<details>
 
 	- Check if current directory contains 'OlfaControl_GUI' (If not, display error message)
 	- Add datafiles to MATLAB path ("*result _files\standard olfa*")
 	- Add functions to MATLAB path ("*analysis\functions*")
-	</details>
-
-2. **Sets up display variables**
-	<details>
-	
-	- a_this_note
-	- flow_inc
-	- plot_opts.individual_trials
-	- plot_opts.x_lines
-	- f.dot_size
-	- f.PID_color
-	- f.pid_lims
-	- f.f_position
-	- f.f2_position
-	- c.nidaq_freq
-	- c.time_to_cut
 	</details>
 
 3. **Loads selected datafile** (from "*OlfaControlGUI\results_files\standard olfa*")  
@@ -66,14 +60,12 @@ It is recommended to enter values for:
 	- For each trial:
 		- **Adjust PID**
 			- Remove missing cells
-			- Create array of time values (using *c.nidaq_freq*) so we can create an array (*pid_data*) of [time, PID data] for this trial
-			- Shift PID up to 0
+			- Create array of time values (using *plot_opts.nidaq_freq*) so we can create an array (*pid_data*) of [time, PID data] for this trial
+			- Shift PID up to 0 (using baseline value)
 		- **Calculate mean PID value for this trial**
-			- Cut user-specified # of seconds from the beginning of the trial
-				- Get data starting at *c.time_to_cut* seconds into the trial (user-specified # of seconds)
-					- If *c.time_to_cut* is less than 2, cut off 2 seconds from beginning anyways
-			- Cut end of the trial: 0.1sec before PID drops below 0.1V
-				- Find what time the PID drops below threshold (0.1V)
+			- To get the section of PID data we need for calculating the mean:
+				- Cut 2 seconds from the beginning of the dataset (If *plot_opts.time_to_cut* is greater than 2 seconds, cut that amount of time)
+				- Cut everything after the vial closed - currently, 100ms before the PID drops below 0.1V
 					- If this was a normal trial: End time is 0.1 sec before PID drops below threshold
 					- If this was a 0 sccm trial (PID started below threshold value): End time is 4.0 sec after trial begins
 			- Get data for this period, calculate mean & standard deviation
