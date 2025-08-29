@@ -64,11 +64,15 @@ It is recommended to enter values for:
 			- Shift PID up to 0 (using baseline value)
 		- **Calculate mean PID value for this trial**
 			- To get the section of PID data we need for calculating the mean:
-				- Cut 2 seconds from the beginning of the dataset (If *plot_opts.time_to_cut* is greater than 2 seconds, cut that amount of time)
-				- Cut everything after the vial closed - currently, 100ms before the PID drops below 0.1V
-					- If this was a normal trial: End time is 0.1 sec before PID drops below threshold
-					- If this was a 0 sccm trial (PID started below threshold value): End time is 4.0 sec after trial begins
-			- Get data for this period, calculate mean & standard deviation
+				1) Cut 2 seconds from the beginning of the trial (If *plot_opts.time_to_cut* is greater than 2 seconds, cut that amount of time)
+				2) Cut everything after the vial closed
+					- end_time = (time when the PID drops below 10% of the max value) - (100ms)
+					- Error check: If the PID started BELOW 10% of the max value, end_time = 4 seconds
+
+				<img src="images/examples/standard_olf_PID_calculation.jpg" width="40%">
+				
+				*^^ vertical lines mark the section of PID data used to calculate the mean*
+			- Get the PID data for this period, calculate mean & standard deviation
 		- If selected: **Plot this trial by itself** (*plot_opts.individual_trials*)  
 			- If selected: **Plot x-lines** at beginning and end of where the mean was calculated from (*plot_opts.x_lines*)
 		- **Add to the data structure** (*d_olfa_data*)  

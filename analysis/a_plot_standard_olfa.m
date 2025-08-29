@@ -4,9 +4,8 @@
 
 %#ok<*AGROW>
 %#ok<*NASGU>
-%#ok<*SAGROW>
 
-function a_plot_standard_olfa_1(a_thisfile_name,plot_opts)
+function a_plot_standard_olfa(a_thisfile_name,plot_opts)
 
 arguments
     a_thisfile_name     (1,1) string = '-'
@@ -106,24 +105,20 @@ pid_values = cell2mat(pid_values);
 pid_adjustment_value = min(pid_values);
 
 clearvars last*
-%% smooth PID   % TODO maybe
 
-%%
-%if strcmp(plot_opts.individual_trials,'yes'); close all; end% TODO move this later
+%% Calculate stuff
 
-%% Initialize data structures
-
+% Initialize empty data structures
 d_olfa_data = [];   % TODO change to d_olfa_data_combined
 d_olfa_data(1).flow_value = [];
 d_olfa_data(1).pid_mean = [];
 d_olfa_data(1).pid_std = [];
 d_olfa_data(1).data = [];
 
-%% Calculate stuff
 % For each trial (each row of the file)
 for i=1:height(a_raw_file)
     
-    % Get data
+    % Get data (flow rate, PID data)
     sccm_value = a_raw_file(i,1);
     this_sccm_value = sccm_value{1};    % Convert from cell to double
     pid_values = a_raw_file(i,2:end);
@@ -142,7 +137,7 @@ for i=1:height(a_raw_file)
     last_time_value = last_time_value - plot_opts.nidaq_freq;
     time_data = 0:plot_opts.nidaq_freq:last_time_value;
     
-    % Shift the pid values up to 0
+    % Shift the PID values up to 0
     pid_values = cell2mat(pid_values);
     pid_values = pid_values - pid_adjustment_value;
     
@@ -152,7 +147,9 @@ for i=1:height(a_raw_file)
     
     %% Calculate mean PID value
 
-    % Cut from the beginning of the trial
+    % Get the section of PID values we will use to calculate the mean
+
+    % 1) Make sure we cut at least 2 seconds from the beginning of the trial
     
     % Get data starting at plot_opts.time_to_cut seconds into the trial
     idx_of_start_time = (plot_opts.time_to_cut/plot_opts.nidaq_freq) + 1;   % Index of plot_opts.time_to_cut seconds
@@ -165,15 +162,16 @@ for i=1:height(a_raw_file)
         new_pid_data_1 = new_pid_data;
     end
     
-    % Cut from the end of the trial
+    % 2. Find time when vial closed: cut everything after that
 
-    % Find what time the PID drops below threshold (0.1V)
-    idx_below_threshold = find(new_pid_data_1(:,2) < 0.1,1);
-    time_below_threshold = new_pid_data_1(idx_below_threshold,1);
+    % Find what time the PID drops below threshold (10% of max value during the trial) (this is based on nothing besides my own visualization)
+    PID_end_threshold = .1*(max(pid_data(:,2)));   % 10% of the max value
+    idx_below_threshold = find(new_pid_data_1(:,2) < PID_end_threshold,1);  % index of first time PID drops below threshold
+    time_below_threshold = new_pid_data_1(idx_below_threshold,1);           % first time PID drops below 0.1V
     
     % Get the time value 0.1s before it drops
 
-    % If this was a normal trial, make the end time 0.1s before the PID drops below threshold (0.1V)
+    % If this was a normal trial: make the end time 0.1s before the PID drops below threshold
     if ~(idx_below_threshold == 1)
         end_time = time_below_threshold - .1;
     % If PID started below 0.1V (aka this was a 0 sccm trial), just make it a 4 second trial
@@ -207,8 +205,7 @@ for i=1:height(a_raw_file)
         p.LineWidth = 2;
         p.Color = f.PID_color;
         
-        % draw xlines
-        % 8/26/2025: I have no idea what this is
+        % draw xlines showing which data was used to calculate the mean PID
         if strcmp(plot_opts.x_lines,'yes')
             xline1 = xline(this_pid_data(1,1),'HandleVisibility','off');
             xline2 = xline(end_time,'HandleVisibility','off');
