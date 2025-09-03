@@ -59,7 +59,6 @@ arguments
     % For individual event plots
     plot_opts.plot_flow         (1,1) string = 'no'     % Show flow data on individual flow rate plots
     plot_opts.plot_ctrl         (1,1) string = 'no'     % Show ctrl data on individual flow rate plots; Show Flow v. Ctrl plot
-
 end
 
 %%
@@ -139,6 +138,8 @@ data(length(file_names)) = d;
 for i=1:length(file_names)
     a_this_file_name = file_names{i};
     data(i).file_name = a_this_file_name;
+    a_this_full_file_name = [dir_data_files '\' a_this_file_name];
+    warning('off','MATLAB:load:variableNotFound'); % ignore warnings about variable not found for standard olfa
     a = load(a_this_file_name,'d_olfa_data_combined','d_olfa_flow','data_pid','d_olfa_data_sorted');
     data(i).d_olfa_data_combined = a.d_olfa_data_combined;
     data(i).d_olfa_data_sorted = a.d_olfa_data_sorted;
@@ -564,38 +565,42 @@ for r=1:length(data)
             
             %% Calculate mean PID value
 
-            % Start at plot_opts.time_to_cut seconds into the trial
-            idx_of_start_time = (plot_opts.time_to_cut/c.nidaq_freq) + 1;
+            % Get the section of PID values we will use to calculate the mean
+
+            % 1) Make sure we cut at least 2 seconds from the beginning of the trial
+            % Get data starting at plot_opts.time_to_cut seconds into the trial
+            idx_of_start_time = (plot_opts.time_to_cut/c.nidaq_freq) + 1;   % Index of c.time_to_cut seconds
             new_pid_data = this_event_pid_data(idx_of_start_time:end,:);
             
-            %% Find the end time of the event (0.1s before the PID drops below 0.1V)
-            % Give it 2 seconds to get up there a little bit
-            c.time_to_get_up_there = 2;
-            if (plot_opts.time_to_cut < c.time_to_get_up_there)
-                new_pid_data_1 = get_section_data(new_pid_data,c.time_to_get_up_there,new_pid_data(end,1));
+            % Cut off 2 seconds anyways (to let it get up there a little bit)
+            if (plot_opts.time_to_cut < 2)
+                new_pid_data_1 = get_section_data(new_pid_data,2,new_pid_data(end,1));
             else
                 new_pid_data_1 = new_pid_data;
             end
             
-            % (from the cut data) find the first time the PID drops below 0.1V
-            idx_below_threshold = find(new_pid_data_1(:,2) < 0.1,1);
-            time_below_threshold = new_pid_data_1(idx_below_threshold,1);
+            % 2. Find time when vial closed: cut everything after that
+            % (from the cut data) Find what time the PID drops below threshold (10% of max value during the trial) (this is based on nothing besides my own visualization)
+            PID_end_threshold = .1*(max(this_event_pid_data(:,2)));   % 10% of the max value
+            idx_below_threshold = find(new_pid_data_1(:,2) < PID_end_threshold,1);  % index of first time PID drops below threshold
+            time_below_threshold = new_pid_data_1(idx_below_threshold,1);           % first time PID drops below threshold
+    
+            % Get the time value 0.1s before it drops
+            % If this was a normal trial: make the end time 0.1s before the PID drops below threshold
             if ~(idx_below_threshold == 1)
-                % If it's a valid time, end time of this trial is 0.1s before PID drops below 0.1V
                 end_time = time_below_threshold - .1;
-                end_idx = find(new_pid_data(:,1) <= end_time,1,'last');
+            % If PID started below 0.1V (aka this was a 0 sccm trial), just make it a 4 second trial
             else
-                % if PID started below 0.1V (aka this was a 0 sccm trial), just make it a 4 second trial
                 end_time = 4;
-                end_idx = find(new_pid_data(:,1) <= end_time,1,'last');
-                str = ['this was a 0 sccm trial (', num2str(this_event_flow_mean),' sccm, i=', num2str(i), ')'];
+                str = ['this was a 0 sccm trial (', num2str(this_event_flow_mean),' sccm, e=', num2str(e), ', ',a_this_file_name, ')'];
                 disp(str)
             end
+            end_idx = find(new_pid_data_1(:,1) <= end_time,1,'last');     % Index of where end_time happens
 
             % Get all the data for this period (calculated time of the event)
-            this_event_cut_pid_data = new_pid_data(1:end_idx,:);
+            this_event_cut_pid_data = new_pid_data_1(1:end_idx,:);
             
-            % Calculate the mean value
+            % Calculate the mean/std
             this_event_pid_mean = mean(this_event_cut_pid_data(:,2));
             this_event_pid_std = std(this_event_cut_pid_data(:,2));
 

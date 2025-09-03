@@ -159,12 +159,12 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow
         - If **Standard olfa**:
             - For each event:
                 - Get the flow value (No std here because it comes from the Alicat)
-                - Get the PID data:
-                    - Cut off the first `c.time_to_cut` seconds
-                    - Figure out the end time of the trial:
-                        - Find the first time the PID drops below 0.1V: the end time of the trial is 0.1s before that. (If PID was below 0.1V the whole time, make it a 4 second trial)
-                    - Get PID data just for this trial
-                - Calculate mean & standard deviation (from cut data)
+                - To get the section of PID data we need for calculating the mean:
+                    1) Cut 2 seconds from the beginning of the trial (If *plot_opts.time_to_cut* is greater than 2 seconds, cut that amount of time)
+                    2) Cut everything after the vial closed
+                        - end_time = (time when the PID drops below 10% of the max value) - (100ms)
+					    - Error check: If the PID started BELOW 10% of the max value, end_time = 4 seconds
+                - - Get the PID data for this period, calculate mean & standard deviation (from cut data)
                 - Add to data structure
                     - `this_file_new_means`     % Array of Flow mean, PID mean (for all trials)
                     - `this_file_new_stds`      % Array of Flow std, PID std (for all trials)
