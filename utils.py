@@ -127,8 +127,7 @@ def find_log_directory():
     return result_file_directory
 
 def find_calibration_table_directory():
-    # check for OlfaControl_GUI directory
-    olfacontrolgui_directory = find_olfaControl_directory()
+    olfacontrolgui_directory = find_olfaControl_directory()     # Check for OlfaControl_GUI directory
 
     # if not found, use whatever directory we are currently in
     # TODO use this strat instead of the whole find_olfaControl_directory
@@ -137,9 +136,19 @@ def find_calibration_table_directory():
         logger.debug('Searching current directory for calibration tables')
     else:
         directory_to_search = olfacontrolgui_directory
+        logger.debug('Searching OlfaControl_GUI for calibration tables (%s)' + directory_to_search)
 
-    # check if there is a folder called calibration tables
+    # Check if there is a folder called calibration tables
     calibration_table_directory = directory_to_search + '\\' + config_main.calibration_file_dir_name
+    if os.path.exists(calibration_table_directory):
+        logger.debug('found calibration table directory at %s', calibration_table_directory)
+    else:
+        # In case of different operating system
+        calibration_table_directory = directory_to_search + '/' + config_main.calibration_file_dir_name
+        if os.path.exists(calibration_table_directory):
+            logger.debug('found calibration table directory at %s', calibration_table_directory)
+        else:
+            logger.warning('cannot find calibration table directory')
 
     return calibration_table_directory
 
