@@ -478,7 +478,7 @@ class olfactometer_window(QGroupBox):
         self.vialsPerSlave = config_olfa.vialsPerSlave
         self.zmq_enabled = False
         
-        # look for calibration table directory
+        # Look for calibration table directory
         self.flow_cal_dir = utils.find_calibration_table_directory()
         if os.path.exists(self.flow_cal_dir):
             self.get_calibration_tables()
@@ -522,7 +522,7 @@ class olfactometer_window(QGroupBox):
         self.master_groupbox.setMaximumHeight(self.master_groupbox.sizeHint().height())
         self.raw_comm_box.setMaximumHeight(self.raw_comm_box.sizeHint().height())
         self.slave_groupbox.setMinimumWidth(self.slave_widget.size().width() + 56)  # this is the exact size for the scroll area to have no horizontal anything
-    
+
     # CREATE WIDGETS
     def create_connect_box(self):
         """Create a groupbox for connecting to the master Arduino."""
@@ -601,7 +601,7 @@ class olfactometer_window(QGroupBox):
         layout.addLayout(m_mode_layout)
         layout.addLayout(timebt_layout)
         layout.addLayout(manualcmd_layout)
-        self.master_groupbox.setLayout(layout)
+        self.master_groupbox.setLayout(layout)    
     
     def create_zmq_groupbox(self):
         """Create a groupbox for ZMQ connection settings."""
@@ -653,14 +653,22 @@ class olfactometer_window(QGroupBox):
         # Displays for written and received data
         self.raw_write_display = QTextEdit(readOnly=True)
         self.raw_read_display = QTextEdit(readOnly=True)
+
+        # Buttons for clearing display
+        self.read_clear_btn = QPushButton("Clear")
+        self.write_clear_btn = QPushButton("Clear")
+        self.read_clear_btn.setToolTip("Clear previous values from display")
+        self.write_clear_btn.setToolTip("Clear previous values from display")
+        self.read_clear_btn.clicked.connect(lambda: self.raw_read_display.clear())
+        self.write_clear_btn.clicked.connect(lambda: self.raw_write_display.clear())
         
         # Layout
-        raw_write_layout = QVBoxLayout()
-        raw_write_layout.addWidget(QLabel('Written to serial port:'))
-        raw_write_layout.addWidget(self.raw_write_display)
-        raw_read_layout = QVBoxLayout()
-        raw_read_layout.addWidget(QLabel('Received from serial port:'))
-        raw_read_layout.addWidget(self.raw_read_display)
+        raw_write_layout = QFormLayout()
+        raw_write_layout.addRow(QLabel('Written to serial port:'),self.write_clear_btn)
+        raw_write_layout.addRow(self.raw_write_display)        
+        raw_read_layout = QFormLayout()
+        raw_read_layout.addRow(QLabel('Received from serial port:'),self.read_clear_btn)
+        raw_read_layout.addRow(self.raw_read_display)
         raw_comm_layout = QHBoxLayout()
         raw_comm_layout.addLayout(raw_read_layout)
         raw_comm_layout.addLayout(raw_write_layout)
@@ -726,7 +734,7 @@ class olfactometer_window(QGroupBox):
     
     def load_config_btn_clicked(self):
         """Open file select dialog & load config file"""
-        
+
         # Open file select dialog
         dlg = QFileDialog()
         dlg.setFileMode(QFileDialog.ExistingFile)   # The name of a single existing file
@@ -1151,7 +1159,6 @@ class olfactometer_window(QGroupBox):
                         self.window().receive_data_from_device(device,unit,value)
                     except AttributeError:  # if main window is not open
                         pass
-
                     
                     # Write it to the vial details box
                     for s in self.slave_objects:    # find out which vial this is

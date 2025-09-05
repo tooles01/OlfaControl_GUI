@@ -207,8 +207,16 @@ class NiDaq(QGroupBox):
 
         self.raw_receive_box = QTextEdit(readOnly=True)
         receiveBoxLbl = QLabel(text="raw values")
+        receiveBox_clear_btn = QPushButton("Clear")
+        receiveBox_clear_btn.setToolTip("Clear previous values from display")
+        receiveBox_clear_btn.clicked.connect(lambda: self.raw_receive_box.clear())
+        receiveBox_clear_btn.clicked.connect(lambda: self.mV_receive_box.clear())
+        layout1 = QHBoxLayout()
+        layout1.addWidget(receiveBoxLbl)
+        layout1.addWidget(receiveBox_clear_btn)
+
         receiveBoxLayout = QVBoxLayout()
-        receiveBoxLayout.addWidget(receiveBoxLbl)
+        receiveBoxLayout.addLayout(layout1)
         receiveBoxLayout.addWidget(self.raw_receive_box)
 
         self.mV_receive_box = QTextEdit(readOnly=True)
@@ -266,4 +274,5 @@ if __name__ == "__main__":
     app1 = QApplication(sys.argv)
     theWindow = NiDaq("")
     theWindow.show()
+    theWindow.setWindowTitle('NiDAQ_driver')
     sys.exit(app1.exec_())
