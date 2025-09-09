@@ -83,7 +83,14 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow
 
     - Preallocate struct array `data`
     - Load the list of files into the array
-        - Variables loaded: `d_olfa_data_combined`, `d_olfa_flow`,`data_pid`,`d_olfa_data_sorted`
+        - Variables loaded: `d_olfa_data_combined`, `d_olfa_flow`,`data_pid`,`d_olfa_data_sorted`,`vial_number` (standard olf only)
+    - Get the vial number for data in this file
+        - Standard olfa: Convert from vials 5-12 --> 1-8
+        - 8line olfa: Remove slave letter & convert from string to int
+    - Assign color to each file based on whether `plot_by_vial` is yes/no
+        - If `plot_vy_vial` == *yes*`: Convert vial number; set to color for this vial number (c.colors)
+        - If `plot_vy_vial` == *no*:- If not: Select a color that has not been used yet
+
     </details>
 
 3. **Get list of flow values recorded in these files**  
@@ -96,7 +103,7 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow
     - Sort the cumulative list of `flow_values`, remove duplicates, now you have every value in these files
     </details>    
 
-4. If selected: **Plots data at each flow rate separately** (`c.plot_by_flow`)  
+4. If selected: **Plots data at each flow rate separately** (`plot_opts.plot_by_flow`)  
     <details>
     
     - For each flow value:
@@ -109,19 +116,19 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow
                         - Get the data (flow, ctrl, pid)
                         - Shift it all to t=0
                         - Plots data
-                            - If selected: **Plots ctrl values** on left yaxis (`c.plot_ctrl`)
-                            - If selected: **Plots flow values** on left yaxis (`c.plot_flow`)
+                            - If selected: **Plots ctrl values** on left yaxis (`plot_opts.plot_ctrl`)
+                            - If selected: **Plots flow values** on left yaxis (`plot_opts.plot_flow`)
                             - **Plots PID** on right yaxis
                                 - If neither flow nor ctrl are plotted, plot on left yaxis
             - If **Standard olfa**:
-                - Get all of the flow values we ran trials at
-                - For each trial/event (row in struct):
-                    - Get the PID data
+                - Get all of the flow values in this file (flow values we ran trials at)
+                - For each trial at this flow value:
+                    - Get the PID data (from *d_olfa_data_sorted*)
                     - **Plots PID** on right yaxis
     </details>
 
 5. **Plots Flow v. PID**  
-    and if selected, **Flow v. Ctrl plot** (`c.plot_ctrl`)  
+    and if selected, **Flow v. Ctrl plot** (`plot_opts.plot_ctrl`)  
     <details>
 
     - Create/set up both plots (title, legend, labels, etc)
@@ -131,7 +138,7 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow
                 - Get data from `d_olfa_flow.events.OV_keep`
                 - For each event: **Cut data & calculate mean/std**
                     - Get (flow, ctrl, PID) data from this event
-                    - Cut off the first `c.time_to_cut` seconds
+                    - Cut off the first `plot_opts.time_to_cut` seconds
                     - Calculate mean & standard deviation
                     - Add to data structure
                         - `this_file_new_means`     % Array of Flow mean, PID mean (for all trials)
@@ -143,19 +150,19 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow
                 - **Plot Flow v. PID means** (f2)
                     - Add this file's Flow/PID means to f2 (`this_file_new_means`)
                     - If selected:
-                        - Shorten file name (`c.shorten_file_name`)
-                        - Plot by vial number (`c.plot_by_vial`)
+                        - Shorten file name (`plot_opts.shorten_file_name`)
+                        - Plot by vial number (`plot_opts.plot_by_vial`)
                 - If selected: **Plot Flow v. Ctrl means** (f3)
                     - Add this file's Flow/Ctrl means to f3 (`this_file_ctrl_means`)
                     - If selected:
-                        - Shorten file name (`c.shorten_file_name`)
-                        - Plot by vial number (`c.plot_by_vial`)
-                - If selected: **Plot error bars** (`c.plot_error_bars`) *****on by default
+                        - Shorten file name (`plot_opts.shorten_file_name`)
+                        - Plot by vial number (`plot_opts.plot_by_vial`)
+                - If selected: **Plot error bars** (`plot_opts.plot_error_bars`) *****on by default
                     - For each event:
                         - Get (flow, ctrl, PID) standard deviations from `this_file_new_stds`, `this_file_ctrl_stds`
                         - Divide by 2; Append to `xneg`, `xpos`, `yneg`, `ypos` (divide by 2 so that entire length of the error bar = 1 standard deviation)
                     - **Plot Flow/PID error bars** on ax2
-                    - If selected: **Plot Flow/Ctrl error bars** on ax3 (`c.plot_ctrl`)
+                    - If selected: **Plot Flow/Ctrl error bars** on ax3 (`plot_opts.plot_ctrl`)
         - If **Standard olfa**:
             - For each event:
                 - Get the flow value (No std here because it comes from the Alicat)
@@ -172,8 +179,8 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow
                 - --> same as w/ 8-line olfa, can probably remove this part
             - **Plot Flow v. PID means** (f2)
                 - Add this file's Flow/PID means to f2 (`this_file_new_means`)
-                - If selected: Shorten file name (`c.shorten_file_name`)
-            - If selected: **Plot error bars** (`c.plot_error_bars`) *****on by default
+                - If selected: Shorten file name (`plot_opts.shorten_file_name`)
+            - If selected: **Plot error bars** (`plot_opts.plot_error_bars`) *****on by default
                 - Get (flow, PID) standard deviations from `this_file_new_stds`
                 - Divide by 2; Append to `xneg`, `xpos`, `yneg`, `ypos` (divide by 2 so that entire length of the error bar = 1 standard deviation)
                 - **Plot Flow/PID error bars** on ax2
@@ -203,13 +210,19 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow
 **round_to - When getting flow means from file, round them to the nearest 'x'**  
 &nbsp;&nbsp;5 (default) | positive integer value  
 &nbsp;&nbsp;&nbsp;&nbsp;->When plotting each flow rate, this is used to determine the flow values that will be plotted. (If round_to = 5, the flow values plotted will be 5,10,15,....100. If round_to = 10, the flow values plotted will be 10,20,30,...100.) (Just don't fuck with this for now, leave it at 5.)  
-
 **time_to_cut - Duration (seconds) to cut from beginning of each section**  
 &nbsp;&nbsp;0 (default) | positive value  
 &nbsp;&nbsp;&nbsp;&nbsp;->Duration (seconds) to cut from the beginning of each section before recalculating stats (mean, standard deviation). This is used to remove the first few seconds from the trial (the period when PID has not yet reached its peak/plateau value)  
 <br>
 
+### Additional Figures
+**plot_by_flow - Plot each flow value individually**  
+&nbsp;&nbsp;"yes" (default) | "no"  
+<br>
+
 ### Plot Options
+**fig_position - position of Flow v. PID plot (f2)**  
+&nbsp;&nbsp;[925 230 812 709] (default) | four-element vector  
 **plot_error_bars - Show error bars on Flow v. PID and Flow v. Ctrl plots**  
 &nbsp;&nbsp;'yes' (default) | 'no'  
 **plot_by_vial - Plot color determined by vial #**  
@@ -217,20 +230,15 @@ a_plot_on_top(file_names,'1-09-2024','Ethyl Tiglate',pid_lims=[0 3],plot_by_flow
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;->Generally, setting this to "no" will only be used when comparing multiple trials of the same vial. Otherwise, you'll want all trials from the same vial to be the same color.
 **shorten_file_name - shorten file name in legend**  
 &nbsp;&nbsp;'no' (default) | 'yes'  
-**fig_position - position of Flow v. PID plot (f2)**  
-&nbsp;&nbsp;[260 230 812 709] (default) | four-element vector  
-**dot_size - Size of points on scatter plots**  
-&nbsp;&nbsp;60 (default) | positive integer  
 <br>
 
-### Additional Figures
-**plot_by_flow - Plot each flow value individually**  
-&nbsp;&nbsp;"yes" (default) | "no"  
-
+### For individual event plots
 **plot_flow - Plot flow values on left yaxis** (8-line olfa)  
 &nbsp;&nbsp;'no' (default) | 'yes'  
 **plot_ctrl - Plot ctrl values on left yaxis, Display Flow v. Ctrl plot (f3)** (8-line olfa)  
 &nbsp;&nbsp;"no" (default) | "yes"  
+**x_lim - X-limits (time in seconds) for *plot by flow* figures**  
+&nbsp;&nbsp;[-2 10] (default) | two-element vector  
 <br>
 
 ## Dependencies

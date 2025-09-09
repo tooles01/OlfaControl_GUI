@@ -18,10 +18,11 @@
 %   fig_position
 %   plot_error_bars
 %   plot_by_vial
-%   shorten_file_name   -
+%   shorten_file_name
 %
 %   plot_flow
 %   plot_ctrl
+%   x_lim
 
 
 %%
@@ -59,6 +60,7 @@ arguments
     % For individual event plots
     plot_opts.plot_flow         (1,1) string = 'no'     % Show flow data on individual flow rate plots
     plot_opts.plot_ctrl         (1,1) string = 'no'     % Show ctrl data on individual flow rate plots; Show Flow v. Ctrl plot
+    plot_opts.x_lim             (1,:) double = [-2 10]  % timescale for "by flow" plots
 end
 
 %%
@@ -66,9 +68,6 @@ set(0,'DefaultTextInterpreter','none')
 
 %% Display Variables
 f = struct();   % struct containing all figure variables
-
-f.x_lim = [-2 30];  % timescale for individual plots
-f.x_lim = [-2 10];
 f.dot_size = 60;
 
 %c = struct();
@@ -81,13 +80,14 @@ c.colors{6} = 'r';                          % red
 c.colors{7} = [0.3010   0.7450  0.9330];    % light blue
 c.colors{8} = [0.4940   0.1840  0.5560];    % purple
 
+colors = lines(7);      % MATLAB's default "lines" color order
+
 c.flow_color = [0 .447 .741];
 c.flow_width = 1.5;
 c.pid_width = 2;
 c.blue = [0 .447 .741];
 c.yellow = [.929 .694 .125];
 c.nidaq_freq = 0.01;    % collection frequency etc etc
-
 
 % Figure positions
 
@@ -140,10 +140,19 @@ for i=1:length(file_names)
     data(i).file_name = a_this_file_name;
     a_this_full_file_name = [dir_data_files '\' a_this_file_name];
     warning('off','MATLAB:load:variableNotFound'); % ignore warnings about variable not found for standard olfa
-    a = load(a_this_file_name,'d_olfa_data_combined','d_olfa_flow','data_pid','d_olfa_data_sorted');
+    a = load(a_this_file_name,'d_olfa_data_combined','d_olfa_flow','data_pid','d_olfa_data_sorted','vial_number');
     data(i).d_olfa_data_combined = a.d_olfa_data_combined;
     data(i).d_olfa_data_sorted = a.d_olfa_data_sorted;
+    data(i).color = [];
     
+    % Get vial number
+    try
+        this_vial_number = a.vial_number{:} - 4;                % standard olf (convert it to 1-8)
+    catch ME
+        this_vial_number = str2num(a.d_olfa_flow.vial_num(2));  % 8channel olf
+    end
+    data(i).vial_number = this_vial_number;
+
     % In case there are standard olfa files
     try
         data(i).d_olfa_flow = a.d_olfa_flow;
@@ -151,13 +160,36 @@ for i=1:length(file_names)
     catch ME
         switch ME.identifier
             case 'MATLAB:nonExistentField'
-                % this is a standard olfa file
+                % this is a standard olfa file, just carry on
                 x=1;
             otherwise
                 rethrow(ME)
         end
     end
+    
+    % Assign a color to each file
+    if strcmp(plot_opts.plot_by_vial,'yes')
+        % assign based on vial number
+        thisfile_color = c.colors{this_vial_number};
+    end
+
+    if strcmp(plot_opts.plot_by_vial,'no')
+        if i==1
+            % this is the first file: use the first color
+            thisfile_color = colors(1,:);
+            %thisfile_color = c.colors{1};
+        else
+            % check which colors are in use, pick something different
+            colors_in_use = vertcat(data(1:i-1).color);
+            %idx = find(~ismember(c.colors, colors_in_use, 'rows'), 1);
+            idx = find(~ismember(colors, colors_in_use, 'rows'), 1);
+            %thisfile_color = c.colors(idx,:);
+            thisfile_color = colors(idx,:);
+        end
+    end
+    data(i).color = thisfile_color;
 end
+
 clearvars x
 
 %% Get list of flow values recorded in these files
@@ -279,12 +311,7 @@ if strcmp(plot_opts.plot_by_flow,'yes')
                                 ylim([plot_opts.flow_lims])
                                 p_flow = plot(this_flow_data(:,1),this_flow_data(:,2));
                                 p_flow.HandleVisibility = 'off';
-                                if strcmp(plot_opts.plot_by_vial,'yes')
-                                    vial_num = str2double(this_vial_num(2));
-                                    p_flow.Color = c.colors{vial_num};
-                                else
-                                    p_flow.Color = c.colors{r};
-                                end
+                                p_flow.Color = data(r).color;
                                 p_flow.LineWidth = c.flow_width;
                                 p_flow.LineStyle = '-';
                                 p_flow.Marker = 'none';
@@ -304,17 +331,12 @@ if strcmp(plot_opts.plot_by_flow,'yes')
                                 p_pid.DisplayName = this_vial_num + " " + a_this_file_name;
                             end
                             if (k>1); p_pid.HandleVisibility = 'off'; end
-                            if strcmp(plot_opts.plot_by_vial,'yes')
-                                vial_num = str2double(this_vial_num(2));    % figure out which color
-                                p_pid.Color = c.colors{vial_num};
-                            else
-                                p_pid.Color = c.colors{r};
-                            end
+                            p_pid.Color = data(r).color;
                             p_pid.LineWidth = c.pid_width;
                             p_pid.LineStyle = '-';
                             p_pid.Marker = 'none';
                             
-                            xlim(f.x_lim);
+                            xlim(plot_opts.x_lim);
                         else
                             disp('no events for this vial')
                         end
@@ -345,6 +367,8 @@ if strcmp(plot_opts.plot_by_flow,'yes')
                         if ~(strcmp(plot_opts.plot_ctrl,'no') && strcmp(plot_opts.plot_flow,'no'))
                             yyaxis right;
                         end
+                        ylabel('PID reading (V)')
+                        ylim([plot_opts.pid_lims]);
                         r_ax = gca; r_ax.YColor = 'k';
                         p_pid = plot(this_pid_data(:,1),this_pid_data(:,2));
                         if strcmp(plot_opts.shorten_file_name,'yes')
@@ -352,19 +376,13 @@ if strcmp(plot_opts.plot_by_flow,'yes')
                         else
                             p_pid.DisplayName = a_this_file_name;
                         end
+                        p_pid.Color = data(r).color;
                         p_pid.LineWidth = c.pid_width;
                         p_pid.LineStyle = '-';
                         p_pid.Marker = 'none';
-                        
-                        % if there are two trials, make sure they plot as the same color
-                        if (j==1)
-                            this_file_color = p_pid.Color;
-                        else
-                            p_pid.Color = this_file_color;
-                        end
                         if (j>1); p_pid.HandleVisibility = 'off'; end
                         
-                        xlim(f.x_lim);
+                        xlim(plot_opts.x_lim);
                     end
                 end
             end
@@ -478,12 +496,7 @@ for r=1:length(data)
                 s = scatter(ax2,x_flow,y_pid,f.dot_size,'filled');
                 if strcmp(plot_opts.shorten_file_name,'yes'); s.DisplayName = this_vial_num + " " + shortened_file_name;
                 else; s.DisplayName = this_vial_num + " " + a_this_file_name; end
-                if strcmp(plot_opts.plot_by_vial,'yes')
-                    vial_num = str2double(this_vial_num(2));    % figure out which color
-                    s.MarkerFaceColor = c.colors{vial_num};
-                else
-                    s.MarkerFaceColor = c.colors{r};
-                end
+                s.MarkerFaceColor = data(r).color;
             end
         
             %% Plot Flow v. Ctrl means (f3)
@@ -493,10 +506,7 @@ for r=1:length(data)
                     s2 = scatter(ax3,x_flow,y_ctrl,f.dot_size,'filled');
                     if strcmp(plot_opts.shorten_file_name,'yes'); s2.DisplayName = this_vial_num + " " + shortened_file_name;
                     else; s2.DisplayName = this_vial_num + " " + a_this_file_name; end
-                    if strcmp(plot_opts.plot_by_vial,'yes')
-                        vial_num = str2double(this_vial_num(2));    % figure out which color
-                        s2.MarkerFaceColor = c.colors{vial_num};
-                    end
+                    s2.MarkerFaceColor = data(r).color;
                 end
             end
             
@@ -513,7 +523,7 @@ for r=1:length(data)
                     ypos_ctrl = zeros(length(this_file_new_stds),1);
                     
                     % For each event
-                    for e=1:length(this_file_new_stds)
+                    for e=1:height(this_file_new_stds)
                         % Create array of values to plot as the error bars
                         % xneg and xpos will be 1/2 the std dev at each point
                         flow_std = this_file_new_stds(e,1);
@@ -569,7 +579,7 @@ for r=1:length(data)
 
             % 1) Make sure we cut at least 2 seconds from the beginning of the trial
             % Get data starting at plot_opts.time_to_cut seconds into the trial
-            idx_of_start_time = (plot_opts.time_to_cut/c.nidaq_freq) + 1;   % Index of c.time_to_cut seconds
+            idx_of_start_time = (plot_opts.time_to_cut/c.nidaq_freq) + 1;   % Index of plot_opts.time_to_cut seconds
             new_pid_data = this_event_pid_data(idx_of_start_time:end,:);
             
             % Cut off 2 seconds anyways (to let it get up there a little bit)
@@ -619,12 +629,14 @@ for r=1:length(data)
         if ~isempty(this_file_new_means)
             x_flow = this_file_new_means(:,1);
             y_pid = this_file_new_means(:,2);
-            s = scatter(ax2,x_flow,y_pid,f.dot_size,'filled');
+            s_standard = scatter(ax2,x_flow,y_pid,f.dot_size,'filled');
             if strcmp(plot_opts.shorten_file_name,'yes')
-                s.DisplayName =  "standard olfa: " + shortened_file_name;
+                s_standard.DisplayName =  "standard olfa: " + shortened_file_name;
             else
-                s.DisplayName =  "standard olfa: " + a_this_file_name;
+                s_standard.DisplayName =  "standard olfa: " + a_this_file_name;
             end
+            s_standard.MarkerFaceColor = data(r).color;
+            s_standard.MarkerEdgeColor = data(r).color;
         end
 
         %% Plot error bars
@@ -635,7 +647,7 @@ for r=1:length(data)
                 yneg = zeros(length(this_file_new_stds),1);
                 ypos = zeros(length(this_file_new_stds),1);
                 % For each event
-                for e=1:length(this_file_new_stds)
+                for e=1:height(this_file_new_stds)
                     % xneg and xpos will be 1/2 the std dev at each point
                     flow_std = this_file_new_stds(e,1);
                     pid_std = this_file_new_stds(e,2);
@@ -646,8 +658,7 @@ for r=1:length(data)
                 end
                 e = errorbar(ax2,x_flow,y_pid,yneg,ypos,xneg,xpos,'o');
                 e.HandleVisibility = 'off';
-                try e.Color = s.MarkerFaceColor;
-                catch ME; e.Color = s.CData; end
+                e.Color = data(r).color;
             end
         end
     
