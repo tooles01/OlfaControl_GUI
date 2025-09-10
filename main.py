@@ -3,7 +3,6 @@ import numpy.matlib as np
 from PyQt5 import sip
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
-from PyQt5.QtCore import QTimer
 from datetime import datetime
 
 import NiDAQ_driver, flow_sensor_driver, olfa_driver_original, olfa_driver_48line
@@ -11,7 +10,7 @@ import utils, utils_olfa_48line, program_additive_popup
 import config_main
 
 
-programs_48line = ['setpoint characterization','additive']
+programs_48line = ['setpoint characterization','additive','cleaning']
 programs_orig = ['the program']
 
 current_date = utils.currentDate
@@ -31,6 +30,8 @@ logger.addHandler(file_handler)
 logger.debug('log file located at: %s', main_datafile_directory)
 ##############################
 
+wait_bt_commands_ms = 150
+wait_bt_time = wait_bt_commands_ms/100
 
 class worker_sptChar(QObject):
     finished = pyqtSignal()
@@ -196,6 +197,56 @@ class worker_additive(QObject):
         time_remaining = self.full_trial_duration_sec - time_elapsed
         self.w_incProgBar.emit(int(ratio_of_entire_duration*100),round(time_remaining))
 
+class worker_cleaning(QObject):
+    finished = pyqtSignal()
+    w_sendThisSp = pyqtSignal(str,int)
+    w_send_OpenValve = pyqtSignal(str,float)
+    w_incProgBar = pyqtSignal(int,int)
+
+    def __init__(self):
+        super().__init__()
+        self.threadON = False
+        self.stimulus_list = []
+        self.duration_on = 5
+        self.duration_off = 5
+    
+    @pyqtSlot()
+    def exp(self):
+        time.sleep(wait_bt_time)
+
+        # Calculate full duration of entire shenanigan (for progress bar)
+        self.full_trial_duration_sec = (self.duration_on+self.duration_off) * len(self.stimulus_list)
+        self.trial_start_time = datetime.now()
+
+        # Iterate through stimulus list
+        for stimulus in self.stimulus_list:
+            if self.threadON == True:
+                self.update_progress_bar()
+                
+                # Open vial
+                full_vial_name = stimulus
+                logger.info('Opening %s (%s seconds)',full_vial_name,self.duration_on)
+                self.w_send_OpenValve.emit(full_vial_name,self.duration_on)
+                
+                # Wait until vial closes
+                time.sleep(self.duration_on)
+                self.update_progress_bar()       
+
+                # Wait for the time between trials
+                time.sleep(self.duration_off)
+                self.update_progress_bar()
+
+        self.update_progress_bar()
+        self.finished.emit()
+    
+    def update_progress_bar(self):
+        current_time = datetime.now()
+        time_elapsed = (current_time - self.trial_start_time).total_seconds()
+        ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
+        time_remaining = self.full_trial_duration_sec - time_elapsed
+        self.w_incProgBar.emit(int(ratio_of_entire_duration*100),round(time_remaining))
+
+
 class worker_zmq_thread(QThread):
     finished = pyqtSignal()     # Signal to communicate with the main thread
     w_send_from_ZMQ = pyqtSignal(str)
@@ -237,6 +288,7 @@ class mainWindow(QMainWindow):
         self.generate_ui()
         self.set_up_threads_sptchar()
         self.set_up_threads_additive()
+        self.set_up_threads_cleaning()
         
         self.mainLayout = QHBoxLayout()
         self.mainLayout.addWidget(self.settings_box)
@@ -435,6 +487,9 @@ class mainWindow(QMainWindow):
             
             if self.program_to_run == "additive":
                 self.create_additive_widgets()
+            
+            if self.program_to_run == "cleaning":
+                self.create_cleaning_widgets()
         
         else:
             self.program_selection_btn.setText("Select")
@@ -511,7 +566,9 @@ class mainWindow(QMainWindow):
                 if self.program_to_run == 'setpoint characterization':
                     self.run_setpoint_characterization()
                 if self.program_to_run == 'additive':
-                    self.run_additive_program()            
+                    self.run_additive_program()
+                if self.program_to_run == 'cleaning':
+                    self.run_cleaning_program()
             except AttributeError as err:
                 logger.error('No program selected')
                 self.program_start_btn.setChecked(False)
@@ -760,6 +817,59 @@ class mainWindow(QMainWindow):
         # DISABLE CHANGE PARAMETERS/START PROGRAM BUTTONS
         self.change_parameters_btn.setEnabled(False)
         self.program_start_btn.setEnabled(False)
+    
+    def create_cleaning_widgets(self):
+        """Create widgets for cleaning program"""
+
+        # Slave select/refresh
+        p_slave_lbl = QLabel('Slave:')
+        p_slave_lbl.setToolTip('Slave to run program on')
+        self.p_slave_select_wid = QComboBox()
+        self.p_slave_select_wid.setToolTip('Only active slaves displayed')
+        if self.olfactometer.active_slaves == []:
+            self.p_slave_select_wid.addItem(config_main.no_active_slaves_warning)
+        else:
+            self.p_slave_select_wid.addItems(self.olfactometer.active_slaves)
+        p_slave_select_refresh = QPushButton(text="Check Slave")
+        p_slave_select_refresh.setToolTip('Request current slave addresses')
+        p_slave_select_refresh.clicked.connect(self.active_slave_refresh)
+        
+        layout_slave = QHBoxLayout()
+        layout_slave.addWidget(p_slave_select_refresh)
+        layout_slave.addWidget(p_slave_lbl)
+        layout_slave.addWidget(self.p_slave_select_wid)
+
+        # Program parameters
+        self.dur_on_wid = QSpinBox(value=2)
+        self.dur_off_wid = QSpinBox(value=2)
+        self.num_trials_wid = QLineEdit('2')
+
+        layout_params = QHBoxLayout()
+        layout_params.addWidget(QLabel("Dur. on (s):"))
+        layout_params.addWidget(self.dur_on_wid)
+        layout_params.addWidget(QLabel("Dur. off (s):"))
+        layout_params.addWidget(self.dur_off_wid)
+        layout_params.addWidget(QLabel("# trials:"))
+        layout_params.addWidget(self.num_trials_wid)
+        
+        # Vials to run
+        layout_vials = QHBoxLayout()
+        self.vial_btn_objects = []
+        for v in range(0,self.olfactometer.vialsPerSlave):
+            vial_num = str(v+1)
+            this_btn = QPushButton(text=vial_num,checkable=True)
+            this_btn.setChecked(True)
+            self.vial_btn_objects.append(this_btn)
+            layout_vials.addWidget(this_btn)
+            if vial_num == '9': this_btn.setChecked(False)  # TEMPORARY*****************
+        
+        # LAYOUT
+        layout = QVBoxLayout()
+        layout.addLayout(layout_slave)
+        layout.addWidget(QLabel("Vials to run:"))
+        layout.addLayout(layout_vials)
+        layout.addLayout(layout_params)
+        self.program_parameters_layout.addRow(layout)
 
     def additive_parameters_display(self):
         ## function is called from the popup window
@@ -915,6 +1025,7 @@ class mainWindow(QMainWindow):
             # START WORKER THREAD
             self.obj_sptchar.threadON = True
             self.thread_olfa.start()            # # start thread -> worker_sptChar iterates through stimuli
+        
         else:
             logger.error('olfactometer has no active slaves - cannot run program')
             self.program_start_btn.setChecked(False)
@@ -974,6 +1085,60 @@ class mainWindow(QMainWindow):
             self.thread_additive.start()
         else:
             logger.info('No vials selected - cannot run program')
+    
+    def run_cleaning_program(self):
+        
+        # CHECK THAT OLFACTOMETER IS CONNECTED (probably redundant)
+        try:
+            if self.olfactometer.connect_btn.isChecked() == False:
+                logger.warning('Olfactometer not connected, attempting to connect')
+                utils_olfa_48line.connect_to_48line_olfa(self.olfactometer)
+        except AttributeError as err:   logger.error(err)
+
+        if self.olfactometer.active_slaves != []:
+            
+            # GET PROGRAM PARAMETERS
+            this_slave_name = self.p_slave_select_wid.currentText()
+            dur_ON = self.dur_on_wid.value()
+            dur_OFF = self.dur_off_wid.value()
+            num_trials = int(self.num_trials_wid.text())
+            # Get vial numbers (which vial buttons are checked)
+            vials_to_run = []
+            for vial_btn in self.vial_btn_objects:
+                if vial_btn.isChecked() == True:
+                    this_vial_num = vial_btn.text()
+                    vials_to_run.append(this_vial_num)
+            
+            # CREATE STIMULUS LIST
+            vials_complete_list = [this_slave_name + vial for _ in range(num_trials) for vial in vials_to_run]
+            
+            # SEND PARAMETERS TO WORKER
+            self.obj_cleaning.stimulus_list = vials_complete_list
+            self.obj_cleaning.duration_on = dur_ON
+            self.obj_cleaning.duration_off = dur_OFF
+            
+            # SET VIALS TO 100CC
+            for s in self.olfactometer.slave_objects:
+                if s.name == this_slave_name:
+                    for v in s.vials:
+                        if v.vialNum in vials_to_run:
+                            this_vial_dict = v.sccmToInt_dict
+                            this_vial_name = v.full_vialNum
+                            this_vial_int = utils_olfa_48line.convertToInt('100',this_vial_dict)
+                            strToSend = 'S_Sp_' + str(this_vial_int) + '_' + this_vial_name
+                            self.olfactometer.send_to_master(strToSend)
+                            logger.info('Set %s to 100cc', v.full_vialNum)
+                            time.sleep(.2)
+            logger.debug("done setting vial setpoints")
+            
+            # START WORKER THREAD
+            self.obj_cleaning.threadON = True
+            self.thread_cleaning.start()
+        
+        else:
+            logger.error('olfactometer has no active slaves - cannot run program')
+            self.program_start_btn.setChecked(False)
+
 
     def set_up_threads_sptchar(self):
         self.obj_sptchar = worker_sptChar()
@@ -997,6 +1162,17 @@ class mainWindow(QMainWindow):
         self.obj_additive.w_incProgBar.connect(self.increment_progress_bar)
         self.obj_additive.finished.connect(self.threadIsFinished)
         self.thread_additive.started.connect(self.obj_additive.exp)
+    
+    def set_up_threads_cleaning(self):
+        self.obj_cleaning = worker_cleaning()
+        self.thread_cleaning = QThread()
+        self.obj_cleaning.moveToThread(self.thread_cleaning)
+
+        self.obj_cleaning.w_sendThisSp.connect(self.sendThisSetpoint)
+        self.obj_cleaning.w_send_OpenValve.connect(self.send_OpenValve)
+        self.obj_cleaning.w_incProgBar.connect(self.increment_progress_bar)
+        self.obj_cleaning.finished.connect(self.threadIsFinished)
+        self.thread_cleaning.started.connect(self.obj_cleaning.exp)
 
     def threadIsFinished(self):
         if self.obj_sptchar.threadON == True:
@@ -1011,6 +1187,12 @@ class mainWindow(QMainWindow):
             self.thread_additive.wait()
             if self.thread_additive.isRunning() == False:
                 logger.debug('additive program finished')
+        if self.obj_cleaning.threadON == True:
+            self.obj_cleaning.threadON = False
+            self.thread_cleaning.quit()
+            self.thread_cleaning.wait()
+            if self.thread_cleaning.isRunning() == False:
+                logger.debug('cleaning program finished')
         
         if self.program_start_btn.isChecked() == True:
             self.program_start_btn.setChecked(False)
