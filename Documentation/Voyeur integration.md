@@ -6,15 +6,17 @@
 # To run the Olfa GUI with Voyeur:
 
 1. **Launch the GUI**  
-    In the command prompt, run `python olfa_driver_48line.py`  
-    <img src="../images/setup_launch_GUI.png">
+    In the command prompt, run `python olfa_driver_48line.py`
+
+    <img src="../images/setup_launch_GUI.png"><br>
 
 2. **Connect olfactometer to ZMQ**  
-    Select "Enable ZMQ Connection"  
-    <img src="../images/setup_enable_ZMQ.png" width="70%">
+
+    Select "Enable ZMQ Connection"<br>
+
+    <img src="../images/setup_enable_ZMQ.png" width="70%"><br>
 
 3. **Run the Voyeur script**
-
 
 <br>
 <br>
@@ -24,23 +26,18 @@
 
 ## Import ZMQ package and set address
 
-#### What to add:
+Add at the top of the file, where the rest of the imports go:
 ```python
 import zmq
 ZMQ_address = "tcp://127.0.0.1:5556"    # Matches the one the olfactometer is set to
 ```
 
-#### Where:
-At top of file, where all the rest of the imports go.  
-
-#### Notes:
-You may need to "pip install zmq" for this to work.  
+**Note:** If you run into errors when running the script, you may need to "pip install zmq".  
 <br>
-
 
 ## Create ZMQ publisher
 
-#### What to add:
+Add in the `__init__` of your `Protocol` class:
 ```python
 try:
     self.zmq_context = zmq.Context()                    # Create a Context (creates sockets)
@@ -50,9 +47,6 @@ try:
 except zmq.ZMQError as e:
     logger.error("Failed to bind ZMQ socket to address: {0}. Error: {1}".format(ZMQ_address, str(e)))
 ```
-
-#### Where:
-In the `__init__` of your `Protocol` class.  
 
 #### Example:
 ```python
@@ -81,67 +75,82 @@ class DMTS_DMD(Protocol):
         '''
         '''
 ```
-
-
+<br>
 
 ## Add functions `send_ZMQ_STolfa` and `_send_ZMQ_message`
 
-#### What to add:
+Add anywhere within your `Protocol` class.  
+(May be most convenient to do so right after the definition of `set_olfa_stimulus`)  
+<br>
 
 **send_zmq_STolfa**
 ```python
 def send_zmq_STolfa(self, ostim):
+    """
+    Input: 1 stimulus (containing 8 olfa dictionaries)
+
+    - Identifies which olfas (olfa_1, olfa_2, etc) have 'odor' set to 'True'
+    - For each of these olfas:
+        - Sends command to update the setpoint
+    - Sends command to open the vials for these olfas
+    """
     delay = 0  # in milliseconds
+
+    # 1) Update setpoints
+    
+    # Iterate through each of the 8 olfa dictionaries in this stimulus
     for olfa, settings in ostim['olfas'].iteritems():
+        # If 'odor' is set to True
         if settings['odor']:
+            # Get setpoint and vial number from this olfa dictionary
             setpoint = settings['mfc_flow']
             vial_code = olfa.split('_')[1]
+            
+            # Create string to set this vial's setpoint
             self.set_point = "S_Sp_{0}_E{1}".format(setpoint, vial_code)
 
-            # Schedule sending command with increasing delay using lambda
+            # Schedule sending command with increasing delay
             QTimer.singleShot(delay, lambda cmd=self.set_point: self._send_zmq_message(cmd))
             delay += 200  # Increase delay for next command
 
     delay += 200
+
+    
+    # 2) Open vials
+
+    # Get vial numbers that have 'odor' set to True
     vial_codes_to_open = [olfa.split('_')[1] for olfa, settings in ostim['olfas'].iteritems() if settings['odor']]
     if vial_codes_to_open:
-        self.set_open = "S_OV_7_E{0}".format("".join(vial_codes_to_open))
+        # Create string to open vials (vial_codes_to_open) for 7 seconds
+        self.set_open = "S_OV_7_C{0}".format("".join(vial_codes_to_open))   
 
         # Schedule the open command using lambda
         QTimer.singleShot(delay, lambda cmd=self.set_open: self._send_zmq_message(cmd))
 ```
-<br>
-
-**_send_zmq_message**
-```python
-def _send_zmq_message(self,command):
-    logger.info("Sending open vial command over ZMQ: {0}".format(command))
-    self.zmq_socket.send_pyobj(command)
-```
-<br>
 
 #### Notes for `send_zmq_STolfa`:
-- To determine which vials to update, it checks which ones have `odor` set to `True`
-- The olfa letter in `self.set_point` ("*E*" in this example) must be changed to match the letter of the olfa that is connected
+- This is a replacement for `set_olfa_stimulus`
+- It activates the vials (olfas) that have `odor` set to `True`
+- The olfa letter in `self.set_point` ("*C*" in this example) must be changed to match the letter of the olfa that is connected
 - The duration of vial open in `self.set_open` ("*7*" in this example) may need to be changed
 - ~Need to investigate the delay situation going on here~
 
 <br>
 
-#### Where:
-Anywhere within your `Protocol` class.  
-(May be most convenient to do so right after the definition of `set_olfa_stimulus`)
-
+**_send_zmq_message**  
+```python
+def _send_zmq_message(self,command):
+    """ Sends message to olfactometer"""
+    logger.info("Sending open vial command over ZMQ: {0}".format(command))
+    self.zmq_socket.send_pyobj(command)
+```
 <br>
 
 ## Replace `set_stimulus` with `send_zmq_STolfa`
 
-#### What to add
-Comment out `self.olfactometers.set_stimulus()`  
-Replace it with `self.send_zmq_STolfa(self.currentstim.olfa_stim_dict)`
-
-#### Where
-Within the function `set_olfa_stimulus` (in your `Protocol` class)
+In the function `set_olfa_stimulus` (in your `Protocol` class):
+- Comment out `self.olfactometers.set_stimulus()`  
+- Replace it with `self.send_zmq_STolfa(self.currentstim.olfa_stim_dict)`
 
 #### Example:
 
@@ -152,10 +161,12 @@ def set_olfa_stimulus(self):
         self.send_zmq_STolfa(self.currentstim.olfa_stim_dict)
 ```
 
-#### Notes
+#### Note
 We may have to do this in a lot of different places, tbd
 
 <br>
+
+<!--
 
 ## Generate the stimulus list
 
@@ -166,3 +177,4 @@ This one is tricky lol
 ## Send another command to close the vials
 
 TBD if we need to integrate this.  If the "vial open" duration is constant for all trials, we can just hard code it into `send_zmq_STolfa`.
+-->
