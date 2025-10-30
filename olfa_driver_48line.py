@@ -13,13 +13,13 @@ import plot_widget
 # CREATE LOGGER
 logger = logging.getLogger(name='olfactometer')
 logger.setLevel(logging.DEBUG)
-if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
+if logger.hasHandlers():    logger.handlers.clear()     # Remove duplicate log messages
 console_handler = utils.create_console_handler()
 logger.addHandler(console_handler)
 
 # add file handler
 main_datafile_directory = utils.find_log_directory()
-if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory)   # if folder doesn't exist, make it
+if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory) 
 file_handler = utils.create_file_handler(main_datafile_directory)
 logger.addHandler(file_handler)
 ##############################
@@ -478,17 +478,16 @@ class olfactometer_window(QGroupBox):
         self.vialsPerSlave = config_olfa.vialsPerSlave
         self.zmq_enabled = False
         
-        # Look for calibration table directory
+        # Find "..\calibration_tables" directory
         self.flow_cal_dir = utils.find_calibration_table_directory()
-        if os.path.exists(self.flow_cal_dir):
+        if self.flow_cal_dir != '':
             self.get_calibration_tables()
         else:
             logger.error('Could not find flow calibration directory (searched \'%s\')', self.flow_cal_dir)
-            self.flow_cal_dir = ''
         
         self.generate_ui()
         
-        # Load default olfa config file (calibration tables)
+        # Load default olfa config file
         self.load_config_file(default_olfa_config_file)
         
         self.master_groupbox.setEnabled(False)
@@ -727,6 +726,7 @@ class olfactometer_window(QGroupBox):
                 directory_selected = dlg.selectedFiles()
                 # now get all the files in this directory
                 self.flow_cal_dir = directory_selected[0]
+                logger.debug('User has selected calibration tables directory: %s', self.flow_cal_dir)
                 self.get_calibration_tables()
                 self.flow_cal_dir_btn.setChecked(False)
         else:
@@ -744,11 +744,12 @@ class olfactometer_window(QGroupBox):
         if dlg.exec_():
             file_selected = dlg.selectedFiles()
             file_selected = file_selected[0]
+            logger.debug('User has selected config file: %s', file_selected)
             self.load_config_file(file_selected)
     
     # LOAD CONFIG FILES
     def get_calibration_tables(self):
-        logger.debug('Loading all flow sensor calibration tables from (%s)', self.flow_cal_dir)
+        logger.debug('Loading all flow sensor calibration tables from "%s"', self.flow_cal_dir)
         
         # Get names of calibration files (all .txt files in flow cal directory) # TODO change to .csv
         cal_file_names = os.listdir(self.flow_cal_dir)
@@ -764,7 +765,7 @@ class olfactometer_window(QGroupBox):
             for cal_file in cal_file_names:
                 idx_ext = cal_file.find('.')    # NOTE: pos fix: this won't work if the file name has a period in it.. but cmon who's gonna have a stupid file name like that
                 file_name = cal_file[:idx_ext]
-                cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
+                cal_file_full_dir = os.path.join(self.flow_cal_dir, cal_file)   # Fix for different operating systems by Xuebo 9/5/2025
                 
                 thisfile_sccm2Ard_dict = {}
                 thisfile_ard2Sccm_dict = {}
@@ -787,7 +788,7 @@ class olfactometer_window(QGroupBox):
                                 thisfile_ard2Sccm_dict[float(row['int'])] = float(row['SCCM'])
                                 last_sccm_value = this_sccm_value
                             else:
-                                logger.warning('\tcannot use %s: sccm values are not in descending order', cal_file)
+                                logger.warning('\t***Cannot use calibration table %s: SCCM values are not in descending order', cal_file)
                                 logger.debug('\t\tlast value: %s   this value: %s', last_sccm_value,this_sccm_value)
                                 thisfile_ard2Sccm_dict = {}
                                 thisfile_sccm2Ard_dict = {}
@@ -831,7 +832,7 @@ class olfactometer_window(QGroupBox):
         self.config_file_dir = file_selected
         with open(self.config_file_dir) as f:
             self.config_obj = json.load(f)   # dict
-        logger.info('Loading config file: %s', self.config_file_dir)
+        logger.info('Loading %s', self.config_file_dir)
         
         # Update calibration tables for each vial
         try:            
@@ -849,7 +850,7 @@ class olfactometer_window(QGroupBox):
                             v.vial_details_window.db_cal_table_combobox.setCurrentText(v.cal_table)
                         else:
                             logger.warning('config file has an invalid cal table: %s', cal_table)
-        except KeyError as err:
+        except KeyError:
             logger.warning('Invalid config file selected - try again')
         
         # Update flow sensor capacity for each vial
@@ -862,7 +863,7 @@ class olfactometer_window(QGroupBox):
                         v.mfc_capacity = self.config_mfc_capacity.get(vial_name)
                         v.vial_details_window.setpoint_slider.setMaximum(int(v.mfc_capacity))
                         logger.debug('%s capacity set to %s', vial_name, v.mfc_capacity)
-        except KeyError as err:
+        except KeyError:
             logger.warning('Selected config file does not include Flow Sensor Capacities')
     
     # CONNECT FUNCTIONS

@@ -65,22 +65,23 @@ def find_olfaControl_directory():
     current_dir = os.getcwd()
     parent_dir = os.path.dirname(current_dir)
     for root, dirs, files in os.walk(parent_dir):
-        if str_to_find in dirs:
+         if str_to_find in dirs:
             path_list.append(os.path.join(root, str_to_find))
+            break
     
-    # If not found: search C:\\GIT
+    # If still not found: search C:\\GIT
     if not path_list:
         dir_to_search = 'C:\\GIT\\'
         for root, dirs, files in os.walk(dir_to_search):
             if str_to_find in dirs: path_list.append(os.path.join(root, str_to_find))
-
-    # If not found: search Dropbox
+            
+    # If still not found: search Dropbox
     if not path_list:
         dir_to_search = os.path.expanduser('~\\Dropbox*')    # idk if this will work
         for root, dirs, files in os.walk(dir_to_search):
             if str_to_find in dirs: path_list.append(os.path.join(root, str_to_find))
     
-    # If not found: print warning
+    # If still not found: print warning
     if not path_list:
         gui_directory = []
         #logger.debug('can\'t find OlfaControl_GUI folder :/')
@@ -103,52 +104,53 @@ def find_olfaControl_directory():
     return gui_directory    # type is string
 
 def find_log_directory():
-    """
+    '''
     Returns directory where log file will be stored
         result_file_directory = directory_to_save_to + "\\result_files"
             directory_to_save_to = either OlfaControl_GUI or current directory
-    """
-
-    """Get directory_to_save_to"""
-    # If "\OlfaControl_GUI" not found: use the directory we are currently in
+    '''
+    
+    # Get directory where result files will be stored
+    # If "..\OlfaControl_GUI" not found, use current working director
     olfacontrolgui_directory = find_olfaControl_directory()
     if not olfacontrolgui_directory:
         directory_to_save_to = os.getcwd()
     else:
         directory_to_save_to = olfacontrolgui_directory
     
-    """Get result_file_directory"""
+    # Get/create result_file_directory
     result_file_directory = directory_to_save_to + '\\' + config_main.result_file_folder_name
-    # If 'result_files' folder does not exist, create it
-    if not os.path.exists(result_file_directory):
+    if not os.path.exists(result_file_directory):   # If folder does not exist, create it
         logger.info('creating result file directory at %s', result_file_directory)
         os.mkdir(result_file_directory)
     
     return result_file_directory
 
 def find_calibration_table_directory():
-    olfacontrolgui_directory = find_olfaControl_directory()     # Check for OlfaControl_GUI directory
-
-    # if not found, use whatever directory we are currently in
-    # TODO use this strat instead of the whole find_olfaControl_directory
+    ''' Finds (& returns) "calibration_tables" directory '''
+    
+    # If "..\OlfaControl_GUI" not found, search current working directory
+    olfacontrolgui_directory = find_olfaControl_directory()
     if not olfacontrolgui_directory:
         directory_to_search = os.getcwd()
-        logger.debug('Searching current directory for calibration tables')
+        logger.debug('Searching current directory for calibration_tables directory...')
     else:
         directory_to_search = olfacontrolgui_directory
-        logger.debug('Searching OlfaControl_GUI for calibration tables (%s)' + directory_to_search)
+        logger.debug('Searching OlfaControl_GUI for calibration_tables directory...')
 
-    # Check if there is a folder called calibration tables
+    # Search for "..\calibration_tables" directory
     calibration_table_directory = directory_to_search + '\\' + config_main.calibration_file_dir_name
     if os.path.exists(calibration_table_directory):
-        logger.debug('found calibration table directory at %s', calibration_table_directory)
+        logger.debug('Found calibration_tables directory at "%s"', calibration_table_directory)
     else:
         # In case of different operating system
         calibration_table_directory = directory_to_search + '/' + config_main.calibration_file_dir_name
         if os.path.exists(calibration_table_directory):
-            logger.debug('found calibration table directory at %s', calibration_table_directory)
-        else:
-            logger.warning('cannot find calibration table directory')
+            logger.debug('Found calibration_tables directory at "%s"', calibration_table_directory)
+    
+    if not os.path.exists(calibration_table_directory):
+        logger.warning('Cannot find calibration_tables directory')
+        calibration_table_directory = ''
 
     return calibration_table_directory
 
