@@ -34,6 +34,26 @@ Update 4/29/2024: GUI is currently compatible with Python 3.9, 3.10, 3.12
 5. Optional: Connect to ZMQ server  
 <br>
 
+## How to set flowrates/open vials:
+
+- Each channel stores its own setpoint value  
+- When the channel is opened, the miniMFC sets the flow to the last stored value  
+
+<br>
+
+**So:**  
+1. **Give the channel(s) their setpoints** (so they know what to do when opened)  
+1st set of commands: Send each channel a flow rate
+
+2. **Open the channels**  
+2nd command: open [x] channels for [x] seconds  
+--> Valves open to let air through these channels  
+--> MFCs turn on at their stored setpoint
+
+<br>
+
+***Note:*** If you're using the same setpoint for all trials, you don't need to resend it before each vial open. It's stored in the miniMFC until the power to the olfactometer is shut off.
+
 ## ZMQ
 The olfa driver has a ZMQ subscriber socket, allowing it to receive messages from a ZMQ publisher. The default address is "tcp://127.0.0.1:5556" (can be manually edited in the heading of *olfa_driver_48line.py*).  
 
