@@ -284,7 +284,8 @@ class flowSensor(QGroupBox):
             for cal_file in cal_file_names:
                 idx_ext = cal_file.find('.')
                 file_name = cal_file[:idx_ext]
-                cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
+                #cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
+                cal_file_full_dir = os.path.join(self.flow_cal_dir, cal_file)   # Fix for different operating systems by Xuebo 9/5/2025
                 
                 thisfile_sccm2Ard_dict = {}
                 thisfile_ard2Sccm_dict = {}
