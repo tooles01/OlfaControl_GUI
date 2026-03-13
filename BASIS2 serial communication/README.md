@@ -20,7 +20,7 @@ Commands & examples using MFC with unit_id 'A'.
 ### Request current flow value
 *unit_id* + "DV 1"  
 
-`aDV1`
+`aDV 1`
 
 ### Send setpoint
 *unit_id* + "S" + *setpoint* (setpoint range 0-1 for 1000cc MFCs)  
@@ -39,9 +39,9 @@ Commands & examples using MFC with unit_id 'A'.
 `aLSS`
 
 #### Setpoint sources:
-"a" --> analog  
+"a" --> analog (will not accept digital commands)  
 "s" --> saved digital (no need to use this)  
-"u" --> unsaved digital  
+"u" --> unsaved digital (analog input is disconnected from the setpoint)  
 
 ### Set setpoint source to analog
 *unit_id* + "LSS a"  
@@ -52,4 +52,14 @@ Commands & examples using MFC with unit_id 'A'.
 *unit_id* + "LSS u"  
 
 `aLSS u`
+
+### Read the baud rate
+*unit_id* + "NCB"  
+
+`aNCB`
+
+### Set the baud rate
+*unit_id* + "NCB " + *baud_rate*
+
+`aNCB 19200`
 
