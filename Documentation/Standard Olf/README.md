@@ -17,40 +17,49 @@ Also you can talk directly to it using the Arduino Serial Monitor if you want to
 
 ### Set flowrate
 
-**alicat_digital:**  
+**alicat_digital**  
 *"DMFC" + slaveindex + arduino port + MFC address + flownum*  
+
+flownum = (flowrate / mfc capacity) * 64000  
 
 `DMFC 1 2 A32000    // Set MFC 2 (200cc capacity) to 100cc`  
 `DMFC 1 2 A16000    // Set MFC 2 (200cc capacity) to 50cc`  
 `DMFC 1 2 A8000     // Set MFC 2 (200cc capacity) to 25cc`  
-
-flownum = (flowrate / mfc capacity) * 64000  
-
 <br>
 
  *** *Note:* Current version of the standard olf GUI does not include functions for sending/receiving messages on analog, the below  section is just for comprehensive documentation purposes 
+<br><br>
 
-**analog:**  
+
+**alicat_digital_raw**  
+*MFC address + flownum*
+
+flownum = (flowrate / mfc capacity) * 64000  
+
+`A19712     // Set MFC A (1000cc capacity) to 308cc`  
+<br><br>
+
+
+**analog**  
 *"MFC" + slaveindex + arduino port + flownum*  
+
+flownum = flowrate / mfc capacity  
 
 `MFC 1 2 .5         // Set MFC 2 (200cc capacity) to 100cc`  
 `MFC 1 2 .25        // Set MFC 2 (200cc capacity) to 50cc`  
 `MFC 1 2 .05        // Set MFC 2 (200cc capacity) to 10cc`  
-
-flownum = flowrate / mfc capacity  
-
-<br>
+<br><br>
 
 ### Read flowrate
 
-**alicat_digital:**
+**alicat_digital**
 
 `DMFC 1 1       // Read flowrate from MFC 1`  
 `DMFC 1 2       // Read flowrate from MFC 2`
 
 <br>
 
-**analog:**
+**analog**
 
 `MFC 1 1        // Read flowrate from MFC 1`  
 `MFC 1 2        // Read flowrate from MFC 2`
