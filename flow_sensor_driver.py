@@ -1,5 +1,9 @@
-# flowSensor_driver.py
-# for Honeywell 5100V
+'''
+flowSensor_driver.py
+for Honeywell 5100V
+
+To be used with sketch readHoneywell5100V.ino
+'''
 
 import os, sys, logging, csv, time
 from PyQt5 import QtCore, QtSerialPort
