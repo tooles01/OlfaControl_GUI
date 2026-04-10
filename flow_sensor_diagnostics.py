@@ -1,0 +1,813 @@
+'''
+flow_sensor_diagnostics.py
+for Honeywell 3000/5000 series
+
+To be used with sketch readHoneywell5100V.ino
+
+Modified version of flow_sensor_driver.py
+Utils have been copied over so this can run as a stand-alone file
+'''
+
+import os, sys, logging, csv
+from PyQt5 import QtCore, QtSerialPort
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import QTimer
+from serial.tools import list_ports
+import numpy as np
+from datetime import datetime, timedelta
+
+
+noPortMsg = ' ~ No COM ports detected ~'
+
+flowSens_baud = 9600
+calibration_table_item_number = 4
+cal_table_file_tyoe = '.txt'
+
+def_cal_setpoints = '0,100,200,300,400,500,600,700,800,900,1000'
+num_calibration_datapoints = 50
+def_new_cal_table_name = 'Honeywell_3300V'
+default_cal_table = 'Honeywell_3100V'
+def_MFC_value = '100'
+def_cal_duration = '10'
+max_calibration_table_value_sccm = '1000'   # TODO change this to mfc capacity
+
+
+# Copied functions from utils
+currentDate = str(datetime.date(datetime.now()))
+calibration_file_dir_name = 'calibration_tables'
+def get_current_time():
+    current_time = datetime.time(datetime.now())
+    current_time_f = current_time.strftime('%H:%M:%S.%f')
+    current_time_str = current_time_f[:-3]
+
+    return current_time_str
+def create_console_handler():   # TODO: user sends log level to this function
+    '''
+    Returns console handler for logger
+        Set level to 'DEBUG'
+    '''
+    
+    console_handler_level = logging.DEBUG
+    console_handler_formatter = logging.Formatter('%(asctime)s : %(name)-14s :%(levelname)-8s: %(message)s',datefmt='%H:%M:%S')
+
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(console_handler_level)
+    console_handler.setFormatter(console_handler_formatter)
+    
+    return console_handler
+def find_olfaControl_directory():
+    """Find "OlfaControl_GUI" directory"""
+    
+    str_to_find = 'OlfaControl_GUI'
+    path_list = []
+
+    # Check if we are already in the folder
+    current_dir = os.getcwd()
+    parent_dir = os.path.dirname(current_dir)
+    for root, dirs, files in os.walk(parent_dir):
+         if str_to_find in dirs:
+            path_list.append(os.path.join(root, str_to_find))
+            break
+    
+    # If still not found: search C:\\GIT
+    if not path_list:
+        dir_to_search = 'C:\\GIT\\'
+        for root, dirs, files in os.walk(dir_to_search):
+            if str_to_find in dirs: path_list.append(os.path.join(root, str_to_find))
+            
+    # If still not found: search Dropbox
+    if not path_list:
+        dir_to_search = os.path.expanduser('~\\Dropbox*')    # idk if this will work
+        for root, dirs, files in os.walk(dir_to_search):
+            if str_to_find in dirs: path_list.append(os.path.join(root, str_to_find))
+    
+    # If still not found: print warning
+    if not path_list:
+        gui_directory = []
+        #logger.debug('can\'t find OlfaControl_GUI folder :/')
+    
+    # If found: use the first path listed
+    else:
+        # Ignore .code-workspace files
+        str_to_exclude = ".code-workspace"
+        path_list = [item for item in path_list if str_to_exclude not in item]
+        
+        # If multiple paths found: print (for user)
+        if len(path_list) > 1:
+            logger.debug('Multiple OlfaControl_GUI paths found:')
+            for i in path_list:
+                logger.debug('\t' + i)
+        
+        gui_directory = path_list[0]
+        logger.debug('OlfaControl_GUI directory found at:\t' + gui_directory)
+    
+    return gui_directory    # type is string
+def find_calibration_table_directory():
+    ''' Finds (& returns) "calibration_tables" directory '''
+    
+    # If "..\OlfaControl_GUI" not found, search current working directory
+    olfacontrolgui_directory = find_olfaControl_directory()
+    if not olfacontrolgui_directory:
+        directory_to_search = os.getcwd()
+        logger.debug('Searching current directory for calibration_tables directory...')
+    else:
+        directory_to_search = olfacontrolgui_directory
+        logger.debug('Searching OlfaControl_GUI for calibration_tables directory...')
+
+    # Search for "..\calibration_tables" directory
+    calibration_table_directory = directory_to_search + '\\' + calibration_file_dir_name
+    if os.path.exists(calibration_table_directory):
+        logger.debug('Found calibration_tables directory at "%s"', calibration_table_directory)
+    else:
+        # In case of different operating system
+        calibration_table_directory = directory_to_search + '/' + calibration_file_dir_name
+        if os.path.exists(calibration_table_directory):
+            logger.debug('Found calibration_tables directory at "%s"', calibration_table_directory)
+    
+    if not os.path.exists(calibration_table_directory):
+        logger.warning('Cannot find calibration_tables directory')
+        calibration_table_directory = ''
+
+    return calibration_table_directory
+def convertToSCCM(ardVal, dictionary):
+    if ardVal in dictionary:    val_SCCM = dictionary.get(ardVal)
+    else:
+        minVal = min(dictionary)
+        maxVal = max(dictionary)
+        if ardVal < minVal:     val_SCCM = dictionary.get(minVal)
+        elif ardVal > maxVal:   val_SCCM = dictionary.get(maxVal)
+        else:
+
+            # get list of dictionary keys
+            list_of_ard_values = list(dictionary.keys())
+
+            # find the closest value to my value
+            val1 = min(list_of_ard_values,key=lambda x:abs(x-ardVal))
+
+            # get the index of that value
+            val1_idx = list_of_ard_values.index(val1)
+
+            # get val2 index (check if val 1 is larger or not)
+            # THIS IS DEPENDENT ON THE CAL TABLE BEING IN DECREASING ORDER
+            if val1 > ardVal:
+                val2_idx = val1_idx + 1
+            else:
+                val2_idx = val1_idx - 1
+
+            # get val2
+            val2 = list_of_ard_values[val2_idx]
+
+            # get flows
+            flow1 = dictionary.get(val1)
+            flow2 = dictionary.get(val2)
+
+            # do the rest of the calculations
+            slope = (flow2-flow1)/(val2-val1)
+            x1 = ardVal - val1
+            addNum = x1*slope
+            val_SCCM = flow1 + addNum
+            val_SCCM = round(val_SCCM,1)
+    
+    return val_SCCM
+
+# CREATE LOGGER
+logger = logging.getLogger(name='flow sensor')
+logger.setLevel(logging.DEBUG)
+if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
+console_handler = create_console_handler()
+logger.addHandler(console_handler)
+
+class flowSensor(QGroupBox):
+
+    def __init__(self, port=""):
+        super().__init__()
+        self.port = port
+        self.connected = False
+        self.calibration_on = False
+
+        # look for calibration table directory
+        self.flow_cal_dir = find_calibration_table_directory()
+        if os.path.exists(self.flow_cal_dir):
+            self.get_calibration_tables()
+        else:
+            logger.error('Could not find flow calibration directory (searched \'%s\')', self.flow_cal_dir)
+            self.flow_cal_dir = ''
+        
+        self.generate_ui()
+    
+    
+    # CREATE GUI ELEMENTS
+    def generate_ui(self):
+        self.create_connect_box()
+        self.create_settings_box()
+        self.create_cal_table_select_box()
+        self.create_new_calibration_box()
+        self.create_data_receive_box()
+
+        top_layout = QHBoxLayout()
+        col1 = QVBoxLayout()
+        col1.addWidget(self.connect_box)
+        #col1.addWidget(self.settings_box)
+        col1.addWidget(self.cal_table_select_box)
+        col2 = QVBoxLayout()
+        col2.addWidget(self.data_receive_box)
+        top_layout.addLayout(col1)
+        top_layout.addLayout(col2)
+
+        self.layout = QVBoxLayout()
+        self.layout.addLayout(top_layout)
+        self.layout.addWidget(self.new_cal_box)
+        self.setLayout(self.layout)
+        self.setTitle('Flow Sensor')
+
+        self.connect_box.setMaximumHeight(self.connect_box.sizeHint().height())
+        self.new_cal_box.setMaximumHeight(self.new_cal_box.sizeHint().height())
+        self.settings_box.setMaximumHeight(self.settings_box.sizeHint().height())
+        self.data_receive_box.setFixedWidth(self.data_receive_box.sizeHint().width())
+
+        self.cal_file_name_wid.setMinimumWidth(175)
+
+        self.new_cal_box.setEnabled(False)
+
+    def create_connect_box(self):
+        self.connect_box = QGroupBox("Connect")
+
+        self.portLbl = QLabel(text="Port/Device:")
+        self.port_widget = QComboBox(currentIndexChanged=self.port_changed)
+        self.connect_btn = QPushButton(checkable=True,toggled=self.toggled_connect)
+        self.refresh_btn = QPushButton(text="Refresh",clicked=self.get_ports)
+        self.get_ports()
+
+        connect_box_layout = QFormLayout()
+        connect_box_layout.addRow(self.portLbl,self.port_widget)
+        connect_box_layout.addRow(self.refresh_btn,self.connect_btn)
+        self.connect_box.setLayout(connect_box_layout)
+    
+    def create_settings_box(self):
+        self.settings_box = QGroupBox('Settings')
+        
+        self.timebtreqs_wid = QLineEdit(text='100',returnPressed=lambda:self.send_to_arduino('MM_timebt_' + self.timebtreqs_wid.text()))
+        self.timebtreqs_btn = QPushButton(text="Send", clicked=lambda:self.send_to_arduino('MM_timebt_' + self.timebtreqs_wid.text()))
+        
+        layout = QHBoxLayout()
+        layout.addWidget(QLabel(text="Time b/t acquisitions (ms):"))
+        layout.addWidget(self.timebtreqs_wid)
+        layout.addWidget(self.timebtreqs_btn)
+        self.settings_box.setLayout(layout)
+    
+    def create_cal_table_select_box(self):
+        self.cal_table_select_box = QGroupBox('Calibration table')
+        
+        self.cal_table_widget = QListWidget()
+        self.cal_table_widget.addItems(self.sccm2Ard_dicts)
+
+        # Get list of all calibration tables currently in the widget
+        item_list_str = [self.cal_table_widget.item(x).text() for x in range(self.cal_table_widget.count())]
+
+        # Check if default calibration table is there
+        if default_cal_table in item_list_str:
+            index_default_cal_table = item_list_str.index(default_cal_table)                # Get the index of this table
+            default_cal_table_item = self.cal_table_widget.item(index_default_cal_table)    # Get the item at this index
+        else:
+            default_cal_table_item = self.cal_table_widget.item(0)
+        
+        # Set calibration table
+        self.cal_table_widget.setCurrentItem(default_cal_table_item)
+        logger.debug('Calibration table set to %s', default_cal_table_item.text())
+        
+        self.cal_table_btn = QPushButton('Set calibration table',checkable=True,toggled=self.cal_tbl_btn_toggled)
+        if self.cal_table_btn.isChecked() == False:
+            #self.cal_table_btn.toggle()
+            self.cal_table_btn.setChecked(True)
+        
+        # LAYOUT
+        layout = QVBoxLayout()
+        layout.addWidget(self.cal_table_widget)
+        layout.addWidget(self.cal_table_btn)
+        self.cal_table_select_box.setLayout(layout)
+    
+    def create_new_calibration_box(self):
+        self.new_cal_box = QGroupBox('New calibration')
+        
+        # File name/Directory
+        cal_file_name = def_new_cal_table_name + '_' + currentDate
+        self.cal_file_dir_wid = QLineEdit(text=self.flow_cal_dir)
+        self.cal_file_name_wid = QLineEdit(text=cal_file_name)
+
+        # MFC value (SCCM)
+        self.mfc_value_wid = QLineEdit(text=def_MFC_value)
+        self.mfc_value_wid.returnPressed.connect(lambda: self.start_calibration_btn.toggle())
+        
+        # Create new file / Start
+        self.create_new_cal_file_btn = QPushButton(text='Create file',checkable=True)
+        self.create_new_cal_file_btn.toggled.connect(self.create_new_cal_file_toggled)
+        self.start_calibration_btn = QPushButton(text='Start',checkable=True,toggled=self.start_calibration)
+        
+        # Widget for calibration duration (& timer for visual)
+        self.cal_duration_wid = QLineEdit(text=def_cal_duration)
+        self.cal_duration_wid.setToolTip('Max 99 seconds')
+        self.cal_duration_wid.returnPressed.connect(lambda: self.start_calibration_btn.toggle())
+        self.calibration_duration_timer = QTimer()
+        self.calibration_duration_timer.setTimerType(0)     # set to millisecond accuracy
+        self.calibration_duration_timer.timeout.connect(self.show_cal_duration_time)
+        self.calibration_duration_label = QLabel('000.00')
+
+        # Collected values
+        self.collected_values_lbl = QLabel('Collected Values:')
+        self.collected_values_wid = QTextEdit()
+        self.collected_values_wid.setToolTip('Values collected during calibration at this flow rate')
+        layout_collected_vals = QVBoxLayout()
+        layout_collected_vals.addWidget(self.collected_values_lbl)
+        layout_collected_vals.addWidget(self.collected_values_wid)
+
+        # Calibration results
+        self.cal_results_min_wid = QLineEdit(readOnly=True,maximumWidth=40)
+        self.cal_results_max_wid = QLineEdit(readOnly=True,maximumWidth=40)
+        self.cal_results_med_wid = QLineEdit(readOnly=True,maximumWidth=40)
+        self.cal_results_mean_wid = QLineEdit(readOnly=True,maximumWidth=40)
+        self.cal_results_range_wid = QLineEdit(readOnly=True,maximumWidth=40)
+        self.cal_results_num_wid = QLineEdit(readOnly=True,maximumWidth=40)
+        self.cal_results_mean_wid.setText('0')
+        self.write_to_file_wid = QLineEdit()
+        self.write_to_file_btn = QPushButton(text='Write to file')
+        self.write_to_file_wid.returnPressed.connect(self.save_calibration_value)
+        self.write_to_file_btn.clicked.connect(self.save_calibration_value)
+        self.write_to_file_wid.setToolTip('[SCCM, int] Results to write to calibration file\nBy default, mean of collected values is put here. Pairs can also be manually entered.')
+        self.write_to_file_btn.setToolTip('Write pair to calibration file')
+        layout_results = QGridLayout()
+        layout_results.addWidget(QLabel('Median:'),     0,0);   layout_results.addWidget(self.cal_results_med_wid,  0,1)
+        layout_results.addWidget(QLabel('Mean:'),       0,2);   layout_results.addWidget(self.cal_results_mean_wid, 0,3)
+        layout_results.addWidget(QLabel('Range:'),      1,0);   layout_results.addWidget(self.cal_results_range_wid,1,1)
+        layout_results.addWidget(QLabel('# of Vals:'),  1,2);   layout_results.addWidget(self.cal_results_num_wid,  1,3)
+        final_row_layout = QHBoxLayout()
+        final_row_layout.addWidget(QLabel('Results:'))
+        final_row_layout.addWidget(self.write_to_file_wid)
+        final_row_layout.addWidget(self.write_to_file_btn)
+        layout_results.addLayout(final_row_layout,3,0,1,4)
+        
+        # Written to cal file
+        self.cal_file_written_display = QTextEdit(readOnly=True)
+        layout_cal_file_output = QVBoxLayout()
+        layout_cal_file_output.addWidget(QLabel('Written to file:'))
+        layout_cal_file_output.addWidget(self.cal_file_written_display)
+        
+        # Fix GUI
+        self.mfc_value_wid.setEnabled(False)
+        self.cal_duration_wid.setEnabled(False)
+        self.start_calibration_btn.setEnabled(False)
+        
+        # LAYOUT
+        layout_directory = QFormLayout()
+        layout_directory.addRow(QLabel("Directory:"),self.cal_file_dir_wid)
+        
+        layout_file_name = QHBoxLayout()
+        layout_file_name.addWidget(QLabel("File name:"))
+        layout_file_name.addWidget(self.cal_file_name_wid)
+        layout_mfc_value = QHBoxLayout()
+        layout_mfc_value.addWidget(QLabel("MFC value (SCCM):"))
+        layout_mfc_value.addWidget(self.mfc_value_wid)
+        layout_cal_duration = QHBoxLayout()
+        layout_cal_duration.addWidget(QLabel("Duration (s):"))
+        layout_cal_duration.addWidget(self.cal_duration_wid)
+        layout_cal_duration.addWidget(self.calibration_duration_label)        
+
+        layout_entered_vals = QFormLayout()
+        layout_entered_vals.addRow(layout_file_name)
+        layout_entered_vals.addRow(layout_cal_duration)
+        layout_entered_vals.addRow(layout_mfc_value)
+        layout_entered_vals.addRow(self.create_new_cal_file_btn,self.start_calibration_btn)
+
+        layout_calibration_box = QGridLayout()
+        layout_calibration_box.addLayout(layout_directory,0,0,1,4)      # row0, col0, rowSpan1, colSpan4
+        layout_calibration_box.addLayout(layout_entered_vals,1,0)
+        layout_calibration_box.addLayout(layout_collected_vals,1,1)
+        layout_calibration_box.addLayout(layout_results,1,2)
+        layout_calibration_box.addLayout(layout_cal_file_output,1,3)
+
+        self.new_cal_box.setLayout(layout_calibration_box)
+        
+        # Sizing
+        self.collected_values_wid.setMaximumHeight(100)
+        self.cal_file_written_display.setMaximumHeight(100)
+
+        self.collected_values_wid.setMaximumWidth(80)
+        self.write_to_file_wid.setFixedWidth(80)
+        self.write_to_file_btn.setMaximumWidth(80)
+        self.cal_file_written_display.setMaximumWidth(115)
+
+    def create_data_receive_box(self):
+        self.data_receive_box = QGroupBox("data received")
+
+        self.receive_box = QTextEdit(readOnly=True)
+        receive_box_lbl = QLabel(text="Flow val (int), Flow val (SCCM)")
+        
+        receive_box_layout = QVBoxLayout()
+        receive_box_layout.addWidget(receive_box_lbl)
+        receive_box_layout.addWidget(self.receive_box)
+        self.data_receive_box.setLayout(receive_box_layout)
+    
+    
+    # FUNCTIONS
+    def get_calibration_tables(self):   # TODO move this to utils
+        logger.debug('Loading all flow sensor calibration tables at (%s)', self.flow_cal_dir)
+        
+        # Get names of all .txt files in flow cal directory # TODO change to .csv
+        cal_file_names = os.listdir(self.flow_cal_dir)
+        cal_file_names = [fn for fn in cal_file_names if fn.endswith(cal_table_file_tyoe)]      # only txt files # TODO: change to csv
+        
+        if cal_file_names != []:
+            
+            # Create dictionaries for storing the calibration tables
+            new_sccm2Ard_dicts = {}
+            new_ard2Sccm_dicts = {}
+
+            # Parse each file
+            for cal_file in cal_file_names:
+                idx_ext = cal_file.find('.')
+                file_name = cal_file[:idx_ext]
+                #cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
+                cal_file_full_dir = os.path.join(self.flow_cal_dir, cal_file)   # Fix for different operating systems by Xuebo 9/5/2025
+                
+                thisfile_sccm2Ard_dict = {}
+                thisfile_ard2Sccm_dict = {}
+                last_sccm_value = max_calibration_table_value_sccm
+                last_sccm_value = int(last_sccm_value) + .01
+                with open(cal_file_full_dir, newline='') as f:
+                    csv_reader = csv.reader(f)      # Create reader object that will process lines from f (file)
+                    firstLine = next(csv_reader)    # Skip over header line
+                    
+                    # For each row in the file
+                    reader = csv.DictReader(f, delimiter=',')   # Create reader object that maps the information in each row to a dict
+                    for row in reader:
+                        try:
+                            # Check that sccm values are in descending order, then add to dict
+                            this_sccm_value = row.get('SCCM')
+                            this_sccm_value = float(this_sccm_value)
+                            if this_sccm_value < last_sccm_value:
+                                thisfile_sccm2Ard_dict[float(row['SCCM'])] = float(row['int'])
+                                thisfile_ard2Sccm_dict[float(row['int'])] = float(row['SCCM'])
+                                last_sccm_value = this_sccm_value
+                            else:
+                                logger.warning('\tcannot use %s: sccm values are not in descending order', cal_file)
+                                logger.debug('\t\tlast value: %s   this value: %s', last_sccm_value,this_sccm_value)
+                                thisfile_ard2Sccm_dict = {}
+                                thisfile_sccm2Ard_dict = {}
+                        except KeyError as err:
+                            # Clear dictionaries & stop trying to read this file
+                            logger.debug('KeyError: %s',err)
+                            logger.error('%s does not have correct headings for calibration files', cal_file)
+                            thisfile_sccm2Ard_dict = {}
+                            thisfile_ard2Sccm_dict = {}
+                            break
+                        except ValueError as err:
+                            # Clear dictionaries & stop trying to read this file
+                            logger.debug('missing some values, skipping calibration file %s', cal_file)
+                            thisfile_sccm2Ard_dict = {}
+                            thisfile_ard2Sccm_dict = {}
+                            break
+                
+                # If this file was good (aka we got values), save it to the dict of dicts
+                if bool(thisfile_sccm2Ard_dict) == True:
+                    new_sccm2Ard_dicts[file_name] = thisfile_sccm2Ard_dict
+                    new_ard2Sccm_dicts[file_name] = thisfile_ard2Sccm_dict
+            
+            # If we got stuff from these files, replace the old dicts
+            if len(new_sccm2Ard_dicts) != 0:
+                self.sccm2Ard_dicts = new_sccm2Ard_dicts
+                self.ard2Sccm_dicts = new_ard2Sccm_dicts
+            else:
+                logger.warning('no calibration files found in this directory')
+        
+        else:
+            logger.warning('no .txt files found in this directory :/')
+
+    def cal_tbl_btn_toggled(self, checked):
+        if checked:
+            self.cal_table_btn.setText('Change current calibration table')
+            self.cal_table_widget.setEnabled(False)
+            self.calibration_table_changed()
+        else:
+            self.cal_table_btn.setText('Set calibration table')
+            self.cal_table_widget.setEnabled(True)
+    
+    def calibration_table_changed(self):
+        new_calibration_table_name = self.cal_table_widget.currentItem().text()
+        self.intToSccm_dict = self.ard2Sccm_dicts.get(new_calibration_table_name)
+        self.sccmToInt_dict = self.sccm2Ard_dicts.get(new_calibration_table_name)
+    
+    
+    # CALIBRATION FUNCTIONS
+    def create_new_cal_file_toggled(self):
+        # Create new file
+        if self.create_new_cal_file_btn.isChecked() == True:
+            # UI THINGS
+            self.create_new_cal_file_btn.setText('End && Save file')
+            self.create_new_cal_file_btn.setToolTip('End calibration\n(the file is already saved though)\n(bc it writes the values in real time)')
+            self.cal_file_dir_wid.setEnabled(False)
+            self.cal_file_name_wid.setEnabled(False)
+            
+            # Get calibration file name & directory
+            self.new_cal_file_name = self.cal_file_name_wid.text()
+            self.new_cal_file_dir = self.cal_file_dir_wid.text() + '\\' + self.new_cal_file_name + '.csv'
+
+            # Create calibration file
+            if not os.path.exists(self.new_cal_file_dir):
+                self.create_file()
+            else:
+                # Ask user if they want to overwrite the current file
+                msg_box = QMessageBox()
+                msg_box.setWindowTitle('Confirm Overwrite')
+                msg_box.setText(self.new_cal_file_name + ' already exists: overwrite?')
+                msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                msg_box.setDefaultButton(QMessageBox.No)
+                ret = msg_box.exec()
+                if ret == QMessageBox.Yes:
+                    logger.info('Deleting %s.csv (%s)', self.new_cal_file_name, self.new_cal_file_dir)
+                    os.remove(self.new_cal_file_dir)
+                    self.create_file()
+                if ret == QMessageBox.No:
+                    logger.debug('Enter new file name to create a calibration file')
+                    self.create_new_cal_file_btn.setChecked(False)
+        
+        # Done with calibration - reset user interface
+        else:
+            logger.info('Ended recording to calibration file %s.csv', self.new_cal_file_name)
+            
+            # UI THINGS
+            self.create_new_cal_file_btn.setText('Create new file')
+            self.create_new_cal_file_btn.setToolTip('')
+            self.cal_file_dir_wid.setEnabled(True)
+            self.cal_file_name_wid.setEnabled(True)
+            
+            # Disable the MFC stuff
+            self.mfc_value_wid.setEnabled(False)
+            self.cal_duration_wid.setEnabled(False)
+            self.start_calibration_btn.setEnabled(False)
+    
+    def start_calibration(self, checked):
+        if checked:
+            
+            # Get sccm value & duration
+            self.this_cal_sccm_value = self.mfc_value_wid.text()
+            self.this_cal_duration = self.cal_duration_wid.text()
+
+            logger.debug('Starting calibration at %s sccm', self.this_cal_sccm_value)
+                        
+            # Fix the GUI
+            self.write_to_file_btn.setEnabled(False)
+            self.create_new_cal_file_btn.setEnabled(False)
+            self.start_calibration_btn.setText('End early')
+            self.start_calibration_btn.setToolTip('Stop collecting flow values')
+            self.collected_values_wid.clear()
+            
+            # Initialize empty data arrays
+            self.serial_values = []
+            self.serial_values_std = []
+            self.start_of_good_values = []
+            self.duration_of_good_values = timedelta(0,10)  # 10 sec
+            self.all_std_devs = []
+            self.values_means = []
+            
+            # Set calibration object to ON (add incoming values to collected calibration values)
+            self.calibration_on = True
+
+            # Start calibration timer
+            self.start_cal_duration_timer(int(self.this_cal_duration))
+
+        else:
+            # Fix the GUI
+            self.write_to_file_btn.setEnabled(True)
+            self.create_new_cal_file_btn.setEnabled(True)
+            self.start_calibration_btn.setText('Start')
+            self.start_calibration_btn.setToolTip('Collect flow values for x seconds')
+
+            # Stop the timer
+            if self.calibration_duration_timer.isActive() == True:  self.end_cal_duration_timer()    
+    
+    def create_file(self):
+        logger.info('Creating calibration file: %s.csv (%s)', self.new_cal_file_name, self.new_cal_file_dir)
+        file_created_time = get_current_time()
+        File = self.new_cal_file_name,file_created_time
+        row_headers = 'SCCM','int'
+        
+        # Write file header
+        with open(self.new_cal_file_dir,'a',newline='') as f:
+            writer = csv.writer(f,delimiter=',')
+            writer.writerow(File)
+            writer.writerow(row_headers)
+        
+        # Fix the GUI
+        self.mfc_value_wid.setEnabled(True)
+        self.cal_duration_wid.setEnabled(True)
+        self.start_calibration_btn.setEnabled(True)
+        self.collected_values_wid.clear()
+        self.cal_file_written_display.clear()
+    
+    def analyze_cal_session(self):
+        flowVal_median = np.median(self.serial_values)
+        flowVal_mean = round(np.mean(self.serial_values),1)
+        
+        # TODO drop the max and min values
+        try:
+            # Calculations
+            flow_min = min(self.serial_values)
+            flow_max = max(self.serial_values)
+            flow_range = flow_max - flow_min
+            self.cal_results_min_wid.setText(str(flow_min))
+            self.cal_results_max_wid.setText(str(flow_max))
+            self.cal_results_med_wid.setText(str(flowVal_median))
+            self.cal_results_mean_wid.setText(str(flowVal_mean))
+            self.cal_results_range_wid.setText(str(flow_range))
+            self.cal_results_num_wid.setText(str(len(self.serial_values)))
+            logger.debug(self.this_cal_sccm_value + ' SCCM:' +
+                         '\t median: ' + str(flowVal_median) +
+                         '\t mean: ' + str(flowVal_mean) +
+                         '\t range: ' + str(flow_range) +
+                         '\t (' + str(self.this_cal_duration) + 'sec, ' + str(len(self.serial_values)) + ' values)')
+            
+            # Put mean value in the widget so the user can decide whether to keep it or not
+            self.this_cal_int_value = flowVal_mean
+            if type(self.this_cal_int_value) is np.float64:
+                pair = str(self.this_cal_sccm_value) + ', ' + str(round(self.this_cal_int_value,2))
+                self.write_to_file_wid.setText(pair)
+            else:
+                logger.warning('calculated value was not an int - cannot save this value')
+        
+        except ValueError as err:
+            # 11/8/2023: got this error when trying to write to file while calibration was running  -this should be fixed now 6/21/2024
+            logger.warning('ValueError:' + str(err))
+        
+        # Clear the array
+        self.serial_values = []
+    
+    def save_calibration_value(self):
+        # Write the data from the widget to the file
+        pair_to_write = eval(self.write_to_file_wid.text())     # Convert from string to tuple
+        logger.debug('Writing to cal file: %s', pair_to_write)
+        try:
+            with open(self.new_cal_file_dir,'a',newline='') as f:
+                writer = csv.writer(f,delimiter=',')
+                writer.writerow(pair_to_write)
+        except PermissionError as err:
+            logger.warning('Cannot write to file: make sure you don''t have it open anywhere')
+
+        # Display what we wrote to the table
+        str_to_display = self.write_to_file_wid.text()
+        self.cal_file_written_display.append(str_to_display)
+        
+        # Clear lists
+        self.serial_values = []
+        self.serial_converted = []
+
+        # Reset
+        self.calibration_on = False
+        self.start_calibration_btn.setChecked(False)
+    
+
+    # FLOW CALIBRATION TIMER
+    def start_cal_duration_timer(self, duration):
+        self.calibration_start_time = datetime.now()
+        self.calibration_full_duration = timedelta(0,int(duration))
+        self.calibration_duration_timer.start(int(duration))
+
+    def show_cal_duration_time(self):
+        current_time = datetime.now()
+        current_cal_dur = current_time - self.calibration_start_time
+        if current_cal_dur >= self.calibration_full_duration:
+            self.end_cal_duration_timer()
+        
+        cal_dur_display_value = str(current_cal_dur)
+        cal_dur_display_value = cal_dur_display_value[5:]   # remove beginning digits, 2 values before decimal point
+        cal_dur_display_value = cal_dur_display_value[:-3]  # leave 3 digits after the decimal point
+        self.calibration_duration_label.setText(cal_dur_display_value)
+    
+    def end_cal_duration_timer(self):
+        self.calibration_duration_timer.stop()
+        self.calibration_on = False
+        
+        self.start_calibration_btn.setChecked(False)
+        self.analyze_cal_session()
+    
+    
+    # CONNECT TO DEVICE
+    def get_ports(self):
+        self.port_widget.clear()
+        ports = list_ports.comports()
+        if ports:
+            for ser in ports:
+                port_device = ser[0]
+                port_description = ser[1]
+                if port_device in port_description:
+                    idx1 = port_description.find(port_device)
+                    port_description = port_description[:idx1-2]
+                ser_str = ('{}: {}').format(port_device,port_description)
+                self.port_widget.addItem(ser_str)
+        else:
+            self.port_widget.addItem(noPortMsg)
+
+        # if any are 'Arduino', set the first one to the current index
+        for item_idx in range(0,self.port_widget.count()):
+            this_item = self.port_widget.itemText(item_idx)
+            if 'Arduino' in this_item:
+                break
+        if item_idx != []:
+            self.port_widget.setCurrentIndex(item_idx)
+        else:
+            logger.debug('no Arduinos detected :(')
+    
+    def port_changed(self):
+        if self.port_widget.count() != 0:
+            self.port = self.port_widget.currentText()
+            if self.port == noPortMsg:
+                self.portStr = noPortMsg
+                self.connect_btn.setEnabled(False)
+                self.connect_btn.setText(noPortMsg)
+            else:
+                self.portStr = self.port[:self.port.index(':')]
+                self.connect_btn.setEnabled(True)
+                self.connect_btn.setText("Connect to  " + self.portStr)
+        
+    def toggled_connect(self, checked):
+        if checked:
+            i = self.port.index(':')
+            self.comPort = self.port[:i]
+            self.serial = QtSerialPort.QSerialPort(self.comPort,baudRate=flowSens_baud,readyRead=self.receive)
+            if not self.serial.isOpen():
+                if self.serial.open(QtCore.QIODevice.ReadWrite):
+                    self.set_connected(True)
+                else:
+                    self.set_connected(False)
+            else:
+                self.set_connected(True)
+        else:
+            try:
+                self.serial.close()
+                self.set_connected(False)
+            except AttributeError as err:
+                logger.error("error :( --> %s", err)
+    
+    def set_connected(self, connected):
+        if connected == True:
+            logger.info('Connected to ' + self.port_widget.currentText())
+            self.connect_btn.setText("Disconnect")
+            self.connect_btn.setToolTip("Disconnect from " + self.portStr)
+            self.refresh_btn.setEnabled(False)
+            self.port_widget.setEnabled(False)
+            self.settings_box.setEnabled(True)
+            self.cal_table_select_box.setEnabled(True)
+            self.new_cal_box.setEnabled(True)
+        
+        else:
+            logger.info('Disconnected from ' + self.port_widget.currentText())
+            self.connect_btn.setText("Connect")
+            self.connect_btn.setToolTip("Connect to " + self.portStr)
+            self.connect_btn.setChecked(False)
+            self.refresh_btn.setEnabled(True)
+            self.port_widget.setEnabled(True)
+            self.settings_box.setEnabled(False)
+            self.cal_table_select_box.setEnabled(False)
+            self.new_cal_box.setEnabled(False)
+    
+    
+    # SEND/RECEIVE DATA
+    def receive(self):
+        if self.serial.canReadLine() == True:
+            text = self.serial.readLine(1024)
+            try:
+                text = text.decode("utf-8")
+                text = text.rstrip('\r\n')
+                if text.isnumeric():
+                    str_value = text
+                    flowVal_int = int(text)
+                    val_SCCM = convertToSCCM(flowVal_int,self.intToSccm_dict)
+                    dataStr = str_value + '\t' + str(val_SCCM)
+                    self.receive_box.append(dataStr)
+
+                    # send to main window for recording
+                    try: self.window().receive_data_from_device('flow sensor','FL',str_value)
+                    except AttributeError as err: pass
+
+                    # if calibration is on:
+                    if self.calibration_on == True:
+                        self.serial_values.append(flowVal_int)
+                        self.collected_values_wid.append(str(flowVal_int))
+
+            except UnicodeDecodeError as err:   logger.error('Serial read error: %s',err)
+    
+    def send_to_arduino(self, strToSend):
+        bArr_send = strToSend.encode()
+        try:
+            if self.serial.isOpen():
+                self.serial.write(bArr_send)                # send to Arduino
+            else:
+                logger.warning('Serial port not open, cannot send parameter: %s', strToSend)
+        except AttributeError as err:
+            logger.warning('(Attribute Error) Serial port not open, cannot send parameter: %s', strToSend)
+
+
+if __name__ == "__main__":
+    app1 = QApplication(sys.argv)
+    theWindow = flowSensor()
+    theWindow.show()
+    theWindow.setWindowTitle('Flow Sensor Widget')
+    sys.exit(app1.exec_())
