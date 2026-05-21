@@ -13,5 +13,5 @@ ST 5/21/2026
 
 import olfactometry
 
-config_filename = "C:\\your_config_dir\\your_config_name.json"
+config_filename = 'olfa_config.json'
 olfactometry.main(config_filename)
