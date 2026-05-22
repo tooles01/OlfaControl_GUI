@@ -37,9 +37,12 @@ class Final_Valve(QGroupBox):
         self.setTitle('Final Valve')
 
         self.generate_ui()
-        layout = QHBoxLayout()
-        layout.addWidget(self.connect_box)
-        layout.addWidget(self.final_valve_button)
+        layout1 = QHBoxLayout()
+        layout1.addWidget(self.connect_box)
+        layout1.addWidget(self.final_valve_button)
+        layout = QVBoxLayout()
+        layout.addLayout(layout1)
+        layout.addWidget(self.raw_comm_box)
         self.setLayout(layout)
     
     # GUI ELEMENTS
@@ -57,12 +60,35 @@ class Final_Valve(QGroupBox):
         connect_box_layout.addRow(self.portLbl,self.port_widget)
         connect_box_layout.addRow(self.refresh_btn,self.connect_btn)
         self.connect_box.setLayout(connect_box_layout)
-
+        
         # FINAL VALVE BUTTON
         self.final_valve_button = QPushButton(text='Final Valve',checkable=True)
         self.final_valve_button.toggled.connect(self.fv_btn_toggled)
 
-    
+        # RAW READ/WRITE
+        self.raw_comm_box = QGroupBox("Raw Communication Data")
+        # Displays for written and received data
+        self.raw_write_display = QTextEdit(readOnly=True)
+        self.raw_read_display = QTextEdit(readOnly=True)
+        # Buttons for clearing display
+        self.read_clear_btn = QPushButton("Clear")
+        self.write_clear_btn = QPushButton("Clear")
+        self.read_clear_btn.setToolTip("Clear previous values from display")
+        self.write_clear_btn.setToolTip("Clear previous values from display")
+        self.read_clear_btn.clicked.connect(lambda: self.raw_read_display.clear())
+        self.write_clear_btn.clicked.connect(lambda: self.raw_write_display.clear())
+        # Layout
+        raw_write_layout = QFormLayout()
+        raw_write_layout.addRow(QLabel('Written to serial port:'),self.write_clear_btn)
+        raw_write_layout.addRow(self.raw_write_display)        
+        raw_read_layout = QFormLayout()
+        raw_read_layout.addRow(QLabel('Received from serial port:'),self.read_clear_btn)
+        raw_read_layout.addRow(self.raw_read_display)
+        raw_comm_layout = QHBoxLayout()
+        raw_comm_layout.addLayout(raw_read_layout)
+        raw_comm_layout.addLayout(raw_write_layout)
+        self.raw_comm_box.setLayout(raw_comm_layout)
+
     # SERIAL CONNECTION
     def get_ports(self):
         self.port_widget.clear()
@@ -93,7 +119,7 @@ class Final_Valve(QGroupBox):
         if checked:
             i = self.port.index(':')
             self.comPort = self.port[:i]
-            self.serial = QtSerialPort.QSerialPort(self.comPort,baudRate=arduino_baud)#,readyRead=self.receive)
+            self.serial = QtSerialPort.QSerialPort(self.comPort,baudRate=arduino_baud,readyRead=self.receive_message)
             if not self.serial.isOpen():
                 if self.serial.open(QtCore.QIODevice.ReadWrite):
                     self.set_connected(True)
@@ -150,16 +176,29 @@ class Final_Valve(QGroupBox):
     
     # SEND MESSAGE
     def send_to_Arduino(self, strToSend):
-        bArr_send = strToSend.encode()
+        #bArr_send = strToSend.encode()
+        bArr_send = (strToSend + '\n').encode()
         try:
             if self.serial.isOpen():
-                self.serial.write(bArr_send)                # Send to Arduino
                 logger.info("Sending string to Arduino: %s", strToSend)
+                self.serial.write(bArr_send)                # Send to Arduino
+                self.raw_write_display.append(strToSend)    # Display string that was sent
             else:
                 logger.warning('Serial port not open, cannot send string')
         except AttributeError as err:
             if (err.args[0] == "'Final_Valve' object has no attribute 'serial'"):
                 logger.warning('(Attribute Error) Serial port not open, cannot send parameter: %s', strToSend)
+    
+    def receive_message(self):
+        if self.serial.canReadLine() == True:
+            text = self.serial.readLine(1024)
+            try:
+                # Attempt to read and decode the serial data
+                text = text.decode("utf-8")
+                text = text.rstrip('\r\n')
+                self.raw_read_display.append(text)
+            except:
+                logger.error('error reading message back')
 
 if __name__ == "__main__":
     app1 = QApplication(sys.argv)
