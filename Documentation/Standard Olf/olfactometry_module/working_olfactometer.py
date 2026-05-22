@@ -7,17 +7,30 @@ GUI for using both the olfactometer and final valve at the same time
 ST 5/21/2026
 '''
 
-
-
-import sys
-from PyQt5.QtWidgets import *
-import olfactometry
-from serial import SerialException
+import sys, logging
 from PyQt5 import sip
+from PyQt5.QtWidgets import *
+from serial import SerialException
+import olfactometry
 import final_valve
 
 config_file = 'olfa_config.json'
 
+# TODO: error checking for if no olfactometer connected
+
+def create_console_handler():
+    console_handler_formatter = logging.Formatter('%(asctime)s : %(name)-14s :%(levelname)-8s: %(message)s',datefmt='%H:%M:%S')
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    console_handler.setFormatter(console_handler_formatter)
+    return console_handler
+
+# CREATE LOGGER
+logger = logging.getLogger(name='working olfactometer')
+logger.setLevel(logging.DEBUG)
+if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
+console_handler = create_console_handler()
+logger.addHandler(console_handler)
 
 class mainWindow(QMainWindow):
 
@@ -69,7 +82,6 @@ class mainWindow(QMainWindow):
         self.config_file_name_wid = QLineEdit()
         self.config_file_name_wid.setText(config_file)
 
-
         layout = QVBoxLayout()
         layout.addWidget(self.config_file_name_wid)
         self.olfa_settings_groupbox.setLayout(layout)
@@ -84,7 +96,7 @@ class mainWindow(QMainWindow):
 
     def add_olfa_btn_toggled(self, checked):
         if checked:
-            print('adding olfactometer')
+            logger.debug('adding olfactometer')
             self.add_olfa_btn.setText('Remove Olfactometer')
             # Create olfactometer
             try:
@@ -99,27 +111,29 @@ class mainWindow(QMainWindow):
                 self.add_olfa_btn.setChecked(False)
 
         else:
-            print('removing olfactometer')
+            logger.debug('removing olfactometer')
             self.add_olfa_btn.setText('Add Olfactometer')
             try:
                 # make sure you disconnect the com port
                 self.olfactometer.serial.close()
                 self.mainLayout.removeWidget(self.olfactometer)
                 sip.delete(self.olfactometer)
-            except RuntimeError:
-                print('cant remove bc it already gone')
-                print('this shouldnt happen')
+            except AttributeError:
+                logger.debug('no olfactometer')
+            #except RuntimeError:
+            #    print('cant remove bc it already gone')
+            #    print('this shouldnt happen')
     
     
     def add_fv_toggled(self, checked):
         if checked:
-            print('adding final valve')
+            logger.debug('adding final valve')
             self.add_fv_btn.setText('Remove Final Valve')
             self.final_valve = final_valve.Final_Valve()
             self.device_layout.addWidget(self.final_valve)
 
         else:
-            print('removing final valve')
+            logger.debug('removing final valve')
             self.add_fv_btn.setText('Add Final Valve')
             self.mainLayout.removeWidget(self.final_valve)
             sip.delete(self.final_valve)
