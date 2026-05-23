@@ -12,15 +12,20 @@ arguments
 
     % Units
     plot_opts.nidaq_freq            (1,1) double = 0.01     % collection frequency etc etc      % NOTE: only used here and in plot_on_top ; why do we use this
+    plot_opts.flow_inc              (1,:) double = []
 
     % Axis Limits
     plot_opts.pid_lims              (1,:) double = []
+    plot_opts.flow_lims             (1,:) double = [0 105]
 
     % Data Manipulation
-    plot_opts.time_to_cut           (1,1) double = 2.00     % don't look at any data before this time
+    plot_opts.time_to_cut           (1,1) double = 0        % don't look at any data before this time
 
     % Additional Figures
     plot_opts.individual_trials     (1,1) string = 'no'     % plot each trial by itself
+
+    % Plot options
+    plot_opts.plot_error_bars       (1,1) string = 'yes'
 
     % Other
     plot_opts.x_lines               (1,1) string = 'yes'    % x lines of where the mean was calculated from
@@ -33,7 +38,8 @@ set(0,'DefaultTextInterpreter','none')
 
 %% Display Variables
 a_this_note = '';
-flow_inc = [];
+%flow_inc = [];
+flow_inc = plot_opts.flow_inc;
 
 f = struct();   % struct containing all figure variables
 f.PID_color = [.4667 .6745 .1882];
@@ -82,6 +88,9 @@ a_thisfile_name = erase(a_thisfile_name,'.csv');
 % Skip down to the third row
 header_goes_til = 3;
 a_raw_file = a_thisfile(header_goes_til:end,:);
+
+% Get the vial number
+vial_number = a_raw_file(1,1);
 
 % Cut out the first column (vial number)
 a_raw_file = a_raw_file(:,2:end);
@@ -150,11 +159,9 @@ for i=1:height(a_raw_file)
     % Get the section of PID values we will use to calculate the mean
 
     % 1) Make sure we cut at least 2 seconds from the beginning of the trial
-    
     % Get data starting at plot_opts.time_to_cut seconds into the trial
     idx_of_start_time = (plot_opts.time_to_cut/plot_opts.nidaq_freq) + 1;   % Index of plot_opts.time_to_cut seconds
     new_pid_data = pid_data(idx_of_start_time:end,:);
-    
     % Cut off 2 seconds anyways (to let it get up there a little bit)
     if (plot_opts.time_to_cut < 2)
         new_pid_data_1 = get_section_data(new_pid_data,2,new_pid_data(end,1));
@@ -163,14 +170,12 @@ for i=1:height(a_raw_file)
     end
     
     % 2. Find time when vial closed: cut everything after that
-
-    % Find what time the PID drops below threshold (10% of max value during the trial) (this is based on nothing besides my own visualization)
+    % (from the cut data) Find what time the PID drops below threshold (10% of max value during the trial) (this is based on nothing besides my own visualization)
     PID_end_threshold = .1*(max(pid_data(:,2)));   % 10% of the max value
     idx_below_threshold = find(new_pid_data_1(:,2) < PID_end_threshold,1);  % index of first time PID drops below threshold
-    time_below_threshold = new_pid_data_1(idx_below_threshold,1);           % first time PID drops below 0.1V
+    time_below_threshold = new_pid_data_1(idx_below_threshold,1);           % first time PID drops below threshold
     
     % Get the time value 0.1s before it drops
-
     % If this was a normal trial: make the end time 0.1s before the PID drops below threshold
     if ~(idx_below_threshold == 1)
         end_time = time_below_threshold - .1;
@@ -182,16 +187,16 @@ for i=1:height(a_raw_file)
     end
     end_idx = find(new_pid_data_1(:,1) <= end_time,1,'last');     % Index of where end_time happens
     
-    % Get all the data for this period
+    % Get all the data for this period (calculated time of the event)
     this_pid_data = new_pid_data_1(1:end_idx,:);
     
-    % Calculate mean/std
+    % Calculate the mean/std
     mean_pid = mean(this_pid_data(:,2));
     std_pid = std(this_pid_data(:,2));
     
     %% Plot this trial by itself
     if strcmp(plot_opts.individual_trials,'yes')
-        f1 = figure(i+1); hold on; legend;
+        f1 = figure; hold on; legend;
         f1.Position = f.f_position;
         f1_subtitle = [num2str(this_sccm_value) ' sccm'];
         subtitle(f1_subtitle);
@@ -223,7 +228,7 @@ for i=1:height(a_raw_file)
     d_olfa_data(i).data = [d_time_data d_pid_data];
     
 end
-clearvars -except a_* d_olfa_data dir_* f flow_inc pid_adjustment_value plot_opts
+clearvars -except a_* d_olfa_data dir_* f flow_inc pid_adjustment_value plot_opts last_* vial_number
 
 %% Sort the data structure (create d_olfa_data_sorted)
 fieldName = 'flow_value';
@@ -262,18 +267,18 @@ for i=1:length(d_olfa_data_sorted)
     end
 end
 
-clearvars -except a_* d* f pid_adjustment_value plot_opts
+clearvars -except a_* d* f pid_adjustment_value plot_opts vial_number
 
 %% Save the data structure
 mat_file_dir = strcat(pwd,'\','data (.mat files)\',a_thisfile_name,'.mat');
 disp_file_dir = strcat('C:\..\data (.mat files)\',a_thisfile_name,'.mat');
 
 if ~isfile(mat_file_dir)
-    save(mat_file_dir,"d_olfa_data_sorted","d_olfa_data_combined");
+    save(mat_file_dir,"d_olfa_data_sorted","d_olfa_data_combined","vial_number");
     disp(['Saved file: ', disp_file_dir])
 else
     delete(mat_file_dir);
-    save(mat_file_dir,"d_olfa_data_sorted","d_olfa_data_combined");
+    save(mat_file_dir,"d_olfa_data_sorted","d_olfa_data_combined","vial_number");
     disp(['File already existed, rewrote: ', disp_file_dir])
 end
 
@@ -284,21 +289,41 @@ f2.Position = f.f2_position;
 f2.NumberTitle = 'off';
 f2.Name = a_thisfile_name;
 title(a_thisfile_name)
-if ~strcmp(a_this_note,''); subtitle(a_this_note); end
+%if ~strcmp(a_this_note,''); subtitle(a_this_note); end     % no note is entered since changing to function
 
-xlabel('Flow (SCCM)')
-ylabel("PID (V)");
-xlim([0 100]);
+xlabel('Odor flow rate (SCCM)')
+ylabel('Mean PID reading (V)')
+xlim([plot_opts.flow_lims]);
+
 if ~isempty(plot_opts.pid_lims); ylim(plot_opts.pid_lims); end
 
 blue_color = [0 .4470 .7410];
 
-s = scatter([d_olfa_data.flow_value],[d_olfa_data.pid_mean],'filled');
+x_flow = [d_olfa_data.flow_value];
+y_pid = [d_olfa_data.pid_mean];
+s = scatter(x_flow,y_pid,plot_opts.dot_size,'filled');
 s.MarkerFaceColor = blue_color;
 s.DisplayName = 'standard olfa';
 
-% if error bars on etc etc TODO
+clearvars *_color disp_*
 
-clearvars *_color last_* disp* number_of_data plot_* i *flow_value*
+%% Plot error bars
+if strcmp(plot_opts.plot_error_bars,'yes')
+    xneg = zeros(length(d_olfa_data),1);
+    xpos = zeros(length(d_olfa_data),1);
+    yneg = zeros(length(d_olfa_data),1);
+    ypos = zeros(length(d_olfa_data),1);
+    % For each event
+    for e=1:length(d_olfa_data)
+        pid_std = d_olfa_data(e).pid_std;
+        yneg(e,1) = pid_std/2;
+        ypos(e,1) = pid_std/2;
+        xneg(e,1) = 0;  % placeholder for flow values
+        xpos(e,1) = 0;
+    end
+    e = errorbar(x_flow,y_pid,yneg,ypos,xneg,xpos,'o');
+    set(e,'HandleVisibility','off');
+    set(e,'Color',s.MarkerFaceColor)
+end
 
 end
