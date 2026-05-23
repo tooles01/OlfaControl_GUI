@@ -185,7 +185,7 @@ class TeensyOlfa():
         flownum = (flowrate * 1. / self.mfc1_capacity)*64000
         flownum = int(flownum)
         command = "DMFC {0:d} {1:d} A{2:d}".format(self.slaveindex, self.arduino_port, flownum)
-        logger.debug("sending command: %s", command)
+        logger.debug(command)
         confirmation = self.send_command(command)
         confirmation_decoded = confirmation.decode('utf-8')
         if(confirmation_decoded != 'MFC set\r\n'):
@@ -195,7 +195,7 @@ class TeensyOlfa():
             success = True
             command = "DMFC {0:d} {1:d}".format(self.slaveindex, self.arduino_port)
             returnstring = self.send_command(command)
-            logger.debug("returnstring: %s", returnstring.decode('utf-8'))
+            logger.debug(command)
             while (returnstring is None or returnstring.startswith(b'Error -2')) and time.time() - start_time < .2:
                 returnstring = self.send_command(command)
             
@@ -238,8 +238,8 @@ class TeensyOlfa():
                 flow = None
             if (flow < 0):
                 self.lcd.setStyleSheet("background-color: Red")
-                logging.error('MFC reporting negative flow.')
-                logging.error(returnstring)
+                logger.error('MFC reporting negative flow.')
+                logger.error(returnstring)
         else:
             self.lcd.setStyleSheet("background-color: Grey")
             flow = None
@@ -262,28 +262,26 @@ class TeensyOlfa():
         :return: True if successful setting.
         :rtype : bool
         """
+        logger.debug("setting dummy vial")
         success = False
         if self.checked_id == self.dummyvial and not valvestate:  # dummy is "off" (this means open as it is normally open),
             command = "vial {0} {1} on".format(self.slaveindex, self.dummyvial)
-            logging.debug(command)
-            line = self.send_command(command)
-            logging.debug(line)
+            logger.debug("command: ",command)
             if not line.split()[0] == "Error":
-                logging.info('Dummy ON.')
+                logger.info('Dummy ON.')
                 self.vialChanged.emit(self.dummyvial)
                 self.checked_id = 0
             else:
-                logging.error('Cannot set dummy vial.')
-                logging.error(line)
+                logger.error('Cannot set dummy vial.')
+                logger.error(line)
         elif self.checked_id == self.dummyvial and valvestate:  # valve is already open, do nothing and return success!
             success = True
         elif self.checked_id == 0 and valvestate:  # dummy is already (closed)
             command = "vial {0} {1} off".format(self.slaveindex, self.dummyvial)
-            logging.debug(command)
+            logger.debug("command: ",command)
             line = self.send_command(command)
-            logging.debug(line)
             if not line.split()[0] == "Error":
-                logging.info("Dummy OFF.")
+                logger.info("Dummy OFF.")
                 self.vialChanged.emit(self.dummyvial)
                 self.checked_id = self.dummyvial
                 success = True
@@ -295,7 +293,7 @@ class TeensyOlfa():
                 QtCore.QTimer.singleShot(1000, self._valve_lockout_clear)
                 self.checked_id = self.dummyvial
         else:
-            logging.error("THIS SHOULDN'T HAPPEN!!!")
+            logger.error("THIS SHOULDN'T HAPPEN!!!")
         return success
     
     def _set_valveset(self, vial_num, valvestate=1, suppress_errors=False):
@@ -306,11 +304,12 @@ class TeensyOlfa():
         else:
             command = "vialOff {0} {1}".format(self.slaveindex, vial_num)
         line = self.send_command(command)
+        logger.debug(command)
         if not line.split()[0] == 'Error':
             return True
         elif not suppress_errors:
-            logging.error('Cannot set valveset for vial {0}'.format(vial_num))
-            logging.error(repr(line))
+            logger.error('Cannot set valveset for vial {0}'.format(vial_num))
+            logger.error(repr(line))
             return False
             
     def send_command(self, command, tries=1):
@@ -329,7 +328,7 @@ class TeensyOlfa():
         line = None
         try:
             line = self.serial.readline()
-            # logging.debug("Recieved line: {0}".format(repr(line)))
+            logger.debug("Received line: {0}".format(repr(line)))
         except SerialException as e:
             print('pySerial exception: Exception that is raised on write timeouts')
         return line
