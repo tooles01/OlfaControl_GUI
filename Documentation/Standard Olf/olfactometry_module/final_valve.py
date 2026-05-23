@@ -10,8 +10,9 @@ ST 5/21/2026
 import sys, logging
 from PyQt5 import QtCore, QtSerialPort
 from PyQt5.QtWidgets import *
+from PyQt5.QtCore import QTimer
 from serial.tools import list_ports
-
+from datetime import datetime, timedelta
 
 noPortMsg = ' ~ No COM ports detected ~'
 arduino_baud = 9600
@@ -67,13 +68,26 @@ class Final_Valve(QGroupBox):
         
 
     def create_FV_groupbox(self):
-        self.FV_groupbox = QGroupBox('Final Valve')
+        self.FV_groupbox = QGroupBox('Final Valve Activation')
 
         self.final_valve_button = QPushButton(text='Turn FV on',checkable=True)
         self.final_valve_button.toggled.connect(self.fv_btn_toggled)
+        self.final_valve_button.setToolTip('Will auto turn off after 3 seconds')
+        
+        self.valve_timer_lbl = QLabel('valve open for:')
+        self.valve_timer_duration_label = QLabel('0.00')
+        layout2 = QHBoxLayout()
+        layout2.addWidget(self.valve_timer_lbl)
+        layout2.addWidget(self.valve_timer_duration_label)
+        layout2.addWidget(QLabel('seconds'))
+
+        self.valve_timer = QTimer()
+        self.valve_timer.setTimerType(0)    # set to millisecond accuracy
+        self.valve_timer.timeout.connect(self.show_valve_time)
 
         fv_box_layout = QVBoxLayout()
         fv_box_layout.addWidget(self.final_valve_button)
+        fv_box_layout.addLayout(layout2)
         self.FV_groupbox.setLayout(fv_box_layout)
 
     def create_raw_comm_groupbox(self):
@@ -181,12 +195,12 @@ class Final_Valve(QGroupBox):
         if checked:
             self.send_to_Arduino("on")
             self.final_valve_button.setText("Turn FV off")
-            #logger.debug("Turning final valve on")
+            self.start_valve_timer('3')
 
         else:
             self.send_to_Arduino("off")
             self.final_valve_button.setText("Turn FV on")
-            #logger.debug("Turning final valve off")
+            self.end_valve_timer()
     
     # SEND MESSAGE
     def send_to_Arduino(self, strToSend):
@@ -214,6 +228,26 @@ class Final_Valve(QGroupBox):
             except:
                 logger.error('error reading message back')
 
+    # VALVE TIMER
+    def start_valve_timer(self, duration):
+        self.time_valve_opened_at = datetime.now()
+        self.timedelta_valve_open_full_dur = timedelta(0,int(duration))
+        self.valve_timer.start()
+
+    def show_valve_time(self):
+        time_current_time = datetime.now()
+        timedelta_current_valve_dur = time_current_time - self.time_valve_opened_at
+        if timedelta_current_valve_dur >= self.timedelta_valve_open_full_dur:
+            self.end_valve_timer()
+        valve_dur_display_value = str(timedelta_current_valve_dur)
+        valve_dur_display_value = valve_dur_display_value[5:]   # Remove hour/minute display
+        valve_dur_display_value = valve_dur_display_value[:-4]  # Remove extra decimal point display
+        self.valve_timer_duration_label.setText(valve_dur_display_value)
+
+    def end_valve_timer(self):
+        self.valve_timer.stop()
+        self.final_valve_button.setChecked(False)
+    
 if __name__ == "__main__":
     app1 = QApplication(sys.argv)
     theWindow = Final_Valve()
