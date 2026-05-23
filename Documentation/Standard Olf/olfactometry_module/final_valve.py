@@ -39,7 +39,7 @@ class Final_Valve(QGroupBox):
         self.generate_ui()
         layout1 = QHBoxLayout()
         layout1.addWidget(self.connect_box)
-        layout1.addWidget(self.final_valve_button)
+        layout1.addWidget(self.FV_groupbox)
         layout = QVBoxLayout()
         layout.addLayout(layout1)
         layout.addWidget(self.raw_comm_box)
@@ -47,7 +47,11 @@ class Final_Valve(QGroupBox):
     
     # GUI ELEMENTS
     def generate_ui(self):
-        # CONNECT BOX
+        self.create_connect_groupbox()
+        self.create_FV_groupbox()
+        self.create_raw_comm_groupbox()
+
+    def create_connect_groupbox(self):
         self.connect_box = QGroupBox("Connect")
 
         self.portLbl = QLabel(text="Port/Device:")
@@ -55,21 +59,30 @@ class Final_Valve(QGroupBox):
         self.connect_btn = QPushButton(checkable=True,toggled=self.toggled_connect)
         self.refresh_btn = QPushButton(text="Refresh",clicked=self.get_ports)
         self.get_ports()
-
+        
         connect_box_layout = QFormLayout()
         connect_box_layout.addRow(self.portLbl,self.port_widget)
         connect_box_layout.addRow(self.refresh_btn,self.connect_btn)
         self.connect_box.setLayout(connect_box_layout)
         
-        # FINAL VALVE BUTTON
-        self.final_valve_button = QPushButton(text='Final Valve',checkable=True)
+
+    def create_FV_groupbox(self):
+        self.FV_groupbox = QGroupBox('Final Valve')
+
+        self.final_valve_button = QPushButton(text='Turn FV on',checkable=True)
         self.final_valve_button.toggled.connect(self.fv_btn_toggled)
 
-        # RAW READ/WRITE
+        fv_box_layout = QVBoxLayout()
+        fv_box_layout.addWidget(self.final_valve_button)
+        self.FV_groupbox.setLayout(fv_box_layout)
+
+    def create_raw_comm_groupbox(self):
         self.raw_comm_box = QGroupBox("Raw Communication Data")
+        
         # Displays for written and received data
         self.raw_write_display = QTextEdit(readOnly=True)
         self.raw_read_display = QTextEdit(readOnly=True)
+        
         # Buttons for clearing display
         self.read_clear_btn = QPushButton("Clear")
         self.write_clear_btn = QPushButton("Clear")
@@ -77,6 +90,7 @@ class Final_Valve(QGroupBox):
         self.write_clear_btn.setToolTip("Clear previous values from display")
         self.read_clear_btn.clicked.connect(lambda: self.raw_read_display.clear())
         self.write_clear_btn.clicked.connect(lambda: self.raw_write_display.clear())
+        
         # Layout
         raw_write_layout = QFormLayout()
         raw_write_layout.addRow(QLabel('Written to serial port:'),self.write_clear_btn)
