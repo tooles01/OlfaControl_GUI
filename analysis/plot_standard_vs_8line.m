@@ -85,6 +85,7 @@ if strcmp(f.plot_all,'yes')
     % for each flow value
     for i=1:length(d_8line_all.d_olfa_flow.d_olfa_data_combined)
         % make a plot
+        % TODO fix this so it only creates the figure AFTER checking if there's data here
         f1 = figure; hold on; f1.Position = f.position;
         legend;
         xlabel('Time (s)')
