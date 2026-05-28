@@ -43,7 +43,7 @@ logger.addHandler(console_handler)
 
 class worker_program(QObject):
     finished = pyqtSignal()
-    w_set_mfc = pyqtSignal()
+    w_set_mfc = pyqtSignal(int)
     w_open_vial = pyqtSignal(int)
     w_close_vial = pyqtSignal(int)
     w_close_FV = pyqtSignal()
@@ -58,13 +58,13 @@ class worker_program(QObject):
         self.dur_FV_open = 0            # Duration of odor presentation
         self.dur_bt_trials = 0          # Duration between trials
         self.flow_rate = 0              # MFC flow rate
-        self.vial_prep_time = 0
+        self.vial_prep_time = 0         # Duration of odor stabilization (before FV open)
             
     @pyqtSlot()
     def exp(self):
         # Set MFC flow rate
-        #logger.info('worker: Setting MFC to %s SCCM', self.flow_rate)
-        #self.w_set_mfc.emit()
+        logger.info('worker: Setting MFC to %s SCCM', self.flow_rate)
+        self.w_set_mfc.emit(self.flow_rate)
 
         # Wait for a sec
         time.sleep(1)
@@ -190,13 +190,15 @@ class mainWindow(QMainWindow):
             vial_button_layout.addWidget(vial_button)
 
         self.p_dur_FV_open_wid = QLineEdit(str(dur_FV_open))            # Duration of odor presentation (FV open)
+        self.p_dur_FV_open_wid.setToolTip("Duration of odor presentation")
         self.p_dur_vial_prep_time_wid = QLineEdit(str(dur_vial_prep))   # Time for vial to be open before final valve is open
         self.p_dur_vial_prep_time_wid.setToolTip("Duration vial is open before final valve opens\n(Time for odor to stabilize before presentation)")
         self.p_num_reps_wid = QLineEdit(str(num_reps))                  # Number of times to run each vial
+        self.p_num_reps_wid.setToolTip("Number of times each vial will be run")
         self.p_dur_bt_trials_wid = QLineEdit(str(dur_bt_trials))        # Duration between presentations
         self.p_dur_bt_trials_wid.setToolTip("Duration between last time final valve closed/next time to open it\nITI")
         self.p_flow_rate_wid = QLineEdit(str(flow_rate))                # MFC flow rate
-        self.p_flow_rate_wid.setEnabled(False)
+        self.p_flow_rate_wid.setToolTip("MFC flow rate")
 
         self.program_start_btn = QPushButton(text='Start Program',checkable=True,toggled=self.program_start_clicked)
 
@@ -223,7 +225,6 @@ class mainWindow(QMainWindow):
                 #for olfa in self.olfas:
                 # fuck it assume one for now
                 self.olfactometer = self.olfas[0]
-                # add it to the layout
                 self.device_layout.addWidget(self.olfactometer)
             except SerialException:
                 print('com port bad')
@@ -233,8 +234,7 @@ class mainWindow(QMainWindow):
             logger.debug('removing olfactometer')
             self.add_olfa_btn.setText('Add Olfactometer')
             try:
-                # make sure you disconnect the com port
-                self.olfactometer.serial.close()
+                self.olfactometer.serial.close()    # Make sure you disconnect the com port
                 self.mainLayout.removeWidget(self.olfactometer)
                 sip.delete(self.olfactometer)
             except AttributeError:
@@ -277,7 +277,6 @@ class mainWindow(QMainWindow):
         if checked:
             self.program_start_btn.setText('End Program')
             self.run_program()
-
         else:
             self.program_start_btn.setText("Start program")
             self.thread_is_finished()
@@ -304,7 +303,6 @@ class mainWindow(QMainWindow):
         vials_complete_list = []
         #for v in self.olfactometer.vials:
         for v in self.vial_buttons:
-            # see which is checked
             vial_is_checked = v.isChecked()
             if vial_is_checked == True:
                 this_vial_num = int(v.text())
@@ -347,9 +345,10 @@ class mainWindow(QMainWindow):
 
     ##################################
     ## FUNCTIONS USED BY WORKERS
-    def set_mfc(self):
-        # TODO
-        logger.warning("this doesn't do anything")
+    def set_mfc(self,flow_rate:int):
+        flow_rate_list = []     # Needs to be sent as a list
+        flow_rate_list.append(flow_rate)
+        self.olfactometer.set_flows(flow_rate_list)
 
     def open_vial(self, vial_name:int):
         self.olfactometer.set_vial(vial_name)
