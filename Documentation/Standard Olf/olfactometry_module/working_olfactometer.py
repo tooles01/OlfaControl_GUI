@@ -35,21 +35,19 @@ def create_console_handler():
     return console_handler
 
 # CREATE LOGGER
-logger = logging.getLogger(name='working olfactometer')
+logger = logging.getLogger(name='working olfa')
 logger.setLevel(logging.DEBUG)
 logger.propagate = False    # removes duplicate log messages
-#if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
 console_handler = create_console_handler()
 logger.addHandler(console_handler)
 
 
 class worker_program(QObject):
     finished = pyqtSignal()
-    # TODO all of the functions lol
-    w_open_vial = pyqtSignal()
-    w_open_FV = pyqtSignal()
-    w_close_vial = pyqtSignal()
+    w_open_vial = pyqtSignal(int)
+    w_close_vial = pyqtSignal(int)
     w_close_FV = pyqtSignal()
+    w_open_FV = pyqtSignal()
     
     def __init__(self):
         super().__init__()
@@ -68,7 +66,6 @@ class worker_program(QObject):
         
         # Set MFC flow rate
         logger.info('worker: Setting MFC to %s SCCM', self.flow_rate)    # TODO
-
         # Wait for a sec
         time.sleep(1)
 
@@ -78,26 +75,26 @@ class worker_program(QObject):
                 full_vial_name = stimulus[0]
                 
                 # Open vial
-                logger.info('worker: Opening vial %s (%s seconds)',full_vial_name,self.dur_vial_open_total)
-                self.w_open_vial.emit()
+                #logger.debug('worker: Opening vial %s (%s seconds)',full_vial_name,self.dur_vial_open_total)
+                self.w_open_vial.emit(full_vial_name)
 
                 # Wait to open FV
                 time.sleep(self.dur_before_fv_open)
 
                 # Open FV
-                logger.info('worker: Opening final valve (%s seconds)',self.dur_FV_open)
+                #logger.debug('worker: Opening final valve (%s seconds)',self.dur_FV_open)
                 self.w_open_FV.emit()
 
                 # Wait for duration of FV open
                 time.sleep(self.dur_FV_open)
                 
                 # Close FV
-                logger.info('worker: Closing final valve')
+                #logger.debug('worker: Closing final valve')
                 self.w_close_FV.emit()
 
                 # Close vial
-                logger.info('worker: Closing vial')
-                self.w_close_vial.emit()
+                #logger.debug('worker: Closing vial')
+                self.w_close_vial.emit(full_vial_name)
 
                 # Wait between trials
                 time.sleep(self.dur_bt_trials)
@@ -168,7 +165,7 @@ class mainWindow(QMainWindow):
         # TODO gray it out until the devices are added
 
         layout = QFormLayout()
-        layout.addWidget(QLabel("it's coming"))
+        layout.addWidget(QLabel("Select vials:"))
 
         # Vials to do
         vial_button_layout = QHBoxLayout()
@@ -204,7 +201,6 @@ class mainWindow(QMainWindow):
     ##################################
     # ADD DEVICES
     def add_olfa_btn_toggled(self, checked):
-        x=1 
         if checked:
             logger.debug('adding olfactometer')
             self.add_olfa_btn.setText('Remove Olfactometer')
@@ -268,10 +264,9 @@ class mainWindow(QMainWindow):
 
     def program_start_clicked(self,checked):
         if checked:
-            # CHECK THAT OLFACTOMETER IS CONNECTED
             self.program_start_btn.setText('End Program')
-            self.program_start_btn.setToolTip("this won't work yet sorry you gotta wait it out")
-
+            self.program_start_btn.setToolTip("this won't work yet sorry you gotta wait it out")    # TODO
+            
             self.run_program()
 
         else:
@@ -280,17 +275,17 @@ class mainWindow(QMainWindow):
     
     def run_program(self):
         logger.info('starting program')
-
-        # CHECK THAT OLFACTOMETER IS CONNECTED
-        '''
-        if self.add_olfa_btn.isChecked() == False:
-            logger.warning("Olfactometer not connected, this is about to fail!!!!!")
-            self.add_olfa_btn.toggle()
-        '''
         
-        # CHECK THAT FINAL VALVE IS CONNECTED
-
-
+        # CHECK THAT DEVICES ARE CONNECTED
+        # TODO make this a try/except
+        if self.add_olfa_btn.isChecked() == False:
+            logger.warning('No olfa connected, this is about to fail')
+            #self.add_olfa_btn.toggle()
+        if self.add_fv_btn.isChecked() == False:
+            logger.warning('No final valve connected, this is about to fail')
+            # TODO check if connected to arduino
+        
+        
         # GET PROGRAM PARAMETERS
         flow_rate = int(self.p_flow_rate_wid.text())
         dur_vial_open = int(self.p_dur_vial_open_total_wid.text())
@@ -345,21 +340,21 @@ class mainWindow(QMainWindow):
 
     ##################################
     ## FUNCTIONS USED BY WORKERS
-    def open_vial(self):
-        # TODO
-        pass
-
-    def close_vial(self):
-        # TODO
-        pass
+    def open_vial(self, vial_name:int):
+        logger.info('Opening vial %s', str(vial_name))
+        self.olfactometer.set_vial(vial_name)
+        
+    def close_vial(self,vial_name:int):
+        logger.info('Closing vial %s', str(vial_name))
+        self.olfactometer.set_vial(vial_name)
 
     def open_FV(self):
-        # TODO verify
-        self.final_valve.send_to_Arduino("on")
+        logger.info('Opening final valve')
+        self.final_valve.final_valve_button.setChecked(True)
 
     def close_FV(self):
-        # TODO verify
-        self.final_valve.send_to_Arduino("off")
+        logger.info('Closing final valve')
+        self.final_valve.final_valve_button.setChecked(False)
 
     ##################################
 
