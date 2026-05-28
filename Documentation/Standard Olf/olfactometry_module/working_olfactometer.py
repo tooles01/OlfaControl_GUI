@@ -37,7 +37,8 @@ def create_console_handler():
 # CREATE LOGGER
 logger = logging.getLogger(name='working olfactometer')
 logger.setLevel(logging.DEBUG)
-if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
+logger.propagate = False    # removes duplicate log messages
+#if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
 console_handler = create_console_handler()
 logger.addHandler(console_handler)
 
@@ -164,6 +165,7 @@ class mainWindow(QMainWindow):
 
     def create_program_box(self):
         self.program_box = QGroupBox('Program')
+        # TODO gray it out until the devices are added
 
         layout = QFormLayout()
         layout.addWidget(QLabel("it's coming"))
@@ -352,12 +354,12 @@ class mainWindow(QMainWindow):
         pass
 
     def open_FV(self):
-        # TODO
-        pass
+        # TODO verify
+        self.final_valve.send_to_Arduino("on")
 
     def close_FV(self):
-        # TODO
-        pass
+        # TODO verify
+        self.final_valve.send_to_Arduino("off")
 
     ##################################
 

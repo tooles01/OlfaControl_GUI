@@ -27,7 +27,8 @@ def create_console_handler():
 # CREATE LOGGER
 logger = logging.getLogger(name='final valve')
 logger.setLevel(logging.DEBUG)
-if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
+logger.propagate = False    # removes duplicate log messages
+#if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
 console_handler = create_console_handler()
 logger.addHandler(console_handler)
 
