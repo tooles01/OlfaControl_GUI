@@ -20,12 +20,11 @@ config_file = 'olfa_config.json'
 
 # Default values
 dur_FV_open = 3
-dur_vial_open = 5
+dur_vial_prep = 1
 num_reps = 2
 flow_rate = 100
-dur_bt_trials = 2
+dur_bt_trials = 5
 
-# TODO: error checking for if no olfactometer connected
 
 def create_console_handler():
     console_handler_formatter = logging.Formatter('%(asctime)s : %(name)-14s :%(levelname)-8s: %(message)s',datefmt='%H:%M:%S')
@@ -44,6 +43,7 @@ logger.addHandler(console_handler)
 
 class worker_program(QObject):
     finished = pyqtSignal()
+    w_set_mfc = pyqtSignal()
     w_open_vial = pyqtSignal(int)
     w_close_vial = pyqtSignal(int)
     w_close_FV = pyqtSignal()
@@ -56,16 +56,16 @@ class worker_program(QObject):
 
         # All durations in seconds
         self.dur_FV_open = 0            # Duration of odor presentation
-        self.dur_vial_open_total = 0    # Duration vial is open
         self.dur_bt_trials = 0          # Duration between trials
         self.flow_rate = 0              # MFC flow rate
+        self.vial_prep_time = 0
         
     @pyqtSlot()
     def exp(self):
-        self.dur_before_fv_open = self.dur_vial_open_total - self.dur_FV_open
-        
         # Set MFC flow rate
-        logger.info('worker: Setting MFC to %s SCCM', self.flow_rate)    # TODO
+        logger.info('worker: Setting MFC to %s SCCM', self.flow_rate)
+        self.w_set_mfc.emit()
+
         # Wait for a sec
         time.sleep(1)
 
@@ -75,29 +75,25 @@ class worker_program(QObject):
                 full_vial_name = stimulus[0]
                 
                 # Open vial
-                #logger.debug('worker: Opening vial %s (%s seconds)',full_vial_name,self.dur_vial_open_total)
                 self.w_open_vial.emit(full_vial_name)
 
                 # Wait to open FV
-                time.sleep(self.dur_before_fv_open)
+                time.sleep(self.vial_prep_time)
 
                 # Open FV
-                #logger.debug('worker: Opening final valve (%s seconds)',self.dur_FV_open)
                 self.w_open_FV.emit()
 
                 # Wait for duration of FV open
                 time.sleep(self.dur_FV_open)
                 
                 # Close FV
-                #logger.debug('worker: Closing final valve')
                 self.w_close_FV.emit()
 
                 # Close vial
-                #logger.debug('worker: Closing vial')
                 self.w_close_vial.emit(full_vial_name)
 
                 # Wait between trials
-                time.sleep(self.dur_bt_trials)
+                time.sleep(self.dur_bt_trials - self.vial_prep_time)
         
         self.finished.emit()
 
@@ -165,7 +161,7 @@ class mainWindow(QMainWindow):
         # TODO gray it out until the devices are added
 
         layout = QFormLayout()
-        layout.addWidget(QLabel("Select vials:"))
+        layout.addRow(QLabel("Select vials:"))
 
         # Vials to do
         vial_button_layout = QHBoxLayout()
@@ -179,17 +175,20 @@ class mainWindow(QMainWindow):
             self.vial_buttons.append(vial_button)
             vial_button_layout.addWidget(vial_button)
 
-        self.p_dur_FV_open_wid = QLineEdit(str(dur_FV_open))            # Duration of odor presentation (FV open)        
-        self.p_dur_vial_open_total_wid = QLineEdit(str(dur_vial_open))  # Time for vial to be open before final valve is open        
+        self.p_dur_FV_open_wid = QLineEdit(str(dur_FV_open))            # Duration of odor presentation (FV open)
+        self.p_dur_vial_prep_time_wid = QLineEdit(str(dur_vial_prep))   # Time for vial to be open before final valve is open
+        self.p_dur_vial_prep_time_wid.setToolTip("Duration vial is open before final valve opens\n(Time for odor to stabilize before presentation)")
         self.p_num_reps_wid = QLineEdit(str(num_reps))                  # Number of times to run each vial
-        self.p_dur_bt_trials_wid = QLineEdit(str(dur_bt_trials))        # Duration between presentations #TODO fix that timing later
+        self.p_dur_bt_trials_wid = QLineEdit(str(dur_bt_trials))        # Duration between presentations
+        self.p_dur_bt_trials_wid.setToolTip("Duration between last time final valve closed/next time to open it\nITI")
         self.p_flow_rate_wid = QLineEdit(str(flow_rate))                # MFC flow rate
+        self.p_flow_rate_wid.setEnabled(False)
 
         self.program_start_btn = QPushButton(text='Start Program',checkable=True,toggled=self.program_start_clicked)
 
         layout.addRow(vial_button_layout)
         layout.addRow(QLabel("Duration FV open (s):"),self.p_dur_FV_open_wid)
-        layout.addRow(QLabel("Duration vial open (s):"),self.p_dur_vial_open_total_wid)
+        layout.addRow(QLabel("Duration vial prep (s):"),self.p_dur_vial_prep_time_wid)
         layout.addRow(QLabel("Duration bt trials (s):"),self.p_dur_bt_trials_wid)
         layout.addRow(QLabel("Num repetitions:"),self.p_num_reps_wid)
         layout.addRow(QLabel("MFC flow rate (SCCM):"),self.p_flow_rate_wid)
@@ -254,6 +253,7 @@ class mainWindow(QMainWindow):
         self.obj_worker.moveToThread(self.thread_program)
 
         # Connect worker functions to stuff here
+        self.obj_worker.w_set_mfc.connect(self.set_mfc)
         self.obj_worker.w_open_vial.connect(self.open_vial)
         self.obj_worker.w_close_vial.connect(self.close_vial)
         self.obj_worker.w_open_FV.connect(self.open_FV)
@@ -288,7 +288,7 @@ class mainWindow(QMainWindow):
         
         # GET PROGRAM PARAMETERS
         flow_rate = int(self.p_flow_rate_wid.text())
-        dur_vial_open = int(self.p_dur_vial_open_total_wid.text())
+        dur_vial_prep = int(self.p_dur_vial_prep_time_wid.text())
         dur_fv_open = int(self.p_dur_FV_open_wid.text())
         n_rep = int(self.p_num_reps_wid.text())
         dur_bt_trials = int(self.p_dur_bt_trials_wid.text())
@@ -310,7 +310,7 @@ class mainWindow(QMainWindow):
         # SEND PARAMETERS TO WORKER
         self.obj_worker.complete_stimulus_list = self.stimulus_list
         self.obj_worker.dur_FV_open = dur_fv_open
-        self.obj_worker.dur_vial_open_total = dur_vial_open
+        self.obj_worker.vial_prep_time = dur_vial_prep
         self.obj_worker.dur_bt_trials = dur_bt_trials
         self.obj_worker.flow_rate = flow_rate
 
@@ -331,7 +331,7 @@ class mainWindow(QMainWindow):
         if self.program_start_btn.isChecked() == True:
             self.program_start_btn.setChecked(False)
         self.program_start_btn.setText('Start Program')
-        #self.program_progress_bar.setValue(0)
+        #self.program_progress_bar.setValue(0)  # TODO
         logger.info('Finished program')
         
     ##################################
@@ -340,6 +340,10 @@ class mainWindow(QMainWindow):
 
     ##################################
     ## FUNCTIONS USED BY WORKERS
+    def set_mfc(self):
+        # TODO
+        logger.warning("this doesn't do anything")
+
     def open_vial(self, vial_name:int):
         logger.info('Opening vial %s', str(vial_name))
         self.olfactometer.set_vial(vial_name)
