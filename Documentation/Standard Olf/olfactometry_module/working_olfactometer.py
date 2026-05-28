@@ -59,43 +59,59 @@ class worker_program(QObject):
         self.dur_bt_trials = 0          # Duration between trials
         self.flow_rate = 0              # MFC flow rate
         self.vial_prep_time = 0
-        
+            
     @pyqtSlot()
     def exp(self):
         # Set MFC flow rate
-        logger.info('worker: Setting MFC to %s SCCM', self.flow_rate)
-        self.w_set_mfc.emit()
+        #logger.info('worker: Setting MFC to %s SCCM', self.flow_rate)
+        #self.w_set_mfc.emit()
 
         # Wait for a sec
         time.sleep(1)
 
         # Iterate through stimulus list
         for stimulus in self.complete_stimulus_list:
-            if self.threadON == True:
-                full_vial_name = stimulus[0]
+            if not self.threadON:
+                break
+            
+            full_vial_name = stimulus[0]
                 
-                # Open vial
-                self.w_open_vial.emit(full_vial_name)
+            # Open vial & wait
+            logger.info("Opening vial %s", str(full_vial_name))
+            self.w_open_vial.emit(full_vial_name)
+            self.interruptible_sleep(self.vial_prep_time)
 
-                # Wait to open FV
-                time.sleep(self.vial_prep_time)
-
-                # Open FV
-                self.w_open_FV.emit()
-
-                # Wait for duration of FV open
-                time.sleep(self.dur_FV_open)
-                
-                # Close FV
-                self.w_close_FV.emit()
-
-                # Close vial
+            if not self.threadON:
+                logger.info("Program ended early, closing vial")
                 self.w_close_vial.emit(full_vial_name)
+                break
+            
+            # Open FV & wait
+            logger.info("Opening final valve")
+            self.w_open_FV.emit()            
+            self.interruptible_sleep(self.dur_FV_open)
+            
+            if not self.threadON:
+                logger.info("Program ended early, closing vial %s & FV", str(full_vial_name))
+                self.w_close_FV.emit()
+                self.w_close_vial.emit(full_vial_name)
+                break
+    
+            # Close FV & vial
+            logger.info("Closing vial %s & final valve", str(full_vial_name))
+            self.w_close_vial.emit(full_vial_name)
+            self.w_close_FV.emit()
 
-                # Wait between trials
-                time.sleep(self.dur_bt_trials - self.vial_prep_time)
+            # Wait between trials
+            self.interruptible_sleep(self.dur_bt_trials - self.vial_prep_time)
         
         self.finished.emit()
+    
+    def interruptible_sleep(self, duration, interval=0.1):
+        elapsed = 0
+        while elapsed < duration and self.threadON:
+            time.sleep(interval)
+            elapsed += interval
 
 class mainWindow(QMainWindow):
 
@@ -131,7 +147,6 @@ class mainWindow(QMainWindow):
         self.device_groupbox = QGroupBox('Devices:')
         self.device_layout = QVBoxLayout()
         self.device_groupbox.setLayout(self.device_layout)
-        x=1
 
     def create_add_devices_box(self):
         self.add_devices_groupbox = QGroupBox("Add/Remove Devices")
@@ -158,7 +173,6 @@ class mainWindow(QMainWindow):
 
     def create_program_box(self):
         self.program_box = QGroupBox('Program')
-        # TODO gray it out until the devices are added
 
         layout = QFormLayout()
         layout.addRow(QLabel("Select vials:"))
@@ -225,9 +239,6 @@ class mainWindow(QMainWindow):
                 sip.delete(self.olfactometer)
             except AttributeError:
                 logger.debug('no olfactometer')
-            #except RuntimeError:
-            #    print('cant remove bc it already gone')
-            #    print('this shouldnt happen')
     
     def add_fv_toggled(self, checked):
         if checked:
@@ -265,8 +276,6 @@ class mainWindow(QMainWindow):
     def program_start_clicked(self,checked):
         if checked:
             self.program_start_btn.setText('End Program')
-            self.program_start_btn.setToolTip("this won't work yet sorry you gotta wait it out")    # TODO
-            
             self.run_program()
 
         else:
@@ -274,17 +283,15 @@ class mainWindow(QMainWindow):
             self.thread_is_finished()
     
     def run_program(self):
-        logger.info('starting program')
-        
         # CHECK THAT DEVICES ARE CONNECTED
-        # TODO make this a try/except
         if self.add_olfa_btn.isChecked() == False:
-            logger.warning('No olfa connected, this is about to fail')
-            #self.add_olfa_btn.toggle()
+            logger.warning('No olfa connected, attempting to connect')
+            self.add_olfa_btn.toggle()
         if self.add_fv_btn.isChecked() == False:
-            logger.warning('No final valve connected, this is about to fail')
-            # TODO check if connected to arduino
-        
+            self.add_fv_btn.toggle()
+        if self.final_valve.connect_btn.isChecked() == False:
+            logger.warning('No final valve connected, attempting to connect')
+            self.final_valve.connect_btn.toggle()
         
         # GET PROGRAM PARAMETERS
         flow_rate = int(self.p_flow_rate_wid.text())
@@ -293,7 +300,6 @@ class mainWindow(QMainWindow):
         n_rep = int(self.p_num_reps_wid.text())
         dur_bt_trials = int(self.p_dur_bt_trials_wid.text())
         
-
         # CREATE STIMULUS LIST
         vials_complete_list = []
         #for v in self.olfactometer.vials:
@@ -315,24 +321,25 @@ class mainWindow(QMainWindow):
         self.obj_worker.flow_rate = flow_rate
 
         # START WORKER THREAD
+        logger.info("=="*50)
+        logger.info("Starting program (%s stimuli)", str(len(self.stimulus_list)))
         self.obj_worker.threadON = True
         self.thread_program.start()
 
     def thread_is_finished(self):
         # End the thread
         if self.obj_worker.threadON == True:
-            self.obj_worker.threadON == False
+            self.obj_worker.threadON = False
             self.thread_program.exit()
             self.thread_program.wait()
             if self.thread_program.isRunning() == False:
                 logger.debug('Program is finished')
+                logger.info("=="*50)
         
         # Reset the GUI
         if self.program_start_btn.isChecked() == True:
             self.program_start_btn.setChecked(False)
-        self.program_start_btn.setText('Start Program')
         #self.program_progress_bar.setValue(0)  # TODO
-        logger.info('Finished program')
         
     ##################################
 
@@ -345,19 +352,15 @@ class mainWindow(QMainWindow):
         logger.warning("this doesn't do anything")
 
     def open_vial(self, vial_name:int):
-        logger.info('Opening vial %s', str(vial_name))
         self.olfactometer.set_vial(vial_name)
         
     def close_vial(self,vial_name:int):
-        logger.info('Closing vial %s', str(vial_name))
         self.olfactometer.set_vial(vial_name)
 
     def open_FV(self):
-        logger.info('Opening final valve')
         self.final_valve.final_valve_button.setChecked(True)
 
     def close_FV(self):
-        logger.info('Closing final valve')
         self.final_valve.final_valve_button.setChecked(False)
 
     ##################################
