@@ -14,9 +14,11 @@ Updated version of Rinberg lab [olfactometry](https://github.com/olfa-lab/olfact
         - Save the folder to a directory on your computer.
 2. Open the command prompt and navigate to the directory this folder is stored in.
 3. *Optional:* Create & activate a virtual environment
-4. Install the required packages by entering: ``` pip install -r requirements_standard_olf.txt ``` into the command prompt.
-
-<br>
+4. Install the required packages by entering:
+```bash
+pip install -r requirements_standard_olf.txt
+```
+into the command prompt.
 
 ## JSON configuration file
 The configuration of the gui and devices is driven by a new JSON formatted configuration file. Its presence is necessary
@@ -26,14 +28,11 @@ project as: [olfa_config.json](olfa_config.json).
 The default file location for the config file is C:\\voyeur_rig_config\\olfa_config.json, but this location can be changed
 by passing the file location to the instantiating classes.
 
-<br>
-
 ## Basic use
 
-[JSON configuration file](docs/json_specs.md) must be present in the current directory.
+[JSON configuration file](json_specs.md) must be present in the current directory.
 
 GUI can be run from a python prompt:
-
 
 ```
 >>> import olfactometry
@@ -42,7 +41,7 @@ GUI can be run from a python prompt:
 >>> # if no filename is passed, it will use the default (C:\\voyeur_rig_config\\olfa_config.json)
 ```
 
-
+![noimage](main.png)
 
 To use the package in a larger program is simple too:
 ```python
