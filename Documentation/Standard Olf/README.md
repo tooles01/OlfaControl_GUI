@@ -25,6 +25,9 @@ flownum = (flowrate / mfc capacity) * 64000
 `DMFC 1 2 A32000    // Set MFC 2 (200cc capacity) to 100cc`  
 `DMFC 1 2 A16000    // Set MFC 2 (200cc capacity) to 50cc`  
 `DMFC 1 2 A8000     // Set MFC 2 (200cc capacity) to 25cc`  
+
+`DMFC 1 2 A32000    // Set MFC 2 (1000cc capacity) to 500cc`  
+`DMFC 1 2 A6400     // Set MFC 2 (1000cc capacity) to 100cc`  
 <br>
 
  *** *Note:* Current version of the standard olf GUI does not include functions for sending/receiving messages on analog, the below  section is just for comprehensive documentation purposes 

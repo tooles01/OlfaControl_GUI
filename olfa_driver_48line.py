@@ -227,7 +227,6 @@ class Vial(QGroupBox):
     
     def cal_table_updated(self, new_cal_table):
         self.cal_table = new_cal_table
-        logger.debug('cal table for %s set to %s', self.full_vialNum, self.cal_table)
         
         self.intToSccm_dict = self.olfactometer_parent_object.ard2Sccm_dicts.get(self.cal_table)
         self.sccmToInt_dict = self.olfactometer_parent_object.sccm2Ard_dicts.get(self.cal_table)
@@ -817,6 +816,7 @@ class olfactometer_window(QGroupBox):
             if len(new_sccm2Ard_dicts) != 0:
                 self.sccm2Ard_dicts = new_sccm2Ard_dicts
                 self.ard2Sccm_dicts = new_ard2Sccm_dicts
+                logger.debug('%s calibration files found', len(new_sccm2Ard_dicts))
             else:
                 logger.warning('No calibration files found in this directory')
         
@@ -849,7 +849,10 @@ class olfactometer_window(QGroupBox):
                             v.cal_table = cal_table
                             v.vial_details_window.db_cal_table_combobox.setCurrentText(v.cal_table)
                         else:
-                            logger.warning('config file has an invalid cal table: %s', cal_table)
+                            logger.warning('cal table for %s (%s) is not found in the combobox', v.full_vialNum, cal_table)
+                            logger.warning('\tlist of tables in the combobox:')
+                            for table_name in cal_table_options_list:
+                                logger.warning('\t\t%s', table_name)
         except KeyError:
             logger.warning('Invalid config file selected - try again')
         
@@ -862,7 +865,7 @@ class olfactometer_window(QGroupBox):
                     if vial_name in self.config_mfc_capacity:
                         v.mfc_capacity = self.config_mfc_capacity.get(vial_name)
                         v.vial_details_window.setpoint_slider.setMaximum(int(v.mfc_capacity))
-                        logger.debug('%s capacity set to %s', vial_name, v.mfc_capacity)
+                        #logger.debug('%s capacity set to %s', vial_name, v.mfc_capacity)
         except KeyError:
             logger.warning('Selected config file does not include Flow Sensor Capacities')
     

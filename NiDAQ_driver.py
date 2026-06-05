@@ -111,8 +111,8 @@ class NiDaq(QGroupBox):
         self.channelToRead.setToolTip("Device channel to read from")
         self.channel_widget = QComboBox()
         
-        if self.port != noPortMsg:
-            self.channelToRead.setText(analogChannel)
+        #if self.port != noPortMsg:
+        self.channelToRead.setText(analogChannel)
         
         self.connectBoxLayout = QFormLayout()
         self.connectBoxLayout.addRow(self.portLbl,self.portWidget)
@@ -156,6 +156,9 @@ class NiDaq(QGroupBox):
             self.channel_name = self.channelToRead.text()
             self.worker_obj_nidaq.analogChan = self.channel_name
             self.worker_obj_nidaq.readTheStuff = True
+
+            # Send device name to worker object
+            self.worker_obj_nidaq.devName = self.port
             
             # Start thread
             self.thread_nidaq.start()
