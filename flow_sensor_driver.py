@@ -1,11 +1,11 @@
 '''
-flowSensor_driver.py
+flow_sensor_driver.py
 for Honeywell 5100V
 
 To be used with sketch readHoneywell5100V.ino
 '''
 
-import os, sys, logging, csv, time
+import os, sys, logging, csv
 from PyQt5 import QtCore, QtSerialPort
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QTimer
@@ -13,9 +13,8 @@ from serial.tools import list_ports
 import numpy as np
 from datetime import datetime, timedelta
 
-import utils, utils_olfa_48line
 
-currentDate = utils.currentDate
+currentDate = str(datetime.date(datetime.now()))
 noPortMsg = ' ~ No COM ports detected ~'
 
 flowSens_baud = 9600
@@ -30,13 +29,89 @@ def_MFC_value = '100'
 def_cal_duration = '10'
 max_calibration_table_value_sccm = '1000'   # TODO change this to mfc capacity
 
+calibration_file_dir_name = 'calibration_tables'
 
+def get_current_time():
+    current_time = datetime.time(datetime.now())
+    current_time_f = current_time.strftime('%H:%M:%S.%f')
+    current_time_str = current_time_f[:-3]
+    return current_time_str
+
+def create_console_handler():    
+    console_handler_formatter = logging.Formatter('%(asctime)s : %(name)-14s :%(levelname)-8s: %(message)s',datefmt='%H:%M:%S')
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    console_handler.setFormatter(console_handler_formatter)
+    
+    return console_handler
+
+def find_calibration_table_directory():
+    ''' Finds (& returns) "calibration_tables" directory '''
+    
+    # Search for "..\calibration_tables" directory
+    logger.debug('Searching current directory for calibration_tables directory...')
+    current_dir = os.getcwd()
+    calibration_table_directory = current_dir + '\\' + calibration_file_dir_name
+    if os.path.exists(calibration_table_directory):
+        logger.debug('Found calibration_tables directory at "%s"', calibration_table_directory)
+    else:
+        # In case of different operating system
+        calibration_table_directory = current_dir + '/' + calibration_file_dir_name
+        if os.path.exists(calibration_table_directory):
+            logger.debug('Found calibration_tables directory at "%s"', calibration_table_directory)
+    
+    if not os.path.exists(calibration_table_directory):
+        logger.warning('Cannot find calibration_tables directory')
+        calibration_table_directory = ''
+
+    return calibration_table_directory
+
+def convertToSCCM(ardVal, dictionary):
+    if ardVal in dictionary:    val_SCCM = dictionary.get(ardVal)
+    else:
+        minVal = min(dictionary)
+        maxVal = max(dictionary)
+        if ardVal < minVal:     val_SCCM = dictionary.get(minVal)
+        elif ardVal > maxVal:   val_SCCM = dictionary.get(maxVal)
+        else:
+
+            # get list of dictionary keys
+            list_of_ard_values = list(dictionary.keys())
+
+            # find the closest value to my value
+            val1 = min(list_of_ard_values,key=lambda x:abs(x-ardVal))
+
+            # get the index of that value
+            val1_idx = list_of_ard_values.index(val1)
+
+            # get val2 index (check if val 1 is larger or not)
+            # THIS IS DEPENDENT ON THE CAL TABLE BEING IN DECREASING ORDER
+            if val1 > ardVal:
+                val2_idx = val1_idx + 1
+            else:
+                val2_idx = val1_idx - 1
+
+            # get val2
+            val2 = list_of_ard_values[val2_idx]
+
+            # get flows
+            flow1 = dictionary.get(val1)
+            flow2 = dictionary.get(val2)
+
+            # do the rest of the calculations
+            slope = (flow2-flow1)/(val2-val1)
+            x1 = ardVal - val1
+            addNum = x1*slope
+            val_SCCM = flow1 + addNum
+            val_SCCM = round(val_SCCM,1)
+    
+    return val_SCCM
 
 # CREATE LOGGER
 logger = logging.getLogger(name='flow sensor')
 logger.setLevel(logging.DEBUG)
 if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
-console_handler = utils.create_console_handler()
+console_handler = create_console_handler()
 logger.addHandler(console_handler)
 
 
@@ -49,7 +124,7 @@ class flowSensor(QGroupBox):
         self.calibration_on = False
 
         # look for calibration table directory
-        self.flow_cal_dir = utils.find_calibration_table_directory()
+        self.flow_cal_dir = find_calibration_table_directory()
         if os.path.exists(self.flow_cal_dir):
             self.get_calibration_tables()
         else:
@@ -153,7 +228,7 @@ class flowSensor(QGroupBox):
         self.new_cal_box = QGroupBox('New calibration')
         
         # File name/Directory
-        cal_file_name = def_new_cal_table_name + '_' + utils.currentDate
+        cal_file_name = def_new_cal_table_name + '_' + currentDate
         self.cal_file_dir_wid = QLineEdit(text=self.flow_cal_dir)
         self.cal_file_name_wid = QLineEdit(text=cal_file_name)
 
@@ -449,7 +524,7 @@ class flowSensor(QGroupBox):
     
     def create_file(self):
         logger.info('Creating calibration file: %s.csv (%s)', self.new_cal_file_name, self.new_cal_file_dir)
-        file_created_time = utils.get_current_time()
+        file_created_time = get_current_time()
         File = self.new_cal_file_name,file_created_time
         row_headers = 'SCCM','int'
         
@@ -642,7 +717,7 @@ class flowSensor(QGroupBox):
                 if text.isnumeric():
                     str_value = text
                     flowVal_int = int(text)
-                    val_SCCM = utils_olfa_48line.convertToSCCM(flowVal_int,self.intToSccm_dict)
+                    val_SCCM = convertToSCCM(flowVal_int,self.intToSccm_dict)
                     dataStr = str_value + '\t' + str(val_SCCM)
                     self.receive_box.append(dataStr)
 
