@@ -13,8 +13,14 @@ import config_main
 programs_48line = ['custom','setpoint characterization','additive','cleaning']
 programs_orig = ['the program']
 
-current_date = utils.currentDate
+current_date = str(datetime.date(datetime.now()))
 ZMQ_default_address = "tcp://127.0.0.1:5556"
+
+def get_current_time():
+    current_time = datetime.time(datetime.now())
+    current_time_f = current_time.strftime('%H:%M:%S.%f')
+    current_time_str = current_time_f[:-3]
+    return current_time_str
 
 ##############################
 # CREATE LOGGER
@@ -22,6 +28,7 @@ main_datafile_directory = utils.find_log_directory()
 if not os.path.exists(main_datafile_directory): os.mkdir(main_datafile_directory)   # if folder doesn't exist, make it
 logger = logging.getLogger(name='main')
 logger.setLevel(logging.DEBUG)
+logger.propagate = False    # removes duplicate log messages
 if logger.hasHandlers():    logger.handlers.clear()     # removes duplicate log messages
 console_handler = utils.create_console_handler()
 file_handler = utils.create_file_handler(main_datafile_directory)
@@ -700,7 +707,7 @@ class mainWindow(QMainWindow):
         if not os.path.exists(self.datafile_dir):
             logger.info('Creating new file: %s', datafile_name)
             File = datafile_name, ' '
-            file_created_time = utils.get_current_time()
+            file_created_time = get_current_time()
             file_created_time = file_created_time[:-4]
             with open(self.datafile_dir,'a',newline='') as f:
                 writer = csv.writer(f,delimiter=',')
@@ -783,7 +790,7 @@ class mainWindow(QMainWindow):
         self.data_file_name_lineEdit.setText(data_file_name)
     ##############################
     
-    
+
     ##############################
     # PROGRAM WIDGETS FOR 48-LINE OLFA
     def create_48line_program_widgets(self):
@@ -1527,7 +1534,7 @@ class mainWindow(QMainWindow):
             if not os.path.exists(self.datafile_dir):
                 logger.info('Creating new file: %s (%s)', datafile_name, self.datafile_dir)
                 File = datafile_name, ' '
-                file_created_time = utils.get_current_time()
+                file_created_time = get_current_time()
                 file_created_time = file_created_time[:-4]
                 Time = 'File Created: ', str(current_date + ' ' + file_created_time)
                 # Write file header
@@ -1658,7 +1665,7 @@ class mainWindow(QMainWindow):
     def receive_data_from_device(self, device, unit, value):
         # if recording is ON: write to datafile
         if self.begin_record_btn.isChecked():
-            current_time = utils.get_current_time()
+            current_time = get_current_time()
             write_to_file = current_time,device,unit,str(value)
             with open(self.datafile_dir,'a',newline='') as f:
                 writer = csv.writer(f,delimiter=',')

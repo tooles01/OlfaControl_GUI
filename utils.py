@@ -2,17 +2,8 @@ import logging, os
 from datetime import datetime
 import config_main
 
-
-#################################
-# TIME
 currentDate = str(datetime.date(datetime.now()))
-
-def get_current_time():
-    current_time = datetime.time(datetime.now())
-    current_time_f = current_time.strftime('%H:%M:%S.%f')
-    current_time_str = current_time_f[:-3]
-
-    return current_time_str
+calibration_file_dir_name = 'calibration_tables'
 
 
 
@@ -27,26 +18,22 @@ def create_file_handler(log_dir):
 
     file_name = 'logfile_{}.txt'.format(currentDate)
     logFilePath = log_dir + '\\' + file_name
-    
-    file_handler_level = logging.INFO
     file_handler_formatter = logging.Formatter('%(asctime)s.%(msecs)03d : %(name)-14s :%(levelname)-8s: %(message)s',datefmt='%H:%M:%S')
     file_handler = logging.FileHandler(logFilePath,mode='a')
-    file_handler.setLevel(file_handler_level)
+    file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(file_handler_formatter)
     
     return file_handler
 
-def create_console_handler():   # TODO: user sends log level to this function
+def create_console_handler():
     '''
     Returns console handler for logger
         Set level to 'DEBUG'
     '''
-    
-    console_handler_level = logging.DEBUG
-    console_handler_formatter = logging.Formatter('%(asctime)s : %(name)-14s :%(levelname)-8s: %(message)s',datefmt='%H:%M:%S')
 
+    console_handler_formatter = logging.Formatter('%(asctime)s : %(name)-14s :%(levelname)-8s: %(message)s',datefmt='%H:%M:%S')
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(console_handler_level)
+    console_handler.setLevel(logging.DEBUG)
     console_handler.setFormatter(console_handler_formatter)
     
     return console_handler
@@ -125,35 +112,6 @@ def find_log_directory():
         os.mkdir(result_file_directory)
     
     return result_file_directory
-
-def find_calibration_table_directory():
-    ''' Finds (& returns) "calibration_tables" directory '''
-    
-    # If "..\OlfaControl_GUI" not found, search current working directory
-    olfacontrolgui_directory = find_olfaControl_directory()
-    if not olfacontrolgui_directory:
-        directory_to_search = os.getcwd()
-        logger.debug('Searching current directory for calibration_tables directory...')
-    else:
-        directory_to_search = olfacontrolgui_directory
-        logger.debug('Searching OlfaControl_GUI for calibration_tables directory...')
-
-    # Search for "..\calibration_tables" directory
-    calibration_table_directory = directory_to_search + '\\' + config_main.calibration_file_dir_name
-    if os.path.exists(calibration_table_directory):
-        logger.debug('Found calibration_tables directory at "%s"', calibration_table_directory)
-    else:
-        # In case of different operating system
-        calibration_table_directory = directory_to_search + '/' + config_main.calibration_file_dir_name
-        if os.path.exists(calibration_table_directory):
-            logger.debug('Found calibration_tables directory at "%s"', calibration_table_directory)
-    
-    if not os.path.exists(calibration_table_directory):
-        logger.warning('Cannot find calibration_tables directory')
-        calibration_table_directory = ''
-
-    return calibration_table_directory
-
 
 
 #################################

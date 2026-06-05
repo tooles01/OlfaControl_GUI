@@ -11,6 +11,8 @@ import plot_widget
 
 # TODO close this window if the olfactometer window is closed or the Arduino is disconnected
 
+currentDate = str(datetime.date(datetime.now()))
+
 ##############################
 # DEFAULT VALUES
 def_pressurize_duration = '1'
@@ -31,6 +33,11 @@ file_handler = utils.create_file_handler(main_datafile_directory)
 logger.addHandler(file_handler)
 ##############################
 
+def get_current_time():
+    current_time = datetime.time(datetime.now())
+    current_time_f = current_time.strftime('%H:%M:%S.%f')
+    current_time_str = current_time_f[:-3]
+    return current_time_str
 
 class VialDetailsPopup(QWidget):
     
@@ -275,7 +282,7 @@ class VialDetailsPopup(QWidget):
         self.db_cal_box = QGroupBox('Flow Sensor Calibration')
 
         # File name
-        cal_file_name = self.full_vialNum + '_' + utils.currentDate
+        cal_file_name = self.full_vialNum + '_' + currentDate
         self.cal_file_name_lbl = QLabel('File Name:')
         self.cal_file_name_wid = QLineEdit(text=cal_file_name)
         self.cal_file_dir_lbl = QLabel('Directory:')
@@ -636,7 +643,7 @@ class VialDetailsPopup(QWidget):
     
     def create_file(self):
         logger.info('Creating calibration file: %s (%s)', self.new_cal_file_name, self.new_cal_file_dir)
-        file_created_time = utils.get_current_time()
+        file_created_time = get_current_time()
         File = self.new_cal_file_name,file_created_time
         row_headers = 'SCCM','int'
         # Write file header

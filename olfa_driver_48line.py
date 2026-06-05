@@ -27,6 +27,28 @@ logger.addHandler(file_handler)
 default_olfa_config_file = 'olfa_config__default.json'
 max_calibration_table_value_sccm = '1000'   # TODO change this to mfc capacity
 ZMQ_default_address = "tcp://127.0.0.1:5556"
+calibration_file_dir_name = 'calibration_tables'
+
+def find_calibration_table_directory():
+    ''' Finds (& returns) "calibration_tables" directory '''
+    
+    # Search for "..\calibration_tables" directory
+    logger.debug('Searching current directory for calibration_tables directory...')
+    current_dir = os.getcwd()
+    calibration_table_directory = current_dir + '\\' + calibration_file_dir_name
+    if os.path.exists(calibration_table_directory):
+        logger.debug('Found calibration_tables directory at "%s"', calibration_table_directory)
+    else:
+        # In case of different operating system
+        calibration_table_directory = current_dir + '/' + calibration_file_dir_name
+        if os.path.exists(calibration_table_directory):
+            logger.debug('Found calibration_tables directory at "%s"', calibration_table_directory)
+    
+    if not os.path.exists(calibration_table_directory):
+        logger.warning('Cannot find calibration_tables directory')
+        calibration_table_directory = ''
+
+    return calibration_table_directory
 
 class worker_zmq_thread(QThread):
     finished = pyqtSignal()     # Signal to communicate with the main thread
@@ -478,7 +500,7 @@ class olfactometer_window(QGroupBox):
         self.zmq_enabled = False
         
         # Find "..\calibration_tables" directory
-        self.flow_cal_dir = utils.find_calibration_table_directory()
+        self.flow_cal_dir = find_calibration_table_directory()
         if self.flow_cal_dir != '':
             self.get_calibration_tables()
         else:
