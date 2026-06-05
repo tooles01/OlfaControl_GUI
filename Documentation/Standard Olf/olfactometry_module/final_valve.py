@@ -177,7 +177,7 @@ class Final_Valve(QGroupBox):
 
     def set_connected(self, connected):
         if connected == True:
-            logger.info('Connected to ' + self.port_widget.currentText())
+            logger.info('Connected to final valve at ' + self.port_widget.currentText())
             self.connect_btn.setText("Disconnect")
             self.connect_btn.setToolTip("Disconnect from " + self.portStr)
             self.refresh_btn.setEnabled(False)
@@ -205,11 +205,10 @@ class Final_Valve(QGroupBox):
     
     # SEND MESSAGE
     def send_to_Arduino(self, strToSend):
-        #bArr_send = strToSend.encode()
         bArr_send = (strToSend + '\n').encode()
         try:
             if self.serial.isOpen():
-                logger.info("Sending string to Arduino: %s", strToSend)
+                logger.debug("Sending string to Arduino: %s", strToSend)
                 self.serial.write(bArr_send)                # Send to Arduino
                 self.raw_write_display.append(strToSend)    # Display string that was sent
             else:
@@ -217,6 +216,8 @@ class Final_Valve(QGroupBox):
         except AttributeError as err:
             if (err.args[0] == "'Final_Valve' object has no attribute 'serial'"):
                 logger.warning('(Attribute Error) Serial port not open, cannot send parameter: %s', strToSend)
+            else:
+                logger.warning('Unknown error: %s', err)
     
     def receive_message(self):
         if self.serial.canReadLine() == True:
