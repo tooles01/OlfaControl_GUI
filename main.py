@@ -6,11 +6,11 @@ from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 from datetime import datetime
 
 import NiDAQ_driver, flow_sensor_driver, olfa_driver_original, olfa_driver_48line
-import utils, utils_olfa_48line, program_additive_popup
+import utils, utils_olfa_48line, program_additive_popup, program_custom_popup
 import config_main
 
 
-programs_48line = ['setpoint characterization','additive','cleaning']
+programs_48line = ['custom','setpoint characterization','additive','cleaning']
 programs_orig = ['the program']
 
 current_date = utils.currentDate
@@ -246,6 +246,92 @@ class worker_cleaning(QObject):
         time_remaining = self.full_trial_duration_sec - time_elapsed
         self.w_incProgBar.emit(int(ratio_of_entire_duration*100),round(time_remaining))
 
+class worker_custom(QObject):
+    finished = pyqtSignal()
+    w_sendThisSp = pyqtSignal(str,int)
+    w_send_OpenValve = pyqtSignal(str,float)
+    w_incProgBar = pyqtSignal(int,int)
+
+    def __init__(self):
+        super().__init__()
+        self.threadON = False
+        
+        self.complete_stimulus_list = []
+        self.duration_on = 5
+        self.duration_off = 5
+    
+    @pyqtSlot()
+    def exp(self):
+        # do an off duration so we have a better baseline
+        time.sleep(self.duration_off)
+
+        # calculate full duration of entire shenanigan (for progress bar)
+        self.full_trial_duration_sec = (self.duration_on+self.duration_off) * len(self.complete_stimulus_list)
+        self.trial_start_time = datetime.now()
+
+        # iterate through stimulus list
+        i = 1
+        for stimulus in self.complete_stimulus_list:
+            if self.threadON == True:                
+                # Log the trial number
+                logger.debug('\n')
+                logger.debug("\tTrial %s", str(i)); i = i+1
+                
+                # For this stimulus (dict of 'vial_num': flow_rate):
+                # Get the list of vials/flows
+                #logger.debug('\t get list of vials/flows for this trial')
+                this_trial_vials = []
+                this_trial_flows = []
+                for vial_num, flow_rate in stimulus.items():
+                    this_vial_flow_rate = flow_rate
+                    #logger.debug("\t\tvial %s, flow %s", str(vial_num), this_vial_flow_rate)
+
+                    # Get which ones have flow > 0
+                    if this_vial_flow_rate > 0:
+                        this_trial_vials.append(str(vial_num))
+                        this_trial_flows.append(this_vial_flow_rate)
+
+                # Set the flow rates
+                for idx, vial in enumerate(this_trial_vials):
+                    this_flow = int(this_trial_flows[idx])   # convert from float to int
+                    # TODO convert from SCCM to int
+                    logger.debug('\t\tSetting %s to %s integer', vial, this_flow)
+                    self.w_sendThisSp.emit(vial,this_flow)  # we want to use sendThisSetpoint because it will log the setpoint
+                    time.sleep(.1)
+
+                # Open the vials
+                # If there is more than one vial
+
+                # If there is one vial
+
+
+                # If there are no vials
+                if not this_trial_vials == []:
+                    # If it's more than one vial, keep only the A for the first on
+                    this_trial_vials_str = this_trial_vials[0][0] + ''.join(v[1:] for v in this_trial_vials)
+                    logger.debug("\tOpening vial(s) %s for %s seconds", this_trial_vials_str,self.duration_on)
+                    self.w_send_OpenValve.emit(this_trial_vials_str,float(self.duration_on))
+                else:
+                    logger.info('No vials to open this trial')
+
+                # Wait while the vial is open
+                self.update_progress_bar()
+                time.sleep(self.duration_on)
+                self.update_progress_bar()
+
+                # Wait for the vial close time (TODO 10/23/2025 will need to calculate this)
+                time.sleep(self.duration_off)
+                self.update_progress_bar()
+
+        self.update_progress_bar()
+        self.finished.emit()
+
+    def update_progress_bar(self):
+        current_time = datetime.now()
+        time_elapsed = (current_time - self.trial_start_time).total_seconds()
+        ratio_of_entire_duration = time_elapsed / self.full_trial_duration_sec
+        time_remaining = self.full_trial_duration_sec - time_elapsed
+        self.w_incProgBar.emit(int(ratio_of_entire_duration*100),round(time_remaining))
 
 class worker_zmq_thread(QThread):
     finished = pyqtSignal()     # Signal to communicate with the main thread
@@ -289,6 +375,7 @@ class mainWindow(QMainWindow):
         self.set_up_threads_sptchar()
         self.set_up_threads_additive()
         self.set_up_threads_cleaning()
+        self.set_up_threads_custom()
         
         self.mainLayout = QHBoxLayout()
         self.mainLayout.addWidget(self.settings_box)
@@ -433,7 +520,7 @@ class mainWindow(QMainWindow):
         self.add_pid_btn = QPushButton(text='Add PID',checkable=True,toggled=self.add_pid_toggled)
         self.add_olfa_orig_btn = QPushButton(text='Add Olfactometer\n(original)',checkable=True,toggled=self.add_olfa_orig_toggled)
         self.add_flow_sens_btn = QPushButton(text='Add\nHoneywell 5100V',checkable=True,toggled=self.add_flow_sens_toggled)
-        
+
         layout = QVBoxLayout()
         layout.addWidget(self.add_pid_btn)
         layout.addWidget(self.add_flow_sens_btn)
@@ -490,6 +577,9 @@ class mainWindow(QMainWindow):
             
             if self.program_to_run == "cleaning":
                 self.create_cleaning_widgets()
+
+            if self.program_to_run == "custom":
+                self.create_custom_widgets()
         
         else:
             self.program_selection_btn.setText("Select")
@@ -569,6 +659,8 @@ class mainWindow(QMainWindow):
                     self.run_additive_program()
                 if self.program_to_run == 'cleaning':
                     self.run_cleaning_program()
+                if self.program_to_run == 'custom':
+                    self.run_custom_program()
             except AttributeError as err:
                 logger.error('No program selected')
                 self.program_start_btn.setChecked(False)
@@ -871,6 +963,10 @@ class mainWindow(QMainWindow):
         layout.addLayout(layout_params)
         self.program_parameters_layout.addRow(layout)
 
+    def create_custom_widgets(self):
+        self.custom_parameters_window = program_custom_popup.custom_program_popup(self)
+        self.custom_parameters_window.show()
+
     def additive_parameters_display(self):
         ## function is called from the popup window
         
@@ -1139,6 +1235,31 @@ class mainWindow(QMainWindow):
             logger.error('olfactometer has no active slaves - cannot run program')
             self.program_start_btn.setChecked(False)
 
+    def run_custom_program(self):
+        logger.info("run custom program")
+        
+        # Get parameters (duration on, duration off) from window
+        # TEMP 10/23/2025 we are making them up for now
+        duration_on = 3
+        duration_off = 3
+
+        # GET STIMULUS LIST
+        complete_stimulus_list = self.custom_parameters_window.complete_stimulus_list
+
+        # SEND PARAMETERS TO WORKER OBJECT
+        self.obj_custom.complete_stimulus_list = complete_stimulus_list
+        self.obj_custom.duration_on = duration_on
+        self.obj_custom.duration_off = duration_off
+
+        # START RECORDING
+        if self.begin_record_btn.isChecked() == False:
+            self.begin_record_btn.click()
+        
+        # START WORKER THREAD
+        self.obj_custom.threadON = True
+        logger.debug('starting thread_custom')
+        logger.warning('WARNING: not fully debugged!!!!')
+        self.thread_custom.start()
 
     def set_up_threads_sptchar(self):
         self.obj_sptchar = worker_sptChar()
@@ -1174,6 +1295,18 @@ class mainWindow(QMainWindow):
         self.obj_cleaning.finished.connect(self.threadIsFinished)
         self.thread_cleaning.started.connect(self.obj_cleaning.exp)
 
+    def set_up_threads_custom(self):
+        self.obj_custom = worker_custom()
+        self.thread_custom = QThread()
+        self.obj_custom.moveToThread(self.thread_custom)
+
+        # CONNECT SIGNALS
+        self.obj_custom.w_sendThisSp.connect(self.sendThisSetpoint)
+        self.obj_custom.w_send_OpenValve.connect(self.send_OpenValve)
+        self.obj_custom.w_incProgBar.connect(self.increment_progress_bar)
+        self.obj_custom.finished.connect(self.threadIsFinished)
+        self.thread_custom.started.connect(self.obj_custom.exp)
+    
     def threadIsFinished(self):
         if self.obj_sptchar.threadON == True:
             self.obj_sptchar.threadON = False
@@ -1193,7 +1326,13 @@ class mainWindow(QMainWindow):
             self.thread_cleaning.wait()
             if self.thread_cleaning.isRunning() == False:
                 logger.debug('cleaning program finished')
-        
+        if self.obj_custom.threadON == True:
+            self.obj_custom.threadON = False
+            self.thread_custom.exit()
+            self.thread_custom.wait()
+            if self.thread_custom.isRunning() == False:
+                logger.debug('custom program finished')
+
         if self.program_start_btn.isChecked() == True:
             self.program_start_btn.setChecked(False)
         self.program_start_btn.setText('Start Program')
@@ -1225,6 +1364,7 @@ class mainWindow(QMainWindow):
     def sendThisSetpoint(self, vial_name:str, ard_val:int):
         strToSend = 'S_Sp_' + str(ard_val) + '_' + vial_name
         self.olfactometer.send_to_master(strToSend)
+        #logger.debug("Sending:\t %s", strToSend)    # TEMP 11/7/2025
 
         # write to datafile
         self.receive_data_from_device('olfactometer ' + vial_name,'Sp',str(ard_val))
@@ -1232,6 +1372,7 @@ class mainWindow(QMainWindow):
     def send_OpenValve(self, vial_name:str, dur:float):
         strToSend = 'S_OV_' + str(dur) + '_' + vial_name
         self.olfactometer.send_to_master(strToSend)
+        #logger.debug("Sending:\t %s", strToSend)    # TEMP 11/7/2025
 
         # write to datafile
         self.receive_data_from_device('olfactometer ' + vial_name,'OV',str(dur))
