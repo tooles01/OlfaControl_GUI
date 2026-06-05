@@ -306,8 +306,7 @@ class mainWindow(QMainWindow):
             vial_is_checked = v.isChecked()
             if vial_is_checked == True:
                 this_vial_num = int(v.text())
-                temp = [this_vial_num]*n_rep
-                vials_complete_list.append(temp)
+                vials_complete_list.extend([this_vial_num] * n_rep)
         random.shuffle(vials_complete_list)
         self.stimulus_list = vials_complete_list
         
