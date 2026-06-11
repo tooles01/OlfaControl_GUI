@@ -226,12 +226,14 @@ class mainWindow(QMainWindow):
             self.add_olfa_btn.setText('Remove Olfactometer')
             # Create olfactometer
             try:
+                # Create olfactometer object
                 self.olfas = olfactometry.Olfactometers(parent=self,config_obj=self.config_file)
                 #for olfa in self.olfas:
                 # fuck it assume one for now
                 self.olfactometer = self.olfas[0]
                 self.device_layout.addWidget(self.olfactometer)
                 
+                # Update GUI
                 self.config_file_select_wid.setEnabled(False)
             except SerialException as err:
                 print('com port bad: %s', err)
@@ -240,13 +242,25 @@ class mainWindow(QMainWindow):
         else:
             logger.debug('removing olfactometer')
             self.add_olfa_btn.setText('Add Olfactometer')
-            try:
-                self.olfactometer.serial.close()        # Make sure you disconnect the com port
-                self.mainLayout.removeWidget(self.olfactometer)
-                sip.delete(self.olfactometer)
-                self.config_file_select_wid.setEnabled(True)
-            except AttributeError:
-                logger.debug('no olfactometer')
+            
+            # Disconnect the com ports
+            self.olfactometer.serial.close()
+            if not self.olfactometer.serial.is_open:
+                logger.info("Disconnected olfactometer at %s", self.olfactometer.serial.port)
+            else:
+                logger.warning("Could not disconnect olfactometer at %s", self.olfactometer.serial.port)
+            
+            for dilutor in self.olfactometer.dilutors:
+                dilutor.serial.close()
+                if not dilutor.serial.is_open:
+                    logger.info("Disconnected dilutor at %s", dilutor.serial.port)
+                else:
+                    logger.warning('Could not disconnect dilutor at %s', dilutor.serial.port)
+            
+            # Update GUI
+            self.mainLayout.removeWidget(self.olfactometer)
+            sip.delete(self.olfactometer)
+            self.config_file_select_wid.setEnabled(True)
     
     def add_fv_toggled(self, checked):
         if checked:
