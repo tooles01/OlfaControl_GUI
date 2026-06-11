@@ -1,8 +1,8 @@
 '''
 flow_sensor_driver.py
-for Honeywell 5100V
+for Honeywell 5100V, 3100V, etc
 
-To be used with sketch readHoneywell5100V.ino
+To be used with Arduino sketch read_flow_sensor.ino
 '''
 
 import os, sys, logging, csv
