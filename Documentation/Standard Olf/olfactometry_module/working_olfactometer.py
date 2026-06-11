@@ -7,7 +7,7 @@ GUI for using both the olfactometer and final valve at the same time
 ST 5/21/2026
 '''
 
-import sys, logging, time, random
+import sys, os, logging, time, random
 from PyQt5 import sip
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
@@ -117,6 +117,7 @@ class mainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        self.config_file = None
 
         self.generate_ui()
         self.set_up_threads()
@@ -164,11 +165,15 @@ class mainWindow(QMainWindow):
         
         self.config_file_name_wid = QLineEdit()
         self.config_file_name_wid.setText(config_file)
-        self.config_file_name_wid.setToolTip("this is a placeholder, doesn't do anything right now")
         self.config_file_name_wid.setEnabled(False)
 
-        layout = QVBoxLayout()
+        self.config_file_select_wid = QPushButton('Select',checkable=True)
+        self.config_file_select_wid.setToolTip('Select olfa config file')
+        self.config_file_select_wid.toggled.connect(self.config_file_select_toggled)
+
+        layout = QHBoxLayout()
         layout.addWidget(self.config_file_name_wid)
+        layout.addWidget(self.config_file_select_wid)
         self.olfa_settings_groupbox.setLayout(layout)
 
     def create_program_box(self):
@@ -221,22 +226,25 @@ class mainWindow(QMainWindow):
             self.add_olfa_btn.setText('Remove Olfactometer')
             # Create olfactometer
             try:
-                self.olfas = olfactometry.Olfactometers(parent=self)
+                self.olfas = olfactometry.Olfactometers(parent=self,config_obj=self.config_file)
                 #for olfa in self.olfas:
                 # fuck it assume one for now
                 self.olfactometer = self.olfas[0]
                 self.device_layout.addWidget(self.olfactometer)
-            except SerialException:
-                print('com port bad')
+                
+                self.config_file_select_wid.setEnabled(False)
+            except SerialException as err:
+                print('com port bad: %s', err)
                 self.add_olfa_btn.setChecked(False)
 
         else:
             logger.debug('removing olfactometer')
             self.add_olfa_btn.setText('Add Olfactometer')
             try:
-                self.olfactometer.serial.close()    # Make sure you disconnect the com port
+                self.olfactometer.serial.close()        # Make sure you disconnect the com port
                 self.mainLayout.removeWidget(self.olfactometer)
                 sip.delete(self.olfactometer)
+                self.config_file_select_wid.setEnabled(True)
             except AttributeError:
                 logger.debug('no olfactometer')
     
@@ -254,6 +262,24 @@ class mainWindow(QMainWindow):
             sip.delete(self.final_valve)
     ##################################
 
+    def config_file_select_toggled(self, checked):
+        if checked:
+            # Open File Select Dialog
+            dlg = QFileDialog()
+            dlg.setFileMode(QFileDialog.ExistingFile)   # Single existing file
+            dlg.setNameFilter("JSON Files (*.json)")    # Set file filter to .json
+            if dlg.exec_():
+                file_selected = dlg.selectedFiles()
+                file_selected = file_selected[0]
+                logger.info('File selected: %s', file_selected)
+                self.config_file_name_wid.setText(os.path.basename(file_selected))
+                self.config_file = file_selected
+                self.config_file_select_wid.setChecked(False)
+            else:
+                logger.debug('File selection cancelled')
+                self.config_file_select_wid.setChecked(False)
+        else:
+            pass
     
     ##################################
     # THREADS
