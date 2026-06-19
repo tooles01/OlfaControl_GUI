@@ -1,7 +1,10 @@
 /*
- * 1/16/2026
+ * BASIS2_communication_2.ino
  * 
- * BASIS MFC
+ * Communicate with Alicat BASIS2 over the serial line
+ * Connect MFC serial pins to corresponding Arduino serial pins
+ * MFC baud rate must be set to 38400 for communication to work
+ * 
  * 
  * yellow TX --> Arduino 10 (RX)
  * green  RX --> Arduino 11 (TX)
@@ -13,6 +16,9 @@
  * Enter them on the serial line
  * 
  * Note: When sending setpoint, BASIS sends back the entire data frame
+ *
+ * 
+ * ST 1/16/2026
  */
 
 
@@ -24,7 +30,7 @@ String toSend = "";
 
 void setup() {
   Serial.begin(9600);
-  alicatSerial.begin(19200);
+  alicatSerial.begin(38400);
   Serial.println("Testing SoftwareSerial...");
 }
 
