@@ -1,5 +1,5 @@
 /*
- * BASIS2_communication_2.ino
+ * BASIS2_communication.ino
  * 
  * Communicate with Alicat BASIS2 over the serial line
  * Connect MFC serial pins to corresponding Arduino serial pins
