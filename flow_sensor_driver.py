@@ -1,8 +1,26 @@
 '''
 flow_sensor_driver.py
-for Honeywell 5100V, 3100V, etc
 
+PyQt5-based GUI for connecting to, reading from, and calibrating Honeywell flow sensors via serial communication.
 To be used with Arduino sketch read_flow_sensor.ino
+
+
+Notes:
+  - Calibration tables are stored as .txt files in the 'calibration_tables' directory
+  - Baud rate: 9600
+
+Usage:
+  Run directly as a standalone application:
+      python flow_sensor_diagnostics.py
+
+  Or import the flowSensor class into a parent application:
+      from flow_sensor_diagnostics import flowSensor
+
+
+
+Author:         Shannon Toole
+Created:        4/10/2026
+Last Modified:  6/19/2026
 '''
 
 import os, sys, logging, csv
@@ -18,18 +36,13 @@ currentDate = str(datetime.date(datetime.now()))
 noPortMsg = ' ~ No COM ports detected ~'
 
 flowSens_baud = 9600
-calibration_table_item_number = 4
 cal_table_file_tyoe = '.txt'
 
-def_cal_setpoints = '0,100,200,300,400,500,600,700,800,900,1000'
-num_calibration_datapoints = 50
 def_new_cal_table_name = 'Honeywell_3300V'
 default_cal_table = 'Honeywell_3100V'
 def_MFC_value = '100'
 def_cal_duration = '10'
-max_calibration_table_value_sccm = '1000'   # TODO change this to mfc capacity
-
-calibration_file_dir_name = 'calibration_tables'
+max_calibration_table_value_sccm = '1000'
 
 def get_current_time():
     current_time = datetime.time(datetime.now())
@@ -48,22 +61,17 @@ def create_console_handler():
 def find_calibration_table_directory():
     ''' Finds (& returns) "calibration_tables" directory '''
     
-    # Search for "..\calibration_tables" directory
     logger.debug('Searching current directory for calibration_tables directory...')
     current_dir = os.getcwd()
-    calibration_table_directory = current_dir + '\\' + calibration_file_dir_name
+    calibration_table_directory = os.path.join(current_dir,'calibration_tables')
+    
+    # Check if this exists
     if os.path.exists(calibration_table_directory):
         logger.debug('Found calibration_tables directory at "%s"', calibration_table_directory)
     else:
-        # In case of different operating system
-        calibration_table_directory = current_dir + '/' + calibration_file_dir_name
-        if os.path.exists(calibration_table_directory):
-            logger.debug('Found calibration_tables directory at "%s"', calibration_table_directory)
+        logger.warning('Cannot find calibration_tables directory, creating folder within current directory')
+        os.mkdir(calibration_table_directory)
     
-    if not os.path.exists(calibration_table_directory):
-        logger.warning('Cannot find calibration_tables directory')
-        calibration_table_directory = ''
-
     return calibration_table_directory
 
 def convertToSCCM(ardVal, dictionary):
@@ -124,12 +132,10 @@ class flowSensor(QGroupBox):
         self.calibration_on = False
 
         # look for calibration table directory
+        self.sccm2Ard_dicts = {}
+        self.ard2Sccm_dicts = {}
         self.flow_cal_dir = find_calibration_table_directory()
-        if os.path.exists(self.flow_cal_dir):
-            self.get_calibration_tables()
-        else:
-            logger.error('Could not find flow calibration directory (searched \'%s\')', self.flow_cal_dir)
-            self.flow_cal_dir = ''
+        self.get_calibration_tables()
         
         self.generate_ui()
     
@@ -145,7 +151,7 @@ class flowSensor(QGroupBox):
         top_layout = QHBoxLayout()
         col1 = QVBoxLayout()
         col1.addWidget(self.connect_box)
-        #col1.addWidget(self.settings_box)
+        col1.addWidget(self.settings_box)
         col1.addWidget(self.cal_table_select_box)
         col2 = QVBoxLayout()
         col2.addWidget(self.data_receive_box)
@@ -198,25 +204,26 @@ class flowSensor(QGroupBox):
         
         self.cal_table_widget = QListWidget()
         self.cal_table_widget.addItems(self.sccm2Ard_dicts)
+        self.cal_table_btn = QPushButton('Set calibration table',checkable=True,toggled=self.cal_tbl_btn_toggled)
 
         # Get list of all calibration tables currently in the widget
         item_list_str = [self.cal_table_widget.item(x).text() for x in range(self.cal_table_widget.count())]
 
-        # Check if default calibration table is there
-        if default_cal_table in item_list_str:
-            index_default_cal_table = item_list_str.index(default_cal_table)                # Get the index of this table
-            default_cal_table_item = self.cal_table_widget.item(index_default_cal_table)    # Get the item at this index
-        else:
-            default_cal_table_item = self.cal_table_widget.item(0)
-        
-        # Set calibration table
-        self.cal_table_widget.setCurrentItem(default_cal_table_item)
-        logger.debug('Calibration table set to %s', default_cal_table_item.text())
-        
-        self.cal_table_btn = QPushButton('Set calibration table',checkable=True,toggled=self.cal_tbl_btn_toggled)
-        if self.cal_table_btn.isChecked() == False:
-            #self.cal_table_btn.toggle()
+        if item_list_str != []: # if there are any calibration tables
+            # Check if default calibration table is there
+            if default_cal_table in item_list_str:
+                index_default_cal_table = item_list_str.index(default_cal_table)                # Get the index of this table
+                default_cal_table_item = self.cal_table_widget.item(index_default_cal_table)    # Get the item at this index
+            else:
+                default_cal_table_item = self.cal_table_widget.item(0)
+            
+            # Set calibration table
+            self.cal_table_widget.setCurrentItem(default_cal_table_item)
+            logger.debug('Calibration table set to %s', default_cal_table_item.text())
             self.cal_table_btn.setChecked(True)
+
+        else:
+            self.cal_table_btn.setEnabled(False)    # If no tables, disable the button        
         
         # LAYOUT
         layout = QVBoxLayout()
@@ -346,7 +353,7 @@ class flowSensor(QGroupBox):
     
     
     # FUNCTIONS
-    def get_calibration_tables(self):   # TODO move this to utils
+    def get_calibration_tables(self):
         logger.debug('Loading all flow sensor calibration tables at (%s)', self.flow_cal_dir)
         
         # Get names of all .txt files in flow cal directory # TODO change to .csv
@@ -363,7 +370,6 @@ class flowSensor(QGroupBox):
             for cal_file in cal_file_names:
                 idx_ext = cal_file.find('.')
                 file_name = cal_file[:idx_ext]
-                #cal_file_full_dir = self.flow_cal_dir + '\\' + cal_file
                 cal_file_full_dir = os.path.join(self.flow_cal_dir, cal_file)   # Fix for different operating systems by Xuebo 9/5/2025
                 
                 thisfile_sccm2Ard_dict = {}
@@ -403,7 +409,12 @@ class flowSensor(QGroupBox):
                             thisfile_sccm2Ard_dict = {}
                             thisfile_ard2Sccm_dict = {}
                             break
-                
+                        except TypeError as err:
+                            # Clear dictionaries & stop trying to read this file
+                            logger.debug('Cannot read %s : %s', cal_file,err)
+                            thisfile_sccm2Ard_dict = {}
+                            thisfile_ard2Sccm_dict = {}
+                            break                
                 # If this file was good (aka we got values), save it to the dict of dicts
                 if bool(thisfile_sccm2Ard_dict) == True:
                     new_sccm2Ard_dicts[file_name] = thisfile_sccm2Ard_dict
@@ -717,11 +728,15 @@ class flowSensor(QGroupBox):
                 if text.isnumeric():
                     str_value = text
                     flowVal_int = int(text)
-                    val_SCCM = convertToSCCM(flowVal_int,self.intToSccm_dict)
-                    dataStr = str_value + '\t' + str(val_SCCM)
+                    try:
+                        val_SCCM = convertToSCCM(flowVal_int,self.intToSccm_dict)
+                        dataStr = str_value + '\t' + str(val_SCCM)
+                    except AttributeError as err:
+                        if err.args[0] == "'flowSensor' object has no attribute 'intToSccm_dict'":
+                            dataStr = str_value + '\t'
                     self.receive_box.append(dataStr)
 
-                    # send to main window for recording
+                    # Send to main window for recording
                     try: self.window().receive_data_from_device('flow sensor','FL',str_value)
                     except AttributeError as err: pass
 
