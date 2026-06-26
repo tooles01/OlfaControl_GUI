@@ -4,6 +4,7 @@ import tables as tb
 from PyQt5 import QtCore, QtGui, QtWidgets
 import logging
 import os
+import sys
 from matplotlib.backends.backend_qt4agg import FigureCanvas
 from matplotlib.figure import Figure
 try:
@@ -965,7 +966,6 @@ class BehaviorTrial(BehaviorEpoch):
 
 
 def main(config_path=''):
-    import sys
     app = QtWidgets.QApplication(sys.argv)
     w = CalibrationViewer()
     w.show()

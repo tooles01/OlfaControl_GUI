@@ -95,6 +95,8 @@ def connect_serial(port, baudrate=115200, timeout=1, writeTimeout=1):
         time.sleep(.01)  # just to let the above lines print before the exemption is raised. cleans console output.
         raise serial.SerialException('Requested COM port: {0} is not listed as connected.'.format(port))
     else:
+        
+        print(baudrate, timeout, writeTimeout)
         return serial.Serial(port, baudrate=baudrate, timeout=timeout, writeTimeout=writeTimeout)
 
 

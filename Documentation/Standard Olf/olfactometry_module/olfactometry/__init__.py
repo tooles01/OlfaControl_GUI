@@ -8,6 +8,6 @@ from .utils import *
 import sys
 
 
-qapp = QtWidgets.QApplication.instance()
-if qapp is None:
-    qapp = QtWidgets.QApplication(sys.argv)
+qApp = QtWidgets.QApplication.instance()
+if qApp is None:
+    qApp = QtWidgets.QApplication(sys.argv)

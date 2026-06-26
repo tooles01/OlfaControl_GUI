@@ -18,16 +18,12 @@ class Dilutor(QtWidgets.QGroupBox):
         com_port = config['com_port']
         self.serial = connect_serial(com_port, baudrate=baudrate, timeout=1, writeTimeout=1)
         self._eol = '\r'
-        
-        self.slaveindex = 1
-        for i, mfc in enumerate(config['MFCs']):
-            mfc['arduino_port_num'] = i + 1
-        
+
         layout = QtWidgets.QHBoxLayout()
         self.mfcs = self._config_mfcs(config['MFCs'])
         self.polling_interval = polling_interval
         self.mfc_timer = self.start_mfc_polling()
-       
+
         # GUI:
         for mfc in self.mfcs:
             layout.addWidget(mfc)
@@ -75,7 +71,6 @@ class Dilutor(QtWidgets.QGroupBox):
 
     def send_command(self, command, tries=1):
         # must send with '\r' end of line
-        #raise TypeError("Only integers are allowed")
         self.serial.flushInput()
         for i in range(tries):
             self.serial.write(bytes(command, 'utf-8'))
