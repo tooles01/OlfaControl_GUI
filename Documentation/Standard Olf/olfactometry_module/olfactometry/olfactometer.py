@@ -1,11 +1,13 @@
-from PyQt5 import QtCore, QtWidgets
-import time
-from .mfc import MFCclasses, MFC
-from .dilutor import DILUTORS
-from serial import SerialException
-from .utils import OlfaException, flatten_dictionary, connect_serial
-
 import logging
+import sys
+import time
+
+from PyQt5 import QtCore, QtWidgets
+from serial import SerialException
+
+from olfactometry.dilutor import DILUTORS
+from olfactometry.mfc import MFC, MFCclasses
+from olfactometry.utils import OlfaException, connect_serial, flatten_dictionary, get_olfa_config
 
 
 class Olfactometer(QtWidgets.QGroupBox):
@@ -628,8 +630,6 @@ def main():
     sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    import sys
-    from .utils import get_olfa_config
     LOGGING_LEVEL = logging.DEBUG
     logger = logging.getLogger()
     handler = logging.StreamHandler()

@@ -1,10 +1,10 @@
-import os
 import json
 import logging
-import serial
-from serial.tools import list_ports
+import os
 import time
 
+import serial
+from serial.tools import list_ports
 
 CONFIG_FILENAME_DEFAULT = 'olfa_config.json'
 
