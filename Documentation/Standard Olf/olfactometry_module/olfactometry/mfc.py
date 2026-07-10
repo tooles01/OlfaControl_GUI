@@ -23,7 +23,7 @@ class MFC(QtWidgets.QGroupBox):
         :return:
         """
         super(MFC, self).__init__()
-        
+
         self.parent_device = parent_device
         self.mfc_type = mfc_config['MFC_type']
         self.capacity = int(mfc_config['capacity'])
@@ -150,12 +150,9 @@ class MFCAnalog(MFC):
         if abs(flowrate - self.flow) < 0.0005:
             return  # floating points have inherent imprecision when using comparisons
         command = "MFC " + str(self.parent_device.slaveindex) + " " + str(self.arduino_port) + " " + str(flowrate * 1.0 / self.capacity)
-        logging.info("MFC %s, sending this command: %s",str(self.arduino_port), command)
         set = self.parent_device.send_command(command)
-        if(set != "MFC set\r\n"):
-            print("Error setting MFC: ", set)
-            logging.info("Error setting MFC %s",str(self.arduino_port))
-            logging.info("\t'set' = %s",set)
+        if(set.decode('utf-8') != "MFC set\r\n"):
+            print(f"Error setting MFC {self.arduino_port} ({self.mfc_type}):  {set}")
             return False
         return True
 
@@ -177,19 +174,15 @@ class MFCAlicatDigArduino(MFC):
         flownum = int(flownum)
         command = "DMFC {0:d} {1:d} A{2:d}".format(self.parent_device.slaveindex, self.arduino_port, flownum)
         confirmation = self.parent_device.send_command(command)
-        if(confirmation != "MFC set\r\n"):
-            print("Error setting MFC: ", confirmation)
+        if(confirmation.decode('utf-8') != "MFC set\r\n"):
+            print(f"Error setting MFC {self.arduino_port} ({self.mfc_type}):  {set}")
         else:
             # Attempt to read back
             success = True
             command = "DMFC {0:d} {1:d}".format(self.parent_device.slaveindex, self.arduino_port)
             returnstring = self.parent_device.send_command(command)
-            try:
-                while (returnstring is None or returnstring.startswith('Error -2')) and time.time() - start_time < .2:
-                    command = command.encode('utf-8')
-                    returnstring = self.parent_device.send_command(command)
-            except TypeError as err:
-                print(err)
+            while (returnstring is None or returnstring.startswith(b'Error -2')) and time.time() - start_time < .2:
+                returnstring = self.parent_device.send_command(command)
         return success
 
     def get_flowrate(self):
